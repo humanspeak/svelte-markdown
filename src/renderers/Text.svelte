@@ -1,5 +1,24 @@
-<script>
-    export let text; text;
-    export let raw; raw;
+<script lang="ts">
+    import { Snippet } from 'svelte'
+
+    /**
+     * @typedef {Object} Props
+     * @property {string} [text]
+     * @property {string} [raw]
+     * @property {Snippet} [children]
+     */
+
+    /** @type {Props} */
+    let {
+        text,
+        raw,
+        children
+    }: {
+        text: string
+        raw: string
+        children: Snippet
+    } = $props()
+    console.log(text, raw, children)
 </script>
-<slot />
+
+{@render children?.()}

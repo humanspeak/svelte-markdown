@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom/extend-expect'
+import '@testing-library/jest-dom'
 import { describe, test, expect } from 'vitest'
 import { render, screen } from '@testing-library/svelte'
 import SvelteMarkdown from '../src/SvelteMarkdown.svelte'

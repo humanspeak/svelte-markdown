@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import { svelteTesting } from '@testing-library/svelte/vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import analyze from 'rollup-plugin-analyzer'
 import { terser } from 'rollup-plugin-terser'
@@ -9,7 +10,7 @@ const production = !process.argv.includes('--watch')
 const removeDist = (p) => p.replace('dist/', '')
 
 export default defineConfig({
-  plugins: [svelte({ hot: !process.env.VITEST })],
+  plugins: [svelte({ hot: !process.env.VITEST }), svelteTesting()],
   test: {
     globals: true,
     environment: 'jsdom',

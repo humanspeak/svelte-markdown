@@ -1,44 +1,58 @@
-<script>
-  import { setContext, createEventDispatcher, onMount } from 'svelte'
-  import Parser from './Parser.svelte'
-  import { Lexer, Slugger, defaultOptions, defaultRenderers } from './markdown-parser'
-  import { key } from './context'
+<script lang="ts">
+    import { setContext } from 'svelte'
+    import Parser from './Parser.svelte'
+    import GithubSlugger from 'github-slugger'
+    import { Lexer, defaultOptions, defaultRenderers } from './markdown-parser'
+    import { key } from './context'
+    import { Token, TokensList } from 'marked'
 
-  export let source = []
-  export let renderers = {}
-  export let options = {}
-  export let isInline = false
+    /**
+     * @typedef {Object} Props
+     * @property {Token[] | string} [source]
+     * @property {object} [renderers]
+     * @property {object} [options]
+     * @property {boolean} [isInline]
+     */
 
-  const dispatch = createEventDispatcher();
+    /** @type {Props} */
+    let {
+        source = [],
+        renderers = {},
+        options = {},
+        isInline = false,
+        parsed = () => {}
+    }: {
+        source: Token[] | string
+        renderers: object
+        options: object
+        isInline: boolean
+        parsed: (tokens: Token[]) => void
+    } = $props()
 
-  let tokens;
-  let lexer;
-  let mounted;
+    let tokens: Token[] | TokensList | undefined = undefined
+    let lexer: Lexer | undefined = undefined
 
-  $: preprocessed = Array.isArray(source)
-  $: slugger = source ? new Slugger : undefined
-  $: combinedOptions = { ...defaultOptions, ...options }
-  $: if (preprocessed) {
-    tokens = source
-  } else {
-    lexer = new Lexer(combinedOptions)
+    let preprocessed = Array.isArray(source)
+    let slugger = source ? new GithubSlugger() : undefined
+    let combinedOptions = { ...defaultOptions, ...options }
 
-    tokens = isInline ? lexer.inlineTokens(source) : lexer.lex(source)
+    if (preprocessed) {
+        tokens = source as Token[]
+    } else {
+        lexer = new Lexer(combinedOptions)
+        tokens = isInline ? lexer.inlineTokens(source as string) : lexer.lex(source as string)
+        parsed(tokens)
+    }
 
-    dispatch('parsed', { tokens })
-  }
+    let combinedRenderers = {
+        ...defaultRenderers,
+        ...renderers
+    }
 
-  $: combinedRenderers = { ...defaultRenderers, ...renderers }
-
-  setContext(key, {
-    slug: (val) => slugger ? slugger.slug(val) : '',
-    getOptions: () => combinedOptions
-  })
-  $: mounted && !preprocessed && dispatch('parsed', { tokens })
-
-  onMount(() => {
-    mounted = true
-  });
+    setContext(key, {
+        slug: (val) => (slugger ? slugger.slug(val) : ''),
+        getOptions: () => combinedOptions
+    })
 </script>
 
 <Parser {tokens} renderers={combinedRenderers} />
