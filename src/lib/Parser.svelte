@@ -1,12 +1,12 @@
 <script lang="ts">
     import Parser from './Parser.svelte'
-    import type { Renderers, Token, TokensList } from './utils/markdown-parser.js'
+    import type { Renderers, Token, TokensList, Tokens } from './utils/markdown-parser.js'
 
     interface Props {
         type?: string
         tokens?: Token[] | TokensList
-        header?: Props[]
-        rows?: Props[][]
+        header?: Tokens.TableCell[]
+        rows?: Tokens.TableCell[][]
         ordered?: boolean
         renderers: Renderers
     }
@@ -29,7 +29,8 @@
 {#if !type}
     {#if tokens}
         {#each tokens as token}
-            <Parser {...token} {renderers} {...rest} />
+            {@const { text, raw, ...parserRest } = rest}
+            <Parser {...token} {renderers} {...parserRest} />
         {/each}
     {/if}
 {:else if type in renderers}

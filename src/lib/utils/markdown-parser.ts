@@ -1,5 +1,5 @@
 export { default as Slugger } from 'github-slugger'
-export { Lexer, type Token, type TokensList } from 'marked'
+export { Lexer, type Token, type TokensList, type Tokens } from 'marked'
 
 import type { Component } from 'svelte'
 import {
