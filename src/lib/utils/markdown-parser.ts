@@ -1,6 +1,8 @@
 export { Lexer } from 'marked'
 export { default as Slugger } from 'github-slugger'
+export type { Token, TokensList } from 'marked'
 
+import type { Component } from 'svelte'
 import {
     // Heading,
     Paragraph,
@@ -25,7 +27,11 @@ import {
     Br
 } from '../renderers/index.js'
 
-export const defaultRenderers = {
+export interface Renderers {
+    [key: string]: Component<any> | null
+}
+
+export const defaultRenderers: Renderers = {
     // heading: Heading,
     paragraph: Paragraph,
     text: Text,

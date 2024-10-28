@@ -1,8 +1,6 @@
 <script lang="ts">
     import Parser from './Parser.svelte'
-    import { supressWarnings } from '$lib/utils/supress-warnings.js'
-
-    import type { Token, TokensList } from 'marked'
+    import type { Renderers, Token, TokensList } from './utils/markdown-parser.js'
 
     interface Props {
         type?: string
@@ -10,12 +8,12 @@
         header?: any[]
         rows?: any[]
         ordered?: boolean
-        renderers: object
+        renderers: Renderers
     }
 
-    let { type = undefined, tokens = undefined, header = undefined, rows = undefined, ordered = false, renderers, ...rest }: Props = $props()
+    let { type = undefined, tokens = undefined, header = undefined, rows = undefined, ordered = false, renderers, ...rest }: Props & { [key: string]: any } = $props()
 
-    supressWarnings()
+    $inspect(type, tokens, header, rows, ordered, renderers, rest)
 </script>
 
 {#if !type}
@@ -24,7 +22,7 @@
             <Parser {...token} {renderers} />
         {/each}
     {/if}
-{:else if renderers[type]}
+{:else if type in renderers && renderers.hasOwnProperty(type)}
     {#if type === 'table'}
         <renderers.table>
             <renderers.tablehead>

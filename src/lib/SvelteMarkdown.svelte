@@ -1,7 +1,6 @@
 <script lang="ts">
     import { setContext } from 'svelte'
-    import type { Token, TokensList } from 'marked'
-    import { Lexer, defaultOptions, defaultRenderers, Slugger } from '$lib/utils/markdown-parser.js'
+    import { Lexer, defaultOptions, defaultRenderers, Slugger, type Token, type TokensList } from '$lib/utils/markdown-parser.js'
     import { key } from '$lib/utils/context.js'
     import Parser from './Parser.svelte'
 
