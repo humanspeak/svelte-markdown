@@ -34,21 +34,29 @@
     {/if}
 {:else if type in renderers}
     {#if type === 'table'}
-        <renderers.table>
-            <renderers.tablehead>
-                <renderers.tablerow>
+        <renderers.table {...rest}>
+            <renderers.tablehead {...rest}>
+                <renderers.tablerow {...rest}>
                     {#each header ?? [] as headerItem, i}
-                        <renderers.tablecell header={true} align={rest.align[i] || 'center'}>
+                        <renderers.tablecell
+                            header={true}
+                            align={rest.align[i] || 'center'}
+                            {...rest}
+                        >
                             <Parser tokens={headerItem.tokens} {renderers} />
                         </renderers.tablecell>
                     {/each}
                 </renderers.tablerow>
             </renderers.tablehead>
-            <renderers.tablebody>
+            <renderers.tablebody {...rest}>
                 {#each rows ?? [] as row}
-                    <renderers.tablerow>
+                    <renderers.tablerow {...rest}>
                         {#each row ?? [] as cells, i}
-                            <renderers.tablecell header={false} align={rest.align[i] || 'center'}>
+                            <renderers.tablecell
+                                header={false}
+                                align={rest.align[i] || 'center'}
+                                {...rest}
+                            >
                                 <Parser tokens={cells.tokens} {renderers} />
                             </renderers.tablecell>
                         {/each}
@@ -59,7 +67,8 @@
     {:else if type === 'list'}
         {#if ordered}
             <renderers.list {ordered} {...rest}>
-                {#each rest.items as item}
+                {@const items = rest.items as Props[]}
+                {#each items as item}
                     {@const SvelteComponent = renderers.orderedlistitem || renderers.listitem}
                     <SvelteComponent {...item}>
                         <Parser tokens={item.tokens} {renderers} />
@@ -68,7 +77,8 @@
             </renderers.list>
         {:else}
             <renderers.list {ordered} {...rest}>
-                {#each rest.items as item}
+                {@const items = rest.items as Props[]}
+                {#each items as item}
                     {@const SvelteComponent_1 = renderers.unorderedlistitem || renderers.listitem}
                     <SvelteComponent_1 {...item} {...rest}>
                         <Parser tokens={item.tokens} {renderers} {...rest} />
