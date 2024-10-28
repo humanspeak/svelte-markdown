@@ -1,10 +1,9 @@
-export { Lexer } from 'marked'
 export { default as Slugger } from 'github-slugger'
-export type { Token, TokensList } from 'marked'
+export { Lexer, type Token, type TokensList } from 'marked'
 
 import type { Component } from 'svelte'
 import {
-    // Heading,
+    Heading,
     Paragraph,
     Text,
     Image,
@@ -32,7 +31,7 @@ export interface Renderers {
 }
 
 export const defaultRenderers: Renderers = {
-    // heading: Heading,
+    heading: Heading,
     paragraph: Paragraph,
     text: Text,
     image: Image,
@@ -56,7 +55,28 @@ export const defaultRenderers: Renderers = {
     code: Code,
     br: Br
 }
-export const defaultOptions = {
+
+export type SvelteMarkdownOptions = {
+    baseUrl: string | null
+    breaks: boolean
+    gfm: boolean
+    headerIds: boolean
+    headerPrefix: string
+    highlight: null
+    langPrefix: string
+    mangle: boolean
+    pedantic: boolean
+    renderer: null
+    sanitize: boolean
+    sanitizer: null
+    silent: boolean
+    smartLists: boolean
+    smartypants: boolean
+    tokenizer: null
+    xhtml: boolean
+}
+
+export const defaultOptions: SvelteMarkdownOptions = {
     baseUrl: null,
     breaks: false,
     gfm: true,

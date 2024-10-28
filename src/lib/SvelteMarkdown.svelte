@@ -1,21 +1,34 @@
 <script lang="ts">
-    import { setContext } from 'svelte'
-    import { Lexer, defaultOptions, defaultRenderers, Slugger, type Token, type TokensList } from '$lib/utils/markdown-parser.js'
-    import { key } from '$lib/utils/context.js'
+    import {
+        Lexer,
+        defaultOptions,
+        defaultRenderers,
+        Slugger,
+        type Token,
+        type TokensList,
+        type SvelteMarkdownOptions
+    } from './utils/markdown-parser.js'
     import Parser from './Parser.svelte'
 
     interface Props {
         source: Token[] | string
         renderers?: object
-        options?: object
+        options?: SvelteMarkdownOptions
         isInline?: boolean
         parsed?: (tokens: Token[] | TokensList) => void
     }
 
-    let { source = [], renderers = {}, options = {}, isInline = false, parsed = () => {} }: Props = $props()
-
-    // svelte-ignore non_reactive_update
-    let tokens: Token[] | TokensList | undefined = $state<Token[] | TokensList | undefined>(undefined)
+    let {
+        source = [],
+        renderers = {},
+        options = {} as SvelteMarkdownOptions,
+        isInline = false,
+        parsed = () => {},
+        ...rest
+    }: Props & { [key: string]: any } = $props()
+    let tokens: Token[] | TokensList | undefined = $state<Token[] | TokensList | undefined>(
+        undefined
+    )
     let lexer: Lexer | undefined = undefined
 
     let slugger = source ? new Slugger() : undefined
@@ -37,11 +50,12 @@
         ...defaultRenderers,
         ...renderers
     }
-
-    setContext(key, {
-        slug: (val: string) => (slugger ? slugger.slug(val) : ''),
-        getOptions: () => combinedOptions
-    })
 </script>
 
-<Parser {tokens} renderers={combinedRenderers} />
+<Parser
+    {tokens}
+    {...rest}
+    options={combinedOptions}
+    slug={(val: string): string => (slugger ? slugger.slug(val) : '')}
+    renderers={combinedRenderers}
+/>

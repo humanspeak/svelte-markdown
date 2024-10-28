@@ -9,9 +9,21 @@
         rows?: any[]
         ordered?: boolean
         renderers: Renderers
+        raw?: string
+        text?: string
     }
 
-    let { type = undefined, tokens = undefined, header = undefined, rows = undefined, ordered = false, renderers, ...rest }: Props & { [key: string]: any } = $props()
+    let {
+        type = undefined,
+        tokens = undefined,
+        header = undefined,
+        rows = undefined,
+        ordered = false,
+        renderers,
+        raw,
+        text,
+        ...rest
+    }: Props & { [key: string]: any } = $props()
 
     $inspect(type, tokens, header, rows, ordered, renderers, rest)
 </script>
@@ -19,7 +31,7 @@
 {#if !type}
     {#if tokens}
         {#each tokens as token}
-            <Parser {...token} {renderers} />
+            <Parser {...token} {renderers} {...rest} />
         {/each}
     {/if}
 {:else if type in renderers && renderers.hasOwnProperty(type)}
@@ -60,8 +72,8 @@
             <renderers.list {ordered} {...rest}>
                 {#each rest.items as item}
                     {@const SvelteComponent_1 = renderers.unorderedlistitem || renderers.listitem}
-                    <SvelteComponent_1 {...item}>
-                        <Parser tokens={item.tokens} {renderers} />
+                    <SvelteComponent_1 {...item} {...rest}>
+                        <Parser tokens={item.tokens} {renderers} {...rest} />
                     </SvelteComponent_1>
                 {/each}
             </renderers.list>
@@ -70,9 +82,9 @@
         {@const SvelteComponent_2 = renderers[type]}
         <SvelteComponent_2 {...rest}>
             {#if tokens}
-                <Parser {tokens} {renderers} />
+                <Parser {tokens} {renderers} {...rest} />
             {:else}
-                {rest.raw}
+                {raw}
             {/if}
         </SvelteComponent_2>
     {/if}

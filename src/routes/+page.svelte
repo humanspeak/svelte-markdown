@@ -1,7 +1,5 @@
 <script lang="ts">
-    import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
-    import type { TokensList } from 'marked'
-    import type { Token } from 'marked'
+    import { default as SvelteMarkdown, type TokensList, type Token } from '$lib/index.js'
 
     let source = $state('**Hello World**')
     let counter = 0

@@ -17,11 +17,11 @@ describe('testing initialization', () => {
                             type: 'strong',
                             raw: '**example**',
                             text: 'example',
-                            tokens: [{ type: 'text', raw: 'example', text: 'example' }]
-                        }
-                    ]
-                }
-            ]
+                            tokens: [{ type: 'text', raw: 'example', text: 'example' }],
+                        },
+                    ],
+                },
+            ],
         })
 
         const element = screen.getByText('example')

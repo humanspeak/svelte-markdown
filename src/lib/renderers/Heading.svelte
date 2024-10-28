@@ -1,10 +1,16 @@
 <script lang="ts">
-    import { getContext } from 'svelte'
-    import { key } from '$lib/utils/context.js'
-    let { depth, raw, text, children } = $props()
+    import type { SvelteMarkdownOptions } from '../utils/markdown-parser.js'
 
-    const { slug, getOptions } = getContext(key)
-    const options = getOptions()
+    interface Props {
+        depth: number
+        raw: string
+        text: string
+        options: SvelteMarkdownOptions
+        slug: (val: string) => string
+        children: () => any
+    }
+
+    let { depth, raw, text, options, slug, children }: Props = $props()
 
     let id = $derived(options.headerIds ? options.headerPrefix + slug(text) : undefined)
 </script>

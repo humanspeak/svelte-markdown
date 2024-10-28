@@ -1,5 +1,5 @@
 <script>
-  let { raw } = $props();
+    const { raw } = $props()
 </script>
 
 <code>{raw.replace(/`/g, '')}</code>
