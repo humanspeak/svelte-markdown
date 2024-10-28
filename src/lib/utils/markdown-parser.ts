@@ -27,7 +27,7 @@ import {
 } from '../renderers/index.js'
 
 export interface Renderers {
-    [key: string]: Component<any> | null
+    [key: string]: Component<any> | null // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export const defaultRenderers: Renderers = {

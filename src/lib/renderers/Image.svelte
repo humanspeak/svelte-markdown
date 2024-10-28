@@ -1,13 +1,11 @@
-<script>
-    /**
-     * @typedef {Object} Props
-     * @property {string} [href]
-     * @property {any} [title]
-     * @property {string} [text]
-     */
+<script lang="ts">
+    interface Props {
+        href?: string
+        title?: string
+        text?: string
+    }
 
-    /** @type {Props} */
-    const { href = '', title = undefined, text = '' } = $props()
+    const { href = '', title = undefined, text = '' }: Props = $props()
 </script>
 
 <img src={href} {title} alt={text} />

@@ -1,6 +1,8 @@
 import globals from 'globals'
 import parser from 'svelte-eslint-parser'
 import path from 'node:path'
+import typescriptEslint from '@typescript-eslint/eslint-plugin'
+import tsParser from '@typescript-eslint/parser'
 import { fileURLToPath } from 'node:url'
 import js from '@eslint/js'
 import { FlatCompat } from '@eslint/eslintrc'
@@ -14,17 +16,47 @@ const compat = new FlatCompat({
 })
 
 export default [
-    ...compat.extends('plugin:svelte/recommended'),
     {
-        plugins: {},
+        ignores: [
+            '**/.DS_Store',
+            '**/node_modules',
+            'postcss.config.cjs',
+            '**/build',
+            '.svelte-kit',
+            'package',
+            '**/.env',
+            '**/.env.*',
+            '!**/.env.example',
+            '**/pnpm-lock.yaml',
+            '**/package-lock.json',
+            '**/yarn.lock',
+            'src/routes/poc',
+            '**/dist'
+        ]
+    },
+    ...compat.extends(
+        'eslint:recommended',
+        'plugin:@typescript-eslint/recommended',
+        'plugin:svelte/recommended',
+        'prettier'
+    ),
+    {
+        plugins: {
+            '@typescript-eslint': typescriptEslint
+        },
 
         languageOptions: {
             globals: {
-                ...globals.browser
+                ...globals.browser,
+                ...globals.node
             },
 
-            ecmaVersion: 2019,
-            sourceType: 'module'
+            parser: tsParser,
+            ecmaVersion: 2020,
+            sourceType: 'module',
+            parserOptions: {
+                extraFileExtensions: ['.svelte']
+            }
         },
 
         rules: {
@@ -36,7 +68,7 @@ export default [
             yoda: ['warn', 'never'],
             camelcase: ['error'],
             'comma-style': ['warn'],
-            'comma-dangle': ['warn', 'always-multiline'],
+            'comma-dangle': ['off', 'always-multiline'],
             'block-spacing': ['warn'],
             'keyword-spacing': ['warn'],
             'no-trailing-spaces': ['warn'],
@@ -48,7 +80,7 @@ export default [
             'arrow-spacing': ['warn'],
             'no-duplicate-imports': ['error'],
             'no-var': ['error'],
-            'prefer-const': ['warn'],
+            'prefer-const': ['error'],
 
             'no-unused-vars': [
                 'warn',
@@ -63,7 +95,13 @@ export default [
         files: ['**/*.svelte'],
 
         languageOptions: {
-            parser: parser
+            parser: parser,
+            ecmaVersion: 5,
+            sourceType: 'script',
+
+            parserOptions: {
+                parser: '@typescript-eslint/parser'
+            }
         }
     }
 ]

@@ -1,13 +1,12 @@
-<script>
-    /**
-     * @typedef {Object} Props
-     * @property {string} [href]
-     * @property {any} [title]
-     * @property {import('svelte').Snippet} [children]
-     */
+<script lang="ts">
+    import type { Snippet } from 'svelte'
 
-    /** @type {Props} */
-    let { href = '', title = undefined, children } = $props()
+    interface Props {
+        href?: string
+        title?: string
+        children?: Snippet
+    }
+    const { href = '', title = undefined, children }: Props = $props()
 </script>
 
 <a {href} {title}>{@render children?.()}</a>

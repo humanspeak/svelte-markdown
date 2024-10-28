@@ -1,5 +1,13 @@
-<script>
-    let { ordered, start, children } = $props()
+<script lang="ts">
+    import type { Snippet } from 'svelte'
+
+    interface Props {
+        ordered?: boolean
+        start?: number
+        children?: Snippet
+    }
+
+    const { ordered = false, start = 1, children }: Props = $props()
 </script>
 
 {#if ordered}

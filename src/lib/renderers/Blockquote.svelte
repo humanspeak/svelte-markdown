@@ -1,11 +1,10 @@
-<script>
-    /**
-     * @typedef {Object} Props
-     * @property {import('svelte').Snippet} [children]
-     */
+<script lang="ts">
+    import type { Snippet } from 'svelte'
 
-    /** @type {Props} */
-    let { children } = $props()
+    interface Props {
+        children?: Snippet
+    }
+    const { children }: Props = $props()
 </script>
 
 <blockquote>{@render children?.()}</blockquote>

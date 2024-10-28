@@ -4,10 +4,10 @@
     interface Props {
         header: boolean
         align: 'left' | 'center' | 'right' | 'justify' | 'char' | null | undefined
-        children: Snippet
+        children?: Snippet
     }
 
-    let { header, align, children }: Props = $props()
+    const { header, align, children }: Props = $props()
 </script>
 
 {#if header}

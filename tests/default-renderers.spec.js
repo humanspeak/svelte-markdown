@@ -48,7 +48,7 @@ describe('testing default renderers', () => {
     describe('renders a link', () => {
         test('renders link title', () => {
             render(SvelteMarkdown, {
-                source: '[link](https://pablo.berganza.dev "link title")',
+                source: '[link](https://pablo.berganza.dev "link title")'
             })
 
             const element = screen.getByRole('link', { title: /link title/ })
@@ -58,7 +58,7 @@ describe('testing default renderers', () => {
 
         test('renders link name', () => {
             render(SvelteMarkdown, {
-                source: '[link](https://pablo.berganza.dev "link title")',
+                source: '[link](https://pablo.berganza.dev "link title")'
             })
 
             const element = screen.getByRole('link', { name: /link/ })
@@ -87,7 +87,7 @@ describe('testing default renderers', () => {
         test('renders a heading with id and preffix', () => {
             render(SvelteMarkdown, {
                 source: '# This is a title',
-                options: { headerPrefix: 'test-' },
+                options: { headerPrefix: 'test-' }
             })
 
             const element = screen.getByRole('heading', { name: /This is a title/ })
@@ -96,11 +96,11 @@ describe('testing default renderers', () => {
 
         test('renders a heading with non-duplicate id', () => {
             render(SvelteMarkdown, {
-                source: '# This is a title\n\n## This is a title',
+                source: '# This is a title\n\n## This is a title'
             })
 
             const element = screen.getAllByRole('heading', {
-                name: /This is a title/,
+                name: /This is a title/
             })
             expect(element[0]).toHaveAttribute('id', 'this-is-a-title')
             expect(element[1]).toHaveAttribute('id', 'this-is-a-title-1')
@@ -109,7 +109,7 @@ describe('testing default renderers', () => {
         test('renders a heading without id', () => {
             render(SvelteMarkdown, {
                 source: '# This is a title',
-                options: { headerIds: false },
+                options: { headerIds: false }
             })
 
             const element = screen.getByRole('heading', { name: /This is a title/ })
@@ -119,7 +119,7 @@ describe('testing default renderers', () => {
 
     test('renders an image', () => {
         render(SvelteMarkdown, {
-            source: '![Image](https://pablo.berganza.dev/img/profile-pic-400.jpeg "image title")',
+            source: '![Image](https://pablo.berganza.dev/img/profile-pic-400.jpeg "image title")'
         })
 
         const element = screen.getByRole('img', { name: /Image/ })
@@ -132,12 +132,12 @@ describe('testing default renderers', () => {
             source: `
   | header |
   |--------|
-  | value |`,
+  | value |`
         })
 
         const element = screen.getByRole('table')
         const tableHeaderElement = screen.getByRole('columnheader', {
-            name: /header/,
+            name: /header/
         })
         const tableCellElement = screen.getByRole('cell', { name: /value/ })
         expect(element).toBeInTheDocument()

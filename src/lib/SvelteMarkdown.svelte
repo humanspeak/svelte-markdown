@@ -15,24 +15,26 @@
         renderers?: object
         options?: SvelteMarkdownOptions
         isInline?: boolean
-        parsed?: (tokens: Token[] | TokensList) => void
+        parsed?: (tokens: Token[] | TokensList) => void // eslint-disable-line no-unused-vars
     }
 
-    let {
+    const {
         source = [],
         renderers = {},
         options = {} as SvelteMarkdownOptions,
         isInline = false,
         parsed = () => {},
         ...rest
-    }: Props & { [key: string]: any } = $props()
+    }: Props & {
+        [key: string]: unknown
+    } = $props()
     let tokens: Token[] | TokensList | undefined = $state<Token[] | TokensList | undefined>(
         undefined
     )
     let lexer: Lexer | undefined = undefined
 
-    let slugger = source ? new Slugger() : undefined
-    let combinedOptions = { ...defaultOptions, ...options }
+    const slugger = source ? new Slugger() : undefined
+    const combinedOptions = { ...defaultOptions, ...options }
 
     $effect.pre(() => {
         if (Array.isArray(source)) {
@@ -46,7 +48,7 @@
         if (tokens) parsed($state.snapshot(tokens))
     })
 
-    let combinedRenderers = {
+    const combinedRenderers = {
         ...defaultRenderers,
         ...renderers
     }

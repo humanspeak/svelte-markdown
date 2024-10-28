@@ -2,10 +2,10 @@
     import type { Snippet } from 'svelte'
 
     interface Props {
-        children: Snippet
+        children?: Snippet
     }
 
-    let { children }: Props = $props()
+    const { children }: Props = $props()
 </script>
 
 <em>{@render children?.()}</em>

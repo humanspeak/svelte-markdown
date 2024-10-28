@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Snippet } from 'svelte'
     import type { SvelteMarkdownOptions } from '../utils/markdown-parser.js'
 
     interface Props {
@@ -6,13 +7,13 @@
         raw: string
         text: string
         options: SvelteMarkdownOptions
-        slug: (val: string) => string
-        children: () => any
+        slug: (val: string) => string // eslint-disable-line no-unused-vars
+        children?: Snippet
     }
 
-    let { depth, raw, text, options, slug, children }: Props = $props()
+    const { depth, raw, text, options, slug, children }: Props = $props()
 
-    let id = $derived(options.headerIds ? options.headerPrefix + slug(text) : undefined)
+    const id = $derived(options.headerIds ? options.headerPrefix + slug(text) : undefined)
 </script>
 
 {#if depth === 1}

@@ -4,11 +4,10 @@
     interface Props {
         text: string
         raw: string
-        children: Snippet
+        children?: Snippet
     }
 
-    let { text, raw, children }: Props = $props()
-    console.log('text', text, raw, children)
+    const { text, raw, children }: Props = $props()
 </script>
 
 {@render children?.()}

@@ -5,25 +5,23 @@
     interface Props {
         type?: string
         tokens?: Token[] | TokensList
-        header?: any[]
-        rows?: any[]
+        header?: Props[]
+        rows?: Props[][]
         ordered?: boolean
         renderers: Renderers
-        raw?: string
-        text?: string
     }
 
-    let {
+    const {
         type = undefined,
         tokens = undefined,
         header = undefined,
         rows = undefined,
         ordered = false,
         renderers,
-        raw,
-        text,
         ...rest
-    }: Props & { [key: string]: any } = $props()
+    }: Props & {
+        [key: string]: unknown
+    } = $props()
 
     $inspect(type, tokens, header, rows, ordered, renderers, rest)
 </script>
@@ -34,12 +32,12 @@
             <Parser {...token} {renderers} {...rest} />
         {/each}
     {/if}
-{:else if type in renderers && renderers.hasOwnProperty(type)}
+{:else if type in renderers}
     {#if type === 'table'}
         <renderers.table>
             <renderers.tablehead>
                 <renderers.tablerow>
-                    {#each header as headerItem, i}
+                    {#each header ?? [] as headerItem, i}
                         <renderers.tablecell header={true} align={rest.align[i] || 'center'}>
                             <Parser tokens={headerItem.tokens} {renderers} />
                         </renderers.tablecell>
@@ -47,9 +45,9 @@
                 </renderers.tablerow>
             </renderers.tablehead>
             <renderers.tablebody>
-                {#each rows as row}
+                {#each rows ?? [] as row}
                     <renderers.tablerow>
-                        {#each row as cells, i}
+                        {#each row ?? [] as cells, i}
                             <renderers.tablecell header={false} align={rest.align[i] || 'center'}>
                                 <Parser tokens={cells.tokens} {renderers} />
                             </renderers.tablecell>
@@ -82,9 +80,10 @@
         {@const SvelteComponent_2 = renderers[type]}
         <SvelteComponent_2 {...rest}>
             {#if tokens}
-                <Parser {tokens} {renderers} {...rest} />
+                {@const { text, raw, ...parserRest } = rest}
+                <Parser {tokens} {renderers} {...parserRest} />
             {:else}
-                {raw}
+                {rest.raw}
             {/if}
         </SvelteComponent_2>
     {/if}
