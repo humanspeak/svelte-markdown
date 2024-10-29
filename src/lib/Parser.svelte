@@ -22,8 +22,6 @@
     }: Props & {
         [key: string]: unknown
     } = $props()
-
-    $inspect(type, tokens, header, rows, ordered, renderers, rest)
 </script>
 
 {#if !type}

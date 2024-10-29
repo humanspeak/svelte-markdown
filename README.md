@@ -162,13 +162,12 @@ A `parsed` event will be fired when the final tokens have been calculated, allow
 
   const source = `# This is a header`
 
-  function handleParsed(event) {
-    //access tokens via event.detail.tokens
-    console.log(event.detail.tokens);
+  const handleParsed = async (parsedTokens: Token[] | TokensList) => {
+      console.log('displaying tokens', parsedTokens)
   }
 </script>
 
-<SvelteMarkdown {source} on:parsed={handleParsed}>
+<SvelteMarkdown {source} parsed={handleParsed}>
 ```
 
 ## Available renderers

@@ -9,7 +9,7 @@
     }
 
     const showParsed = async (parsedTokens: Token[] | TokensList) => {
-        console.log('parsedTokens', parsedTokens)
+        console.log('displaying tokens', parsedTokens)
     }
 </script>
 
