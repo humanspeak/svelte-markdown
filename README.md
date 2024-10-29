@@ -1,10 +1,5 @@
 # Svelte Markdown
 
-[![Tests](https://github.com/pablo-abc/svelte-markdown/workflows/Tests/badge.svg?branch=master)](https://github.com/pablo-abc/svelte-markdown/actions?query=workflow%3ATests)
-[![npm](https://img.shields.io/npm/v/svelte-markdown)](https://www.npmjs.com/package/svelte-markdown)
-[![npm](https://img.shields.io/npm/dw/svelte-markdown)](https://www.npmjs.com/package/svelte-markdown)
-![NPM](https://img.shields.io/npm/l/svelte-markdown)
-
 A markdown parser that renders into Svelte Components. Inspired by [ReactMarkdown](https://github.com/remarkjs/react-markdown).
 
 ## Installation
@@ -12,13 +7,13 @@ A markdown parser that renders into Svelte Components. Inspired by [ReactMarkdow
 You can install it with
 
 ```console
-$ npm i -S svelte-markdown
+npm i -S @humanspeak/svelte-markdown
 ```
 
 If you use npm or if you prefer yarn
 
 ```console
-$ yarn add svelte-markdown
+yarn add @humanspeak/svelte-markdown
 ```
 
 If you're using Sapper you might need to install it as a dev dependency.
@@ -27,7 +22,7 @@ If you're using Sapper you might need to install it as a dev dependency.
 
 ```html
 <script>
-  import SvelteMarkdown from 'svelte-markdown'
+  import SvelteMarkdown from '@humanspeak/svelte-markdown'
   const source = `
   # This is a header
 
@@ -102,6 +97,7 @@ The SvelteMarkdown component accepts the following props:
 To create custom renderer for an element, you can create a Svelte component with the default props ([you can check them here](https://marked.js.org/using_pro#renderer)), for example:
 
 _`ImageComponent.svelte`_
+
 ```svelte
 <script>
   export let href = "";
@@ -120,13 +116,13 @@ So you can import the component and pass to the `renderers` props:
 
 ```svelte
 <script>
-  import SvelteMarkdown from "svelte-markdown";
+  import SvelteMarkdown from "@humanspeak/svelte-markdown";
   import ImageComponent from "./renderers/ImageComponent.svelte";
   export let content;
 </script>
 
-<SvelteMarkdown source={content} 
-  renderers={{ image: ImageComponent }} 
+<SvelteMarkdown source={content}
+  renderers={{ image: ImageComponent }}
 />
 ```
 
@@ -136,7 +132,7 @@ For greater flexibility, an array of tokens may be given as `source`, in which c
 
 ```html
 <script>
-  import SvelteMarkdown from 'svelte-markdown'
+  import SvelteMarkdown from '@humanspeak/svelte-markdown'
   import { marked } from 'marked'
 
   const tokens = marked.lexer('this is an **example**')
@@ -162,17 +158,16 @@ A `parsed` event will be fired when the final tokens have been calculated, allow
 
 ```html
 <script>
-  import SvelteMarkdown from 'svelte-markdown'
+  import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
   const source = `# This is a header`
 
-  function handleParsed(event) {
-    //access tokens via event.detail.tokens
-    console.log(event.detail.tokens);
+  const handleParsed = async (parsedTokens: Token[] | TokensList) => {
+      console.log('displaying tokens', parsedTokens)
   }
 </script>
 
-<SvelteMarkdown {source} on:parsed={handleParsed}>
+<SvelteMarkdown {source} parsed={handleParsed}>
 ```
 
 ## Available renderers
@@ -251,15 +246,15 @@ Some tests have been added to the `tests` folder. You can clone this repo and cr
 You can clone this repo and do the following:
 
 ```console
-$ yarn
-$ yarn link
-$ yarn dev
+yarn
+yarn link
+yarn dev
 ```
 
 This will watch all changes and make the project linkable. Now on the app you created you can link it with:
 
 ```console
-$ yarn link svelte-markdown
+yarn link @humanspeak/svelte-markdown
 ```
 
 And then import it like in the example above.
@@ -271,3 +266,4 @@ As of now the only external dependency of this project is `marked`.
 - [ReactMarkdown](https://github.com/remarkjs/react-markdown) - React library to render markdown using React components. Inspiration for this library.
 - [Svelte](https://svelte.dev) - JavaScript front-end framework.
 - [Marked](https://marked.js.org/) - Markdown parser
+- [Original](https://github.com/pablo-abc/svelte-markdown) - Original component
