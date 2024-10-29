@@ -1,11 +1,11 @@
-import globals from 'globals'
-import parser from 'svelte-eslint-parser'
-import path from 'node:path'
+import { FlatCompat } from '@eslint/eslintrc'
+import js from '@eslint/js'
 import typescriptEslint from '@typescript-eslint/eslint-plugin'
 import tsParser from '@typescript-eslint/parser'
+import globals from 'globals'
+import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import js from '@eslint/js'
-import { FlatCompat } from '@eslint/eslintrc'
+import parser from 'svelte-eslint-parser'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -31,7 +31,8 @@ export default [
             '**/package-lock.json',
             '**/yarn.lock',
             'src/routes/poc',
-            '**/dist'
+            '**/dist',
+            'docs/'
         ]
     },
     ...compat.extends(

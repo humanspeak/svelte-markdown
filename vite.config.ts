@@ -1,6 +1,6 @@
-import { defineConfig } from 'vitest/config'
-import { svelteTesting } from '@testing-library/svelte/vite'
 import { sveltekit } from '@sveltejs/kit/vite'
+import { svelteTesting } from '@testing-library/svelte/vite'
+import { configDefaults, defineConfig } from 'vitest/config'
 
 export default defineConfig({
     plugins: [sveltekit(), svelteTesting()],
@@ -8,7 +8,8 @@ export default defineConfig({
         globals: true,
         environment: 'jsdom',
         setupFiles: ['vitest.setup.ts'],
-        coverage: { reporter: 'lcov' }
+        coverage: { reporter: 'lcov' },
+        exclude: [...configDefaults.exclude, 'docs/**/*']
     },
     build: {
         sourcemap: true

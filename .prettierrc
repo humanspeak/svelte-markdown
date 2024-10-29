@@ -5,10 +5,7 @@
     "tabWidth": 4,
     "semi": false,
     "singleQuote": true,
-    "plugins": [
-        "prettier-plugin-organize-imports",
-        "prettier-plugin-svelte"
-    ],
+    "plugins": ["prettier-plugin-organize-imports", "prettier-plugin-svelte"],
     "overrides": [
         {
             "files": "*.svelte",

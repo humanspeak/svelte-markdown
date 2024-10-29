@@ -22,8 +22,8 @@ If you're using Sapper you might need to install it as a dev dependency.
 
 ```html
 <script>
-  import SvelteMarkdown from '@humanspeak/svelte-markdown'
-  const source = `
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    const source = `
   # This is a header
 
 This is a paragraph.
@@ -49,34 +49,34 @@ This would render something like
 <h1>This is a header</h1>
 <p>This is a paragraph.</p>
 <ul>
-  <li>This is a list</li>
-  <li>
-    With two items
-    <ol start="1">
-      <li>And a sublist</li>
-      <li>
-        That is ordered
-        <ul>
-          <li>With another</li>
-          <li>Sublist inside</li>
-        </ul>
-      </li>
-    </ol>
-  </li>
+    <li>This is a list</li>
+    <li>
+        With two items
+        <ol start="1">
+            <li>And a sublist</li>
+            <li>
+                That is ordered
+                <ul>
+                    <li>With another</li>
+                    <li>Sublist inside</li>
+                </ul>
+            </li>
+        </ol>
+    </li>
 </ul>
 <table>
-  <thead>
-    <tr>
-      <th>And this is</th>
-      <th>A table</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>With two</td>
-      <td>columns</td>
-    </tr>
-  </tbody>
+    <thead>
+        <tr>
+            <th>And this is</th>
+            <th>A table</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>With two</td>
+            <td>columns</td>
+        </tr>
+    </tbody>
 </table>
 ```
 
@@ -88,9 +88,9 @@ Just like with React Markdown, this package doesn't use `{@html ...}` unless you
 
 The SvelteMarkdown component accepts the following props:
 
-- `source` - _string_ or _array_ The Markdown source to be parsed, or an array of tokens to be rendered directly.
-- `renderers` - _object (optional)_ An object where the keys represent a node type and the value is a Svelte component. This object will be merged with the default renderers. For now you can check how the default renderers are written in the source code at `src/renderers`.
-- `options` - _object (optional)_ An object containing [options for Marked](https://marked.js.org/using_advanced#options)
+-   `source` - _string_ or _array_ The Markdown source to be parsed, or an array of tokens to be rendered directly.
+-   `renderers` - _object (optional)_ An object where the keys represent a node type and the value is a Svelte component. This object will be merged with the default renderers. For now you can check how the default renderers are written in the source code at `src/renderers`.
+-   `options` - _object (optional)_ An object containing [options for Marked](https://marked.js.org/using_advanced#options)
 
 ## Renderers
 
@@ -100,30 +100,24 @@ _`ImageComponent.svelte`_
 
 ```svelte
 <script>
-  export let href = "";
-  export let title = undefined;
-  export let text = "";
+    export let href = ''
+    export let title = undefined
+    export let text = ''
 </script>
 
-<img
-  src={href}
-  {title}
-  alt={text}
-/>
+<img src={href} {title} alt={text} />
 ```
 
 So you can import the component and pass to the `renderers` props:
 
 ```svelte
 <script>
-  import SvelteMarkdown from "@humanspeak/svelte-markdown";
-  import ImageComponent from "./renderers/ImageComponent.svelte";
-  export let content;
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import ImageComponent from './renderers/ImageComponent.svelte'
+    export let content
 </script>
 
-<SvelteMarkdown source={content}
-  renderers={{ image: ImageComponent }}
-/>
+<SvelteMarkdown source={content} renderers={{ image: ImageComponent }} />
 ```
 
 ## Rendering From Tokens
@@ -132,18 +126,18 @@ For greater flexibility, an array of tokens may be given as `source`, in which c
 
 ```html
 <script>
-  import SvelteMarkdown from '@humanspeak/svelte-markdown'
-  import { marked } from 'marked'
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { marked } from 'marked'
 
-  const tokens = marked.lexer('this is an **example**')
+    const tokens = marked.lexer('this is an **example**')
 
-  marked.walkTokens(tokens, token=> {
-    if (token.type == 'strong') token.type = 'em'
-    token.raw = token.raw.toUpperCase()
-  })
+    marked.walkTokens(tokens, (token) => {
+        if (token.type == 'strong') token.type = 'em'
+        token.raw = token.raw.toUpperCase()
+    })
 </script>
 
-<SvelteMarkdown source={tokens} />
+<SvelteMarkdown source="{tokens}" />
 ```
 
 This will render the following:
@@ -158,42 +152,42 @@ A `parsed` event will be fired when the final tokens have been calculated, allow
 
 ```html
 <script>
-  import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
-  const source = `# This is a header`
+    const source = `# This is a header`
 
-  const handleParsed = async (parsedTokens: Token[] | TokensList) => {
-      console.log('displaying tokens', parsedTokens)
-  }
+    const handleParsed = async (parsedTokens: Token[] | TokensList) => {
+        console.log('displaying tokens', parsedTokens)
+    }
 </script>
 
-<SvelteMarkdown {source} parsed={handleParsed}>
+<SvelteMarkdown {source} parsed="{handleParsed}"></SvelteMarkdown>
 ```
 
 ## Available renderers
 
 These would be the property names expected by the `renderers` option.
 
-- `text` - Text rendered inside of other elements, such as paragraphs
-- `paragraph` - Paragraph (`<p>`)
-- `em` - Emphasis (`<em>`)
-- `strong` - Strong/bold (`<strong>`)
-- `hr` - Horizontal rule / thematic break (`<hr>`)
-- `blockquote` - Block quote (`<blockquote>`)
-- `del` - Deleted/strike-through (`<del>`)
-- `link` - Link (`<a>`)
-- `image` - Image (`<img>`)
-- `table` - Table (`<table>`)
-- `tablehead` - Table head (`<thead>`)
-- `tablebody` - Table body (`<tbody>`)
-- `tablerow` - Table row (`<tr>`)
-- `tablecell` - Table cell (`<td>`/`<th>`)
-- `list` - List (`<ul>`/`<ol>`)
-- `listitem` - List item (`<li>`)
-- `heading` - Heading (`<h1>`-`<h6>`)
-- `codespan` - Inline code (`<code>`)
-- `code` - Block of code (`<pre><code>`)
-- `html` - HTML node
+-   `text` - Text rendered inside of other elements, such as paragraphs
+-   `paragraph` - Paragraph (`<p>`)
+-   `em` - Emphasis (`<em>`)
+-   `strong` - Strong/bold (`<strong>`)
+-   `hr` - Horizontal rule / thematic break (`<hr>`)
+-   `blockquote` - Block quote (`<blockquote>`)
+-   `del` - Deleted/strike-through (`<del>`)
+-   `link` - Link (`<a>`)
+-   `image` - Image (`<img>`)
+-   `table` - Table (`<table>`)
+-   `tablehead` - Table head (`<thead>`)
+-   `tablebody` - Table body (`<tbody>`)
+-   `tablerow` - Table row (`<tr>`)
+-   `tablecell` - Table cell (`<td>`/`<th>`)
+-   `list` - List (`<ul>`/`<ol>`)
+-   `listitem` - List item (`<li>`)
+-   `heading` - Heading (`<h1>`-`<h6>`)
+-   `codespan` - Inline code (`<code>`)
+-   `code` - Block of code (`<pre><code>`)
+-   `html` - HTML node
 
 ### Optional List Renderers
 
@@ -201,16 +195,16 @@ For fine detail styling of lists, it can be useful to differentiate between orde
 If either key is missing, the default `listitem` will be used. There are two
 optional keys in the `renderers` option which can provide this:
 
-- `orderedlistitem` - A list item appearing inside an ordered list
-- `unorderedlistitem` A list item appearing inside an un-ordered list
+-   `orderedlistitem` - A list item appearing inside an ordered list
+-   `unorderedlistitem` A list item appearing inside an un-ordered list
 
 As an example, if we have an `orderedlistitem`:
 
 ```html
 <style>
-  li::marker {
-    color: blue;
-  }
+    li::marker {
+        color: blue;
+    }
 </style>
 
 <li><slot></slot></li>
@@ -263,7 +257,7 @@ As of now the only external dependency of this project is `marked`.
 
 ## Related
 
-- [ReactMarkdown](https://github.com/remarkjs/react-markdown) - React library to render markdown using React components. Inspiration for this library.
-- [Svelte](https://svelte.dev) - JavaScript front-end framework.
-- [Marked](https://marked.js.org/) - Markdown parser
-- [Original](https://github.com/pablo-abc/svelte-markdown) - Original component
+-   [ReactMarkdown](https://github.com/remarkjs/react-markdown) - React library to render markdown using React components. Inspiration for this library.
+-   [Svelte](https://svelte.dev) - JavaScript front-end framework.
+-   [Marked](https://marked.js.org/) - Markdown parser
+-   [Original](https://github.com/pablo-abc/svelte-markdown) - Original component
