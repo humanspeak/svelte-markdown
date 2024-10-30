@@ -5,8 +5,12 @@ name: Tests
 
 on:
     push:
+        paths:
+            - '!docs/**'
         branches: [main]
     pull_request:
+        paths:
+            - '!docs/**'
         branches: [main]
 
 jobs:
