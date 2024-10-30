@@ -52,7 +52,6 @@
         "shiki": "^1.22.2",
         "svelte": "^5.1.4",
         "svelte-check": "^4.0.5",
-        "svelte-rune-highlight": "^0.5.12",
         "svelte-sonner": "^0.3.28",
         "sveltekit-superforms": "^2.20.0",
         "tailwind-merge": "^2.5.4",
