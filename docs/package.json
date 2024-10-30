@@ -19,7 +19,7 @@
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20241022.0",
-        "@humanspeak/svelte-markdown": "^0.5.1",
+        "@humanspeak/svelte-markdown": "^0.5.3",
         "@internationalized/date": "^3.5.6",
         "@playwright/test": "^1.48.2",
         "@sveltejs/adapter-auto": "^3.3.1",
@@ -64,8 +64,5 @@
         "vite": "^5.4.10",
         "vitest": "^2.1.4",
         "zod": "^3.23.8"
-    },
-    "dependencies": {
-        "@svelte-dev/pretty-code": "^1.0.0"
     }
 }

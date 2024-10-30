@@ -10,14 +10,6 @@ You can install it with
 npm i -S @humanspeak/svelte-markdown
 ```
 
-If you use npm or if you prefer yarn
-
-```console
-yarn add @humanspeak/svelte-markdown
-```
-
-If you're using Sapper you might need to install it as a dev dependency.
-
 ## Usage
 
 ```html
