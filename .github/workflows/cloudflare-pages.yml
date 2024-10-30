@@ -4,6 +4,7 @@ on:
     push:
         paths:
             - 'docs/**'
+            - '.github/workflows/cloudflare-pages.yml'
         branches:
             - main
 
