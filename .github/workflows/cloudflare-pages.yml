@@ -20,4 +20,5 @@ jobs:
               run: |
                   cd docs
 
+                  npm install
                   CF_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }} CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }} npm run deploy
