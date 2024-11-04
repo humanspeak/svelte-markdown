@@ -5,7 +5,7 @@
     import SvelteMarkdown, { type Token, type TokensList } from '@humanspeak/svelte-markdown'
     import * as Card from '$lib/shadcn/components/ui/card/index.js'
 
-    const ogText = 'Hi! I am **Svelte-Markdown** 👋'
+    const ogText = `Hi! I am **Svelte-Markdown**<sup>TM</sup> 👋`
 
     const text = localStore('markdown', ogText)
     let source = $state(text.value)
@@ -41,7 +41,7 @@
                             id="markdown"
                             class="h-fit"
                         />
-                        <p class="text-sm text-muted">*Note: Type markdown here</p>
+                        <p class="text-muted text-sm">*Note: Type markdown here</p>
                     </Card.Content>
                 </Card.Root>
             </div>
