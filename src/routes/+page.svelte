@@ -1,11 +1,14 @@
 <script lang="ts">
     import { default as SvelteMarkdown, type TokensList, type Token } from '$lib/index.js'
 
-    let source = $state('**Hello World**')
-    let counter = 0
+    const ogText = `| And this is | A table |
+|-|-|
+| With two | columns |`
+    let source = $state(ogText)
+    let value = $state(ogText)
 
-    const clickButton = async () => {
-        source = `Jason! 👋 x ${counter++}`
+    const onKeyupTextArea = async () => {
+        source = value
     }
 
     const showParsed = async (parsedTokens: Token[] | TokensList) => {
@@ -13,6 +16,6 @@
     }
 </script>
 
-<SvelteMarkdown {source} parsed={showParsed} />
+<textarea bind:value onkeyup={onKeyupTextArea}></textarea>
 
-<button onclick={clickButton}>Click me</button>
+<SvelteMarkdown {source} parsed={showParsed} />

@@ -1,11 +1,14 @@
 <script lang="ts">
-    import Html from '$lib/component/SvelteMarkdown/Html.svelte'
-    import { Label } from '$lib/shadcn/components/ui/label'
+    import { localStore } from '$lib/state/localStore.svelte'
+    import Html from '$lib/components/SvelteMarkdown/Html.svelte'
     import Textarea from '$lib/shadcn/components/ui/textarea/textarea.svelte'
-    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import SvelteMarkdown, { type Token, type TokensList } from '@humanspeak/svelte-markdown'
+    import * as Card from '$lib/shadcn/components/ui/card/index.js'
 
-    let text = $state('Hi! I am **Svelte-Markdown** 👋')
-    let source = $state($state.snapshot(text)) // eslint-disable-line svelte/valid-compile
+    const ogText = 'Hi! I am **Svelte-Markdown** 👋'
+
+    const text = localStore('markdown', ogText)
+    let source = $state(text.value)
     let timeout: number | null = null
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -13,46 +16,57 @@
         if (!window) return
         if (timeout) clearTimeout(timeout)
         timeout = window.setTimeout(() => {
-            source = text
+            source = text.value
         }, 500)
+    }
+
+    const showParsed = async (parsedTokens: Token[] | TokensList) => {
+        console.log('showing parsed tokens', parsedTokens)
     }
 </script>
 
-<div class="w-full">
-    <h1 class="text-center text-4xl font-extrabold">Svelte-Markdown</h1>
-
-    <div class="flex justify-center">
-        <div class="grid w-[50%] grid-cols-2 gap-4">
-            <div>
-                <Label for="markdown">Markdown Text</Label>
-                <Textarea onkeyupcapture={onChangeTextArea} bind:value={text} id="markdown" />
+<div class="h-full w-full">
+    <div class="flex h-full justify-center p-8">
+        <div class="grid h-full w-full grid-cols-[25%_auto] gap-8">
+            <div class="h-auto min-h-max">
+                <Card.Root class="h-auto min-h-[100%]">
+                    <Card.Header>
+                        <Card.Title>Editor</Card.Title>
+                        <Card.Description>Just some text to format 🥰</Card.Description>
+                    </Card.Header>
+                    <Card.Content>
+                        <Textarea
+                            onkeyupcapture={onChangeTextArea}
+                            bind:value={text.value}
+                            id="markdown"
+                            class="h-fit"
+                        />
+                        <p class="text-sm text-muted">*Note: Type markdown here</p>
+                    </Card.Content>
+                </Card.Root>
             </div>
-            <div>
-                <SvelteMarkdown
-                    {source}
-                    renderers={{
-                        html: Html
-                    }}
-                />
+            <div class="h-auto min-h-max">
+                <Card.Root class="h-auto min-h-[100%]">
+                    <Card.Header>
+                        <Card.Title>Markdown</Card.Title>
+                        <Card.Description>Your renderded markdown 👩🏼‍💻</Card.Description>
+                    </Card.Header>
+                    <Card.Content class="block h-auto min-h-[100%]">
+                        <div
+                            class="h-auto min-h-[100%] w-full overflow-y-scroll rounded-md border p-4"
+                            id="markdown"
+                        >
+                            <SvelteMarkdown
+                                {source}
+                                parsed={showParsed}
+                                renderers={{
+                                    html: Html
+                                }}
+                            />
+                        </div>
+                    </Card.Content>
+                </Card.Root>
             </div>
         </div>
     </div>
-
-    <footer>
-        <p class="w-full text-center">
-            Made with <i class="fa-duotone fa-heart"></i> by
-            <a class="humanspeak" target="_blank" href="https://humanspeak.com">Humanspeak</a>
-        </p>
-        <p class="w-full text-center">
-            Original project by <a target="_blank" href="https://github.com/pablo-abc">
-                Pablo Berganza
-            </a>
-        </p>
-    </footer>
 </div>
-
-<style>
-    .fa-heart {
-        --fa-secondary-color: red;
-    }
-</style>

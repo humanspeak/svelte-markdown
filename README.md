@@ -12,8 +12,8 @@ npm i -S @humanspeak/svelte-markdown
 
 ## Usage
 
-```html
-<script>
+```svelte
+<script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     const source = `
   # This is a header

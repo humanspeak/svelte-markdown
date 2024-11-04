@@ -42,6 +42,7 @@
                             align={rest.align[i] || 'center'}
                             {...rest}
                         >
+                            {rest.align[i]}
                             <Parser tokens={headerItem.tokens} {renderers} />
                         </renderers.tablecell>
                     {/each}
@@ -53,7 +54,7 @@
                         {#each row ?? [] as cells, i}
                             <renderers.tablecell
                                 header={false}
-                                align={rest.align[i] || 'center'}
+                                align={rest.align[i] ?? 'center'}
                                 {...rest}
                             >
                                 <Parser tokens={cells.tokens} {renderers} />
