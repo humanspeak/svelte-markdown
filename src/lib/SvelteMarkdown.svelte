@@ -9,6 +9,7 @@
         type SvelteMarkdownOptions
     } from './utils/markdown-parser.js'
     import Parser from './Parser.svelte'
+    import { shrinkHtmlTokens } from './utils/token-cleanup.js'
 
     interface Props {
         source: Token[] | string
@@ -38,10 +39,12 @@
 
     $effect.pre(() => {
         if (Array.isArray(source)) {
-            tokens = source as Token[]
+            tokens = shrinkHtmlTokens(source) as Token[]
         } else {
             lexer = new Lexer(combinedOptions)
-            tokens = isInline ? lexer.inlineTokens(source as string) : lexer.lex(source as string)
+            tokens = shrinkHtmlTokens(
+                isInline ? lexer.inlineTokens(source as string) : lexer.lex(source as string)
+            )
         }
     })
     $effect(() => {

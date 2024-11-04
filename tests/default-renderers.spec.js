@@ -144,4 +144,16 @@ describe('testing default renderers', () => {
         expect(element).toContainElement(tableHeaderElement)
         expect(element).toContainElement(tableCellElement)
     })
+
+    test('short html renders properly', () => {
+        render(SvelteMarkdown, { source: 'a<sub>1</sub>' })
+
+        const element = screen.getByText('1')
+        expect(element).toBeInTheDocument()
+        expect(element.nodeName).toBe('SUB')
+
+        const element2 = screen.getByText('a')
+        expect(element2).toBeInTheDocument()
+        expect(element2.nodeName).toBe('P')
+    })
 })
