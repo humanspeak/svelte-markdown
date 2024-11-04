@@ -66,6 +66,7 @@
         "zod": "^3.23.8"
     },
     "dependencies": {
+        "@sentry/cloudflare": "^8.36.0",
         "@sentry/sveltekit": "^8.36.0",
         "sanitize-html": "^2.13.1"
     }
