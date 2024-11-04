@@ -5,6 +5,7 @@ import { browser } from '$app/environment'
 export class LocalStore<T> {
     value = $state<T>() as T
     #key = ''
+    #storage: Storage | null = null
 
     get key() {
         return this.#key
@@ -14,19 +15,21 @@ export class LocalStore<T> {
         this.#key = key
 
         if (browser) {
-            const item = localStorage.getItem(key)
+            this.#storage = localStorage
+            const item = this.#storage.getItem(key)
             if (item) {
                 this.value = this.deserialize(item)
             } else {
                 this.value = value
             }
+
+            $effect(() => {
+                this.#storage?.setItem(this.key, this.serialize(this.value))
+            })
         } else {
+            // Server-side: just use the initial value without storage
             this.value = value
         }
-
-        $effect(() => {
-            localStorage.setItem(this.key, this.serialize(this.value))
-        })
     }
 
     serialize(value: T): string {

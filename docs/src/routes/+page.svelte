@@ -7,7 +7,7 @@
 
     const ogText = `Hi! I am **Svelte-Markdown**<sup>TM</sup> 👋`
 
-    const text = localStore('markdown', ogText)
+    const text = localStore<string>('markdown', ogText)
     let source = $state(text.value)
     let timeout: number | null = null
 

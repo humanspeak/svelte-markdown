@@ -1,5 +1,5 @@
 <script lang="ts">
-    import sanitizeHtml from 'sanitize-html'
+    // import DOMPurify from 'isomorphic-dompurify'
 
     interface Props {
         text: string
@@ -7,7 +7,7 @@
 
     const { text }: Props = $props()
 
-    const code = sanitizeHtml(text)
+    // const code = DOMPurify.sanitize(text)
 </script>
 
-{@html code}
+{@html text}

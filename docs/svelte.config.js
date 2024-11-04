@@ -15,7 +15,12 @@ const config = {
         adapter: adapter(),
         csp: {
             directives: {
-                'script-src': ['self', 'https://kit.fontawesome.com']
+                'script-src': [
+                    'self',
+                    'https://kit.fontawesome.com',
+                    'https://o4507838639243264.ingest.us.sentry.io'
+                ],
+                'worker-src': ['self', 'blob:']
             }
         }
     },
