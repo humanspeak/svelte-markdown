@@ -64,5 +64,9 @@
         "vite": "^5.4.10",
         "vitest": "^2.1.4",
         "zod": "^3.23.8"
+    },
+    "dependencies": {
+        "@sentry/sveltekit": "^8.36.0",
+        "sanitize-html": "^2.13.1"
     }
 }

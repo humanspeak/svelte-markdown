@@ -1,5 +1,5 @@
 <script lang="ts">
-    import hljs from 'highlight.js'
+    import sanitizeHtml from 'sanitize-html'
 
     interface Props {
         text: string
@@ -7,9 +7,7 @@
 
     const { text }: Props = $props()
 
-    const code = hljs.highlightAuto(text).value
+    const code = sanitizeHtml(text)
 </script>
 
-<div>
-    {@html code}
-</div>
+{@html code}
