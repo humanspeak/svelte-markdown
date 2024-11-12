@@ -7,7 +7,7 @@
 | With two | columns |`
     let source = $state(ogText)
     let value = $state(ogText)
-    let browser = false
+    let browser = $state(false)
 
     const onKeyupTextArea = async () => {
         source = value
@@ -22,12 +22,16 @@
     })
 </script>
 
-<textarea bind:value onkeyup={onKeyupTextArea}></textarea>
-
-Server:
-<SvelteMarkdown {source} parsed={showParsed} />
-
-Browser:
-{#if browser}
+<div>
+    <textarea bind:value onkeyup={onKeyupTextArea}></textarea>
+</div>
+<div>
+    Server:
     <SvelteMarkdown {source} parsed={showParsed} />
-{/if}
+</div>
+<div>
+    Browser:
+    {#if browser}
+        <SvelteMarkdown {source} parsed={showParsed} />
+    {/if}
+</div>

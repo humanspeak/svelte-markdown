@@ -1,5 +1,6 @@
 <script lang="ts">
     import Parser from './Parser.svelte'
+    import Html from './renderers/html/index.js'
     import type { Renderers, Token, TokensList, Tokens } from './utils/markdown-parser.js'
 
     interface Props {
@@ -69,32 +70,51 @@
             <renderers.list {ordered} {...rest}>
                 {@const items = rest.items as Props[]}
                 {#each items as item}
-                    {@const SvelteComponent = renderers.orderedlistitem || renderers.listitem}
-                    <SvelteComponent {...item}>
+                    {@const OrderedListComponent = renderers.orderedlistitem || renderers.listitem}
+                    <OrderedListComponent {...item}>
                         <Parser tokens={item.tokens} {renderers} />
-                    </SvelteComponent>
+                    </OrderedListComponent>
                 {/each}
             </renderers.list>
         {:else}
             <renderers.list {ordered} {...rest}>
                 {@const items = rest.items as Props[]}
                 {#each items as item}
-                    {@const SvelteComponent_1 = renderers.unorderedlistitem || renderers.listitem}
-                    <SvelteComponent_1 {...item} {...rest}>
+                    {@const UnorderedListComponent =
+                        renderers.unorderedlistitem || renderers.listitem}
+                    <UnorderedListComponent {...item} {...rest}>
                         <Parser tokens={item.tokens} {renderers} {...rest} />
-                    </SvelteComponent_1>
+                    </UnorderedListComponent>
                 {/each}
             </renderers.list>
         {/if}
+    {:else if type === 'html'}
+        {@const { tag, ...localRest } = rest}
+        {@const htmlTag = rest.tag as keyof typeof Html}
+        {#if htmlTag in Html}
+            {@const HtmlComponent = Html[htmlTag]}
+            {@const tokens = (rest.tokens as Token[]) ?? ([] as Token[])}
+            <HtmlComponent {...rest}>
+                {#if tokens.length}
+                    <Parser {tokens} {renderers} {...localRest} />
+                {/if}
+            </HtmlComponent>
+        {:else}
+            <Parser
+                tokens={(rest.tokens as Token[]) ?? ([] as Token[])}
+                {renderers}
+                {...localRest}
+            />
+        {/if}
     {:else}
-        {@const SvelteComponent_2 = renderers[type]}
-        <SvelteComponent_2 {...rest}>
+        {@const GeneralComponent = renderers[type]}
+        <GeneralComponent {...rest}>
             {#if tokens}
                 {@const { text, raw, ...parserRest } = rest}
                 <Parser {tokens} {renderers} {...parserRest} />
             {:else}
                 {rest.raw}
             {/if}
-        </SvelteComponent_2>
+        </GeneralComponent>
     {/if}
 {/if}
