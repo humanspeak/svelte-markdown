@@ -1,11 +1,21 @@
 <script lang="ts">
     import { Button } from '$lib/shadcn/components/ui/button'
+    import { mode } from 'mode-watcher'
 </script>
 
 <div class="grid grid-cols-3 items-center">
     <div>&nbsp;</div>
     <!-- Empty left column -->
-    <h1 class="text-center text-4xl font-extrabold">@humanspeak/svelte-markdown</h1>
+    <h1 class="text-center text-4xl font-extrabold">
+        <div class="flex w-full items-center justify-center gap-2">
+            {#if $mode === 'dark'}
+                <img src="./Humanspeak-bubble-dark.svg" alt="humanspeak logo" class="h-10" />
+            {:else}
+                <img src="./Humanspeak-bubble.svg" alt="humanspeak logo" class="h-10" />
+            {/if}
+            <span>/svelte-markdown</span>
+        </div>
+    </h1>
     <div class="flex justify-end">
         <Button
             variant="ghost"
