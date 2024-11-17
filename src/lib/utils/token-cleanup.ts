@@ -29,7 +29,7 @@ export const isHtmlOpenTag = (raw: string): { tag: string; isOpening: boolean } 
  * @param raw - The raw HTML tag string (e.g., '<div class="example" id="test">')
  * @returns An object containing key-value pairs of attributes
  */
-function extractAttributes(raw: string): Record<string, string> {
+const extractAttributes = (raw: string): Record<string, string> => {
     const attributes: Record<string, string> = {}
     // Match pattern: attribute="value" or attribute='value'
     const attributeRegex = /(\w+)=["']([^"']*?)["']/g
@@ -50,14 +50,14 @@ function extractAttributes(raw: string): Record<string, string> {
  * @param html - The HTML string to parse
  * @returns Array of tokens representing the HTML structure
  */
-function parseHtmlBlock(html: string): Token[] {
+const parseHtmlBlock = (html: string): Token[] => {
     const tokens: Token[] = []
     // Buffer for accumulating text content between tags
     let currentText = ''
 
     const parser = new Parser({
         // Called when an opening tag is encountered (<div>, <span>, etc.)
-        onopentag(name, attributes) {
+        onopentag: (name, attributes) => {
             // If we have accumulated any text, create a text token first
             if (currentText.trim()) {
                 tokens.push({
@@ -78,11 +78,11 @@ function parseHtmlBlock(html: string): Token[] {
             })
         },
         // Called for text content between tags
-        ontext(text) {
+        ontext: (text) => {
             currentText += text
         },
         // Called when a closing tag is encountered (</div>, </span>, etc.)
-        onclosetag(name) {
+        onclosetag: (name) => {
             // Push any accumulated text before the closing tag
             if (currentText.trim()) {
                 tokens.push({
@@ -114,7 +114,7 @@ function parseHtmlBlock(html: string): Token[] {
  * @param html - The HTML string to check
  * @returns boolean indicating if multiple tags are present
  */
-function containsMultipleTags(html: string): boolean {
+const containsMultipleTags = (html: string): boolean => {
     // Count the number of opening tags (excluding self-closing)
     const openingTags = html.match(/<[a-zA-Z][^>]*>/g) || []
     const closingTags = html.match(/<\/[a-zA-Z][^>]*>/g) || []
@@ -163,7 +163,7 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
  *   ]}
  * ]
  */
-function processHtmlTokens(tokens: Token[]): Token[] {
+const processHtmlTokens = (tokens: Token[]): Token[] => {
     const result: Token[] = []
     // Stack to keep track of opening tags and their positions
     const stack: { tag: string; startIndex: number }[] = []
