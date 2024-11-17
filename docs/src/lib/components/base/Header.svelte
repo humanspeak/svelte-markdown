@@ -1,6 +1,7 @@
 <script lang="ts">
     import { Button } from '$lib/shadcn/components/ui/button'
     import { mode } from 'mode-watcher'
+    import ModeChanger from './ModeChanger.svelte'
 </script>
 
 <div class="grid grid-cols-3 items-center">
@@ -17,6 +18,7 @@
         </div>
     </h1>
     <div class="flex justify-end">
+        <ModeChanger />
         <Button
             variant="ghost"
             size="icon"
