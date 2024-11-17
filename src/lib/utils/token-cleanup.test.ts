@@ -1,6 +1,6 @@
 import type { Token } from 'marked'
 import { describe, expect, it } from 'vitest'
-import { isHtmlOpenTag, shrinkHtmlTokens } from './token-cleanup'
+import { isHtmlOpenTag, shrinkHtmlTokens } from './token-cleanup.js'
 
 describe('Token Cleanup Utilities', () => {
     describe('isHtmlOpenTag', () => {

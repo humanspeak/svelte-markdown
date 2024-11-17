@@ -14,7 +14,7 @@
 
     interface Props {
         source: Token[] | string
-        renderers?: Renderers
+        renderers?: Partial<Renderers>
         options?: SvelteMarkdownOptions
         isInline?: boolean
         parsed?: (tokens: Token[] | TokensList) => void // eslint-disable-line no-unused-vars

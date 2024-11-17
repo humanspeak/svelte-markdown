@@ -1,7 +1,13 @@
 <script lang="ts">
     import Parser from './Parser.svelte'
     import Html from './renderers/html/index.js'
-    import type { Renderers, Token, TokensList, Tokens } from './utils/markdown-parser.js'
+    import type {
+        Renderers,
+        Token,
+        TokensList,
+        Tokens,
+        RendererComponent
+    } from './utils/markdown-parser.js'
 
     interface Props {
         type?: string
@@ -28,7 +34,7 @@
 {#if !type}
     {#if tokens}
         {#each tokens as token}
-            {@const { text, raw, ...parserRest } = rest}
+            {@const { text: _text, raw: _raw, ...parserRest } = rest}
             <Parser {...token} {renderers} {...parserRest} />
         {/each}
     {/if}
@@ -40,10 +46,9 @@
                     {#each header ?? [] as headerItem, i}
                         <renderers.tablecell
                             header={true}
-                            align={rest.align[i] || 'center'}
+                            align={(rest.align as string[])[i] || 'center'}
                             {...rest}
                         >
-                            {rest.align[i]}
                             <Parser tokens={headerItem.tokens} {renderers} />
                         </renderers.tablecell>
                     {/each}
@@ -55,7 +60,7 @@
                         {#each row ?? [] as cells, i}
                             <renderers.tablecell
                                 header={false}
-                                align={rest.align[i] ?? 'center'}
+                                align={(rest.align as string[])[i] ?? 'center'}
                                 {...rest}
                             >
                                 <Parser tokens={cells.tokens} {renderers} />
@@ -107,10 +112,10 @@
             />
         {/if}
     {:else}
-        {@const GeneralComponent = renderers[type]}
+        {@const GeneralComponent = renderers[type as keyof Renderers] as RendererComponent}
         <GeneralComponent {...rest}>
             {#if tokens}
-                {@const { text, raw, ...parserRest } = rest}
+                {@const { text: _text, raw: _raw, ...parserRest } = rest}
                 <Parser {tokens} {renderers} {...parserRest} />
             {:else}
                 {rest.raw}

@@ -82,10 +82,10 @@ Just like with React Markdown, this package doesn't use `{@html ...}`. Even if y
 
 The SvelteMarkdown component accepts the following props:
 
-- `source` - _string_ or _array_ The Markdown source to be parsed, or an array of tokens to be rendered directly.
-- `renderers` - _object (optional)_ An object where the keys represent a node type and the value is a Svelte component. This object will be merged with the default renderers. For now you can check how the default renderers are written in the source code at `src/renderers`.
-- `renderes.html` - _object (optional)_ An object where the key represents the HTML tag and the value is a Svelte component. This object will be merged with the default renderers. For now you can check how the default renderers are written in the source code at `src/renderers/html`.
-- `options` - _object (optional)_ An object containing [options for Marked](https://marked.js.org/using_advanced#options)
+-   `source` - _string_ or _array_ The Markdown source to be parsed, or an array of tokens to be rendered directly.
+-   `renderers` - _object (optional)_ An object where the keys represent a node type and the value is a Svelte component. This object will be merged with the default renderers. For now you can check how the default renderers are written in the source code at `src/renderers`.
+-   `renderes.html` - _object (optional)_ An object where the key represents the HTML tag and the value is a Svelte component. This object will be merged with the default renderers. For now you can check how the default renderers are written in the source code at `src/renderers/html`.
+-   `options` - _object (optional)_ An object containing [options for Marked](https://marked.js.org/using_advanced#options)
 
 ## Renderers
 
@@ -94,7 +94,6 @@ To create custom renderer for an element, you can create a Svelte component with
 _`ImageComponent.svelte`_
 
 ```svelte
-
 <script lang="ts">
     interface Props {
         href?: string
@@ -106,7 +105,6 @@ _`ImageComponent.svelte`_
 </script>
 
 <img src={href} {title} alt={text} />
-
 ```
 
 So you can import the component and pass to the `renderers` props:
@@ -138,7 +136,7 @@ For greater flexibility, an array of tokens may be given as `source`, in which c
     })
 </script>
 
-<SvelteMarkdown source={tokens} />
+<SvelteMarkdown source="{tokens}" />
 ```
 
 This will render the following:
@@ -162,33 +160,33 @@ A `parsed` event will be fired when the final tokens have been calculated, allow
     }
 </script>
 
-<SvelteMarkdown {source} parsed={handleParsed}></SvelteMarkdown>
+<SvelteMarkdown {source} parsed="{handleParsed}"></SvelteMarkdown>
 ```
 
 ## Available renderers
 
 These would be the property names expected by the `renderers` option.
 
-- `text` - Text rendered inside of other elements, such as paragraphs
-- `paragraph` - Paragraph (`<p>`)
-- `em` - Emphasis (`<em>`)
-- `strong` - Strong/bold (`<strong>`)
-- `hr` - Horizontal rule / thematic break (`<hr>`)
-- `blockquote` - Block quote (`<blockquote>`)
-- `del` - Deleted/strike-through (`<del>`)
-- `link` - Link (`<a>`)
-- `image` - Image (`<img>`)
-- `table` - Table (`<table>`)
-- `tablehead` - Table head (`<thead>`)
-- `tablebody` - Table body (`<tbody>`)
-- `tablerow` - Table row (`<tr>`)
-- `tablecell` - Table cell (`<td>`/`<th>`)
-- `list` - List (`<ul>`/`<ol>`)
-- `listitem` - List item (`<li>`)
-- `heading` - Heading (`<h1>`-`<h6>`)
-- `codespan` - Inline code (`<code>`)
-- `code` - Block of code (`<pre><code>`)
-- `html` - HTML node
+-   `text` - Text rendered inside of other elements, such as paragraphs
+-   `paragraph` - Paragraph (`<p>`)
+-   `em` - Emphasis (`<em>`)
+-   `strong` - Strong/bold (`<strong>`)
+-   `hr` - Horizontal rule / thematic break (`<hr>`)
+-   `blockquote` - Block quote (`<blockquote>`)
+-   `del` - Deleted/strike-through (`<del>`)
+-   `link` - Link (`<a>`)
+-   `image` - Image (`<img>`)
+-   `table` - Table (`<table>`)
+-   `tablehead` - Table head (`<thead>`)
+-   `tablebody` - Table body (`<tbody>`)
+-   `tablerow` - Table row (`<tr>`)
+-   `tablecell` - Table cell (`<td>`/`<th>`)
+-   `list` - List (`<ul>`/`<ol>`)
+-   `listitem` - List item (`<li>`)
+-   `heading` - Heading (`<h1>`-`<h6>`)
+-   `codespan` - Inline code (`<code>`)
+-   `code` - Block of code (`<pre><code>`)
+-   `html` - HTML node
 
 ### Optional List Renderers
 
@@ -196,8 +194,8 @@ For fine detail styling of lists, it can be useful to differentiate between orde
 If either key is missing, the default `listitem` will be used. There are two
 optional keys in the `renderers` option which can provide this:
 
-- `orderedlistitem` - A list item appearing inside an ordered list
-- `unorderedlistitem` A list item appearing inside an un-ordered list
+-   `orderedlistitem` - A list item appearing inside an ordered list
+-   `unorderedlistitem` A list item appearing inside an un-ordered list
 
 As an example, if we have an `orderedlistitem`:
 
@@ -258,7 +256,7 @@ As of now the only external dependencys of this project is `marked`, `github-slu
 
 ## Related
 
-- [ReactMarkdown](https://github.com/remarkjs/react-markdown) - React library to render markdown using React components. Inspiration for this library.
-- [Svelte](https://svelte.dev) - JavaScript front-end framework.
-- [Marked](https://marked.js.org/) - Markdown parser
-- [Original](https://github.com/pablo-abc/svelte-markdown) - Original component
+-   [ReactMarkdown](https://github.com/remarkjs/react-markdown) - React library to render markdown using React components. Inspiration for this library.
+-   [Svelte](https://svelte.dev) - JavaScript front-end framework.
+-   [Marked](https://marked.js.org/) - Markdown parser
+-   [Original](https://github.com/pablo-abc/svelte-markdown) - Original component

@@ -1,8 +1,8 @@
 export { default as Slugger } from 'github-slugger'
 export { Lexer, type Token, type Tokens, type TokensList } from 'marked'
+import type { Component } from 'svelte'
 import { type HtmlRenderers } from '../renderers/html/index.js'
 
-import type { Component } from 'svelte'
 import {
     Blockquote,
     Br,
@@ -27,10 +27,46 @@ import {
     Text
 } from '../renderers/index.js'
 
+/**
+ * Type definition for markdown renderers
+ * Maps each markdown element to its corresponding Svelte component
+ */
+
+export type RendererComponent = Component<any, any, any> | undefined | null // eslint-disable-line @typescript-eslint/no-explicit-any
+
 export type Renderers = {
+    // Special HTML renderer
     html: HtmlRenderers
-} & {
-    [key: string]: Component<any> | null // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    // Block elements
+    heading: RendererComponent
+    paragraph: RendererComponent
+    blockquote: RendererComponent
+    code: RendererComponent
+    list: RendererComponent
+    listitem: RendererComponent
+    hr: RendererComponent
+
+    // Table elements
+    table: RendererComponent
+    tablehead: RendererComponent
+    tablebody: RendererComponent
+    tablerow: RendererComponent
+    tablecell: RendererComponent
+
+    // Inline elements
+    text: RendererComponent
+    link: RendererComponent
+    image: RendererComponent
+    em: RendererComponent
+    strong: RendererComponent
+    codespan: RendererComponent
+    br: RendererComponent
+    del: RendererComponent
+
+    // List variations
+    orderedlistitem: RendererComponent
+    unorderedlistitem: RendererComponent
 }
 
 export const defaultRenderers: Renderers = {

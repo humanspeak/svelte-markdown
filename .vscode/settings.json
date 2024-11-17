@@ -8,5 +8,9 @@
     "prettier.configPath": ".prettierrc",
     "prettier.prettierPath": "./node_modules/prettier",
     "prettier.useEditorConfig": false,
-    "editor.formatOnPaste": true
+    "editor.formatOnPaste": true,
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/*.test.ts": true
+    }
 }
