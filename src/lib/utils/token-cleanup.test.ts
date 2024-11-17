@@ -12,6 +12,10 @@ describe('Token Cleanup Utilities', () => {
             })
             expect(isHtmlOpenTag('<p id="para">')).toEqual({ tag: 'p', isOpening: true })
             expect(isHtmlOpenTag('<div class="test">')).toEqual({ tag: 'div', isOpening: true })
+            expect(isHtmlOpenTag('<span style="color: hotpink">')).toEqual({
+                tag: 'span',
+                isOpening: true
+            })
         })
 
         it('should correctly identify closing HTML tags', () => {
@@ -123,6 +127,68 @@ describe('Token Cleanup Utilities', () => {
 
             const result = shrinkHtmlTokens(tokens)
             expect(result).toHaveLength(2)
+        })
+
+        it('should handle tags with attrinutes that have spaces in them', () => {
+            const tokens: Token[] = [
+                {
+                    type: 'paragraph',
+                    raw: 'Happy coding! <span style="color: hotpink">♥</span>',
+                    text: 'Happy coding! <span style="color: hotpink">♥</span>',
+                    tokens: [
+                        {
+                            type: 'text',
+                            raw: 'Happy coding! ',
+                            text: 'Happy coding! ',
+                            escaped: false
+                        },
+                        {
+                            type: 'html',
+                            raw: '<span style="color: hotpink">',
+                            inLink: false,
+                            inRawBlock: false,
+                            block: false,
+                            text: '<span style="color: hotpink">'
+                        },
+                        {
+                            type: 'text',
+                            raw: '♥',
+                            text: '♥',
+                            escaped: false
+                        },
+                        {
+                            type: 'html',
+                            raw: '</span>',
+                            inLink: false,
+                            inRawBlock: false,
+                            block: false,
+                            text: '</span>'
+                        }
+                    ]
+                }
+            ]
+
+            const result = shrinkHtmlTokens(tokens)
+            expect(result[0].tokens).toHaveLength(2)
+            expect(result[0].tokens[1].attributes).toEqual({ style: 'color: hotpink' })
+            expect(result[0].tokens[1].tag).toEqual('span')
+        })
+
+        it('should break up multiple html tags that are in the same html block', () => {
+            const tokens: Token[] = [
+                {
+                    type: 'html',
+                    block: true,
+                    raw: "<details>\n<summary>Want to see something cool?</summary>\nHere's a hidden surprise! 🎉\n</details>\n\n",
+                    pre: false,
+                    text: "<details>\n<summary>Want to see something cool?</summary>\nHere's a hidden surprise! 🎉\n</details>\n\n"
+                }
+            ]
+
+            const result = shrinkHtmlTokens(tokens)
+            expect(result).toHaveLength(1)
+            expect(result[0].tag).toEqual('details')
+            expect(result[0].tokens).toHaveLength(2)
         })
 
         it('should handle empty token arrays', () => {

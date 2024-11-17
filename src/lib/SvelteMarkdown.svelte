@@ -60,8 +60,6 @@
             ...renderers.html
         }
     }
-
-    $inspect(tokens)
 </script>
 
 <Parser
