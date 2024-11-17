@@ -6,14 +6,15 @@
         Slugger,
         type Token,
         type TokensList,
-        type SvelteMarkdownOptions
+        type SvelteMarkdownOptions,
+        type Renderers
     } from './utils/markdown-parser.js'
     import Parser from './Parser.svelte'
     import { shrinkHtmlTokens } from './utils/token-cleanup.js'
 
     interface Props {
         source: Token[] | string
-        renderers?: object
+        renderers?: Renderers
         options?: SvelteMarkdownOptions
         isInline?: boolean
         parsed?: (tokens: Token[] | TokensList) => void // eslint-disable-line no-unused-vars
@@ -53,7 +54,11 @@
 
     const combinedRenderers = {
         ...defaultRenderers,
-        ...renderers
+        ...renderers,
+        html: {
+            ...defaultRenderers.html,
+            ...renderers.html
+        }
     }
 </script>
 

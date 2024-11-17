@@ -1,5 +1,6 @@
 export { default as Slugger } from 'github-slugger'
 export { Lexer, type Token, type Tokens, type TokensList } from 'marked'
+import { type HtmlRenderers } from '../renderers/html/index.js'
 
 import type { Component } from 'svelte'
 import {
@@ -26,7 +27,9 @@ import {
     Text
 } from '../renderers/index.js'
 
-export interface Renderers {
+export type Renderers = {
+    html: HtmlRenderers
+} & {
     [key: string]: Component<any> | null // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
