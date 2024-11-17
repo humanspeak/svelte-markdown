@@ -2,6 +2,8 @@
 
 A markdown parser that renders into Svelte Components. Inspired by [ReactMarkdown](https://github.com/remarkjs/react-markdown).
 
+Rewriten for Svelte5 and all the updated goodies that have happened over the last two years. Also moved to Typescript because its the future!
+
 ## Installation
 
 You can install it with
@@ -74,15 +76,16 @@ This would render something like
 
 ## Note
 
-Just like with React Markdown, this package doesn't use `{@html ...}` unless you need to render HTML.
+Just like with React Markdown, this package doesn't use `{@html ...}`. Even if you add HTML tags to the code, all if it is managed by either the defaults or YOU! If you want to spice things up you can! 🥰
 
 ## Props
 
 The SvelteMarkdown component accepts the following props:
 
--   `source` - _string_ or _array_ The Markdown source to be parsed, or an array of tokens to be rendered directly.
--   `renderers` - _object (optional)_ An object where the keys represent a node type and the value is a Svelte component. This object will be merged with the default renderers. For now you can check how the default renderers are written in the source code at `src/renderers`.
--   `options` - _object (optional)_ An object containing [options for Marked](https://marked.js.org/using_advanced#options)
+- `source` - _string_ or _array_ The Markdown source to be parsed, or an array of tokens to be rendered directly.
+- `renderers` - _object (optional)_ An object where the keys represent a node type and the value is a Svelte component. This object will be merged with the default renderers. For now you can check how the default renderers are written in the source code at `src/renderers`.
+- `renderes.html` - _object (optional)_ An object where the key represents the HTML tag and the value is a Svelte component. This object will be merged with the default renderers. For now you can check how the default renderers are written in the source code at `src/renderers/html`.
+- `options` - _object (optional)_ An object containing [options for Marked](https://marked.js.org/using_advanced#options)
 
 ## Renderers
 
@@ -91,19 +94,25 @@ To create custom renderer for an element, you can create a Svelte component with
 _`ImageComponent.svelte`_
 
 ```svelte
-<script>
-    export let href = ''
-    export let title = undefined
-    export let text = ''
+
+<script lang="ts">
+    interface Props {
+        href?: string
+        title?: string
+        text?: string
+    }
+
+    const { href = '', title = undefined, text = '' }: Props = $props()
 </script>
 
 <img src={href} {title} alt={text} />
+
 ```
 
 So you can import the component and pass to the `renderers` props:
 
 ```svelte
-<script>
+<script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import ImageComponent from './renderers/ImageComponent.svelte'
     export let content
@@ -117,7 +126,7 @@ So you can import the component and pass to the `renderers` props:
 For greater flexibility, an array of tokens may be given as `source`, in which case parsing is skipped and the tokens will be rendered directly. This alows you to generate and transform the tokens freely beforehand. Example:
 
 ```html
-<script>
+<script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import { marked } from 'marked'
 
@@ -129,7 +138,7 @@ For greater flexibility, an array of tokens may be given as `source`, in which c
     })
 </script>
 
-<SvelteMarkdown source="{tokens}" />
+<SvelteMarkdown source={tokens} />
 ```
 
 This will render the following:
@@ -143,7 +152,7 @@ This will render the following:
 A `parsed` event will be fired when the final tokens have been calculated, allowing you to access the raw token array if needed for things like generating Table of Contents from headings.
 
 ```html
-<script>
+<script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
     const source = `# This is a header`
@@ -153,33 +162,33 @@ A `parsed` event will be fired when the final tokens have been calculated, allow
     }
 </script>
 
-<SvelteMarkdown {source} parsed="{handleParsed}"></SvelteMarkdown>
+<SvelteMarkdown {source} parsed={handleParsed}></SvelteMarkdown>
 ```
 
 ## Available renderers
 
 These would be the property names expected by the `renderers` option.
 
--   `text` - Text rendered inside of other elements, such as paragraphs
--   `paragraph` - Paragraph (`<p>`)
--   `em` - Emphasis (`<em>`)
--   `strong` - Strong/bold (`<strong>`)
--   `hr` - Horizontal rule / thematic break (`<hr>`)
--   `blockquote` - Block quote (`<blockquote>`)
--   `del` - Deleted/strike-through (`<del>`)
--   `link` - Link (`<a>`)
--   `image` - Image (`<img>`)
--   `table` - Table (`<table>`)
--   `tablehead` - Table head (`<thead>`)
--   `tablebody` - Table body (`<tbody>`)
--   `tablerow` - Table row (`<tr>`)
--   `tablecell` - Table cell (`<td>`/`<th>`)
--   `list` - List (`<ul>`/`<ol>`)
--   `listitem` - List item (`<li>`)
--   `heading` - Heading (`<h1>`-`<h6>`)
--   `codespan` - Inline code (`<code>`)
--   `code` - Block of code (`<pre><code>`)
--   `html` - HTML node
+- `text` - Text rendered inside of other elements, such as paragraphs
+- `paragraph` - Paragraph (`<p>`)
+- `em` - Emphasis (`<em>`)
+- `strong` - Strong/bold (`<strong>`)
+- `hr` - Horizontal rule / thematic break (`<hr>`)
+- `blockquote` - Block quote (`<blockquote>`)
+- `del` - Deleted/strike-through (`<del>`)
+- `link` - Link (`<a>`)
+- `image` - Image (`<img>`)
+- `table` - Table (`<table>`)
+- `tablehead` - Table head (`<thead>`)
+- `tablebody` - Table body (`<tbody>`)
+- `tablerow` - Table row (`<tr>`)
+- `tablecell` - Table cell (`<td>`/`<th>`)
+- `list` - List (`<ul>`/`<ol>`)
+- `listitem` - List item (`<li>`)
+- `heading` - Heading (`<h1>`-`<h6>`)
+- `codespan` - Inline code (`<code>`)
+- `code` - Block of code (`<pre><code>`)
+- `html` - HTML node
 
 ### Optional List Renderers
 
@@ -187,8 +196,8 @@ For fine detail styling of lists, it can be useful to differentiate between orde
 If either key is missing, the default `listitem` will be used. There are two
 optional keys in the `renderers` option which can provide this:
 
--   `orderedlistitem` - A list item appearing inside an ordered list
--   `unorderedlistitem` A list item appearing inside an un-ordered list
+- `orderedlistitem` - A list item appearing inside an ordered list
+- `unorderedlistitem` A list item appearing inside an un-ordered list
 
 As an example, if we have an `orderedlistitem`:
 
@@ -245,11 +254,11 @@ yarn link @humanspeak/svelte-markdown
 
 And then import it like in the example above.
 
-As of now the only external dependency of this project is `marked`.
+As of now the only external dependencys of this project is `marked`, `github-slugger`, `htmlparser2`.
 
 ## Related
 
--   [ReactMarkdown](https://github.com/remarkjs/react-markdown) - React library to render markdown using React components. Inspiration for this library.
--   [Svelte](https://svelte.dev) - JavaScript front-end framework.
--   [Marked](https://marked.js.org/) - Markdown parser
--   [Original](https://github.com/pablo-abc/svelte-markdown) - Original component
+- [ReactMarkdown](https://github.com/remarkjs/react-markdown) - React library to render markdown using React components. Inspiration for this library.
+- [Svelte](https://svelte.dev) - JavaScript front-end framework.
+- [Marked](https://marked.js.org/) - Markdown parser
+- [Original](https://github.com/pablo-abc/svelte-markdown) - Original component
