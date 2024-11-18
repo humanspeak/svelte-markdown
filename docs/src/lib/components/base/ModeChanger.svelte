@@ -1,6 +1,6 @@
 <script lang="ts">
     import { resetMode, setMode, userPrefersMode } from 'mode-watcher'
-    import { Button, buttonVariants } from '$lib/shadcn/components/ui/button/'
+    import { buttonVariants } from '$lib/shadcn/components/ui/button/'
     import * as DropdownMenu from '$lib/shadcn/components/ui/dropdown-menu/index.js'
     import * as Tooltip from '$lib/shadcn/components/ui/tooltip/index.js'
 </script>
