@@ -32,7 +32,8 @@ export default [
             '**/yarn.lock',
             'src/routes/poc',
             '**/dist',
-            'docs/'
+            'docs/',
+            '**/*.test.ts'
         ]
     },
     ...compat.extends(
@@ -83,7 +84,24 @@ export default [
             'no-var': ['error'],
             'prefer-const': ['error'],
 
+            '@typescript-eslint/no-unused-expressions': [
+                'error',
+                {
+                    allowShortCircuit: true,
+                    allowTernary: true,
+                    allowTaggedTemplates: true
+                }
+            ],
+
             'no-unused-vars': [
+                'warn',
+                {
+                    argsIgnorePattern: '^_',
+                    ignoreRestSiblings: true
+                }
+            ],
+
+            '@typescript-eslint/no-unused-vars': [
                 'warn',
                 {
                     argsIgnorePattern: '^_',

@@ -2,6 +2,8 @@
 
 A markdown parser that renders into Svelte Components. Inspired by [ReactMarkdown](https://github.com/remarkjs/react-markdown).
 
+Rewriten for Svelte5 and all the updated goodies that have happened over the last two years. Also moved to Typescript because its the future!
+
 ## Installation
 
 You can install it with
@@ -74,7 +76,7 @@ This would render something like
 
 ## Note
 
-Just like with React Markdown, this package doesn't use `{@html ...}` unless you need to render HTML.
+Just like with React Markdown, this package doesn't use `{@html ...}`. Even if you add HTML tags to the code, all if it is managed by either the defaults or YOU! If you want to spice things up you can! 🥰
 
 ## Props
 
@@ -82,6 +84,7 @@ The SvelteMarkdown component accepts the following props:
 
 -   `source` - _string_ or _array_ The Markdown source to be parsed, or an array of tokens to be rendered directly.
 -   `renderers` - _object (optional)_ An object where the keys represent a node type and the value is a Svelte component. This object will be merged with the default renderers. For now you can check how the default renderers are written in the source code at `src/renderers`.
+-   `renderes.html` - _object (optional)_ An object where the key represents the HTML tag and the value is a Svelte component. This object will be merged with the default renderers. For now you can check how the default renderers are written in the source code at `src/renderers/html`.
 -   `options` - _object (optional)_ An object containing [options for Marked](https://marked.js.org/using_advanced#options)
 
 ## Renderers
@@ -91,10 +94,14 @@ To create custom renderer for an element, you can create a Svelte component with
 _`ImageComponent.svelte`_
 
 ```svelte
-<script>
-    export let href = ''
-    export let title = undefined
-    export let text = ''
+<script lang="ts">
+    interface Props {
+        href?: string
+        title?: string
+        text?: string
+    }
+
+    const { href = '', title = undefined, text = '' }: Props = $props()
 </script>
 
 <img src={href} {title} alt={text} />
@@ -103,7 +110,7 @@ _`ImageComponent.svelte`_
 So you can import the component and pass to the `renderers` props:
 
 ```svelte
-<script>
+<script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import ImageComponent from './renderers/ImageComponent.svelte'
     export let content
@@ -117,7 +124,7 @@ So you can import the component and pass to the `renderers` props:
 For greater flexibility, an array of tokens may be given as `source`, in which case parsing is skipped and the tokens will be rendered directly. This alows you to generate and transform the tokens freely beforehand. Example:
 
 ```html
-<script>
+<script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import { marked } from 'marked'
 
@@ -143,7 +150,7 @@ This will render the following:
 A `parsed` event will be fired when the final tokens have been calculated, allowing you to access the raw token array if needed for things like generating Table of Contents from headings.
 
 ```html
-<script>
+<script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
     const source = `# This is a header`
@@ -245,7 +252,7 @@ yarn link @humanspeak/svelte-markdown
 
 And then import it like in the example above.
 
-As of now the only external dependency of this project is `marked`.
+As of now the only external dependencys of this project is `marked`, `github-slugger`, `htmlparser2`.
 
 ## Related
 

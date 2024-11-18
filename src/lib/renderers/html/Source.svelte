@@ -1,6 +1,6 @@
 <script lang="ts">
     interface Props {
-        attributes?: Record<string, any>
+        attributes?: Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
     }
 
     const { attributes }: Props = $props()
