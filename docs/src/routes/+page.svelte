@@ -61,7 +61,7 @@ Happy coding! <span style="color: hotpink">♥</span>`
                             id="markdown"
                             class="w-full flex-1 resize-none"
                         />
-                        <p class="text-muted mt-2 text-sm">*Note: Type markdown here</p>
+                        <p class="mt-2 text-sm text-muted">*Note: Type markdown here</p>
                     </Card.Content>
                 </Card.Root>
             </div>

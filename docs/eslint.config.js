@@ -31,7 +31,8 @@ export default [
             '**/package-lock.json',
             '**/yarn.lock',
             'src/routes/poc',
-            '**/dist'
+            '**/dist',
+            'vite.config.ts.*'
         ]
     },
     ...compat.extends(

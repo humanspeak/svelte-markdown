@@ -10,10 +10,7 @@
     lang="ts"
     generics="TData, TValue, TContext extends HeaderContext<TData, TValue> | CellContext<TData, TValue>"
 >
-    import {
-        RenderComponentConfig,
-        RenderSnippetConfig
-    } from '$lib/shadcn/components/ui/data-table/render-helpers.js'
+    import { RenderComponentConfig, RenderSnippetConfig } from './render-helpers.js'
     type Props = {
         /** The cell or header field of the current cell's column definition. */
         content?: TContext extends HeaderContext<TData, TValue>
@@ -25,7 +22,7 @@
         context: TContext
     }
 
-    const { content, context }: Props = $props()
+    let { content, context }: Props = $props()
 </script>
 
 {#if typeof content === 'string'}
