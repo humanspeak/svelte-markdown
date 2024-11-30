@@ -66,14 +66,14 @@ Happy coding! <span style="color: hotpink">♥</span>`
                 </Card.Root>
             </div>
             <div class="h-auto min-h-max">
-                <Card.Root class="h-auto min-h-[100%]">
+                <Card.Root class="flex h-full w-full flex-col">
                     <Card.Header>
                         <Card.Title>Markdown</Card.Title>
                         <Card.Description>Your renderded markdown 👩🏼‍💻</Card.Description>
                     </Card.Header>
-                    <Card.Content class="block h-auto min-h-[100%]">
+                    <Card.Content class="flex-1">
                         <div
-                            class="h-auto min-h-[100%] w-full overflow-y-scroll rounded-md border p-4"
+                            class="h-full w-full overflow-y-auto rounded-md border p-4"
                             id="markdown"
                         >
                             <SvelteMarkdown {source} parsed={showParsed} />

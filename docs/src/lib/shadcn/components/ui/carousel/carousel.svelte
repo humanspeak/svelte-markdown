@@ -7,7 +7,7 @@
     } from './context.js'
     import { cn } from '$lib/shadcn/utils.js'
 
-    const {
+    let {
         opts = {},
         plugins = [],
         setApi = () => {},
@@ -17,7 +17,7 @@
         ...restProps
     }: CarouselProps = $props()
 
-    const carouselState = $state<EmblaContext>({
+    let carouselState = $state<EmblaContext>({
         api: undefined,
         scrollPrev,
         scrollNext,
