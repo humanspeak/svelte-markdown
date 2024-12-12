@@ -11,24 +11,42 @@ jobs:
             contents: read
             packages: write
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  persist-credentials: false
+
+            - name: Use Node.js - 22
+              uses: actions/setup-node@v4
               with:
                   node-version: 22
-            - run: npm install
-            - run: npm test
+
+            - name: Install
+              run: npm ci
+
+            - name: Test
+              run: npm test
 
     publish-github-packages:
         needs: build
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  persist-credentials: false
+
+            - name: Use Node.js - 22
+              uses: actions/setup-node@v4
               with:
                   node-version: 22
                   registry-url: 'https://registry.npmjs.org'
                   scope: '@humanspeak'
-            - run: npm install
-            - run: npm publish
+
+            - name: Install
+              run: npm ci
+
+            - name: Publish
+              run: npm publish
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
