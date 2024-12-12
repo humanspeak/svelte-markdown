@@ -4,11 +4,6 @@
 name: Tests
 
 on:
-    push:
-        paths:
-            - '!docs/**'
-            - '!.github/workflows/npm-publish.yml'
-        branches: [main]
     pull_request:
         paths:
             - '!docs/**'
@@ -24,10 +19,18 @@ jobs:
                 node-version: [20.x, 22.x]
 
         steps:
-            - uses: actions/checkout@v4
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  persist-credentials: false
+
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v4
               with:
                   node-version: ${{ matrix.node-version }}
-            - run: npm install
-            - run: npm test
+
+            - name: Install
+              run: npm ci
+
+            - name: Test
+              run: npm test

@@ -15,14 +15,18 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v4
+              with:
+                  persist-credentials: false
+
             - name: Use Node.js - 22
               uses: actions/setup-node@v4
               with:
                   node-version: 22
+
             - name: Deploy
               working-directory: docs
               env:
                   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
               run: |
                   npm install
-                  CF_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }} CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }} npm run deploy
+                  CLOUDFLARE_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }} CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }} npm run deploy
