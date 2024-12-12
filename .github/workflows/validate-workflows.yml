@@ -1,0 +1,43 @@
+name: Validate Workflows
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Install zizmor
+        run: cargo install zizmor
+
+      - name: Validate all workflows
+        working-directory: .github/workflows
+        run: |
+          # Initialize error flag
+          has_errors=0
+
+          # Loop through all workflow files
+          for file in *.yml; do
+            echo "Validating $file..."
+            if ! zizmor check "$file"; then
+              echo "::error::Validation failed for $file"
+              has_errors=1
+            fi
+          done
+
+          # Exit with error if any validation failed
+          if [ $has_errors -eq 1 ]; then
+            exit 1
+          fi
