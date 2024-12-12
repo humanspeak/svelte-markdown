@@ -27,6 +27,9 @@ jobs:
               working-directory: docs
               env:
                   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+                  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+                  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
               run: |
                   npm install
-                  CLOUDFLARE_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }} CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }} npm run deploy
+
+                  npm run deploy

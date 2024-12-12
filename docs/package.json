@@ -68,5 +68,13 @@
     "dependencies": {
         "@sentry/cloudflare": "^8.44.0",
         "@sentry/sveltekit": "^8.44.0"
+    },
+    "overrides": {
+        "@sveltejs/kit": {
+            "cookie": "^0.7.0"
+        }
+    },
+    "volta": {
+        "node": "22.12.0"
     }
 }
