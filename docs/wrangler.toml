@@ -4,6 +4,7 @@ compatibility_date = "2024-10-22"
 pages_build_output_dir = ".svelte-kit/cloudflare"
 compatibility_flags = ["nodejs_compat"]
 upload_source_maps = true
+account_id = "2996514109f6a00aad231c6907c53155"
 
 # Automatically place your workloads in an optimal location to minimize latency.
 # If you are running back-end logic in a Pages Function, running it closer to your back-end infrastructure
