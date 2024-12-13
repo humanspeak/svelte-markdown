@@ -21,6 +21,7 @@ jobs:
               with:
                   scheme: semver
                   increment: patch
+                  release_branch: master
 
             - name: Echo version
               id: echo_version
