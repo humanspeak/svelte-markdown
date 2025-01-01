@@ -1,10 +1,14 @@
 import '@testing-library/jest-dom'
 import { render, screen } from '@testing-library/svelte'
-import { describe, expect, test } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
 
+beforeEach(() => {
+    vi.useFakeTimers()
+})
+
 describe('testing initialization', () => {
-    test('accepts pre-processed tokens as source', () => {
+    test('accepts pre-processed tokens as source', async () => {
         render(SvelteMarkdown, {
             source: [
                 {
@@ -24,7 +28,11 @@ describe('testing initialization', () => {
             ]
         })
 
-        const element = screen.getByText('example')
+        // Wait for all timers and effects to settle
+        await vi.runAllTimersAsync()
+
+        // Use findByText instead of getByText to handle async rendering
+        const element = await screen.findByText('example')
         expect(element).toBeInTheDocument()
         expect(element.nodeName).toBe('STRONG')
     })
