@@ -51,7 +51,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
               with:
-                  token: ${{ secrets.ACTIONS_KEY }}
+                  token: ${{ secrets.GITHUB_TOKEN }}
                   fetch-depth: 0
 
             - name: Use Node.js - 22
@@ -96,6 +96,10 @@ jobs:
                   PR_URL: ${{ github.event.pull_request.html_url }}
                   BUMP_TYPE: ${{ steps.version-type.outputs.bump }}
               run: |
+                  # Configure git user
+                  git config --global user.name "github-actions[bot]"
+                  git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
                   # Validate bump type again for extra security
                   case "$BUMP_TYPE" in
                     "major"|"minor"|"patch") ;;
