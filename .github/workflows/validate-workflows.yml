@@ -34,6 +34,8 @@ jobs:
 
             - name: Validate all workflows
               working-directory: .github/workflows
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
                   # Initialize error flag
                   has_errors=0
