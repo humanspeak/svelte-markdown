@@ -34,6 +34,7 @@
         undefined
     )
     let lexer: Lexer | undefined = undefined
+    let previousTokens: Token[] | TokensList | undefined = undefined
 
     const slugger = source ? new Slugger() : undefined
     const combinedOptions = { ...defaultOptions, ...options }
@@ -49,7 +50,10 @@
         }
     })
     $effect(() => {
-        if (tokens) parsed($state.snapshot(tokens))
+        if (tokens && tokens !== previousTokens) {
+            previousTokens = tokens
+            parsed($state.snapshot(tokens))
+        }
     })
 
     const combinedRenderers = {
