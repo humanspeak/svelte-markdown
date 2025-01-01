@@ -90,21 +90,15 @@ jobs:
                       ;;
                   esac
 
-            - name: Setup GPG
-              run: |
-                  echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
-                  # Get the key ID from the imported key
-                  KEY_ID=$(gpg --list-secret-keys --keyid-format LONG | grep sec | head -n 1 | sed 's/.*\/\([^ ]*\) .*/\1/')
-                  echo "Imported key ID: $KEY_ID"
-
-                  # Configure GPG agent
-                  mkdir -p ~/.gnupg
-                  echo 'allow-preset-passphrase' > ~/.gnupg/gpg-agent.conf
-                  echo 'default-cache-ttl 34560000' >> ~/.gnupg/gpg-agent.conf
-                  gpg-connect-agent reloadagent /bye
-
-                  # Store the key ID for later use
-                  echo "KEY_ID=$KEY_ID" >> $GITHUB_ENV
+            - name: Import GPG key
+              id: import_gpg
+              uses: crazy-max/ghaction-import-gpg@v6
+              with:
+                  gpg_private_key: ${{ secrets.ACTIONS_GPG_PRIVATE_KEY }}
+                  passphrase: ${{ secrets.ACTIONS_GPG_PASSPHRASE }}
+                  git_user_signingkey: true
+                  git_commit_gpgsign: true
+                  git_tag_gpgsign: true
 
             - name: Bump version
               id: version
@@ -116,10 +110,9 @@ jobs:
               run: |
                   # Configure git with token-based authentication and signing
                   git config --global user.name "GitHub Actions Bot"
-                  git config --global user.email "actions@github.com"
+                  git config --global user.email "jason@humanspeak.com"
                   git config --global commit.gpgsign true
-                  git config --global user.signingkey $KEY_ID
-                  git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git
+                  git config --global user.signingkey "${{ steps.import_gpg.outputs.keyid }}"
 
                   # Validate bump type again for extra security
                   case "$BUMP_TYPE" in
