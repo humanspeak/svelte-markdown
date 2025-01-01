@@ -30,15 +30,17 @@
     }: Props & {
         [key: string]: unknown
     } = $props()
-    let tokens: Token[] | TokensList | undefined = $state<Token[] | TokensList | undefined>(
-        undefined
-    )
-    let lexer: Lexer | undefined = undefined
+    let tokens: Token[] | undefined
+    let previousSource = $state<string | Token[] | undefined>(undefined)
+    let lexer: Lexer
 
     const slugger = source ? new Slugger() : undefined
     const combinedOptions = { ...defaultOptions, ...options }
 
     $effect.pre(() => {
+        if (source === previousSource) return
+        previousSource = source
+
         if (Array.isArray(source)) {
             tokens = shrinkHtmlTokens(source) as Token[]
         } else {
@@ -48,8 +50,10 @@
             )
         }
     })
+
     $effect(() => {
-        if (tokens) parsed($state.snapshot(tokens))
+        if (!tokens) return
+        parsed($state.snapshot(tokens))
     })
 
     const combinedRenderers = {

@@ -49,7 +49,6 @@ import Mark from './Mark.svelte'
 import Menu from './Menu.svelte'
 import Meter from './Meter.svelte'
 import Nav from './Nav.svelte'
-import Object from './Object.svelte'
 import Ol from './Ol.svelte'
 import Optgroup from './Optgroup.svelte'
 import Option from './Option.svelte'
@@ -138,7 +137,6 @@ export const Html: HtmlRenderers = {
     menu: Menu,
     meter: Meter,
     nav: Nav,
-    object: Object,
     ol: Ol,
     optgroup: Optgroup,
     option: Option,
