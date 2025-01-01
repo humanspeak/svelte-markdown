@@ -1,12 +1,13 @@
 name: Publish to GitHub Packages
 
 on:
-    pull_request:
+    push:
+        branches:
+            - main
+    pull_request_target:
         types: [closed]
         branches:
             - main
-        paths:
-            - '!docs/**'
 
 jobs:
     build:
