@@ -7,7 +7,7 @@ on:
     pull_request:
         paths:
             - '!docs/**'
-            - '!.github/workflows/npm-publish.yml'
+            - '!.github/**'
         branches: [main]
 
 jobs:

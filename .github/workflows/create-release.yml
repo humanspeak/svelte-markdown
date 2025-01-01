@@ -1,8 +1,11 @@
 name: Create Release
 
 on:
-    push:
-
+    pull_request:
+        branches:
+            - main
+        paths:
+            - '!docs/**'
 jobs:
     # This workflow contains a single job called "build"
     create-tag:

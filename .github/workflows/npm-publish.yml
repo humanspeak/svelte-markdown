@@ -1,8 +1,12 @@
 name: Publish to GitHub Packages
 
 on:
-    release:
-        types: [created]
+    pull_request:
+        types: [closed]
+        branches:
+            - main
+        paths:
+            - '!docs/**'
 
 jobs:
     build:
@@ -27,9 +31,21 @@ jobs:
             - name: Test
               run: npm test
 
+            - name: Cache dependencies
+              uses: actions/cache@v3
+              with:
+                  path: ~/.npm
+                  key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-node-
+
     publish-github-packages:
-        needs: build
+        needs: build # Ensure build job passes before publishing
+        if: github.event.pull_request.merged == true
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            packages: write
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -46,7 +62,80 @@ jobs:
             - name: Install
               run: npm ci
 
-            - name: Publish
-              run: npm publish
+            - name: Configure Git
+              run: |
+                  git config --local user.email "github-actions[bot]@users.noreply.github.com"
+                  git config --local user.name "github-actions[bot]"
+
+            - name: Determine version bump type
+              id: version-type
+              run: |
+                  if [[ ${{ contains(github.event.pull_request.labels.*.name, 'major') }} == 'true' ]]; then
+                    echo "bump=major" >> $GITHUB_OUTPUT
+                  elif [[ ${{ contains(github.event.pull_request.labels.*.name, 'minor') }} == 'true' ]]; then
+                    echo "bump=minor" >> $GITHUB_OUTPUT
+                  else
+                    echo "bump=patch" >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Bump version
+              id: version
               env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+                  PR_TITLE: ${{ github.event.pull_request.title }}
+                  PR_URL: ${{ github.event.pull_request.html_url }}
+              run: |
+                  # Get the new version number (will be in format 'vX.X.X')
+                  NEW_VERSION=$(npm version ${{ steps.version-type.outputs.bump }} --no-git-tag-version)
+                  echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+                  # Escape special characters in PR title
+                  ESCAPED_TITLE=$(echo "$PR_TITLE" | sed 's/[`$"\]/\\&/g')
+                  ESCAPED_URL=$(echo "$PR_URL" | sed 's/[`$"\]/\\&/g')
+
+                  # Commit the version changes
+                  git add package.json package-lock.json
+                  git commit -m "Bump version to ${NEW_VERSION} [skip ci]"
+
+                  # Create an annotated tag with release notes
+                  git tag -a "${NEW_VERSION}" -m "Release ${NEW_VERSION}
+
+                  Changes in this Release:
+                  - ${ESCAPED_TITLE}
+
+                  PR: ${ESCAPED_URL}"
+
+                  # Push both the commit and the tag
+                  git push
+                  git push --tags
+
+            - name: Create Release
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: ${{ steps.version.outputs.new_version }}
+                  name: Release ${{ steps.version.outputs.new_version }}
+                  body: |
+                      Changes in this Release
+                      - ${{ github.event.pull_request.title }}
+
+                      For more details, see the [Pull Request](${{ github.event.pull_request.html_url }})
+                  draft: false
+                  prerelease: false
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Publish
+              run: npm publish --access public
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}
+
+            - name: Notify on failure
+              if: failure()
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      github.rest.issues.createComment({
+                          issue_number: context.issue.number,
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          body: '❌ Release workflow failed. Please check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+                      })
