@@ -69,23 +69,47 @@ jobs:
 
             - name: Determine version bump type
               id: version-type
+              env:
+                  HAS_MAJOR: ${{ contains(github.event.pull_request.labels.*.name, 'major') }}
+                  HAS_MINOR: ${{ contains(github.event.pull_request.labels.*.name, 'minor') }}
               run: |
-                  if [[ ${{ contains(github.event.pull_request.labels.*.name, 'major') }} == 'true' ]]; then
-                    echo "bump=major" >> $GITHUB_OUTPUT
-                  elif [[ ${{ contains(github.event.pull_request.labels.*.name, 'minor') }} == 'true' ]]; then
-                    echo "bump=minor" >> $GITHUB_OUTPUT
+                  if [ "$HAS_MAJOR" = "true" ]; then
+                    BUMP_TYPE="major"
+                  elif [ "$HAS_MINOR" = "true" ]; then
+                    BUMP_TYPE="minor"
                   else
-                    echo "bump=patch" >> $GITHUB_OUTPUT
+                    BUMP_TYPE="patch"
                   fi
+
+                  # Validate that bump type is one of the allowed values
+                  case "$BUMP_TYPE" in
+                    "major"|"minor"|"patch")
+                      echo "bump=$BUMP_TYPE" >> $GITHUB_OUTPUT
+                      ;;
+                    *)
+                      echo "Invalid version bump type"
+                      exit 1
+                      ;;
+                  esac
 
             - name: Bump version
               id: version
               env:
                   PR_TITLE: ${{ github.event.pull_request.title }}
                   PR_URL: ${{ github.event.pull_request.html_url }}
+                  BUMP_TYPE: ${{ steps.version-type.outputs.bump }}
               run: |
-                  # Get the new version number (will be in format 'vX.X.X')
-                  NEW_VERSION=$(npm version ${{ steps.version-type.outputs.bump }} --no-git-tag-version)
+                  # Validate bump type again for extra security
+                  case "$BUMP_TYPE" in
+                    "major"|"minor"|"patch") ;;
+                    *)
+                      echo "Invalid version bump type"
+                      exit 1
+                      ;;
+                  esac
+
+                  # Get the new version number
+                  NEW_VERSION=$(npm version "$BUMP_TYPE" --no-git-tag-version)
                   echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
                   # Escape special characters in PR title
