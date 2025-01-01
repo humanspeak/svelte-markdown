@@ -155,6 +155,7 @@ jobs:
                   git push --tags
 
             - name: Create Release
+              id: create_release
               uses: softprops/action-gh-release@v1
               with:
                   tag_name: ${{ steps.version.outputs.new_version }}
@@ -171,10 +172,23 @@ jobs:
 
             - name: Publish
               run: |
+                  npm config set //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
+                  npm config set @humanspeak:registry=https://registry.npmjs.org/
                   npm whoami
                   npm publish --access public
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}
+
+            - name: Cleanup on failure
+              if: failure() && steps.create_release.outcome == 'success'
+              run: |
+                  # Delete the release
+                  gh release delete ${{ steps.version.outputs.new_version }} --yes
+                  # Delete the tag both locally and remotely
+                  git tag -d ${{ steps.version.outputs.new_version }}
+                  git push --delete origin ${{ steps.version.outputs.new_version }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.ACTIONS_KEY }}
 
             - name: Notify on failure
               if: failure()
