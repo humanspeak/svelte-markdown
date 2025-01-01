@@ -172,9 +172,16 @@ jobs:
 
             - name: Publish
               run: |
+                  echo "Current npm configuration:"
+                  npm config list
+                  echo "Setting up npm configuration..."
                   npm config set //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
                   npm config set @humanspeak:registry=https://registry.npmjs.org/
+                  echo "Updated npm configuration:"
+                  npm config list
+                  echo "Attempting whoami..."
                   npm whoami
+                  echo "Publishing package..."
                   npm publish --access public
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}
