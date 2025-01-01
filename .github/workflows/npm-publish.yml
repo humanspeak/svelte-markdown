@@ -111,17 +111,24 @@ jobs:
                   PR_URL: ${{ github.event.pull_request.html_url }}
                   BUMP_TYPE: ${{ steps.version-type.outputs.bump }}
                   GITHUB_TOKEN: ${{ secrets.ACTIONS_KEY }}
+                  GPG_KEY_ID: ${{ steps.import_gpg.outputs.keyid }}
               run: |
-                  # Configure git with token-based authentication
+                  # Validate GPG key ID format first
+                  if [[ ! "$GPG_KEY_ID" =~ ^[A-F0-9]{16}$ ]]; then
+                      echo "Invalid GPG key ID format"
+                      exit 1
+                  fi
+
+                  # Configure git with validated credentials
                   git config --global user.name "GitHub Actions Bot"
                   git config --global user.email "jason@humanspeak.com"
                   git config --global commit.gpgsign true
-                  git config --global user.signingkey "${{ steps.import_gpg.outputs.keyid }}"
+                  git config --global user.signingkey "$GPG_KEY_ID"
 
-                  # Set up authentication for push using github.repository context
+                  # Set up authentication for push
                   git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
 
-                  # Validate bump type again for extra security
+                  # Validate bump type for security
                   case "$BUMP_TYPE" in
                     "major"|"minor"|"patch") ;;
                     *)
@@ -134,7 +141,7 @@ jobs:
                   NEW_VERSION=$(npm version "$BUMP_TYPE" --no-git-tag-version)
                   echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-                  # Escape special characters in PR title
+                  # Escape special characters in PR title and URL
                   ESCAPED_TITLE=$(echo "$PR_TITLE" | sed 's/[`$"\]/\\&/g')
                   ESCAPED_URL=$(echo "$PR_URL" | sed 's/[`$"\]/\\&/g')
 
@@ -150,7 +157,7 @@ jobs:
 
                   PR: ${ESCAPED_URL}"
 
-                  # Push both the commit and the tag
+                  # Push changes
                   git push
                   git push --tags
 
@@ -181,14 +188,20 @@ jobs:
 
             - name: Cleanup on failure
               if: failure() && steps.create_release.outcome == 'success'
-              run: |
-                  # Delete the release
-                  gh release delete ${{ steps.version.outputs.new_version }} --yes
-                  # Delete the tag both locally and remotely
-                  git tag -d ${{ steps.version.outputs.new_version }}
-                  git push --delete origin ${{ steps.version.outputs.new_version }}
               env:
+                  RELEASE_VERSION: ${{ steps.version.outputs.new_version }}
                   GITHUB_TOKEN: ${{ secrets.ACTIONS_KEY }}
+              run: |
+                  # Validate version format first
+                  if [[ ! "$RELEASE_VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                    echo "Invalid version format: $RELEASE_VERSION"
+                    exit 1
+                  fi
+
+                  # Proceed with cleanup only if validation passes
+                  gh release delete "$RELEASE_VERSION" --yes
+                  git tag -d "$RELEASE_VERSION"
+                  git push --delete origin "$RELEASE_VERSION"
 
             - name: Notify on failure
               if: failure()
