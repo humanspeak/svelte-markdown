@@ -24,13 +24,18 @@ jobs:
               with:
                   node-version: 22
 
-            - name: Deploy
+            - name: Install Root Dependencies
+              run: npm ci
+
+            - name: Build Package
+              run: npm run build
+
+            - name: Deploy Docs
               working-directory: docs
               env:
                   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
                   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                   CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
               run: |
-                  npm install
-
+                  npm ci
                   npm run deploy
