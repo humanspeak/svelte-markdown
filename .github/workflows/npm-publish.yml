@@ -100,13 +100,15 @@ jobs:
                   git_commit_gpgsign: true
                   git_tag_gpgsign: true
 
+            - name: List keys
+              run: gpg -K
+
             - name: Bump version
               id: version
               env:
                   PR_TITLE: ${{ github.event.pull_request.title }}
                   PR_URL: ${{ github.event.pull_request.html_url }}
                   BUMP_TYPE: ${{ steps.version-type.outputs.bump }}
-                  GH_TOKEN: ${{ secrets.ACTIONS_KEY }}
               run: |
                   # Validate bump type again for extra security
                   case "$BUMP_TYPE" in
@@ -127,7 +129,7 @@ jobs:
 
                   # Commit the version changes
                   git add package.json package-lock.json
-                  git commit -m "Bump version to ${NEW_VERSION} [skip ci]"
+                  git commit -S -m "Bump version to ${NEW_VERSION} [skip ci]"
 
                   # Create an annotated tag with release notes
                   git tag -a "${NEW_VERSION}" -m "Release ${NEW_VERSION}
