@@ -108,12 +108,6 @@ jobs:
                   BUMP_TYPE: ${{ steps.version-type.outputs.bump }}
                   GH_TOKEN: ${{ secrets.ACTIONS_KEY }}
               run: |
-                  # Configure git with token-based authentication and signing
-                  git config --global user.name "GitHub Actions Bot"
-                  git config --global user.email "jason@humanspeak.com"
-                  git config --global commit.gpgsign true
-                  git config --global user.signingkey "${{ steps.import_gpg.outputs.keyid }}"
-
                   # Validate bump type again for extra security
                   case "$BUMP_TYPE" in
                     "major"|"minor"|"patch") ;;
