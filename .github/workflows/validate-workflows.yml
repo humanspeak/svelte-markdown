@@ -19,8 +19,18 @@ jobs:
               with:
                   toolchain: stable
 
+            - name: Cache cargo registry
+              uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/.cargo/registry
+                      ~/.cargo/git
+                  key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-cargo-registry-
+
             - name: Install zizmor
-              run: cargo install zizmor
+              run: cargo install --force zizmor
 
             - name: Validate all workflows
               working-directory: .github/workflows

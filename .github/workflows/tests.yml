@@ -4,11 +4,10 @@
 name: Tests
 
 on:
-    pull_request:
+    push:
         paths:
             - '!docs/**'
             - '!.github/**'
-        branches: [main]
 
 jobs:
     build:
