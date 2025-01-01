@@ -1,7 +1,8 @@
 name: Cloudflare Pages - Deploy
 
 on:
-    push:
+    pull_request:
+        types: [closed]
         paths:
             - 'docs/**'
             - '.github/workflows/cloudflare-pages.yml'

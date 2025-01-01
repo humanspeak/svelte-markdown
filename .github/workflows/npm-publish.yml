@@ -5,6 +5,9 @@ on:
         types: [closed]
         branches:
             - main
+        paths-ignore:
+            - '.github/**'
+            - 'docs/**'
 
 jobs:
     build:
