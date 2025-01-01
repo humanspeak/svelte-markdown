@@ -110,7 +110,17 @@ jobs:
                   PR_TITLE: ${{ github.event.pull_request.title }}
                   PR_URL: ${{ github.event.pull_request.html_url }}
                   BUMP_TYPE: ${{ steps.version-type.outputs.bump }}
+                  GITHUB_TOKEN: ${{ secrets.ACTIONS_KEY }}
               run: |
+                  # Configure git with token-based authentication
+                  git config --global user.name "GitHub Actions Bot"
+                  git config --global user.email "jason@humanspeak.com"
+                  git config --global commit.gpgsign true
+                  git config --global user.signingkey "${{ steps.import_gpg.outputs.keyid }}"
+
+                  # Set up authentication for push using github.repository context
+                  git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+
                   # Validate bump type again for extra security
                   case "$BUMP_TYPE" in
                     "major"|"minor"|"patch") ;;
