@@ -90,5 +90,8 @@
         "@sveltejs/kit": {
             "cookie": "^0.7.0"
         }
+    },
+    "volta": {
+        "node": "22.12.0"
     }
 }

@@ -1,5 +1,4 @@
 #!/bin/bash
-# https://node-jz.medium.com/instantly-find-and-remove-svelte-component-orphans-9b2838ea2d99
 
 # ANSI color codes
 RED='\033[0;31m'
@@ -59,6 +58,7 @@ if [ -f "$COMPONENTS_JSON" ]; then
 fi
 
 # Create a temporary file to store results
+declare temp_file
 temp_file=$(mktemp)
 trap 'rm -f "$temp_file"' EXIT
 
@@ -72,7 +72,10 @@ MAX_JOBS=8
 # Process files with controlled concurrency
 process_file() {
     local svelte_file="$1"
-    local filename=$(basename -- "$svelte_file")
+    # Declare filename first
+    local filename
+    # Then assign value separately
+    filename=$(basename -- "$svelte_file")
 
     # skip files starting with '+' or in node_modules
     if [[ "$filename" == +* ]] || [[ "$svelte_file" == *"node_modules"* ]]; then
@@ -83,8 +86,10 @@ process_file() {
 
     # Search for the component name without extension
     local component_name="${filename%.svelte}"
-    # Look for import statements or component usage, excluding common false positives
-    local found=$(grep -rl -E "import.*${component_name}($|[^a-zA-Z])|<${component_name}($|[^a-zA-Z-])" "$SRC_DIR" | grep -v "^$svelte_file$")
+    # Declare found variable first
+    local found
+    # Then assign grep result separately
+    found=$(grep -rl -E "import.*${component_name}($|[^a-zA-Z])|<${component_name}($|[^a-zA-Z-])" "$SRC_DIR" | grep -v "^$svelte_file$")
 
     if [[ -z $found ]]; then
         echo "$svelte_file:unused" >> "$temp_file"
@@ -127,6 +132,7 @@ echo
 echo
 
 # Create a temporary file to store results
+declare temp_file
 temp_file=$(mktemp)
 
 # Read results and display progress
