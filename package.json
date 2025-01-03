@@ -30,7 +30,7 @@
         "svelte",
         "markdown"
     ],
-    "homepage": "sveltemarkdown.com",
+    "homepage": "https://markdown.svelte.page",
     "files": [
         "dist",
         "!dist/**/*.test.*",

@@ -14,6 +14,8 @@
 
 A markdown parser that renders into Svelte Components. Inspired by [ReactMarkdown](https://github.com/remarkjs/react-markdown).
 
+Feel free to play with it and leave comments on its [homepage](https://markdown.svelte.page)
+
 Rewriten for Svelte5 and all the updated goodies that have happened over the last two years. Also moved to Typescript because its the future!
 
 ## Installation
@@ -272,3 +274,5 @@ As of now the only external dependencys of this project is `marked`, `github-slu
 - [Svelte](https://svelte.dev) - JavaScript front-end framework.
 - [Marked](https://marked.js.org/) - Markdown parser
 - [Original](https://github.com/pablo-abc/svelte-markdown) - Original component
+
+Made with ♥ by [Humanspeak](https://humanspeak.com)
