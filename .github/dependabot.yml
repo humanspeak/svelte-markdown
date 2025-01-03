@@ -4,8 +4,14 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    ignore-paths:
-      - "docs/**"
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
+
+  - package-ecosystem: "npm"
+    directory: "/docs"
+    schedule:
+      interval: "monthly"
+    labels: [ ]
+    ignore:
+      - dependency-name: "*"
