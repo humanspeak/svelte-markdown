@@ -1,32 +1,32 @@
 name: Mark stale PRs
 
 on:
-  schedule:
-    - cron: '30 1 * * *'  # Runs at 1:30 AM UTC daily
+    schedule:
+        - cron: '30 1 * * *' # Runs at 1:30 AM UTC daily
 
 jobs:
-  stale:
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
+    stale:
+        runs-on: ubuntu-latest
+        permissions:
+            issues: write
+            pull-requests: write
 
-    steps:
-      - uses: actions/stale@v9
-        with:
-          # PR specific settings
-          stale-pr-message: 'This PR is being marked as stale due to 30 days of inactivity. It will be closed in 5 days if no further activity occurs.'
-          close-pr-message: 'This PR was closed due to inactivity. Please feel free to reopen if this is still relevant.'
-          days-before-pr-stale: 30
-          days-before-pr-close: 5
-          stale-pr-label: 'stale'
-          exempt-pr-labels: 'no-stale,security,dependencies'
+        steps:
+            - uses: actions/stale@v9
+              with:
+                  # PR specific settings
+                  stale-pr-message: 'This PR is being marked as stale due to 30 days of inactivity. It will be closed in 5 days if no further activity occurs.'
+                  close-pr-message: 'This PR was closed due to inactivity. Please feel free to reopen if this is still relevant.'
+                  days-before-pr-stale: 30
+                  days-before-pr-close: 5
+                  stale-pr-label: 'stale'
+                  exempt-pr-labels: 'no-stale,security,dependencies'
 
-          # Skip issues - we only want to track PRs
-          days-before-issue-stale: -1
-          days-before-issue-close: -1
+                  # Skip issues - we only want to track PRs
+                  days-before-issue-stale: -1
+                  days-before-issue-close: -1
 
-          # Additional settings
-          remove-stale-when-updated: true
-          delete-branch: false
-          enable-statistics: true
+                  # Additional settings
+                  remove-stale-when-updated: true
+                  delete-branch: false
+                  enable-statistics: true

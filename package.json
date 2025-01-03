@@ -1,6 +1,6 @@
 {
     "name": "@humanspeak/svelte-markdown",
-    "description": "A markdown renderer for Svelte",
+    "description": "A powerful, customizable markdown renderer for Svelte with TypeScript support",
     "version": "0.7.0",
     "scripts": {
         "dev": "vite dev",
@@ -29,6 +29,21 @@
     "tags": [
         "svelte",
         "markdown"
+    ],
+    "keywords": [
+        "svelte",
+        "markdown",
+        "renderer",
+        "parser",
+        "marked",
+        "component",
+        "sveltekit",
+        "svelte5",
+        "md",
+        "documentation",
+        "html",
+        "converter",
+        "formatting"
     ],
     "homepage": "https://markdown.svelte.page",
     "files": [
@@ -93,5 +108,12 @@
     },
     "volta": {
         "node": "22.12.0"
+    },
+    "funding": {
+        "type": "github",
+        "url": "https://github.com/sponsors/humanspeak"
+    },
+    "publishConfig": {
+        "access": "public"
     }
 }
