@@ -54,7 +54,8 @@
     }: Props & {
         [key: string]: unknown
     } = $props()
-    let tokens: Token[] | undefined
+    // @ts-expect-error - Intentionally not using $state for tokens
+    let tokens: Token[] | undefined // eslint-disable-line svelte/valid-compile
     let previousSource = $state<string | Token[] | undefined>(undefined)
     let lexer: Lexer
 
