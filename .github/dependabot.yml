@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    ignore-paths:
+      - "docs/**"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
