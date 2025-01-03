@@ -10,7 +10,15 @@ export default defineConfig({
         environment: 'jsdom',
         setupFiles: ['vitest.setup.ts'],
         coverage: { reporter: 'lcov' },
-        exclude: [...configDefaults.exclude, 'docs/**/*']
+        exclude: [
+            ...configDefaults.exclude,
+            'node_modules/**',
+            'dist/**',
+            'docs/**',
+            'src/routes/**',
+            'coverage/**',
+            'test/**'
+        ]
     },
     build: {
         sourcemap: true

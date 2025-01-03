@@ -91,10 +91,12 @@
     }
 </script>
 
-<Parser
-    {tokens}
-    {...rest}
-    options={combinedOptions}
-    slug={(val: string): string => (slugger ? slugger.slug(val) : '')}
-    renderers={combinedRenderers}
-/>
+{#key source}
+    <Parser
+        {tokens}
+        {...rest}
+        options={combinedOptions}
+        slug={(val: string): string => (slugger ? slugger.slug(val) : '')}
+        renderers={combinedRenderers}
+    />
+{/key}
