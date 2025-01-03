@@ -40,6 +40,8 @@ jobs:
               uses: coverallsapp/github-action@v2
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
+                  flag-name: node-${{ matrix.node-version }}
+                  parallel: true
               if: matrix.node-version == '22'
 
             - name: Cache dependencies
@@ -228,3 +230,14 @@ jobs:
                           repo: context.repo.repo,
                           body: '❌ Release workflow failed. Please check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
                       })
+
+    finish-coverage:
+        needs: build
+        runs-on: ubuntu-latest
+        if: ${{ always() }}
+        steps:
+            - name: Coveralls Finished
+              uses: coverallsapp/github-action@v2
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  parallel-finished: true
