@@ -1,7 +1,7 @@
 {
     "name": "@humanspeak/svelte-markdown",
     "description": "A powerful, customizable markdown renderer for Svelte with TypeScript support",
-    "version": "0.7.1",
+    "version": "0.7.2",
     "scripts": {
         "dev": "vite dev",
         "build": "vite build && npm run package",
