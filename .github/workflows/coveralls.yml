@@ -1,0 +1,62 @@
+name: Coveralls
+
+on:
+    schedule:
+        # Runs at 00:00 on Sunday
+        - cron: '0 0 * * 0'
+    workflow_dispatch: # Allows manual triggering
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                node-version: [18, 20, 22]
+        permissions:
+            contents: read
+            packages: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  persist-credentials: false
+                  token: ${{ secrets.ACTIONS_KEY }}
+
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.node-version }}
+
+            - name: Install
+              run: npm ci
+
+            - name: Test
+              run: npm test --coverage
+
+            - name: Upload coverage to Coveralls
+              uses: coverallsapp/github-action@v2
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  flag-name: node-${{ matrix.node-version }}
+                  parallel: true
+              if: matrix.node-version == '22'
+
+            - name: Cache dependencies
+              uses: actions/cache@v3
+              with:
+                  path: ~/.npm
+                  key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-node-${{ matrix.node-version }}-
+                      ${{ runner.os }}-node-
+
+    finish-coverage:
+        needs: build
+        runs-on: ubuntu-latest
+        if: ${{ always() }}
+        steps:
+            - name: Coveralls Finished
+              uses: coverallsapp/github-action@v2
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  parallel-finished: true
