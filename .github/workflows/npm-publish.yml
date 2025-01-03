@@ -34,7 +34,13 @@ jobs:
               run: npm ci
 
             - name: Test
-              run: npm test
+              run: npm test --coverage
+
+            - name: Upload coverage to Coveralls
+              uses: coverallsapp/github-action@v2
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+              if: matrix.node-version == '22'
 
             - name: Cache dependencies
               uses: actions/cache@v3
