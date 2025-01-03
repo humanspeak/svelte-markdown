@@ -54,7 +54,7 @@
     "dependencies": {
         "github-slugger": "^2.0.0",
         "htmlparser2": "^10.0.0",
-        "marked": "^15.0.4"
+        "marked": "^15.0.5"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3.2.0",
@@ -66,7 +66,7 @@
         "@testing-library/jest-dom": "^6.6.3",
         "@testing-library/svelte": "^5.2.6",
         "@testing-library/user-event": "^14.5.2",
-        "@types/node": "^22.10.3",
+        "@types/node": "^22.10.5",
         "@typescript-eslint/eslint-plugin": "^8.19.0",
         "@typescript-eslint/parser": "^8.19.0",
         "@vitest/coverage-v8": "^2.1.8",
@@ -80,10 +80,10 @@
         "prettier-plugin-svelte": "^3.3.2",
         "prettier-plugin-tailwindcss": "^0.6.9",
         "publint": "^0.2.12",
-        "svelte": "^5.16.0",
+        "svelte": "^5.16.1",
         "svelte-check": "^4.1.1",
         "typescript": "^5.7.2",
-        "vite": "^6.0.6",
+        "vite": "^6.0.7",
         "vitest": "^2.1.8"
     },
     "overrides": {

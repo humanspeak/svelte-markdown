@@ -250,29 +250,16 @@ Note that the HTML paragraph must be enclosed within `<p>` tags.
 
 Some tests have been added to the `tests` folder. You can clone this repo and create another svelte app and link it to this repo to try modifying it.
 
-You can clone this repo and do the following:
+The current extenral dependencies are:
 
-```console
-yarn
-yarn link
-yarn dev
-```
-
-This will watch all changes and make the project linkable. Now on the app you created you can link it with:
-
-```console
-yarn link @humanspeak/svelte-markdown
-```
-
-And then import it like in the example above.
-
-As of now the only external dependencys of this project is `marked`, `github-slugger`, `htmlparser2`.
+- [Marked](https://marked.js.org/)
+- [Github-Slugger](https://github.com/Flet/github-slugger)
+- [HTMLParser2](https://github.com/fb55/htmlparser2).
 
 ## Related
 
 - [ReactMarkdown](https://github.com/remarkjs/react-markdown) - React library to render markdown using React components. Inspiration for this library.
 - [Svelte](https://svelte.dev) - JavaScript front-end framework.
-- [Marked](https://marked.js.org/) - Markdown parser
 - [Original](https://github.com/pablo-abc/svelte-markdown) - Original component
 
 Made with ♥ by [Humanspeak](https://humanspeak.com)

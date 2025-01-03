@@ -1,6 +1,6 @@
 <script lang="ts">
     import { localStore } from '$lib/state/localStore.svelte'
-    import Textarea from '$lib/shadcn/components/ui/textarea/textarea.svelte'
+    import { Textarea } from '$lib/shadcn/components/ui/textarea/index.js'
     import SvelteMarkdown, { type Token, type TokensList } from '@humanspeak/svelte-markdown'
     import * as Card from '$lib/shadcn/components/ui/card/index.js'
 
@@ -52,7 +52,7 @@ Happy coding! <span style="color: hotpink">♥</span>`
                 <Card.Root class="flex h-full flex-col">
                     <Card.Header>
                         <Card.Title>Editor</Card.Title>
-                        <Card.Description>Just some text to format 🥰</Card.Description>
+                        <Card.Description>Just edit the text 🥰</Card.Description>
                     </Card.Header>
                     <Card.Content class="flex flex-1 flex-col">
                         <Textarea
@@ -61,7 +61,6 @@ Happy coding! <span style="color: hotpink">♥</span>`
                             id="markdown"
                             class="w-full flex-1 resize-none"
                         />
-                        <p class="mt-2 text-sm text-muted">*Note: Type markdown here</p>
                     </Card.Content>
                 </Card.Root>
             </div>
