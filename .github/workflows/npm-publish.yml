@@ -1,4 +1,4 @@
-name: Publish to GitHub Packages
+name: Publish to NPM
 
 on:
     pull_request:
@@ -34,14 +34,21 @@ jobs:
               run: npm ci
 
             - name: Test
-              run: npm test
+              run: npm test --coverage
+
+            - name: Upload coverage to Coveralls
+              uses: coverallsapp/github-action@v2
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+              if: matrix.node-version == '22'
 
             - name: Cache dependencies
               uses: actions/cache@v3
               with:
                   path: ~/.npm
-                  key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+                  key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
                   restore-keys: |
+                      ${{ runner.os }}-node-${{ matrix.node-version }}-
                       ${{ runner.os }}-node-
 
     publish-github-packages:

@@ -1,6 +1,20 @@
 # Svelte Markdown
 
+[![NPM version](https://img.shields.io/npm/v/@humanspeak/svelte-markdown.svg)](https://www.npmjs.com/package/@humanspeak/svelte-markdown)
+[![Build Status](https://github.com/humanspeak/svelte-markdown/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/humanspeak/svelte-markdown/actions/workflows/npm-publish.yml)
+[![Coverage Status](https://coveralls.io/repos/github/humanspeak/svelte-markdown/badge.svg?branch=main)](https://coveralls.io/github/humanspeak/svelte-markdown?branch=main)
+[![License](https://img.shields.io/npm/l/@humanspeak/svelte-markdown.svg)](https://github.com/humanspeak/svelte-markdown/blob/main/LICENSE)
+<!-- [![Bundle Size](https://img.shields.io/bundlephobia/minzip/@humanspeak/svelte-markdown)](https://bundlephobia.com/package/@humanspeak/svelte-markdown) -->
+[![Downloads](https://img.shields.io/npm/dm/@humanspeak/svelte-markdown.svg)](https://www.npmjs.com/package/@humanspeak/svelte-markdown)
+[![CodeQL](https://github.com/humanspeak/svelte-markdown/actions/workflows/codeql.yml/badge.svg)](https://github.com/humanspeak/svelte-markdown/actions/workflows/codeql.yml)
+<!-- [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md) -->
+[![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
+[![Types](https://img.shields.io/npm/types/@humanspeak/svelte-markdown.svg)](https://www.npmjs.com/package/@humanspeak/svelte-markdown)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/humanspeak/svelte-markdown/graphs/commit-activity)
+
 A markdown parser that renders into Svelte Components. Inspired by [ReactMarkdown](https://github.com/remarkjs/react-markdown).
+
+Feel free to play with it and leave comments on its [homepage](https://markdown.svelte.page)
 
 Rewriten for Svelte5 and all the updated goodies that have happened over the last two years. Also moved to Typescript because its the future!
 
@@ -236,27 +250,16 @@ Note that the HTML paragraph must be enclosed within `<p>` tags.
 
 Some tests have been added to the `tests` folder. You can clone this repo and create another svelte app and link it to this repo to try modifying it.
 
-You can clone this repo and do the following:
+The current extenral dependencies are:
 
-```console
-yarn
-yarn link
-yarn dev
-```
-
-This will watch all changes and make the project linkable. Now on the app you created you can link it with:
-
-```console
-yarn link @humanspeak/svelte-markdown
-```
-
-And then import it like in the example above.
-
-As of now the only external dependencys of this project is `marked`, `github-slugger`, `htmlparser2`.
+- [Marked](https://marked.js.org/)
+- [Github-Slugger](https://github.com/Flet/github-slugger)
+- [HTMLParser2](https://github.com/fb55/htmlparser2).
 
 ## Related
 
 - [ReactMarkdown](https://github.com/remarkjs/react-markdown) - React library to render markdown using React components. Inspiration for this library.
 - [Svelte](https://svelte.dev) - JavaScript front-end framework.
-- [Marked](https://marked.js.org/) - Markdown parser
 - [Original](https://github.com/pablo-abc/svelte-markdown) - Original component
+
+Made with ♥ by [Humanspeak](https://humanspeak.com)

@@ -1,3 +1,27 @@
+<!--
+@component
+
+ A Svelte component that renders Markdown content into HTML using a customizable parser.
+ Supports both string input and pre-parsed markdown tokens, with configurable rendering
+ options and custom renderers.
+
+ @example
+ ```svelte
+ <SvelteMarkdown source="# Hello World" />
+
+ <SvelteMarkdown
+   source={markdownString}
+   options={{ headerIds: false }}
+   renderers={{ link: CustomLink }}
+ />
+ ```
+
+ @property {string | Token[]} source - The markdown content to render, either as a string or pre-parsed tokens
+ @property {Partial<Renderers>} [renderers] - Custom renderers for markdown elements
+ @property {SvelteMarkdownOptions} [options] - Configuration options for the markdown parser
+ @property {boolean} [isInline=false] - Whether to parse the content as inline markdown
+ @property {function} [parsed] - Callback function called with the parsed tokens
+-->
 <script lang="ts">
     import {
         Lexer,
