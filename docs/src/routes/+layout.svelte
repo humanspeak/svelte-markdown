@@ -10,6 +10,10 @@
     const { children } = $props()
 </script>
 
+<svelte:head>
+    <title>Markdown - Svelte Component Library - Humanspeak Inc.</title>
+</svelte:head>
+
 <ModeWatcher />
 
 <Sidebar.Provider open={false}>
