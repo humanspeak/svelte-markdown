@@ -14,7 +14,7 @@ Hey there! This is a *fun* example of mixing **Markdown** and <em>HTML</em> toge
 3. Using emojis 🚀 ✨ 🌈
 
 | Feature | Markdown | HTML |
-|---------|----------|------|
+|---------|:--------:|-----:|
 | Bold | **text** | <strong>text</strong> |
 | Italic | *text* | <em>text</em> |
 | Links | [text](url) | <a href="url">text</a> |
