@@ -33,7 +33,7 @@ import {
  *
  * @typedef {Component<any, any, any> | undefined | null} RendererComponent
  */
-export type RendererComponent = Component<any, any, any> | undefined | null
+export type RendererComponent = Component<any, any, any> | undefined | null // eslint-disable-line @typescript-eslint/no-explicit-any
 
 /**
  * Comprehensive mapping of markdown elements to their renderer components.
