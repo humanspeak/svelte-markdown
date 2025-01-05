@@ -2,7 +2,7 @@
     import { default as SvelteMarkdown, type TokensList, type Token } from '$lib/index.js'
     import { onMount } from 'svelte'
 
-    let ogText = `# Welcome to My Markdown Playground! 🎨
+    const ogText = `# Welcome to My Markdown Playground! 🎨
 
 Hey there! This is a *fun* example of mixing **Markdown** and <em>HTML</em> together.
 
@@ -30,10 +30,6 @@ Here's a hidden surprise! 🎉
 </details>
 
 Happy coding! <span style="color: hotpink">♥</span>`
-
-    ogText = `| Header 1 | Header 2 |
-|----------|----------|
-| Cell 1   | Cell 2   |`
 
     let source = $state(ogText)
     let value = $state(ogText)
