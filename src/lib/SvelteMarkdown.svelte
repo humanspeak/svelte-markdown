@@ -74,7 +74,7 @@
     const slugger = source ? new Slugger() : undefined
     let lexer: Lexer
 
-    let tokens = $derived.by(() => {
+    const tokens = $derived.by(() => {
         if (!lexer) {
             lexer = new Lexer(combinedOptions)
         }
