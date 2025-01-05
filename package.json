@@ -1,6 +1,6 @@
 {
     "name": "@humanspeak/svelte-markdown",
-    "version": "0.7.4",
+    "version": "0.7.5",
     "description": "A powerful, customizable markdown renderer for Svelte with TypeScript support",
     "type": "module",
     "svelte": "./dist/index.js",
