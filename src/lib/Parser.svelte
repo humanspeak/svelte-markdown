@@ -1,4 +1,42 @@
 <script lang="ts">
+    /**
+     * @component Parser
+     *
+     * Recursive markdown token parser that transforms tokens into Svelte components.
+     * This component is the core rendering engine of the markdown system, handling
+     * the transformation of parsed markdown tokens into their corresponding Svelte components.
+     *
+     * @example
+     * ```svelte
+     * <Parser
+     *   tokens={parsedTokens}
+     *   renderers={customRenderers}
+     *   type="paragraph"
+     * />
+     * ```
+     *
+     * Features:
+     * - Recursive token parsing
+     * - Custom renderer support
+     * - Special handling for tables, lists, and HTML content
+     * - Type-safe component rendering
+     *
+     * @typedef {Object} Props
+     * @property {string} [type] - Token type for direct component rendering
+     * @property {Token[] | TokensList} [tokens] - Markdown tokens to be rendered
+     * @property {Tokens.TableCell[]} [header] - Table header cells for table rendering
+     * @property {Tokens.TableCell[][]} [rows] - Table row cells for table rendering
+     * @property {boolean} [ordered=false] - Whether the list is ordered (for list rendering)
+     * @property {Renderers} renderers - Component mapping for markdown elements
+     *
+     * Implementation Notes:
+     * - Uses recursive rendering for nested tokens
+     * - Implements special logic for tables, lists, and HTML content
+     * - Handles component prop spreading carefully to avoid conflicts
+     * - Maintains type safety through TypeScript interfaces
+     *
+     */
+
     import Parser from './Parser.svelte'
     import Html from './renderers/html/index.js'
     import type {
