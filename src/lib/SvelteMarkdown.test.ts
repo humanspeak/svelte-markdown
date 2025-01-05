@@ -9,32 +9,35 @@ beforeEach(() => {
 
 describe('testing initialization', () => {
     test('accepts pre-processed tokens as source', async () => {
-        render(SvelteMarkdown, {
-            source: [
-                {
-                    type: 'paragraph',
-                    raw: 'this is an **example**',
-                    text: 'this is an **example**',
-                    tokens: [
-                        { type: 'text', raw: 'this is an ', text: 'this is an ' },
-                        {
-                            type: 'strong',
-                            raw: '**example**',
-                            text: 'example',
-                            tokens: [{ type: 'text', raw: 'example', text: 'example' }]
-                        }
-                    ]
-                }
-            ]
+        const { container } = render(SvelteMarkdown, {
+            props: {
+                source: [
+                    {
+                        type: 'paragraph',
+                        raw: 'this is an **example**',
+                        text: 'this is an **example**',
+                        tokens: [
+                            { type: 'text', raw: 'this is an ', text: 'this is an ' },
+                            {
+                                type: 'strong',
+                                raw: '**example**',
+                                text: 'example',
+                                tokens: [{ type: 'text', raw: 'example', text: 'example' }]
+                            }
+                        ]
+                    }
+                ]
+            }
         })
 
         // Wait for all timers and effects to settle
         await vi.runAllTimersAsync()
 
-        // Use findByText instead of getByText to handle async rendering
-        const element = await screen.findByText('example')
+        // Query the DOM directly to avoid state mutations
+        const element = container.querySelector('strong')
         expect(element).toBeInTheDocument()
-        expect(element.nodeName).toBe('STRONG')
+        expect(element?.textContent).toBe('example')
+        expect(element?.nodeName).toBe('STRONG')
     })
 })
 
@@ -119,14 +122,18 @@ describe('testing default renderers', () => {
             expect(element).toHaveAttribute('id', 'this-is-a-title')
         })
 
-        test('renders a heading with id and preffix', () => {
-            render(SvelteMarkdown, {
-                source: '# This is a title',
-                options: { headerPrefix: 'test-' }
+        test('renders a heading with id and prefix', async () => {
+            const { container } = render(SvelteMarkdown, {
+                props: {
+                    source: '# This is a title',
+                    options: {
+                        headerPrefix: 'test-'
+                    }
+                }
             })
 
-            const element = screen.getByRole('heading', { name: /This is a title/ })
-            expect(element).toHaveAttribute('id', 'test-this-is-a-title')
+            const heading = container.querySelector('h1')
+            expect(heading).toHaveAttribute('id', 'test-this-is-a-title')
         })
 
         test('renders a heading with non-duplicate id', () => {

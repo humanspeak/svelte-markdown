@@ -53,8 +53,7 @@
         Slugger,
         type Token,
         type TokensList,
-        type SvelteMarkdownOptions,
-        type Renderers
+        type SvelteMarkdownOptions
     } from './utils/markdown-parser.js'
     import Parser from './Parser.svelte'
     import { shrinkHtmlTokens } from './utils/token-cleanup.js'
@@ -74,17 +73,17 @@
     let lexer: Lexer
 
     let tokens = $derived.by(() => {
-        if (Array.isArray(source)) {
-            return shrinkHtmlTokens(source) as Token[]
+        if (!lexer) {
+            lexer = new Lexer(combinedOptions)
         }
+        const processedTokens = Array.isArray(source)
+            ? source
+            : isInline
+              ? lexer.inlineTokens(source as string)
+              : lexer.lex(source as string)
 
-        const currentLexer = new Lexer(options)
-        return shrinkHtmlTokens(
-            isInline
-                ? currentLexer.inlineTokens(source as string)
-                : currentLexer.lex(source as string)
-        )
-    }) as Token[] | TokensList | undefined
+        return shrinkHtmlTokens(processedTokens) as Token[]
+    }) satisfies Token[] | TokensList | undefined
 
     const slugger = source ? new Slugger() : undefined
     const combinedOptions = { ...defaultOptions, ...options }

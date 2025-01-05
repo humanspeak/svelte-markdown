@@ -149,6 +149,7 @@ export type SvelteMarkdownOptions = {
     breaks: boolean
     gfm: boolean
     headerIds: boolean
+    tables: boolean
     headerPrefix: string
     highlight: null
     langPrefix: string
@@ -181,6 +182,7 @@ export const defaultOptions: SvelteMarkdownOptions = {
     baseUrl: null,
     breaks: false,
     gfm: true,
+    tables: true,
     headerIds: true,
     headerPrefix: '',
     highlight: null,

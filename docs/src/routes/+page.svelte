@@ -13,6 +13,12 @@ Hey there! This is a *fun* example of mixing **Markdown** and <em>HTML</em> toge
 2. Making lists (like this one!)
 3. Using emojis 🚀 ✨ 🌈
 
+| Feature | Markdown | HTML |
+|---------|----------|------|
+| Bold | **text** | <strong>text</strong> |
+| Italic | *text* | <em>text</em> |
+| Links | [text](url) | <a href="url">text</a> |
+
 Here's a quote for you:
 > "The best of both worlds" - <cite>Someone who loves markdown & HTML</cite>
 
