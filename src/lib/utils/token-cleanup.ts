@@ -94,6 +94,7 @@ export const parseHtmlBlock = (html: string): Token[] => {
     let currentText = ''
     const selfClosingTags =
         /^(br|hr|img|input|link|meta|area|base|col|embed|keygen|param|source|track|wbr)$/i
+    const openTags: string[] = []
 
     const parser = new Parser(
         {
@@ -107,13 +108,14 @@ export const parseHtmlBlock = (html: string): Token[] => {
                     currentText = ''
                 }
 
-                // Check if it's a self-closing tag
+                openTags.push(name)
+
                 if (selfClosingTags.test(name)) {
                     tokens.push({
                         type: 'html',
                         raw: `<${name}${Object.entries(attributes)
                             .map(([key, value]) => ` ${key}="${value}"`)
-                            .join('')}/>`, // Note the /> ending
+                            .join('')}/>`,
                         tag: name,
                         attributes
                     })
@@ -141,25 +143,30 @@ export const parseHtmlBlock = (html: string): Token[] => {
                     currentText = ''
                 }
 
-                // Only add closing tag for non-self-closing elements
-                if (!selfClosingTags.test(name)) {
-                    tokens.push({
-                        type: 'html',
-                        raw: `</${name}>`,
-                        tag: name
-                    })
+                // Only add closing tag if we found its opening tag
+                // and it's not a self-closing tag
+                if (openTags.includes(name) && !selfClosingTags.test(name)) {
+                    if (html.includes(`</${name}>`)) {
+                        tokens.push({
+                            type: 'html',
+                            raw: `</${name}>`,
+                            tag: name
+                        })
+                    }
+                    openTags.splice(openTags.indexOf(name), 1)
                 }
             }
         },
         {
-            xmlMode: true
+            xmlMode: true,
+            // Add this to prevent automatic tag closing
+            recognizeSelfClosing: true
         }
     )
 
     parser.write(html)
     parser.end()
 
-    // Handle any remaining text
     if (currentText.trim()) {
         tokens.push({
             type: 'text',
