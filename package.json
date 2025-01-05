@@ -1,14 +1,30 @@
 {
     "name": "@humanspeak/svelte-markdown",
-    "description": "A powerful, customizable markdown renderer for Svelte with TypeScript support",
     "version": "0.7.3",
+    "description": "A powerful, customizable markdown renderer for Svelte with TypeScript support",
     "type": "module",
+    "svelte": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "svelte": "./dist/index.js"
+        }
+    },
+    "files": [
+        "dist",
+        "!dist/**/*.test.*",
+        "!dist/**/*.spec.*"
+    ],
+    "sideEffects": [
+        "**/*.css"
+    ],
     "scripts": {
         "dev": "vite dev",
         "build": "vite build && npm run package",
-        "preview": "vite preview",
         "package": "svelte-kit sync && svelte-package && publint",
         "prepublishOnly": "npm run package",
+        "preview": "vite preview",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
         "test": "vitest run --coverage",
@@ -18,13 +34,13 @@
         "lint:fix": "npm run format && eslint . --fix",
         "format": "prettier --write ."
     },
-    "peerDependencies": {
-        "svelte": "^5.0.0"
-    },
     "dependencies": {
         "github-slugger": "^2.0.0",
         "htmlparser2": "^10.0.0",
         "marked": "^15.0.5"
+    },
+    "peerDependencies": {
+        "svelte": "^5.0.0"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3.2.0",
@@ -56,6 +72,14 @@
         "vite": "^6.0.7",
         "vitest": "^3.0.0-beta.3"
     },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/humanspeak/svelte-markdown.git"
+    },
+    "homepage": "https://markdown.svelte.page",
+    "bugs": {
+        "url": "https://github.com/humanspeak/svelte-markdown/issues"
+    },
     "keywords": [
         "svelte",
         "markdown",
@@ -75,14 +99,6 @@
         "svelte",
         "markdown"
     ],
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/humanspeak/svelte-markdown.git"
-    },
-    "homepage": "https://markdown.svelte.page",
-    "bugs": {
-        "url": "https://github.com/humanspeak/svelte-markdown/issues"
-    },
     "author": "Humanspeak, Inc.",
     "license": "MIT",
     "funding": {
