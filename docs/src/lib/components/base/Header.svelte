@@ -13,9 +13,9 @@
     <h1 class="text-center text-4xl font-extrabold">
         <div class="flex w-full items-center justify-center gap-2">
             {#if $mode === 'dark'}
-                <img src="./Humanspeak-bubble-dark.svg" alt="humanspeak logo" class="h-10" />
+                <img src="./humanspeak-bubble-dark.svg" alt="humanspeak logo" class="h-10" />
             {:else}
-                <img src="./Humanspeak-bubble.svg" alt="humanspeak logo" class="h-10" />
+                <img src="./humanspeak-bubble.svg" alt="humanspeak logo" class="h-10" />
             {/if}
             <span>/markdown</span>
         </div>

@@ -1,33 +1,78 @@
 <script lang="ts">
-    import Header from '../lib/components/base/Header.svelte'
-
     import '../app.css'
     import { ModeWatcher } from 'mode-watcher'
-    import * as Sidebar from '$lib/shadcn/components/ui/sidebar/index.js'
-    import AppSidebar from '$lib/components/base/app-sidebar.svelte'
-    import Footer from '$lib/components/base/Footer.svelte'
+    import { page } from '$app/state'
 
     const { children } = $props()
+    const imageLocation = `${page.url.origin}/`
 </script>
 
 <svelte:head>
-    <title>Markdown - Svelte Component Library - Humanspeak Inc.</title>
-</svelte:head>
+    <title>Svelte Markdown - High Performance Markdown Parser for Svelte 5</title>
+    <meta
+        name="description"
+        content="A powerful, customizable markdown parser for Svelte 5 with TypeScript support. Features include custom renderers, HTML parsing, GitHub-style slugs, and extensive testing coverage."
+    />
 
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="Svelte Markdown - Modern Markdown Parser for Svelte" />
+    <meta
+        property="og:description"
+        content="Transform markdown into Svelte components with support for custom renderers, HTML parsing, and TypeScript. Perfect for documentation, blogs, and content-rich applications."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://markdown.svelte.page" />
+    <meta property="og:image" content="{imageLocation}svelte-markdown-opengraph.png" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Svelte Markdown - TypeScript-Ready Parser" />
+    <meta
+        name="twitter:description"
+        content="Build better documentation and content-rich applications with this modern Markdown parser for Svelte 5"
+    />
+    <meta name="twitter:image" content="{imageLocation}svelte-markdown-twitter.png" />
+
+    <!-- Keywords -->
+    <meta
+        name="keywords"
+        content="svelte, markdown, parser, typescript, svelte5, documentation, html, converter, marked, github-slugger, component, sveltekit, formatting, content management"
+    />
+
+    <!-- Additional Meta -->
+    <meta name="author" content="Humanspeak, Inc." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://markdown.svelte.page" />
+
+    <!-- JSON-LD structured data -->
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Svelte Markdown",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any",
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+            },
+            "author": {
+                "@type": "Organization",
+                "name": "Humanspeak, Inc.",
+                "url": "https://humanspeak.com"
+            },
+            "programmingLanguage": ["Svelte", "TypeScript"],
+            "description": "A powerful markdown parser for Svelte 5 that transforms markdown into customizable Svelte components with TypeScript support and extensive testing coverage.",
+            "license": "MIT",
+            "url": "https://markdown.svelte.page",
+            "downloadUrl": "https://www.npmjs.com/package/@humanspeak/svelte-markdown",
+            "requirements": "Svelte 5.0 or higher",
+            "releaseNotes": "https://github.com/humanspeak/svelte-markdown/releases",
+            "keywords": "svelte, markdown, parser, typescript, documentation"
+        }
+    </script>
+</svelte:head>
 <ModeWatcher />
 
-<Sidebar.Provider open={false}>
-    <AppSidebar />
-    <div class="flex h-screen w-full flex-col">
-        <header class="border-grey sticky top-0 w-full border-b p-4 text-center">
-            <Header></Header>
-        </header>
-        <main class="w-full flex-1 overflow-y-scroll">
-            <!-- <Sidebar.Trigger /> -->
-            {@render children?.()}
-        </main>
-        <footer class="border-grey sticky bottom-0 w-full border-t p-2 text-center">
-            <Footer></Footer>
-        </footer>
-    </div>
-</Sidebar.Provider>
+{@render children?.()}
