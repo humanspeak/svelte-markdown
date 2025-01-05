@@ -252,9 +252,27 @@ export const containsMultipleTags = (html: string): boolean => {
  */
 export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
     const result: Token[] = []
-
     for (const token of tokens) {
-        if (token.type === 'html' && containsMultipleTags(token.raw)) {
+        if (token.type === 'table') {
+            // Process header cells
+            if (token.header) {
+                token.header = token.header.map((cell) => ({
+                    ...cell,
+                    tokens: cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
+                }))
+            }
+
+            // Process row cells
+            if (token.rows) {
+                token.rows = token.rows.map((row) =>
+                    row.map((cell) => ({
+                        ...cell,
+                        tokens: cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
+                    }))
+                )
+            }
+            result.push(token)
+        } else if (token.type === 'html' && containsMultipleTags(token.raw)) {
             // Parse HTML with multiple tags into separate tokens
             result.push(...parseHtmlBlock(token.raw))
         } else {

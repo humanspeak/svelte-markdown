@@ -82,10 +82,11 @@
             <renderers.tablehead {...rest}>
                 <renderers.tablerow {...rest}>
                     {#each header ?? [] as headerItem, i}
+                        {@const { align: _align, ...cellRest } = rest}
                         <renderers.tablecell
                             header={true}
-                            align={(rest.align as string[])[i] || 'center'}
-                            {...rest}
+                            align={(rest.align as string[])[i]}
+                            {...cellRest}
                         >
                             <Parser tokens={headerItem.tokens} {renderers} />
                         </renderers.tablecell>
@@ -96,12 +97,30 @@
                 {#each rows ?? [] as row}
                     <renderers.tablerow {...rest}>
                         {#each row ?? [] as cells, i}
+                            {@const { align: _align, ...cellRest } = rest}
                             <renderers.tablecell
                                 header={false}
-                                align={(rest.align as string[])[i] ?? 'center'}
-                                {...rest}
+                                align={(rest.align as string[])[i]}
+                                {...cellRest}
                             >
-                                <Parser tokens={cells.tokens} {renderers} />
+                                {#if cells.type === 'html'}
+                                    {@const { tag, ...localRest } = cells}
+                                    {@const htmlTag = cells.tag as keyof typeof Html}
+                                    {#if htmlTag in Html}
+                                        {@const HtmlComponent = Html[htmlTag]}
+                                        <HtmlComponent {...cells}>
+                                            {#if cells.tokens?.length}
+                                                <Parser
+                                                    tokens={cells.tokens}
+                                                    {renderers}
+                                                    {...localRest}
+                                                />
+                                            {/if}
+                                        </HtmlComponent>
+                                    {/if}
+                                {:else}
+                                    <Parser tokens={cells.tokens} {renderers} />
+                                {/if}
                             </renderers.tablecell>
                         {/each}
                     </renderers.tablerow>

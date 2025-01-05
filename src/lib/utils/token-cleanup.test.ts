@@ -227,5 +227,36 @@ describe('Token Cleanup Utilities', () => {
             expect(result).toHaveLength(1000)
             expect(endTime - startTime).toBeLessThan(1000) // Should process in under 1 second
         })
+
+        it('should process HTML tokens within table cells', () => {
+            const tokens: Token[] = [
+                {
+                    type: 'table',
+                    raw: '| HTML |\n|------|\n| <strong>bold</strong> |',
+                    header: [
+                        {
+                            text: 'HTML',
+                            tokens: [{ type: 'text', raw: 'HTML', text: 'HTML' }]
+                        }
+                    ],
+                    rows: [
+                        [
+                            {
+                                text: '<strong>bold</strong>',
+                                tokens: [
+                                    { type: 'html', raw: '<strong>', text: '<strong>' },
+                                    { type: 'text', raw: 'bold', text: 'bold' },
+                                    { type: 'html', raw: '</strong>', text: '</strong>' }
+                                ]
+                            }
+                        ]
+                    ]
+                }
+            ]
+
+            const result = shrinkHtmlTokens(tokens)
+            expect(result[0].rows[0][0].tokens[0].type).toBe('html')
+            expect(result[0].rows[0][0].tokens[0].tag).toBe('strong')
+        })
     })
 })

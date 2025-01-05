@@ -235,3 +235,133 @@ describe('testing default renderers', () => {
         })
     })
 })
+
+describe('mixed markdown and HTML table rendering', () => {
+    test('renders mixed markdown-HTML table with formatting', () => {
+        const source = `
+| Feature | Markdown | HTML |
+|---------|----------|------|
+| Bold | **text** | <strong>text</strong> |
+| Italic | *text* | <em>text</em> |
+| Links | [text](url) | <a href="url">text</a> |`
+
+        const { container } = render(SvelteMarkdown, { source })
+
+        // Check table structure
+        const table = screen.getByRole('table')
+        expect(table).toBeInTheDocument()
+
+        // Updated row selection
+        const tbody = container.querySelector('tbody')
+        const rows = tbody?.querySelectorAll('tr')
+        expect(rows?.length).toBeGreaterThan(0)
+
+        // Check Bold row (index 0)
+        const boldRow = rows?.[0]
+        const boldCells = boldRow?.querySelectorAll('td')
+        expect(boldCells?.[1].innerHTML).toContain('<strong>')
+        expect(boldCells?.[1].innerHTML).toContain('text')
+        expect(boldCells?.[1].innerHTML).toContain('</strong>')
+        expect(boldCells?.[2].innerHTML).toContain('<strong>')
+        expect(boldCells?.[2].innerHTML).toContain('text')
+        expect(boldCells?.[2].innerHTML).toContain('</strong>')
+
+        // Check Italic row (index 1)
+        const italicRow = rows?.[1]
+        const italicCells = italicRow?.querySelectorAll('td')
+        expect(italicCells?.[1].innerHTML).toContain('<em>')
+        expect(italicCells?.[1].innerHTML).toContain('text')
+        expect(italicCells?.[1].innerHTML).toContain('</em>')
+        expect(italicCells?.[2].innerHTML).toContain('<em>')
+        expect(italicCells?.[2].innerHTML).toContain('text')
+        expect(italicCells?.[2].innerHTML).toContain('</em>')
+
+        // Check Links row (index 2)
+        const linksRow = rows?.[2]
+        const linkCells = linksRow?.querySelectorAll('td')
+        expect(linkCells?.[1].innerHTML).toContain('<a href="url">')
+        expect(linkCells?.[1].innerHTML).toContain('text')
+        expect(linkCells?.[1].innerHTML).toContain('</a>')
+        expect(linkCells?.[2].innerHTML).toContain('<a href="url">')
+        expect(linkCells?.[2].innerHTML).toContain('text')
+        expect(linkCells?.[2].innerHTML).toContain('</a>')
+    })
+
+    //     test('handles malformed mixed content gracefully', () => {
+    //         const source = `
+    // | Feature | Markdown | HTML |
+    // |---------|----------|------|
+    // | Bold | **unclosed | <strong>unclosed |
+    // | Italic | *text** | <em>text</strong> |`
+
+    //         render(SvelteMarkdown, { source })
+
+    //         // Verify table structure remains intact
+    //         const table = screen.getByRole('table')
+    //         expect(table).toBeInTheDocument()
+
+    //         // Verify headers are present
+    //         const headers = screen.getAllByRole('columnheader')
+    //         expect(headers).toHaveLength(3)
+
+    //         // Check that content is rendered as fallback text when malformed
+    //         expect(screen.getByText('**unclosed')).toBeInTheDocument()
+    //         expect(screen.getByText('<strong>unclosed')).toBeInTheDocument()
+    //     })
+
+    test('handles nested markdown within HTML in table cells', () => {
+        const source = `
+| Type | Content |
+|------|---------|
+| Nested | <div>**bold** and *italic*</div> |
+| Mixed List | <ul><li>Item 1</li><li>Item 2</li></ul> |
+| Code | <code>\`inline code\`</code> |`
+
+        const { container } = render(SvelteMarkdown, { source })
+
+        const tbody = container.querySelector('tbody')
+        const rows = tbody?.querySelectorAll('tr')
+        expect(rows?.length).toBeGreaterThan(0)
+
+        // Check nested formatting
+        const nestedCell = rows?.[0].querySelectorAll('td')[1]
+        expect(nestedCell.querySelector('div strong')).toBeInTheDocument()
+        expect(nestedCell.querySelector('div em')).toBeInTheDocument()
+
+        // Check mixed list - updated to use proper HTML list structure
+        const listCell = rows?.[1].querySelectorAll('td')[1]
+        const ul = listCell.querySelector('ul')
+        expect(ul).toBeInTheDocument()
+        const listItems = ul?.querySelectorAll('li')
+        expect(listItems).toHaveLength(2)
+
+        // Check code formatting
+        const codeCell = rows?.[2].querySelectorAll('td')[1]
+        expect(codeCell.querySelector('code')).toBeInTheDocument()
+    })
+
+    test('handles complex table cell alignments with mixed content', () => {
+        const source = `
+| Left | Center | Right |
+|:-----|:------:|------:|
+| <em>italic</em> | **centered** | [right](url) |
+| *left* | <strong>middle</strong> | <div align="right">end</div> |`
+
+        const { container } = render(SvelteMarkdown, { source })
+
+        const tbody = container.querySelector('tbody')
+        const rows = tbody?.querySelectorAll('tr')
+        expect(rows?.length).toBeGreaterThan(0)
+
+        // Check alignments and content
+        const firstRow = rows?.[0].querySelectorAll('td')
+        // Only check center and right alignment since left is default
+        expect(firstRow[1]).toHaveStyle({ textAlign: 'center' })
+        expect(firstRow[2]).toHaveStyle({ textAlign: 'right' })
+
+        // Check mixed content rendering
+        expect(firstRow[0].querySelector('em')).toBeInTheDocument()
+        expect(firstRow[1].querySelector('strong')).toBeInTheDocument()
+        expect(firstRow[2].querySelector('a')).toBeInTheDocument()
+    })
+})
