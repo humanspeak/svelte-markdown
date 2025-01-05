@@ -1,4 +1,42 @@
 <script lang="ts">
+    /**
+     * @component Parser
+     *
+     * Recursive markdown token parser that transforms tokens into Svelte components.
+     * This component is the core rendering engine of the markdown system, handling
+     * the transformation of parsed markdown tokens into their corresponding Svelte components.
+     *
+     * @example
+     * ```svelte
+     * <Parser
+     *   tokens={parsedTokens}
+     *   renderers={customRenderers}
+     *   type="paragraph"
+     * />
+     * ```
+     *
+     * Features:
+     * - Recursive token parsing
+     * - Custom renderer support
+     * - Special handling for tables, lists, and HTML content
+     * - Type-safe component rendering
+     *
+     * @typedef {Object} Props
+     * @property {string} [type] - Token type for direct component rendering
+     * @property {Token[] | TokensList} [tokens] - Markdown tokens to be rendered
+     * @property {Tokens.TableCell[]} [header] - Table header cells for table rendering
+     * @property {Tokens.TableCell[][]} [rows] - Table row cells for table rendering
+     * @property {boolean} [ordered=false] - Whether the list is ordered (for list rendering)
+     * @property {Renderers} renderers - Component mapping for markdown elements
+     *
+     * Implementation Notes:
+     * - Uses recursive rendering for nested tokens
+     * - Implements special logic for tables, lists, and HTML content
+     * - Handles component prop spreading carefully to avoid conflicts
+     * - Maintains type safety through TypeScript interfaces
+     *
+     */
+
     import Parser from './Parser.svelte'
     import Html from './renderers/html/index.js'
     import type {
@@ -44,10 +82,11 @@
             <renderers.tablehead {...rest}>
                 <renderers.tablerow {...rest}>
                     {#each header ?? [] as headerItem, i}
+                        {@const { align: _align, ...cellRest } = rest}
                         <renderers.tablecell
                             header={true}
-                            align={(rest.align as string[])[i] || 'center'}
-                            {...rest}
+                            align={(rest.align as string[])[i]}
+                            {...cellRest}
                         >
                             <Parser tokens={headerItem.tokens} {renderers} />
                         </renderers.tablecell>
@@ -58,12 +97,30 @@
                 {#each rows ?? [] as row}
                     <renderers.tablerow {...rest}>
                         {#each row ?? [] as cells, i}
+                            {@const { align: _align, ...cellRest } = rest}
                             <renderers.tablecell
                                 header={false}
-                                align={(rest.align as string[])[i] ?? 'center'}
-                                {...rest}
+                                align={(rest.align as string[])[i]}
+                                {...cellRest}
                             >
-                                <Parser tokens={cells.tokens} {renderers} />
+                                {#if cells.type === 'html'}
+                                    {@const { tag, ...localRest } = cells}
+                                    {@const htmlTag = cells.tag as keyof typeof Html}
+                                    {#if htmlTag in Html}
+                                        {@const HtmlComponent = Html[htmlTag]}
+                                        <HtmlComponent {...cells}>
+                                            {#if cells.tokens?.length}
+                                                <Parser
+                                                    tokens={cells.tokens}
+                                                    {renderers}
+                                                    {...localRest}
+                                                />
+                                            {/if}
+                                        </HtmlComponent>
+                                    {/if}
+                                {:else}
+                                    <Parser tokens={cells.tokens} {renderers} />
+                                {/if}
                             </renderers.tablecell>
                         {/each}
                     </renderers.tablerow>

@@ -3,3 +3,5 @@ When asking for python doc strings please always do it from a senior google engi
 When creating test cases for javascript, please use the vitest library.
 
 We are using svelte5, so please use the svelte5 syntax.
+
+When adding comments to the components please use this webpage for references: https://svelte.dev/docs/svelte/faq#How-do-I-document-my-components

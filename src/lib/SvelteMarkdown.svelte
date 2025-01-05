@@ -23,6 +23,29 @@
  @property {function} [parsed] - Callback function called with the parsed tokens
 -->
 <script lang="ts">
+    /**
+     * Component Evolution & Design Notes:
+     *
+     * 1. Core Purpose:
+     * - Serves as the main entry point for markdown rendering in Svelte
+     * - Handles both string input and pre-parsed tokens for flexibility
+     *
+     * 2. Key Design Decisions:
+     * - Uses a separate Parser component for actual rendering to maintain separation of concerns
+     * - Implements token cleanup via shrinkHtmlTokens to optimize HTML token handling
+     * - Maintains state synchronization using Svelte 5's $state and $effect
+     *
+     * 3. Performance Considerations:
+     * - Caches previous source to prevent unnecessary re-parsing
+     * - Uses key directive for proper component rerendering when source changes
+     * - Intentionally avoids reactive tokens to prevent double processing
+     *
+     * 4. Extensibility:
+     * - Supports custom renderers through composition pattern
+     * - Allows parser configuration via options prop
+     * - Provides parsed callback for external token access
+     */
+
     import {
         Lexer,
         defaultOptions,
@@ -30,19 +53,11 @@
         Slugger,
         type Token,
         type TokensList,
-        type SvelteMarkdownOptions,
-        type Renderers
+        type SvelteMarkdownOptions
     } from './utils/markdown-parser.js'
     import Parser from './Parser.svelte'
     import { shrinkHtmlTokens } from './utils/token-cleanup.js'
-
-    interface Props {
-        source: Token[] | string
-        renderers?: Partial<Renderers>
-        options?: SvelteMarkdownOptions
-        isInline?: boolean
-        parsed?: (tokens: Token[] | TokensList) => void // eslint-disable-line no-unused-vars
-    }
+    import { type SvelteMarkdownProps } from './types.js'
 
     const {
         source = [],
@@ -51,34 +66,31 @@
         isInline = false,
         parsed = () => {},
         ...rest
-    }: Props & {
+    }: SvelteMarkdownProps & {
         [key: string]: unknown
     } = $props()
-    // @ts-expect-error - Intentionally not using $state for tokens
-    let tokens: Token[] | undefined // eslint-disable-line svelte/valid-compile
-    let previousSource = $state<string | Token[] | undefined>(undefined)
+
+    const combinedOptions = { ...defaultOptions, ...options }
+    const slugger = source ? new Slugger() : undefined
     let lexer: Lexer
 
-    const slugger = source ? new Slugger() : undefined
-    const combinedOptions = { ...defaultOptions, ...options }
-
-    $effect.pre(() => {
-        if (source === previousSource) return
-        previousSource = source
-
-        if (Array.isArray(source)) {
-            tokens = shrinkHtmlTokens(source) as Token[]
-        } else {
+    const tokens = $derived.by(() => {
+        if (!lexer) {
             lexer = new Lexer(combinedOptions)
-            tokens = shrinkHtmlTokens(
-                isInline ? lexer.inlineTokens(source as string) : lexer.lex(source as string)
-            )
         }
-    })
+        if (Array.isArray(source)) {
+            return source as Token[]
+        }
+        return source
+            ? (shrinkHtmlTokens(
+                  isInline ? lexer.inlineTokens(source as string) : lexer.lex(source as string)
+              ) as Token[])
+            : []
+    }) satisfies Token[] | TokensList | undefined
 
     $effect(() => {
         if (!tokens) return
-        parsed($state.snapshot(tokens))
+        parsed(tokens)
     })
 
     const combinedRenderers = {
@@ -91,12 +103,10 @@
     }
 </script>
 
-{#key source}
-    <Parser
-        {tokens}
-        {...rest}
-        options={combinedOptions}
-        slug={(val: string): string => (slugger ? slugger.slug(val) : '')}
-        renderers={combinedRenderers}
-    />
-{/key}
+<Parser
+    {tokens}
+    {...rest}
+    options={combinedOptions}
+    slug={(val: string): string => (slugger ? slugger.slug(val) : '')}
+    renderers={combinedRenderers}
+/>

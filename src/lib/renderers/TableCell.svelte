@@ -8,10 +8,13 @@
     }
 
     const { header, align, children }: Props = $props()
+
+    // Convert alignment to style object if alignment is specified
+    const style = $derived(align ? `text-align: ${align}` : undefined)
 </script>
 
 {#if header}
-    <th {align}>{@render children?.()}</th>
+    <th {style}>{@render children?.()}</th>
 {:else}
-    <td {align}>{@render children?.()}</td>
+    <td {style}>{@render children?.()}</td>
 {/if}

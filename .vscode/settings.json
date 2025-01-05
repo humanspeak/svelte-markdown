@@ -11,6 +11,5 @@
     "editor.formatOnPaste": true,
     "files.exclude": {
         "**/node_modules": true,
-        "**/*.test.ts": true
     }
 }

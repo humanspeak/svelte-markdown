@@ -2,17 +2,33 @@ import { Parser } from 'htmlparser2'
 import type { Token } from 'marked'
 
 /**
- * Regular expression pattern to match HTML tags
- * Matches both opening and closing tags with optional attributes
- * Example matches: <div>, </div>, <img src="...">, <input type="text"/>
+ * Matches HTML tags with comprehensive coverage of edge cases.
+ * Pattern breakdown:
+ * - <\/?         : Matches opening < and optional /
+ * - [a-zA-Z]     : Tag must start with letter
+ * - [a-zA-Z0-9-] : Subsequent chars can be letters, numbers, or hyphens
+ * - (?:\s+[^>]*)?: Optional attributes
+ * - >            : Closing bracket
+ *
+ * @const {RegExp}
  */
 const HTML_TAG_PATTERN = /<\/?([a-zA-Z][a-zA-Z0-9-]{0,})(?:\s+[^>]*)?>/
 const htmlTagRegex = new RegExp(HTML_TAG_PATTERN)
 
 /**
- * Determines if a string contains an HTML opening or closing tag
- * @param raw - The string to check for HTML tags
- * @returns Object containing the tag name and whether it's an opening tag, or null if no tag found
+ * Analyzes a string to determine if it contains an HTML tag and its characteristics.
+ *
+ * @param {string} raw - Raw string potentially containing an HTML tag
+ * @returns {Object|null} Returns null if no tag found, otherwise returns:
+ *    {
+ *      tag: string      - The name of the HTML tag
+ *      isOpening: bool  - True if opening tag, false if closing
+ *    }
+ *
+ * @example
+ * isHtmlOpenTag('<div class="test">') // Returns { tag: 'div', isOpening: true }
+ * isHtmlOpenTag('</span>') // Returns { tag: 'span', isOpening: false }
+ * isHtmlOpenTag('plain text') // Returns null
  */
 export const isHtmlOpenTag = (raw: string): { tag: string; isOpening: boolean } | null => {
     // First check if the string contains any HTML tags at all (faster than full regex match)
@@ -25,96 +41,185 @@ export const isHtmlOpenTag = (raw: string): { tag: string; isOpening: boolean } 
 }
 
 /**
- * Extracts HTML attributes from a tag string
- * @param raw - The raw HTML tag string (e.g., '<div class="example" id="test">')
- * @returns An object containing key-value pairs of attributes
+ * Parses HTML attributes from a tag string into a structured object.
+ * Handles both single and double quoted attributes.
+ *
+ * @param {string} raw - Raw HTML tag string containing attributes
+ * @returns {Record<string, string>} Map of attribute names to their values
+ *
+ * @example
+ * extractAttributes('<div class="foo" id="bar">')
+ * // Returns { class: 'foo', id: 'bar' }
+ *
+ * @internal
  */
-const extractAttributes = (raw: string): Record<string, string> => {
+export const extractAttributes = (raw: string): Record<string, string> => {
     const attributes: Record<string, string> = {}
-    // Match pattern: attribute="value" or attribute='value'
-    const attributeRegex = /(\w+)=["']([^"']*?)["']/g
-    let match
 
-    // Continue finding matches until we've processed all attributes
-    while ((match = attributeRegex.exec(raw)) !== null) {
+    // First pass: handle regular and unclosed quoted attributes
+    const quotedRegex = /([a-zA-Z][\w-]*?)=["']([^"']*?)(?:["']|$)/g
+    let match
+    while ((match = quotedRegex.exec(raw)) !== null) {
         const [, key, value] = match
         attributes[key] = value.trim()
+    }
+
+    // Second pass: handle boolean attributes
+    const booleanRegex = /(?:^|\s)([a-zA-Z][\w-]*?)(?=[\s>]|$)/g
+    while ((match = booleanRegex.exec(raw)) !== null) {
+        const [, key] = match
+        if (key && !attributes[key]) {
+            attributes[key] = ''
+        }
     }
 
     return attributes
 }
 
 /**
- * Parses an HTML string into an array of tokens
- * Uses htmlparser2 to properly handle nested tags and text content
- * @param html - The HTML string to parse
- * @returns Array of tokens representing the HTML structure
+ * Converts an HTML string into a sequence of tokens using htmlparser2.
+ * Handles complex nested structures while maintaining proper order and relationships.
+ *
+ * Key features:
+ * - Preserves original HTML structure without automatic tag closing
+ * - Handles self-closing tags with proper XML syntax (e.g., <br/> instead of <br>)
+ * - Gracefully handles malformed HTML by preserving the original structure
+ * - Maintains attribute information in opening tags
+ * - Processes text content between tags
+ *
+ * @param {string} html - HTML string to be parsed
+ * @returns {Token[]} Array of tokens representing the HTML structure
+ *
+ * @example
+ * // Well-formed HTML
+ * parseHtmlBlock('<div>Hello <span>world</span></div>')
+ * // Returns [
+ * //   { type: 'html', raw: '<div>', ... },
+ * //   { type: 'text', raw: 'Hello ', ... },
+ * //   { type: 'html', raw: '<span>', ... },
+ * //   { type: 'text', raw: 'world', ... },
+ * //   { type: 'html', raw: '</span>', ... },
+ * //   { type: 'html', raw: '</div>', ... }
+ * // ]
+ *
+ * // Self-closing tags
+ * parseHtmlBlock('<div>Before<br/>After</div>')
+ * // Returns [
+ * //   { type: 'html', raw: '<div>', ... },
+ * //   { type: 'text', raw: 'Before', ... },
+ * //   { type: 'html', raw: '<br/>', ... },
+ * //   { type: 'text', raw: 'After', ... },
+ * //   { type: 'html', raw: '</div>', ... }
+ * // ]
+ *
+ * // Malformed HTML
+ * parseHtmlBlock('<div>Unclosed')
+ * // Returns [
+ * //   { type: 'html', raw: '<div>', ... },
+ * //   { type: 'text', raw: 'Unclosed', ... }
+ * // ]
+ *
+ * @internal
  */
-const parseHtmlBlock = (html: string): Token[] => {
+export const parseHtmlBlock = (html: string): Token[] => {
     const tokens: Token[] = []
-    // Buffer for accumulating text content between tags
     let currentText = ''
+    const selfClosingTags =
+        /^(br|hr|img|input|link|meta|area|base|col|embed|keygen|param|source|track|wbr)$/i
+    const openTags: string[] = []
 
-    const parser = new Parser({
-        // Called when an opening tag is encountered (<div>, <span>, etc.)
-        onopentag: (name, attributes) => {
-            // If we have accumulated any text, create a text token first
-            if (currentText.trim()) {
-                tokens.push({
-                    type: 'text',
-                    raw: currentText,
-                    text: currentText
-                })
-                currentText = ''
+    const parser = new Parser(
+        {
+            onopentag: (name, attributes) => {
+                if (currentText.trim()) {
+                    tokens.push({
+                        type: 'text',
+                        raw: currentText,
+                        text: currentText
+                    })
+                    currentText = ''
+                }
+
+                openTags.push(name)
+
+                if (selfClosingTags.test(name)) {
+                    tokens.push({
+                        type: 'html',
+                        raw: `<${name}${Object.entries(attributes)
+                            .map(([key, value]) => ` ${key}="${value}"`)
+                            .join('')}/>`,
+                        tag: name,
+                        attributes
+                    })
+                } else {
+                    tokens.push({
+                        type: 'html',
+                        raw: `<${name}${Object.entries(attributes)
+                            .map(([key, value]) => ` ${key}="${value}"`)
+                            .join('')}>`,
+                        tag: name,
+                        attributes
+                    })
+                }
+            },
+            ontext: (text) => {
+                currentText += text
+            },
+            onclosetag: (name) => {
+                if (currentText.trim()) {
+                    tokens.push({
+                        type: 'text',
+                        raw: currentText,
+                        text: currentText
+                    })
+                    currentText = ''
+                }
+
+                // Only add closing tag if we found its opening tag
+                // and it's not a self-closing tag
+                if (openTags.includes(name) && !selfClosingTags.test(name)) {
+                    if (html.includes(`</${name}>`)) {
+                        tokens.push({
+                            type: 'html',
+                            raw: `</${name}>`,
+                            tag: name
+                        })
+                    }
+                    openTags.splice(openTags.indexOf(name), 1)
+                }
             }
-            // Create a token for the opening tag with its attributes
-            tokens.push({
-                type: 'html',
-                raw: `<${name}${Object.entries(attributes)
-                    .map(([key, value]) => ` ${key}="${value}"`)
-                    .join('')}>`,
-                tag: name,
-                attributes
-            })
         },
-        // Called for text content between tags
-        ontext: (text) => {
-            currentText += text
-        },
-        // Called when a closing tag is encountered (</div>, </span>, etc.)
-        onclosetag: (name) => {
-            // Push any accumulated text before the closing tag
-            if (currentText.trim()) {
-                tokens.push({
-                    type: 'text',
-                    raw: currentText,
-                    text: currentText
-                })
-                currentText = ''
-            }
-            // Create a token for the closing tag
-            tokens.push({
-                type: 'html',
-                raw: `</${name}>`,
-                tag: name
-            })
+        {
+            xmlMode: true,
+            // Add this to prevent automatic tag closing
+            recognizeSelfClosing: true
         }
-    })
+    )
 
-    // Process the HTML string
     parser.write(html)
     parser.end()
+
+    if (currentText.trim()) {
+        tokens.push({
+            type: 'text',
+            raw: currentText,
+            text: currentText
+        })
+    }
 
     return tokens
 }
 
 /**
- * Checks if an HTML string contains multiple tags
- * Used to determine if further parsing is needed
- * @param html - The HTML string to check
- * @returns boolean indicating if multiple tags are present
+ * Determines if an HTML string contains multiple distinct tags.
+ * Used as a preprocessing step to optimize token processing.
+ *
+ * @param {string} html - HTML string to analyze
+ * @returns {boolean} True if multiple tags are present
+ *
+ * @internal
  */
-const containsMultipleTags = (html: string): boolean => {
+export const containsMultipleTags = (html: string): boolean => {
     // Count the number of opening tags (excluding self-closing)
     const openingTags = html.match(/<[a-zA-Z][^>]*>/g) || []
     const closingTags = html.match(/<\/[a-zA-Z][^>]*>/g) || []
@@ -122,16 +227,52 @@ const containsMultipleTags = (html: string): boolean => {
 }
 
 /**
- * Main function to process and shrink HTML tokens
- * Breaks down complex HTML structures into manageable tokens
- * @param tokens - Array of tokens to process
- * @returns Processed array of tokens with nested structure
+ * Primary entry point for HTML token processing. Transforms flat token arrays
+ * into properly nested structures while preserving HTML semantics.
+ *
+ * Key features:
+ * - Breaks down complex HTML structures into atomic tokens
+ * - Maintains attribute information
+ * - Preserves proper nesting relationships
+ * - Handles malformed HTML gracefully
+ *
+ * @param {Token[]} tokens - Array of tokens to process
+ * @returns {Token[]} Processed and properly nested token array
+ *
+ * @example
+ * const tokens = [
+ *   { type: 'html', raw: '<div class="wrapper">' },
+ *   { type: 'text', raw: 'content' },
+ *   { type: 'html', raw: '</div>' }
+ * ];
+ * shrinkHtmlTokens(tokens);
+ * // Returns nested structure with proper token relationships
+ *
+ * @public
  */
 export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
     const result: Token[] = []
-
     for (const token of tokens) {
-        if (token.type === 'html' && containsMultipleTags(token.raw)) {
+        if (token.type === 'table') {
+            // Process header cells
+            if (token.header) {
+                token.header = token.header.map((cell) => ({
+                    ...cell,
+                    tokens: cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
+                }))
+            }
+
+            // Process row cells
+            if (token.rows) {
+                token.rows = token.rows.map((row) =>
+                    row.map((cell) => ({
+                        ...cell,
+                        tokens: cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
+                    }))
+                )
+            }
+            result.push(token)
+        } else if (token.type === 'html' && containsMultipleTags(token.raw)) {
             // Parse HTML with multiple tags into separate tokens
             result.push(...parseHtmlBlock(token.raw))
         } else {
@@ -144,26 +285,22 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
 }
 
 /**
- * Processes HTML tokens to create a nested structure
- * Handles matching opening and closing tags, maintains proper nesting
- * and preserves attributes
+ * Core token processing logic that handles the complexities of HTML nesting.
+ * Uses a stack-based approach to match opening and closing tags while
+ * maintaining proper hierarchical relationships.
  *
- * @param tokens - Array of tokens to process
- * @returns Processed array of tokens with proper nesting structure
+ * Implementation details:
+ * - Maintains a stack of opening tags
+ * - Processes nested tokens recursively
+ * - Preserves HTML attributes
+ * - Handles malformed HTML gracefully
  *
- * @example
- * Input tokens: [
- *   { type: 'html', raw: '<div>' },
- *   { type: 'text', raw: 'Hello' },
- *   { type: 'html', raw: '</div>' }
- * ]
- * Output: [
- *   { type: 'html', tag: 'div', tokens: [
- *     { type: 'text', raw: 'Hello' }
- *   ]}
- * ]
+ * @param {Token[]} tokens - Tokens to be processed
+ * @returns {Token[]} Processed tokens with proper nesting structure
+ *
+ * @internal
  */
-const processHtmlTokens = (tokens: Token[]): Token[] => {
+export const processHtmlTokens = (tokens: Token[]): Token[] => {
     const result: Token[] = []
     // Stack to keep track of opening tags and their positions
     const stack: { tag: string; startIndex: number }[] = []
