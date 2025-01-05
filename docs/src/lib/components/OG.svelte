@@ -75,7 +75,7 @@
             <div
                 class="flex flex-shrink-0 items-center rounded-full bg-white/10 px-6 py-3 backdrop-blur-sm"
             >
-                <img src="{url}/humanspeak-bubble.svg" alt="Logo" class="mr-2 h-8" />
+                <img src="{url}/humanspeak.svg" alt="Logo" class="mr-2 h-8" />
                 <span class="text-xl font-medium">by Humanspeak</span>
             </div>
             <div class="flex items-center rounded-full bg-white/10 px-6 py-3 backdrop-blur-sm">

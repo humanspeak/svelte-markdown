@@ -15,13 +15,13 @@
                             <div class="flex w-full gap-2">
                                 {#if $mode === 'dark'}
                                     <img
-                                        src="./humanspeak-bubble-dark.svg"
+                                        src="./humanspeak-dark.svg"
                                         alt="humanspeak logo"
                                         class="h-5"
                                     />
                                 {:else}
                                     <img
-                                        src="./humanspeak-bubble.svg"
+                                        src="./humanspeak.svg"
                                         alt="humanspeak logo"
                                         class="h-5"
                                     />
