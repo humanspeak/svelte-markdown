@@ -70,23 +70,23 @@
         [key: string]: unknown
     } = $props()
 
+    const combinedOptions = { ...defaultOptions, ...options }
+    const slugger = source ? new Slugger() : undefined
     let lexer: Lexer
 
     let tokens = $derived.by(() => {
         if (!lexer) {
             lexer = new Lexer(combinedOptions)
         }
-        const processedTokens = Array.isArray(source)
-            ? source
-            : isInline
-              ? lexer.inlineTokens(source as string)
-              : lexer.lex(source as string)
-
-        return shrinkHtmlTokens(processedTokens) as Token[]
+        if (Array.isArray(source)) {
+            return source as Token[]
+        }
+        return source
+            ? (shrinkHtmlTokens(
+                  isInline ? lexer.inlineTokens(source as string) : lexer.lex(source as string)
+              ) as Token[])
+            : []
     }) satisfies Token[] | TokensList | undefined
-
-    const slugger = source ? new Slugger() : undefined
-    const combinedOptions = { ...defaultOptions, ...options }
 
     $effect(() => {
         if (!tokens) return
