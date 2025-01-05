@@ -53,16 +53,24 @@ export const isHtmlOpenTag = (raw: string): { tag: string; isOpening: boolean } 
  *
  * @internal
  */
-const extractAttributes = (raw: string): Record<string, string> => {
+export const extractAttributes = (raw: string): Record<string, string> => {
     const attributes: Record<string, string> = {}
-    // Match pattern: attribute="value" or attribute='value'
-    const attributeRegex = /(\w+)=["']([^"']*?)["']/g
-    let match
 
-    // Continue finding matches until we've processed all attributes
-    while ((match = attributeRegex.exec(raw)) !== null) {
+    // First pass: handle regular and unclosed quoted attributes
+    const quotedRegex = /([a-zA-Z][\w-]*?)=["']([^"']*?)(?:["']|$)/g
+    let match
+    while ((match = quotedRegex.exec(raw)) !== null) {
         const [, key, value] = match
         attributes[key] = value.trim()
+    }
+
+    // Second pass: handle boolean attributes
+    const booleanRegex = /(?:^|\s)([a-zA-Z][\w-]*?)(?=[\s>]|$)/g
+    while ((match = booleanRegex.exec(raw)) !== null) {
+        const [, key] = match
+        if (key && !attributes[key]) {
+            attributes[key] = ''
+        }
     }
 
     return attributes
@@ -81,60 +89,84 @@ const extractAttributes = (raw: string): Record<string, string> => {
  *
  * @internal
  */
-const parseHtmlBlock = (html: string): Token[] => {
+export const parseHtmlBlock = (html: string): Token[] => {
     const tokens: Token[] = []
-    // Buffer for accumulating text content between tags
     let currentText = ''
+    const selfClosingTags =
+        /^(br|hr|img|input|link|meta|area|base|col|embed|keygen|param|source|track|wbr)$/i
 
-    const parser = new Parser({
-        // Called when an opening tag is encountered (<div>, <span>, etc.)
-        onopentag: (name, attributes) => {
-            // If we have accumulated any text, create a text token first
-            if (currentText.trim()) {
-                tokens.push({
-                    type: 'text',
-                    raw: currentText,
-                    text: currentText
-                })
-                currentText = ''
+    const parser = new Parser(
+        {
+            onopentag: (name, attributes) => {
+                if (currentText.trim()) {
+                    tokens.push({
+                        type: 'text',
+                        raw: currentText,
+                        text: currentText
+                    })
+                    currentText = ''
+                }
+
+                // Check if it's a self-closing tag
+                if (selfClosingTags.test(name)) {
+                    tokens.push({
+                        type: 'html',
+                        raw: `<${name}${Object.entries(attributes)
+                            .map(([key, value]) => ` ${key}="${value}"`)
+                            .join('')}/>`, // Note the /> ending
+                        tag: name,
+                        attributes
+                    })
+                } else {
+                    tokens.push({
+                        type: 'html',
+                        raw: `<${name}${Object.entries(attributes)
+                            .map(([key, value]) => ` ${key}="${value}"`)
+                            .join('')}>`,
+                        tag: name,
+                        attributes
+                    })
+                }
+            },
+            ontext: (text) => {
+                currentText += text
+            },
+            onclosetag: (name) => {
+                if (currentText.trim()) {
+                    tokens.push({
+                        type: 'text',
+                        raw: currentText,
+                        text: currentText
+                    })
+                    currentText = ''
+                }
+
+                // Only add closing tag for non-self-closing elements
+                if (!selfClosingTags.test(name)) {
+                    tokens.push({
+                        type: 'html',
+                        raw: `</${name}>`,
+                        tag: name
+                    })
+                }
             }
-            // Create a token for the opening tag with its attributes
-            tokens.push({
-                type: 'html',
-                raw: `<${name}${Object.entries(attributes)
-                    .map(([key, value]) => ` ${key}="${value}"`)
-                    .join('')}>`,
-                tag: name,
-                attributes
-            })
         },
-        // Called for text content between tags
-        ontext: (text) => {
-            currentText += text
-        },
-        // Called when a closing tag is encountered (</div>, </span>, etc.)
-        onclosetag: (name) => {
-            // Push any accumulated text before the closing tag
-            if (currentText.trim()) {
-                tokens.push({
-                    type: 'text',
-                    raw: currentText,
-                    text: currentText
-                })
-                currentText = ''
-            }
-            // Create a token for the closing tag
-            tokens.push({
-                type: 'html',
-                raw: `</${name}>`,
-                tag: name
-            })
+        {
+            xmlMode: true
         }
-    })
+    )
 
-    // Process the HTML string
     parser.write(html)
     parser.end()
+
+    // Handle any remaining text
+    if (currentText.trim()) {
+        tokens.push({
+            type: 'text',
+            raw: currentText,
+            text: currentText
+        })
+    }
 
     return tokens
 }
@@ -148,7 +180,7 @@ const parseHtmlBlock = (html: string): Token[] => {
  *
  * @internal
  */
-const containsMultipleTags = (html: string): boolean => {
+export const containsMultipleTags = (html: string): boolean => {
     // Count the number of opening tags (excluding self-closing)
     const openingTags = html.match(/<[a-zA-Z][^>]*>/g) || []
     const closingTags = html.match(/<\/[a-zA-Z][^>]*>/g) || []
@@ -211,7 +243,7 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
  *
  * @internal
  */
-const processHtmlTokens = (tokens: Token[]): Token[] => {
+export const processHtmlTokens = (tokens: Token[]): Token[] => {
     const result: Token[] = []
     // Stack to keep track of opening tags and their positions
     const stack: { tag: string; startIndex: number }[] = []
