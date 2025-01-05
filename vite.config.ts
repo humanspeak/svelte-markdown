@@ -4,6 +4,11 @@ import { configDefaults, defineConfig } from 'vitest/config'
 
 export default defineConfig({
     plugins: [sveltekit(), svelteTesting()],
+    resolve: process.env.VITEST
+        ? {
+              conditions: ['browser']
+          }
+        : undefined,
     test: {
         include: ['src/**/*.test.ts'],
         globals: true,
