@@ -80,12 +80,44 @@ export const extractAttributes = (raw: string): Record<string, string> => {
  * Converts an HTML string into a sequence of tokens using htmlparser2.
  * Handles complex nested structures while maintaining proper order and relationships.
  *
+ * Key features:
+ * - Preserves original HTML structure without automatic tag closing
+ * - Handles self-closing tags with proper XML syntax (e.g., <br/> instead of <br>)
+ * - Gracefully handles malformed HTML by preserving the original structure
+ * - Maintains attribute information in opening tags
+ * - Processes text content between tags
+ *
  * @param {string} html - HTML string to be parsed
  * @returns {Token[]} Array of tokens representing the HTML structure
  *
  * @example
+ * // Well-formed HTML
  * parseHtmlBlock('<div>Hello <span>world</span></div>')
- * // Returns structured token array with proper nesting
+ * // Returns [
+ * //   { type: 'html', raw: '<div>', ... },
+ * //   { type: 'text', raw: 'Hello ', ... },
+ * //   { type: 'html', raw: '<span>', ... },
+ * //   { type: 'text', raw: 'world', ... },
+ * //   { type: 'html', raw: '</span>', ... },
+ * //   { type: 'html', raw: '</div>', ... }
+ * // ]
+ *
+ * // Self-closing tags
+ * parseHtmlBlock('<div>Before<br/>After</div>')
+ * // Returns [
+ * //   { type: 'html', raw: '<div>', ... },
+ * //   { type: 'text', raw: 'Before', ... },
+ * //   { type: 'html', raw: '<br/>', ... },
+ * //   { type: 'text', raw: 'After', ... },
+ * //   { type: 'html', raw: '</div>', ... }
+ * // ]
+ *
+ * // Malformed HTML
+ * parseHtmlBlock('<div>Unclosed')
+ * // Returns [
+ * //   { type: 'html', raw: '<div>', ... },
+ * //   { type: 'text', raw: 'Unclosed', ... }
+ * // ]
  *
  * @internal
  */
