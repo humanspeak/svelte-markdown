@@ -180,15 +180,51 @@ describe('testing default renderers', () => {
         expect(element).toContainElement(tableCellElement)
     })
 
-    test('short html renders properly', () => {
-        render(SvelteMarkdown, { source: 'a<sub>1</sub>' })
+    describe('html rendering', () => {
+        test('short html renders properly', () => {
+            render(SvelteMarkdown, { source: 'a<sub>1</sub>' })
 
-        const element = screen.getByText('1')
-        expect(element).toBeInTheDocument()
-        expect(element.nodeName).toBe('SUB')
+            const element = screen.getByText('1')
+            expect(element).toBeInTheDocument()
+            expect(element.nodeName).toBe('SUB')
 
-        const element2 = screen.getByText('a')
-        expect(element2).toBeInTheDocument()
-        expect(element2.nodeName).toBe('P')
+            const element2 = screen.getByText('a')
+            expect(element2).toBeInTheDocument()
+            expect(element2.nodeName).toBe('P')
+        })
+
+        test('renders nested html elements', () => {
+            render(SvelteMarkdown, {
+                source: '<div>Hello <span>nested <em>world</em></span></div>'
+            })
+
+            const emElement = screen.getByText('world')
+            expect(emElement).toBeInTheDocument()
+            expect(emElement.nodeName).toBe('EM')
+            expect(emElement.parentElement?.nodeName).toBe('SPAN')
+            expect(emElement.parentElement?.parentElement?.nodeName).toBe('DIV')
+        })
+
+        test('renders html with attributes', () => {
+            render(SvelteMarkdown, {
+                source: '<a href="https://example.com" class="link">Click me</a>'
+            })
+
+            const linkElement = screen.getByText('Click me')
+            expect(linkElement).toBeInTheDocument()
+            expect(linkElement.nodeName).toBe('A')
+            expect(linkElement).toHaveAttribute('href', 'https://example.com')
+            expect(linkElement).toHaveAttribute('class', 'link')
+        })
+
+        test('renders mixed markdown and html', () => {
+            render(SvelteMarkdown, {
+                source: '**Bold** text with <code>inline code</code> and *italic*'
+            })
+
+            expect(screen.getByText('Bold')).toHaveProperty('nodeName', 'STRONG')
+            expect(screen.getByText('inline code')).toHaveProperty('nodeName', 'CODE')
+            expect(screen.getByText('italic')).toHaveProperty('nodeName', 'EM')
+        })
     })
 })

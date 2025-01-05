@@ -58,14 +58,7 @@
     } from './utils/markdown-parser.js'
     import Parser from './Parser.svelte'
     import { shrinkHtmlTokens } from './utils/token-cleanup.js'
-
-    interface Props {
-        source: Token[] | string
-        renderers?: Partial<Renderers>
-        options?: SvelteMarkdownOptions
-        isInline?: boolean
-        parsed?: (tokens: Token[] | TokensList) => void // eslint-disable-line no-unused-vars
-    }
+    import { type SvelteMarkdownProps } from './types.js'
 
     const {
         source = [],
@@ -74,34 +67,31 @@
         isInline = false,
         parsed = () => {},
         ...rest
-    }: Props & {
+    }: SvelteMarkdownProps & {
         [key: string]: unknown
     } = $props()
-    // @ts-expect-error - Intentionally not using $state for tokens
-    let tokens: Token[] | undefined // eslint-disable-line svelte/valid-compile
-    let previousSource = $state<string | Token[] | undefined>(undefined)
+
     let lexer: Lexer
+
+    let tokens = $derived.by(() => {
+        if (Array.isArray(source)) {
+            return shrinkHtmlTokens(source) as Token[]
+        }
+
+        const currentLexer = new Lexer(options)
+        return shrinkHtmlTokens(
+            isInline
+                ? currentLexer.inlineTokens(source as string)
+                : currentLexer.lex(source as string)
+        )
+    }) as Token[] | TokensList | undefined
 
     const slugger = source ? new Slugger() : undefined
     const combinedOptions = { ...defaultOptions, ...options }
 
-    $effect.pre(() => {
-        if (source === previousSource) return
-        previousSource = source
-
-        if (Array.isArray(source)) {
-            tokens = shrinkHtmlTokens(source) as Token[]
-        } else {
-            lexer = new Lexer(combinedOptions)
-            tokens = shrinkHtmlTokens(
-                isInline ? lexer.inlineTokens(source as string) : lexer.lex(source as string)
-            )
-        }
-    })
-
     $effect(() => {
         if (!tokens) return
-        parsed($state.snapshot(tokens))
+        parsed(tokens)
     })
 
     const combinedRenderers = {
@@ -114,12 +104,10 @@
     }
 </script>
 
-{#key source}
-    <Parser
-        {tokens}
-        {...rest}
-        options={combinedOptions}
-        slug={(val: string): string => (slugger ? slugger.slug(val) : '')}
-        renderers={combinedRenderers}
-    />
-{/key}
+<Parser
+    {tokens}
+    {...rest}
+    options={combinedOptions}
+    slug={(val: string): string => (slugger ? slugger.slug(val) : '')}
+    renderers={combinedRenderers}
+/>
