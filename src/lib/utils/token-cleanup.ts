@@ -2,17 +2,33 @@ import { Parser } from 'htmlparser2'
 import type { Token } from 'marked'
 
 /**
- * Regular expression pattern to match HTML tags
- * Matches both opening and closing tags with optional attributes
- * Example matches: <div>, </div>, <img src="...">, <input type="text"/>
+ * Matches HTML tags with comprehensive coverage of edge cases.
+ * Pattern breakdown:
+ * - <\/?         : Matches opening < and optional /
+ * - [a-zA-Z]     : Tag must start with letter
+ * - [a-zA-Z0-9-] : Subsequent chars can be letters, numbers, or hyphens
+ * - (?:\s+[^>]*)?: Optional attributes
+ * - >            : Closing bracket
+ *
+ * @const {RegExp}
  */
 const HTML_TAG_PATTERN = /<\/?([a-zA-Z][a-zA-Z0-9-]{0,})(?:\s+[^>]*)?>/
 const htmlTagRegex = new RegExp(HTML_TAG_PATTERN)
 
 /**
- * Determines if a string contains an HTML opening or closing tag
- * @param raw - The string to check for HTML tags
- * @returns Object containing the tag name and whether it's an opening tag, or null if no tag found
+ * Analyzes a string to determine if it contains an HTML tag and its characteristics.
+ *
+ * @param {string} raw - Raw string potentially containing an HTML tag
+ * @returns {Object|null} Returns null if no tag found, otherwise returns:
+ *    {
+ *      tag: string      - The name of the HTML tag
+ *      isOpening: bool  - True if opening tag, false if closing
+ *    }
+ *
+ * @example
+ * isHtmlOpenTag('<div class="test">') // Returns { tag: 'div', isOpening: true }
+ * isHtmlOpenTag('</span>') // Returns { tag: 'span', isOpening: false }
+ * isHtmlOpenTag('plain text') // Returns null
  */
 export const isHtmlOpenTag = (raw: string): { tag: string; isOpening: boolean } | null => {
     // First check if the string contains any HTML tags at all (faster than full regex match)
@@ -25,9 +41,17 @@ export const isHtmlOpenTag = (raw: string): { tag: string; isOpening: boolean } 
 }
 
 /**
- * Extracts HTML attributes from a tag string
- * @param raw - The raw HTML tag string (e.g., '<div class="example" id="test">')
- * @returns An object containing key-value pairs of attributes
+ * Parses HTML attributes from a tag string into a structured object.
+ * Handles both single and double quoted attributes.
+ *
+ * @param {string} raw - Raw HTML tag string containing attributes
+ * @returns {Record<string, string>} Map of attribute names to their values
+ *
+ * @example
+ * extractAttributes('<div class="foo" id="bar">')
+ * // Returns { class: 'foo', id: 'bar' }
+ *
+ * @internal
  */
 const extractAttributes = (raw: string): Record<string, string> => {
     const attributes: Record<string, string> = {}
@@ -45,10 +69,17 @@ const extractAttributes = (raw: string): Record<string, string> => {
 }
 
 /**
- * Parses an HTML string into an array of tokens
- * Uses htmlparser2 to properly handle nested tags and text content
- * @param html - The HTML string to parse
- * @returns Array of tokens representing the HTML structure
+ * Converts an HTML string into a sequence of tokens using htmlparser2.
+ * Handles complex nested structures while maintaining proper order and relationships.
+ *
+ * @param {string} html - HTML string to be parsed
+ * @returns {Token[]} Array of tokens representing the HTML structure
+ *
+ * @example
+ * parseHtmlBlock('<div>Hello <span>world</span></div>')
+ * // Returns structured token array with proper nesting
+ *
+ * @internal
  */
 const parseHtmlBlock = (html: string): Token[] => {
     const tokens: Token[] = []
@@ -109,10 +140,13 @@ const parseHtmlBlock = (html: string): Token[] => {
 }
 
 /**
- * Checks if an HTML string contains multiple tags
- * Used to determine if further parsing is needed
- * @param html - The HTML string to check
- * @returns boolean indicating if multiple tags are present
+ * Determines if an HTML string contains multiple distinct tags.
+ * Used as a preprocessing step to optimize token processing.
+ *
+ * @param {string} html - HTML string to analyze
+ * @returns {boolean} True if multiple tags are present
+ *
+ * @internal
  */
 const containsMultipleTags = (html: string): boolean => {
     // Count the number of opening tags (excluding self-closing)
@@ -122,10 +156,28 @@ const containsMultipleTags = (html: string): boolean => {
 }
 
 /**
- * Main function to process and shrink HTML tokens
- * Breaks down complex HTML structures into manageable tokens
- * @param tokens - Array of tokens to process
- * @returns Processed array of tokens with nested structure
+ * Primary entry point for HTML token processing. Transforms flat token arrays
+ * into properly nested structures while preserving HTML semantics.
+ *
+ * Key features:
+ * - Breaks down complex HTML structures into atomic tokens
+ * - Maintains attribute information
+ * - Preserves proper nesting relationships
+ * - Handles malformed HTML gracefully
+ *
+ * @param {Token[]} tokens - Array of tokens to process
+ * @returns {Token[]} Processed and properly nested token array
+ *
+ * @example
+ * const tokens = [
+ *   { type: 'html', raw: '<div class="wrapper">' },
+ *   { type: 'text', raw: 'content' },
+ *   { type: 'html', raw: '</div>' }
+ * ];
+ * shrinkHtmlTokens(tokens);
+ * // Returns nested structure with proper token relationships
+ *
+ * @public
  */
 export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
     const result: Token[] = []
@@ -144,24 +196,20 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
 }
 
 /**
- * Processes HTML tokens to create a nested structure
- * Handles matching opening and closing tags, maintains proper nesting
- * and preserves attributes
+ * Core token processing logic that handles the complexities of HTML nesting.
+ * Uses a stack-based approach to match opening and closing tags while
+ * maintaining proper hierarchical relationships.
  *
- * @param tokens - Array of tokens to process
- * @returns Processed array of tokens with proper nesting structure
+ * Implementation details:
+ * - Maintains a stack of opening tags
+ * - Processes nested tokens recursively
+ * - Preserves HTML attributes
+ * - Handles malformed HTML gracefully
  *
- * @example
- * Input tokens: [
- *   { type: 'html', raw: '<div>' },
- *   { type: 'text', raw: 'Hello' },
- *   { type: 'html', raw: '</div>' }
- * ]
- * Output: [
- *   { type: 'html', tag: 'div', tokens: [
- *     { type: 'text', raw: 'Hello' }
- *   ]}
- * ]
+ * @param {Token[]} tokens - Tokens to be processed
+ * @returns {Token[]} Processed tokens with proper nesting structure
+ *
+ * @internal
  */
 const processHtmlTokens = (tokens: Token[]): Token[] => {
     const result: Token[] = []

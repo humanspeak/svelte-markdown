@@ -1,8 +1,11 @@
 import '@testing-library/jest-dom/vitest'
-import { vi } from 'vitest'
+import { afterEach, beforeEach, vi } from 'vitest'
 
 // Mock requestAnimationFrame and related timing functions
-global.requestAnimationFrame = vi.fn((cb) => setTimeout(cb, 0))
+global.requestAnimationFrame = vi.fn().mockImplementation((cb: FrameRequestCallback): number => {
+    const timeoutId = setTimeout(cb, 0)
+    return Number(timeoutId)
+})
 global.cancelAnimationFrame = vi.fn((id) => clearTimeout(id))
 
 // Reset mocks between tests
@@ -11,6 +14,6 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-    vi.runOnlyPendingTimers()
+    vi.clearAllTimers()
     vi.useRealTimers()
 })

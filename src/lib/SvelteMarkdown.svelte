@@ -23,6 +23,29 @@
  @property {function} [parsed] - Callback function called with the parsed tokens
 -->
 <script lang="ts">
+    /**
+     * Component Evolution & Design Notes:
+     *
+     * 1. Core Purpose:
+     * - Serves as the main entry point for markdown rendering in Svelte
+     * - Handles both string input and pre-parsed tokens for flexibility
+     *
+     * 2. Key Design Decisions:
+     * - Uses a separate Parser component for actual rendering to maintain separation of concerns
+     * - Implements token cleanup via shrinkHtmlTokens to optimize HTML token handling
+     * - Maintains state synchronization using Svelte 5's $state and $effect
+     *
+     * 3. Performance Considerations:
+     * - Caches previous source to prevent unnecessary re-parsing
+     * - Uses key directive for proper component rerendering when source changes
+     * - Intentionally avoids reactive tokens to prevent double processing
+     *
+     * 4. Extensibility:
+     * - Supports custom renderers through composition pattern
+     * - Allows parser configuration via options prop
+     * - Provides parsed callback for external token access
+     */
+
     import {
         Lexer,
         defaultOptions,
