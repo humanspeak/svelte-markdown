@@ -10,7 +10,7 @@
         <Sidebar.Menu>
             <Sidebar.MenuItem>
                 <Sidebar.MenuButton size="lg">
-                    {#snippet child({ props }: { props: any })}
+                    {#snippet child({ props }: { props: Record<string, unknown> })}
                         <a href="##" {...props}>
                             <div class="flex w-full gap-2">
                                 {#if $mode === 'dark'}
@@ -40,7 +40,7 @@
                 <Collapsible.Root open class="group/collapsible">
                     <Sidebar.MenuItem>
                         <Collapsible.Trigger>
-                            {#snippet child({ props }: { props: any })}
+                            {#snippet child({ props }: { props: Record<string, unknown> })}
                                 <Sidebar.MenuButton {...props}>
                                     Components{' '}
                                     <span in:fade={{ duration: 500 }} class="ml-auto">
@@ -75,10 +75,9 @@
                 <Collapsible.Root open class="group/collapsible">
                     <Sidebar.MenuItem>
                         <Collapsible.Trigger>
-                            {#snippet child({ props }: { props: any })}
+                            {#snippet child({ props }: { props: Record<string, unknown> })}
                                 <Sidebar.MenuButton {...props}>
                                     Love & Respect{' '}
-
                                     <span in:fade={{ duration: 500 }} class="ml-auto">
                                         {#if props['data-state'] === 'open'}
                                             <i class="fa-solid fa-plus fa-fw"></i>

@@ -17,52 +17,6 @@
         "lint:fix": "npm run format && eslint . --fix",
         "format": "prettier --write ."
     },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/humanspeak/svelte-markdown.git"
-    },
-    "author": "Humanspeak, Inc.",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/humanspeak/svelte-markdown/issues"
-    },
-    "tags": [
-        "svelte",
-        "markdown"
-    ],
-    "keywords": [
-        "svelte",
-        "markdown",
-        "renderer",
-        "parser",
-        "marked",
-        "component",
-        "sveltekit",
-        "svelte5",
-        "md",
-        "documentation",
-        "html",
-        "converter",
-        "formatting"
-    ],
-    "homepage": "https://markdown.svelte.page",
-    "files": [
-        "dist",
-        "!dist/**/*.test.*",
-        "!dist/**/*.spec.*"
-    ],
-    "sideEffects": [
-        "**/*.css"
-    ],
-    "svelte": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "type": "module",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "svelte": "./dist/index.js"
-        }
-    },
     "peerDependencies": {
         "svelte": "^5.0.0"
     },
@@ -101,6 +55,42 @@
         "vite": "^6.0.7",
         "vitest": "^2.1.8"
     },
+    "keywords": [
+        "svelte",
+        "markdown",
+        "renderer",
+        "parser",
+        "marked",
+        "component",
+        "sveltekit",
+        "svelte5",
+        "md",
+        "documentation",
+        "html",
+        "converter",
+        "formatting"
+    ],
+    "tags": [
+        "svelte",
+        "markdown"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/humanspeak/svelte-markdown.git"
+    },
+    "homepage": "https://markdown.svelte.page",
+    "bugs": {
+        "url": "https://github.com/humanspeak/svelte-markdown/issues"
+    },
+    "author": "Humanspeak, Inc.",
+    "license": "MIT",
+    "funding": {
+        "type": "github",
+        "url": "https://github.com/sponsors/humanspeak"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
     "overrides": {
         "@sveltejs/kit": {
             "cookie": "^0.7.0"
@@ -108,12 +98,5 @@
     },
     "volta": {
         "node": "22.12.0"
-    },
-    "funding": {
-        "type": "github",
-        "url": "https://github.com/sponsors/humanspeak"
-    },
-    "publishConfig": {
-        "access": "public"
     }
 }
