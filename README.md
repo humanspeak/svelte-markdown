@@ -4,14 +4,8 @@
 [![Build Status](https://github.com/humanspeak/svelte-markdown/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/humanspeak/svelte-markdown/actions/workflows/npm-publish.yml)
 [![Coverage Status](https://coveralls.io/repos/github/humanspeak/svelte-markdown/badge.svg?branch=main)](https://coveralls.io/github/humanspeak/svelte-markdown?branch=main)
 [![License](https://img.shields.io/npm/l/@humanspeak/svelte-markdown.svg)](https://github.com/humanspeak/svelte-markdown/blob/main/LICENSE)
-
-<!-- [![Bundle Size](https://img.shields.io/bundlephobia/minzip/@humanspeak/svelte-markdown)](https://bundlephobia.com/package/@humanspeak/svelte-markdown) -->
-
 [![Downloads](https://img.shields.io/npm/dm/@humanspeak/svelte-markdown.svg)](https://www.npmjs.com/package/@humanspeak/svelte-markdown)
 [![CodeQL](https://github.com/humanspeak/svelte-markdown/actions/workflows/codeql.yml/badge.svg)](https://github.com/humanspeak/svelte-markdown/actions/workflows/codeql.yml)
-
-<!-- [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md) -->
-
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
 [![Types](https://img.shields.io/npm/types/@humanspeak/svelte-markdown.svg)](https://www.npmjs.com/package/@humanspeak/svelte-markdown)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/humanspeak/svelte-markdown/graphs/commit-activity)
@@ -26,8 +20,72 @@ Rewriten for Svelte5 and all the updated goodies that have happened over the las
 
 You can install it with
 
-```console
+```bash
 npm i -S @humanspeak/svelte-markdown
+```
+
+Or with your preferred package manager:
+
+```bash
+pnpm add @humanspeak/svelte-markdown
+yarn add @humanspeak/svelte-markdown
+```
+
+## Usage with Svelte 5
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+# This is a header
+
+This is a paragraph with **bold** and <em>mixed HTML</em>.
+
+* List item with \`inline code\`
+* And a [link](https://svelte.dev)
+  * With nested items
+  * Supporting full markdown
+`
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+## TypeScript Support
+
+The package is written in TypeScript and includes full type definitions. You can import types for custom renderers:
+
+```typescript
+import type {
+    Renderers,
+    Token,
+    TokensList,
+    SvelteMarkdownOptions
+} from '@humanspeak/svelte-markdown'
+```
+
+## Custom Renderer Example
+
+Here's a complete example of a custom renderer with TypeScript support:
+
+```svelte
+<script lang="ts">
+    import type { Snippet } from 'svelte'
+
+    interface Props {
+        children?: Snippet
+        href?: string
+        title?: string
+        text?: string
+    }
+
+    const { href = '', title = '', text = '', children }: Props = $props()
+</script>
+
+<a {href} {title} class="custom-link">
+    {@render children?.() ?? text}
+</a>
 ```
 
 ## Usage
@@ -240,15 +298,98 @@ To use [inline markdown](https://marked.js.org/using_advanced#inline), you can a
 
 ## HTML rendering
 
-While the most common flavours of markdown let you use HTML in markdown paragraphs, due to how Svelte handles plain HTML it is currently not possible to do this with this package. A paragraph must be either _all_ HTML or _all_ markdown.
+The package supports mixing HTML and Markdown content seamlessly within the same document. You can use HTML tags alongside Markdown syntax, and both will be properly rendered through their respective components.
+
+### Basic HTML in Markdown
+
+You can freely mix HTML tags with Markdown syntax:
 
 ```markdown
-This is a **markdown** paragraph.
+This is a **markdown** paragraph with <em>HTML emphasis</em> mixed in.
 
-<p>This is an <strong>HTML</strong> paragraph</p>
+<div style="color: blue">
+  ### This is a Markdown heading inside HTML
+  And here's some **bold** text too!
+</div>
 ```
 
-Note that the HTML paragraph must be enclosed within `<p>` tags.
+### Tables with Mixed Content
+
+Tables support both Markdown and HTML formatting in cells:
+
+```markdown
+| Feature | Markdown | HTML |
+|---------|:--------:|-----:|
+| Bold | **text** | <strong>text</strong> |
+| Italic | *text* | <em>text</em> |
+| Links | [text](url) | <a href="url">text</a> |
+```
+
+### Interactive HTML Elements
+
+HTML interactive elements like `<details>` work seamlessly:
+
+```markdown
+<details>
+<summary>Click to expand</summary>
+
+- This is a markdown list
+- Inside an HTML details element
+- Supporting **bold** and *italic* text
+
+</details>
+```
+
+### HTML Block Elements
+
+HTML block elements can contain Markdown content:
+
+```markdown
+<blockquote>
+  ### Markdown Heading in Blockquote
+
+  - List item with **bold**
+  - Another item with *italic*
+</blockquote>
+```
+
+### Component Customization
+
+You can customize how HTML elements are rendered by providing custom components in the `renderers.html` prop:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import CustomBlockquote from './renderers/CustomBlockquote.svelte'
+
+    const source = `
+        <blockquote>
+            This will use the custom renderer
+        </blockquote>
+    `
+</script>
+
+<SvelteMarkdown
+    {source}
+    renderers={{
+        html: {
+            blockquote: CustomBlockquote
+        }
+    }}
+/>
+```
+
+### Important Notes
+
+1. The HTML rendering is handled by dedicated Svelte components, ensuring proper integration with Svelte's reactivity system.
+
+2. All HTML elements are sanitized by default for security. Custom HTML attributes are preserved and passed to the corresponding components.
+
+3. The package includes renderers for all standard HTML5 elements, which can be found in the source code at `src/renderers/html/`.
+
+4. When mixing HTML and Markdown, the parser maintains proper nesting and hierarchy of elements.
+
+5. For security reasons, script tags and potentially harmful HTML attributes are stripped out during parsing.
 
 ## Developing
 
