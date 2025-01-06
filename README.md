@@ -20,8 +20,72 @@ Rewriten for Svelte5 and all the updated goodies that have happened over the las
 
 You can install it with
 
-```console
+```bash
 npm i -S @humanspeak/svelte-markdown
+```
+
+Or with your preferred package manager:
+
+```bash
+pnpm add @humanspeak/svelte-markdown
+yarn add @humanspeak/svelte-markdown
+```
+
+## Usage with Svelte 5
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+# This is a header
+
+This is a paragraph with **bold** and <em>mixed HTML</em>.
+
+* List item with \`inline code\`
+* And a [link](https://svelte.dev)
+  * With nested items
+  * Supporting full markdown
+`
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+## TypeScript Support
+
+The package is written in TypeScript and includes full type definitions. You can import types for custom renderers:
+
+```typescript
+import type {
+    Renderers,
+    Token,
+    TokensList,
+    SvelteMarkdownOptions
+} from '@humanspeak/svelte-markdown'
+```
+
+## Custom Renderer Example
+
+Here's a complete example of a custom renderer with TypeScript support:
+
+```svelte
+<script lang="ts">
+    import type { Snippet } from 'svelte'
+
+    interface Props {
+        children?: Snippet
+        href?: string
+        title?: string
+        text?: string
+    }
+
+    const { href = '', title = '', text = '', children }: Props = $props()
+</script>
+
+<a {href} {title} class="custom-link">
+    {@render children?.() ?? text}
+</a>
 ```
 
 ## Usage
