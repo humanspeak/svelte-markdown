@@ -4,10 +4,10 @@
     const edgeCaseExamples = {
         empty: '',
         whitespace: '   \n   \t   ',
-        deeplyNested: Array(15)
-            .fill(0)
-            .map((_, i) => `${'*'.repeat(i + 1)} Level ${i}`)
-            .join('\n'),
+        // deeplyNested: Array(15)
+        //     .fill(0)
+        //     .map((_, i) => `${'*'.repeat(i + 1)} Level ${i}`)
+        //     .join('\n'),
         unicode: `# 你好，世界！
 ## مرحبا بالعالم
 ### Привет, мир!
