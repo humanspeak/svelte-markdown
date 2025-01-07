@@ -38,7 +38,7 @@ console.log('Section ${i}, Block ${j}');
     }
 
     let source = ''
-    let largeMarkdown = generateLargeMarkdown()
+    const largeMarkdown = generateLargeMarkdown()
 </script>
 
 <div class="container">

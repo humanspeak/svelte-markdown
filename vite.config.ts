@@ -10,7 +10,7 @@ export default defineConfig({
           }
         : undefined,
     test: {
-        include: ['src/**/*.test.ts'],
+        include: ['src/lib/**/*.test.ts'],
         globals: true,
         environment: 'jsdom',
         setupFiles: ['vitest.setup.ts'],
@@ -24,8 +24,10 @@ export default defineConfig({
             'coverage/**',
             'tests/**',
             'playwright.config.ts',
-            'tests-results/**'
-        ]
+            'tests-results/**',
+            '**/docs/**/*'
+        ],
+        reporters: ['verbose']
     },
     build: {
         sourcemap: true
