@@ -399,12 +399,12 @@ The current extenral dependencies are:
 
 - [Marked](https://marked.js.org/)
 - [Github-Slugger](https://github.com/Flet/github-slugger)
-- [HTMLParser2](https://github.com/fb55/htmlparser2).
+- [HTMLParser2](https://github.com/fb55/htmlparser2)
 
 ## Related
 
-- [ReactMarkdown](https://github.com/remarkjs/react-markdown) - React library to render markdown using React components. Inspiration for this library.
-- [Svelte](https://svelte.dev) - JavaScript front-end framework.
+- [ReactMarkdown](https://github.com/remarkjs/react-markdown) - React library to render markdown using React components. Inspiration for this library
+- [Svelte](https://svelte.dev) - JavaScript front-end framework
 - [Original](https://github.com/pablo-abc/svelte-markdown) - Original component
 
 Made with ♥ by [Humanspeak](https://humanspeak.com)
