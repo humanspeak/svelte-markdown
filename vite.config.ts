@@ -22,7 +22,9 @@ export default defineConfig({
             'docs/**',
             'src/routes/**',
             'coverage/**',
-            'test/**'
+            'tests/**',
+            'playwright.config.ts',
+            'tests-results/**'
         ]
     },
     build: {
