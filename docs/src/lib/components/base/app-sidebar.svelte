@@ -20,11 +20,7 @@
                                         class="h-5"
                                     />
                                 {:else}
-                                    <img
-                                        src="./humanspeak.svg"
-                                        alt="humanspeak logo"
-                                        class="h-5"
-                                    />
+                                    <img src="./humanspeak.svg" alt="humanspeak logo" class="h-5" />
                                 {/if}
                                 <span>/markdown</span>
                             </div>

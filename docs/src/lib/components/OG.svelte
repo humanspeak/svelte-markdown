@@ -36,9 +36,7 @@
             <div
                 class="flex flex-shrink-0 text-lg font-medium uppercase tracking-wider text-white/80"
             >
-                {type === 'og'
-                    ? 'High Performance Markdown Parser'
-                    : 'Markdown Parser Component'}
+                {type === 'og' ? 'High Performance Markdown Parser' : 'Markdown Parser Component'}
             </div>
             <h1
                 class:text-8xl={type === 'og'}
