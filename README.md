@@ -350,7 +350,7 @@ HTML block elements can contain Markdown content:
 
 - List item with **bold**
 - Another item with _italic_
-  </blockquote>
+    </blockquote>
 ```
 
 ### Component Customization
