@@ -58,7 +58,7 @@ jobs:
                       ${{ runner.os }}-node-${{ matrix.node-version }}-
                       ${{ runner.os }}-node-
 
-    playright-tests:
+    playwright-tests:
         timeout-minutes: 60
         runs-on: ubuntu-latest
         steps:
@@ -83,8 +83,8 @@ jobs:
                   retention-days: 10
 
     # 4. Coverage reporting (depends on tests)
-    finish-coverage:
-        needs: [build, playright-tests]
+    coverage-report:
+        needs: [build, playwright-tests]
         runs-on: ubuntu-latest
         if: ${{ always() }}
         steps:
