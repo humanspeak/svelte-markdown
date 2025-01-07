@@ -9,6 +9,7 @@ on:
             - '.github/**'
             - 'docs/**'
             - 'PRD.md'
+            - 'README.md'
 
 jobs:
     build:
