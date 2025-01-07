@@ -318,11 +318,11 @@ This is a **markdown** paragraph with <em>HTML emphasis</em> mixed in.
 Tables support both Markdown and HTML formatting in cells:
 
 ```markdown
-| Feature | Markdown | HTML |
-|---------|:--------:|-----:|
-| Bold | **text** | <strong>text</strong> |
-| Italic | *text* | <em>text</em> |
-| Links | [text](url) | <a href="url">text</a> |
+| Feature |  Markdown   |                   HTML |
+| ------- | :---------: | ---------------------: |
+| Bold    |  **text**   |  <strong>text</strong> |
+| Italic  |   _text_    |          <em>text</em> |
+| Links   | [text](url) | <a href="url">text</a> |
 ```
 
 ### Interactive HTML Elements
@@ -335,7 +335,7 @@ HTML interactive elements like `<details>` work seamlessly:
 
 - This is a markdown list
 - Inside an HTML details element
-- Supporting **bold** and *italic* text
+- Supporting **bold** and _italic_ text
 
 </details>
 ```
@@ -348,9 +348,9 @@ HTML block elements can contain Markdown content:
 <blockquote>
   ### Markdown Heading in Blockquote
 
-  - List item with **bold**
-  - Another item with *italic*
-</blockquote>
+- List item with **bold**
+- Another item with _italic_
+  </blockquote>
 ```
 
 ### Component Customization

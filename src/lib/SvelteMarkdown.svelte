@@ -72,12 +72,10 @@
 
     const combinedOptions = { ...defaultOptions, ...options }
     const slugger = source ? new Slugger() : undefined
-    let lexer: Lexer
 
     const tokens = $derived.by(() => {
-        if (!lexer) {
-            lexer = new Lexer(combinedOptions)
-        }
+        const lexer = new Lexer(combinedOptions)
+
         if (Array.isArray(source)) {
             return source as Token[]
         }

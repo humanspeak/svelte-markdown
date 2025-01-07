@@ -36,12 +36,14 @@ jobs:
               working-directory: .github/workflows
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  BASE_REF: ${{ github.base_ref }}
               run: |
                   # Initialize error flag
                   has_errors=0
 
-                  # Safely quote the base ref
-                  base_ref="${{ github.base_ref }}"
+                  # Use the environment variable instead of direct template expansion
+                  # and escape it properly
+                  base_ref=$(printf '%q' "$BASE_REF")
 
                   # Get list of changed files in .github/workflows with proper quoting
                   changed_files=$(git diff --name-only "origin/${base_ref}" | grep -E '^\.github/workflows/[^/]+\.yml$' || true)
