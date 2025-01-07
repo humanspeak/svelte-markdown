@@ -1,5 +1,7 @@
+# 1. Workflow metadata
 name: Publish to NPM
 
+# 2. Trigger conditions
 on:
     pull_request:
         types: [closed]
@@ -12,6 +14,7 @@ on:
             - 'README.md'
 
 jobs:
+    # 3. Testing jobs (grouped together)
     build:
         runs-on: ubuntu-latest
         strategy:
@@ -79,6 +82,19 @@ jobs:
                   path: playwright-report/
                   retention-days: 10
 
+    # 4. Coverage reporting (depends on tests)
+    finish-coverage:
+        needs: [build, playright-tests]
+        runs-on: ubuntu-latest
+        if: ${{ always() }}
+        steps:
+            - name: Coveralls Finished
+              uses: coverallsapp/github-action@v2
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  parallel-finished: true
+
+    # 5. Publishing job (main deployment logic)
     publish-github-packages:
         needs: [build, playright-tests]
         if: |
@@ -256,14 +272,3 @@ jobs:
                           repo: context.repo.repo,
                           body: '❌ Release workflow failed. Please check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
                       })
-
-    finish-coverage:
-        needs: build
-        runs-on: ubuntu-latest
-        if: ${{ always() }}
-        steps:
-            - name: Coveralls Finished
-              uses: coverallsapp/github-action@v2
-              with:
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
-                  parallel-finished: true
