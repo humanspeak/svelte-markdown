@@ -1,11 +1,14 @@
 name: Cloudflare Pages - Deploy
 
+permissions:
+    contents: read
+
 on:
     pull_request:
         types: [closed]
         paths:
-            - 'docs/**'
-            - '.github/workflows/cloudflare-pages.yml'
+            - docs/**
+            - .github/workflows/cloudflare-pages.yml
         branches:
             - main
 

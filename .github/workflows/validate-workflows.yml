@@ -1,9 +1,12 @@
 name: Validate Workflows
 
+permissions:
+    contents: read
+
 on:
     pull_request:
         paths:
-            - '.github/workflows/**'
+            - .github/workflows/**
 
 jobs:
     validate:
@@ -20,7 +23,7 @@ jobs:
                   toolchain: stable
 
             - name: Cache cargo registry
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: |
                       ~/.cargo/registry
@@ -38,28 +41,54 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   BASE_REF: ${{ github.base_ref }}
               run: |
+                  # Exit on any error
+                  set -euo pipefail
+
                   # Initialize error flag
                   has_errors=0
 
-                  # Use the environment variable instead of direct template expansion
-                  # and escape it properly
+                  # Validate inputs
+                  if [ -z "${BASE_REF:-}" ]; then
+                      echo "::error::BASE_REF is not set"
+                      exit 1
+                  fi
+
+                  # Properly escape the base ref for use in git commands
                   base_ref=$(printf '%q' "$BASE_REF")
 
-                  # Get list of changed files in .github/workflows with proper quoting
-                  changed_files=$(git diff --name-only "origin/${base_ref}" | grep -E '^\.github/workflows/[^/]+\.yml$' || true)
+                  # Get list of changed files with error handling
+                  changed_files=$(git diff --name-only "origin/${base_ref}" 2>/dev/null | \
+                                grep -E '^\.github/workflows/[^/]+\.yml$' || true)
+
+                  if [ -z "$changed_files" ]; then
+                      echo "No workflow files changed"
+                      exit 0
+                  fi
 
                   # Loop through changed workflow files
                   while IFS= read -r file; do
-                    [ -z "$file" ] && continue
-                    filename=$(basename -- "$file")
-                    echo "Validating $filename..."
-                    if ! zizmor "$filename"; then
-                      echo "::error::Validation failed for $filename"
-                      has_errors=1
-                    fi
+                      [ -z "$file" ] && continue
+
+                      # Safely handle filenames
+                      filename=$(basename -- "$file")
+
+                      # Skip non-yaml files
+                      if [[ ! "$filename" =~ \.(ya?ml)$ ]]; then
+                          continue
+                      }
+
+                      echo "Validating $filename..."
+
+                      if ! zizmor "$filename" 2>/dev/null; then
+                          echo "::error::Validation failed for $filename"
+                          has_errors=1
+                      fi
                   done <<< "$changed_files"
 
                   # Exit with error if any validation failed
-                  if [ $has_errors -eq 1 ]; then
-                    exit 1
+                  if [ "$has_errors" -eq 1 ]; then
+                      echo "::error::One or more workflow validations failed"
+                      exit 1
                   fi
+
+                  echo "All workflows validated successfully"

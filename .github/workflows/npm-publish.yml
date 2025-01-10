@@ -1,6 +1,11 @@
 # 1. Workflow metadata
 name: Publish to NPM
 
+permissions:
+    contents: read
+    packages: read
+    pull-requests: read
+
 # 2. Trigger conditions
 on:
     pull_request:
@@ -8,14 +13,15 @@ on:
         branches:
             - main
         paths-ignore:
-            - '.github/**'
-            - 'docs/**'
-            - 'PRD.md'
-            - 'README.md'
+            - .github/**
+            - docs/**
+            - PRD.md
+            - README.md
     workflow_dispatch:
         inputs:
+            # trunk-ignore(checkov/CKV_GHA_7): We need manual version control for releases
             version_bump:
-                description: 'Version bump type (major/minor/patch) or skip'
+                description: Version bump type (major/minor/patch) or skip
                 required: true
                 type: choice
                 options:
@@ -24,7 +30,7 @@ on:
                     - minor
                     - major
             custom_message:
-                description: 'Release message'
+                description: Release message
                 required: false
                 type: string
 
@@ -60,7 +66,7 @@ jobs:
               if: always()
               uses: trunk-io/analytics-uploader@main
               with:
-                  junit-paths: 'junit-vitest.xml'
+                  junit-paths: junit-vitest.xml
                   org-slug: ${{ secrets.TRUNK_ORG_SLUG }}
                   token: ${{ secrets.TRUNK_TOKEN }}
 
@@ -107,7 +113,7 @@ jobs:
               if: always()
               uses: trunk-io/analytics-uploader@main
               with:
-                  junit-paths: 'junit-playwright.xml'
+                  junit-paths: junit-playwright.xml
                   org-slug: ${{ secrets.TRUNK_ORG_SLUG }}
                   token: ${{ secrets.TRUNK_TOKEN }}
 
@@ -152,7 +158,7 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: 22
-                  registry-url: 'https://registry.npmjs.org'
+                  registry-url: https://registry.npmjs.org
                   scope: '@humanspeak'
 
             - name: Install
