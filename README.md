@@ -346,11 +346,12 @@ HTML block elements can contain Markdown content:
 
 ```markdown
 <blockquote>
-  ### Markdown Heading in Blockquote
+    ### Markdown Heading in Blockquote
 
-- List item with **bold**
-- Another item with _italic_
-    </blockquote>
+    - List item with **bold**
+    - Another item with _italic_
+
+</blockquote>
 ```
 
 ### Component Customization
