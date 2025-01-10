@@ -1,5 +1,7 @@
+# 1. Workflow metadata
 name: Publish to NPM
 
+# 2. Trigger conditions
 on:
     pull_request:
         types: [closed]
@@ -10,8 +12,24 @@ on:
             - 'docs/**'
             - 'PRD.md'
             - 'README.md'
+    workflow_dispatch:
+        inputs:
+            version_bump:
+                description: 'Version bump type (major/minor/patch) or skip'
+                required: true
+                type: choice
+                options:
+                    - skip
+                    - patch
+                    - minor
+                    - major
+            custom_message:
+                description: 'Release message'
+                required: false
+                type: string
 
 jobs:
+    # 3. Testing jobs (grouped together)
     build:
         runs-on: ubuntu-latest
         strategy:
@@ -38,6 +56,14 @@ jobs:
             - name: Test
               run: npm test --coverage
 
+            - name: Upload Vitest Results
+              if: always()
+              uses: trunk-io/analytics-uploader@main
+              with:
+                  junit-paths: 'junit-vitest.xml'
+                  org-slug: ${{ secrets.TRUNK_ORG_SLUG }}
+                  token: ${{ secrets.TRUNK_TOKEN }}
+
             - name: Upload coverage to Coveralls
               uses: coverallsapp/github-action@v2
               with:
@@ -55,7 +81,7 @@ jobs:
                       ${{ runner.os }}-node-${{ matrix.node-version }}-
                       ${{ runner.os }}-node-
 
-    playright-tests:
+    playwright-tests:
         timeout-minutes: 60
         runs-on: ubuntu-latest
         steps:
@@ -63,15 +89,28 @@ jobs:
               with:
                   persist-credentials: false
                   token: ${{ secrets.ACTIONS_KEY }}
+
             - uses: actions/setup-node@v4
               with:
                   node-version: 22
+
             - name: Install dependencies
               run: npm ci
+
             - name: Install Playwright Browsers
               run: npx playwright install --with-deps
+
             - name: Run Playwright tests
               run: npm run test:e2e
+
+            - name: Upload Playwright Results
+              if: always()
+              uses: trunk-io/analytics-uploader@main
+              with:
+                  junit-paths: 'junit-playwright.xml'
+                  org-slug: ${{ secrets.TRUNK_ORG_SLUG }}
+                  token: ${{ secrets.TRUNK_TOKEN }}
+
             - uses: actions/upload-artifact@v4
               if: always()
               with:
@@ -79,11 +118,21 @@ jobs:
                   path: playwright-report/
                   retention-days: 10
 
+    # 4. Coverage reporting (depends on tests)
+    coverage-report:
+        needs: [build, playwright-tests]
+        runs-on: ubuntu-latest
+        if: ${{ always() }}
+        steps:
+            - name: Coveralls Finished
+              uses: coverallsapp/github-action@v2
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  parallel-finished: true
+
+    # 5. Publishing job (main deployment logic)
     publish-github-packages:
-        needs: [build, playright-tests]
-        if: |
-            (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
-            (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        needs: [build, playwright-tests, coverage-report]
         runs-on: ubuntu-latest
         permissions:
             contents: write
@@ -109,32 +158,53 @@ jobs:
             - name: Install
               run: npm ci
 
-            - name: Determine version bump type
-              id: version-type
+            - name: Check Publishing Status
+              id: publish-check
               env:
-                  HAS_MAJOR: ${{ contains(github.event.pull_request.labels.*.name, 'major') }}
-                  HAS_MINOR: ${{ contains(github.event.pull_request.labels.*.name, 'minor') }}
+                  EVENT_NAME: ${{ github.event_name }}
+                  IS_MERGED: ${{ github.event.pull_request.merged }}
+                  HAS_SKIP_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'skip-publish') }}
+                  INPUT_VERSION: ${{ github.event.inputs.version_bump }}
               run: |
-                  if [ "$HAS_MAJOR" = "true" ]; then
-                    BUMP_TYPE="major"
-                  elif [ "$HAS_MINOR" = "true" ]; then
-                    BUMP_TYPE="minor"
-                  else
-                    BUMP_TYPE="patch"
+                  # Validate event name first
+                  if [[ "$EVENT_NAME" != "pull_request" && "$EVENT_NAME" != "workflow_dispatch" ]]; then
+                    echo "Invalid event type"
+                    exit 1
                   fi
 
-                  # Validate that bump type is one of the allowed values
-                  case "$BUMP_TYPE" in
-                    "major"|"minor"|"patch")
-                      echo "bump=$BUMP_TYPE" >> $GITHUB_OUTPUT
-                      ;;
-                    *)
-                      echo "Invalid version bump type"
-                      exit 1
-                      ;;
-                  esac
+                  # Check publishing conditions
+                  if [[ "$EVENT_NAME" == "pull_request" ]]; then
+                    if [[ "$IS_MERGED" != "true" ]]; then
+                      echo "PR not merged, skipping publish"
+                      echo "should_publish=false" >> $GITHUB_OUTPUT
+                    elif [[ "$HAS_SKIP_LABEL" == "true" ]]; then
+                      echo "Publishing skipped due to skip-publish label"
+                      echo "should_publish=false" >> $GITHUB_OUTPUT
+                    else
+                      echo "should_publish=true" >> $GITHUB_OUTPUT
+                    fi
+                  elif [[ "$EVENT_NAME" == "workflow_dispatch" && "$INPUT_VERSION" == "skip" ]]; then
+                    echo "Publishing skipped via manual selection"
+                    echo "should_publish=false" >> $GITHUB_OUTPUT
+                  else
+                    echo "should_publish=true" >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Create Comment on Skip
+              if: github.event_name == 'pull_request' && steps.publish-check.outputs.should_publish == 'false'
+              uses: actions/github-script@v7
+              with:
+                  github-token: ${{ secrets.ACTIONS_KEY }}
+                  script: |
+                      github.rest.issues.createComment({
+                          issue_number: context.issue.number,
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          body: '⏭️ NPM publishing was skipped due to the `skip-publish` label.'
+                      })
 
             - name: Import GPG key
+              if: steps.publish-check.outputs.should_publish == 'true'
               id: import_gpg
               uses: crazy-max/ghaction-import-gpg@v6
               with:
@@ -145,7 +215,43 @@ jobs:
                   git_tag_gpgsign: true
                   git_config_global: true
 
+            - name: Determine version bump type
+              if: steps.publish-check.outputs.should_publish == 'true'
+              id: version-type
+              env:
+                  HAS_MAJOR: ${{ contains(github.event.pull_request.labels.*.name, 'major') }}
+                  HAS_MINOR: ${{ contains(github.event.pull_request.labels.*.name, 'minor') }}
+                  INPUT_VERSION: ${{ github.event.inputs.version_bump }}
+              run: |
+                  # Function to validate version bump type
+                  validate_bump_type() {
+                    local bump="$1"
+                    case "$bump" in
+                      "major"|"minor"|"patch"|"skip") echo "$bump" ;;
+                      *) echo "patch" ;;
+                    esac
+                  }
+
+                  # Determine and validate bump type
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                    BUMP_TYPE=$(validate_bump_type "$INPUT_VERSION")
+                    if [ "$BUMP_TYPE" = "skip" ]; then
+                      echo "Publishing skipped via manual selection"
+                      echo "should_publish=false" >> $GITHUB_OUTPUT
+                      exit 0
+                    fi
+                  elif [ "$HAS_MAJOR" = "true" ]; then
+                    BUMP_TYPE="major"
+                  elif [ "$HAS_MINOR" = "true" ]; then
+                    BUMP_TYPE="minor"
+                  else
+                    BUMP_TYPE="patch"
+                  fi
+
+                  echo "bump=$BUMP_TYPE" >> $GITHUB_OUTPUT
+
             - name: Bump version
+              if: steps.publish-check.outputs.should_publish == 'true'
               id: version
               env:
                   PR_TITLE: ${{ github.event.pull_request.title }}
@@ -203,6 +309,7 @@ jobs:
                   git push --tags
 
             - name: Create Release
+              if: steps.publish-check.outputs.should_publish == 'true'
               id: create_release
               uses: softprops/action-gh-release@v1
               with:
@@ -210,15 +317,16 @@ jobs:
                   name: Release ${{ steps.version.outputs.new_version }}
                   body: |
                       Changes in this Release
-                      - ${{ github.event.pull_request.title }}
+                      ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.custom_message || github.event.pull_request.title }}
 
-                      For more details, see the [Pull Request](${{ github.event.pull_request.html_url }})
+                      ${{ github.event_name == 'pull_request' && format('For more details, see the [Pull Request]({0})', github.event.pull_request.html_url) || '' }}
                   draft: false
                   prerelease: false
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Publish
+              if: steps.publish-check.outputs.should_publish == 'true'
               run: |
                   # Ensure we're publishing to the correct scope
                   rm -f ./.npmrc
@@ -256,14 +364,3 @@ jobs:
                           repo: context.repo.repo,
                           body: '❌ Release workflow failed. Please check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
                       })
-
-    finish-coverage:
-        needs: build
-        runs-on: ubuntu-latest
-        if: ${{ always() }}
-        steps:
-            - name: Coveralls Finished
-              uses: coverallsapp/github-action@v2
-              with:
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
-                  parallel-finished: true
