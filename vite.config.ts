@@ -27,7 +27,7 @@ export default defineConfig({
             'tests-results/**',
             '**/docs/**/*'
         ],
-        reporters: [['junit', { outputFile: './junit-vitest.xml' }]]
+        reporters: ['verbose', ['junit', { outputFile: './junit-vitest.xml' }]]
     },
     build: {
         sourcemap: true
