@@ -59,9 +59,6 @@ jobs:
             - name: Install
               run: |
                   npm ci
-                  npm rebuild
-              env:
-                  NODE_OPTIONS: --experimental-vm-modules
 
             - name: Test
               run: npm test --coverage
