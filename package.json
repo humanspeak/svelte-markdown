@@ -65,7 +65,7 @@
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-svelte": "^2.46.1",
         "globals": "^15.14.0",
-        "jsdom": "^26.0.0",
+        "jsdom": "^25.0.1",
         "prettier": "^3.4.2",
         "prettier-plugin-organize-imports": "^4.1.0",
         "prettier-plugin-svelte": "^3.3.2",
@@ -116,6 +116,10 @@
     "overrides": {
         "@sveltejs/kit": {
             "cookie": "^0.7.0"
+        },
+        "jsdom": {
+            "cssstyle": "2.3.0",
+            "@asamuzakjp/css-color": "1.0.0"
         }
     },
     "volta": {

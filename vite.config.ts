@@ -27,13 +27,7 @@ export default defineConfig({
             'tests-results/**',
             '**/docs/**/*'
         ],
-        reporters: ['verbose', ['junit', { outputFile: './junit-vitest.xml' }]],
-        // Add these configurations to handle the ESM/CommonJS interop
-        deps: {
-            interopDefault: true,
-            inline: [/@asamuzakjp\/css-color/, /cssstyle/],
-            moduleDirectories: ['node_modules']
-        }
+        reporters: ['verbose', ['junit', { outputFile: './junit-vitest.xml' }]]
     },
     build: {
         sourcemap: true
