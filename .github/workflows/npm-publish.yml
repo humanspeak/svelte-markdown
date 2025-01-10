@@ -73,7 +73,7 @@ jobs:
               if: matrix.node-version == '22'
 
             - name: Cache dependencies
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: ~/.npm
                   key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
@@ -311,7 +311,7 @@ jobs:
             - name: Create Release
               if: steps.publish-check.outputs.should_publish == 'true'
               id: create_release
-              uses: softprops/action-gh-release@v1
+              uses: softprops/action-gh-release@v2
               with:
                   tag_name: ${{ steps.version.outputs.new_version }}
                   name: Release ${{ steps.version.outputs.new_version }}
@@ -322,6 +322,8 @@ jobs:
                       ${{ github.event_name == 'pull_request' && format('For more details, see the [Pull Request]({0})', github.event.pull_request.html_url) || '' }}
                   draft: false
                   prerelease: false
+                  make_latest: true
+                  generate_release_notes: false
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
