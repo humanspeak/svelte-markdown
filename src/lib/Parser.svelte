@@ -34,6 +34,12 @@
      * - Implements special logic for tables, lists, and HTML content
      * - Handles component prop spreading carefully to avoid conflicts
      * - Maintains type safety through TypeScript interfaces
+     * - HTML token handling in table cells uses type assertions for better type safety
+     * - Table cell HTML content is processed with proper token nesting and attribute preservation
+     * - Improved HTML component rendering with proper type checking for tag properties
+     * - Added support for nested markdown within HTML table cells (see test at lines 311-343 in SvelteMarkdown.test.ts)
+     * - Token cleanup utilities handle complex nested structures (see lines 105-127 in token-cleanup.test.ts)
+     * - HTML parsing maintains proper structure for both simple and complex nested elements
      *
      */
 
