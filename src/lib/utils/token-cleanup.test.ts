@@ -61,8 +61,10 @@ describe('Token Cleanup Utilities', () => {
 
             const result = shrinkHtmlTokens(tokens)
             expect(result).toHaveLength(1)
-            expect(result[0].tokens).toHaveLength(1)
-            expect(result[0].tokens?.[0].tokens).toHaveLength(1)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((result[0] as any).tokens).toHaveLength(1)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((result[0] as any).tokens?.[0].tokens).toHaveLength(1)
         })
 
         it('should handle nested Same HTML structures', () => {
@@ -76,8 +78,10 @@ describe('Token Cleanup Utilities', () => {
 
             const result = shrinkHtmlTokens(tokens)
             expect(result).toHaveLength(1)
-            expect(result[0].tokens).toHaveLength(1)
-            expect(result[0].tokens?.[0].tokens).toHaveLength(1)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((result[0] as any).tokens).toHaveLength(1)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((result[0] as any).tokens?.[0].tokens).toHaveLength(1)
         })
 
         it('should handle multiple sibling HTML elements', () => {
@@ -93,7 +97,8 @@ describe('Token Cleanup Utilities', () => {
             const result = shrinkHtmlTokens(tokens)
             expect(result).toHaveLength(2)
             result.forEach((token) => {
-                expect(token.tokens).toHaveLength(1)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                expect((token as any).tokens).toHaveLength(1)
             })
         })
 
@@ -115,8 +120,10 @@ describe('Token Cleanup Utilities', () => {
 
             const result = shrinkHtmlTokens(tokens)
             expect(result).toHaveLength(1)
-            expect(result[0].tag).toBe('div')
-            expect(result[0].tokens).toHaveLength(2)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((result[0] as any).tag).toBe('div')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((result[0] as any).tokens).toHaveLength(2)
         })
 
         it('should handle malformed HTML gracefully', () => {
@@ -169,9 +176,14 @@ describe('Token Cleanup Utilities', () => {
             ]
 
             const result = shrinkHtmlTokens(tokens)
-            expect(result[0].tokens).toHaveLength(2)
-            expect(result[0].tokens[1].attributes).toEqual({ style: 'color: hotpink' })
-            expect(result[0].tokens[1].tag).toEqual('span')
+
+            expect(result).toHaveLength(1)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((result[0] as any).tokens).toHaveLength(2)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((result[0] as any).tokens[1].attributes).toEqual({ style: 'color: hotpink' })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((result[0] as any).tokens[1].tag).toEqual('span')
         })
 
         it('should break up multiple html tags that are in the same html block', () => {
@@ -187,8 +199,10 @@ describe('Token Cleanup Utilities', () => {
 
             const result = shrinkHtmlTokens(tokens)
             expect(result).toHaveLength(1)
-            expect(result[0].tag).toEqual('details')
-            expect(result[0].tokens).toHaveLength(2)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((result[0] as any).tag).toEqual('details')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((result[0] as any).tokens).toHaveLength(2)
         })
 
         it('should handle empty token arrays', () => {
@@ -255,8 +269,11 @@ describe('Token Cleanup Utilities', () => {
             ]
 
             const result = shrinkHtmlTokens(tokens)
-            expect(result[0].rows[0][0].tokens[0].type).toBe('html')
-            expect(result[0].rows[0][0].tokens[0].tag).toBe('strong')
+            expect(result).toHaveLength(1)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((result[0] as any).rows[0][0].tokens[0].type).toBe('html')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((result[0] as any).rows[0][0].tokens[0].tag).toBe('strong')
         })
     })
 })

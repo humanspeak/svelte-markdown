@@ -30,9 +30,12 @@ describe('processHtmlTokens', () => {
 
         const result = processHtmlTokens(tokens)
         expect(result).toHaveLength(1)
-        expect(result[0].tag).toBe('div')
-        expect(result[0].tokens?.[0].tag).toBe('span')
-        expect(result[0].tokens?.[0].tokens?.[0].text).toBe('nested')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((result[0] as any).tag).toBe('div')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((result[0] as any).tokens?.[0].tag).toBe('span')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((result[0] as any).tokens?.[0].tokens?.[0].text).toBe('nested')
     })
 
     it('should preserve attributes in nested structures', () => {
@@ -45,8 +48,11 @@ describe('processHtmlTokens', () => {
         ]
 
         const result = processHtmlTokens(tokens)
-        expect(result[0].attributes).toEqual({ class: 'wrapper' })
-        expect(result[0].tokens?.[0].attributes).toEqual({ style: 'color: red' })
+        expect(result).toHaveLength(1)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((result[0] as any).attributes).toEqual({ class: 'wrapper' })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((result[0] as any).tokens?.[0].attributes).toEqual({ style: 'color: red' })
     })
 
     it('should handle malformed HTML gracefully', () => {
@@ -71,8 +77,10 @@ describe('processHtmlTokens', () => {
 
         const result = processHtmlTokens(tokens)
         expect(result).toHaveLength(2)
-        expect(result[0].tag).toBe('div')
-        expect(result[1].tag).toBe('span')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((result[0] as any).tag).toBe('div')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((result[1] as any).tag).toBe('span')
     })
 
     it('should handle recursive token processing', () => {
@@ -92,8 +100,11 @@ describe('processHtmlTokens', () => {
         ]
 
         const result = processHtmlTokens(tokens)
-        expect(result[0].tag).toBe('div')
-        expect(result[0].tokens?.[0].tokens?.[0].tag).toBe('em')
+        expect(result).toHaveLength(1)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((result[0] as any).tag).toBe('div')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((result[0] as any).tokens?.[0].tokens?.[0].tag).toBe('em')
     })
 
     it('should handle empty token arrays', () => {
