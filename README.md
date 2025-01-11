@@ -157,6 +157,40 @@ For fine-grained styling:
 - `orderedlistitem` - Items in ordered lists
 - `unorderedlistitem` - Items in unordered lists
 
+### HTML Renderers
+
+The `html` renderer is special and can be configured separately to handle HTML elements:
+
+| Element  | Description          |
+| -------- | -------------------- |
+| `div`    | Division element     |
+| `span`   | Inline container     |
+| `table`  | HTML table structure |
+| `thead`  | Table header group   |
+| `tbody`  | Table body group     |
+| `tr`     | Table row            |
+| `td`     | Table data cell      |
+| `th`     | Table header cell    |
+| `ul`     | Unordered list       |
+| `ol`     | Ordered list         |
+| `li`     | List item            |
+| `code`   | Code block           |
+| `em`     | Emphasized text      |
+| `strong` | Strong text          |
+| `a`      | Anchor/link          |
+| `img`    | Image                |
+
+You can customize HTML rendering by providing your own components:
+
+```typescript
+import type { HtmlRenderers } from '@humanspeak/svelte-markdown'
+
+const customHtmlRenderers: Partial<HtmlRenderers> = {
+    div: YourCustomDivComponent,
+    span: YourCustomSpanComponent
+}
+```
+
 ## Events
 
 The component emits a `parsed` event when tokens are calculated:
