@@ -103,15 +103,16 @@
                                 align={(rest.align as string[])[i]}
                                 {...cellRest}
                             >
-                                {#if cells.type === 'html'}
-                                    {@const { tag, ...localRest } = cells}
-                                    {@const htmlTag = cells.tag as keyof typeof Html}
+                                {#if cells.tokens?.[0]?.type === 'html'}
+                                    {@const token = cells.tokens[0] as Token & { tag: string, tokens?: Token[] }}
+                                    {@const { tag, ...localRest } = token}
+                                    {@const htmlTag = tag as keyof typeof Html}
                                     {#if htmlTag in Html}
                                         {@const HtmlComponent = Html[htmlTag]}
-                                        <HtmlComponent {...cells}>
-                                            {#if cells.tokens?.length}
+                                        <HtmlComponent {...token}>
+                                            {#if token.tokens?.length}
                                                 <Parser
-                                                    tokens={cells.tokens}
+                                                    tokens={token.tokens}
                                                     {renderers}
                                                     {...localRest}
                                                 />
