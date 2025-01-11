@@ -3,20 +3,24 @@
     "version": "0.0.1",
     "type": "module",
     "scripts": {
-        "dev": "vite dev",
         "build": "vite build",
-        "preview": "vite preview",
+        "cf-typegen": "wrangler types && mv worker-configuration.d.ts src/",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-        "test:unit": "vitest",
-        "test": "npm run test:unit -- --run && npm run test:e2e",
-        "test:e2e": "playwright test",
+        "deploy": "npm run build && wrangler pages deploy",
+        "dev": "vite dev",
+        "format": "prettier --write .",
+        "generate-social": "tsx scripts/generate-social-images.ts",
         "lint": "prettier --check . && eslint .",
         "lint:fix": "npm run format && eslint . --fix",
-        "format": "prettier --write .",
-        "deploy": "npm run build && wrangler pages deploy",
-        "cf-typegen": "wrangler types && mv worker-configuration.d.ts src/",
-        "generate-social": "tsx scripts/generate-social-images.ts"
+        "preview": "vite preview",
+        "test": "npm run test:unit -- --run && npm run test:e2e",
+        "test:e2e": "playwright test",
+        "test:unit": "vitest"
+    },
+    "dependencies": {
+        "@sentry/cloudflare": "^8.48.0",
+        "@sentry/sveltekit": "^8.48.0"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20250109.0",
@@ -68,16 +72,12 @@
         "vitest": "^2.1.8",
         "zod": "^3.24.1"
     },
-    "dependencies": {
-        "@sentry/cloudflare": "^8.48.0",
-        "@sentry/sveltekit": "^8.48.0"
+    "volta": {
+        "node": "22.12.0"
     },
     "overrides": {
         "@sveltejs/kit": {
             "cookie": "^0.7.0"
         }
-    },
-    "volta": {
-        "node": "22.12.0"
     }
 }

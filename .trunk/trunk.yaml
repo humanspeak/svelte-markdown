@@ -18,6 +18,7 @@ runtimes:
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
     enabled:
+        - sort-package-json@2.12.0
         - actionlint@1.7.6
         - checkov@3.2.352
         - eslint@9.17.0

@@ -2,49 +2,75 @@
     "name": "@humanspeak/svelte-markdown",
     "version": "0.7.9",
     "description": "A powerful, customizable markdown renderer for Svelte with TypeScript support",
+    "keywords": [
+        "svelte",
+        "markdown",
+        "renderer",
+        "parser",
+        "marked",
+        "component",
+        "sveltekit",
+        "svelte5",
+        "md",
+        "documentation",
+        "html",
+        "converter",
+        "formatting"
+    ],
+    "homepage": "https://markdown.svelte.page",
+    "bugs": {
+        "url": "https://github.com/humanspeak/svelte-markdown/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/humanspeak/svelte-markdown.git"
+    },
+    "funding": {
+        "type": "github",
+        "url": "https://github.com/sponsors/humanspeak"
+    },
+    "license": "MIT",
+    "author": "Humanspeak, Inc.",
+    "sideEffects": [
+        "**/*.css"
+    ],
     "type": "module",
-    "svelte": "./dist/index.js",
-    "types": "./dist/index.d.ts",
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
             "svelte": "./dist/index.js"
         }
     },
+    "svelte": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "files": [
         "dist",
         "!dist/**/*.test.*",
         "!dist/**/*.spec.*"
     ],
-    "sideEffects": [
-        "**/*.css"
-    ],
     "scripts": {
-        "dev": "vite dev",
         "build": "vite build && npm run package",
+        "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+        "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+        "dev": "vite dev",
+        "format": "prettier --write .",
+        "lint": "prettier --check . && eslint .",
+        "lint:fix": "npm run format && eslint . --fix",
         "package": "svelte-kit sync && svelte-package && publint",
         "prepublishOnly": "npm run package",
         "preview": "vite preview",
-        "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-        "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
         "test": "vitest run --coverage",
-        "test:only": "vitest run",
-        "test:watch": "vitest",
-        "lint": "prettier --check . && eslint .",
-        "lint:fix": "npm run format && eslint . --fix",
-        "format": "prettier --write .",
         "test:e2e": "playwright test",
-        "test:e2e:ui": "playwright test --ui",
         "test:e2e:debug": "playwright test --debug",
-        "test:e2e:report": "playwright show-report"
+        "test:e2e:report": "playwright show-report",
+        "test:e2e:ui": "playwright test --ui",
+        "test:only": "vitest run",
+        "test:watch": "vitest"
     },
     "dependencies": {
         "github-slugger": "^2.0.0",
         "htmlparser2": "^10.0.0",
         "marked": "^15.0.6"
-    },
-    "peerDependencies": {
-        "svelte": "^5.0.0"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3.2.0",
@@ -77,38 +103,11 @@
         "vite": "^6.0.7",
         "vitest": "^3.0.0-beta.4"
     },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/humanspeak/svelte-markdown.git"
+    "peerDependencies": {
+        "svelte": "^5.0.0"
     },
-    "homepage": "https://markdown.svelte.page",
-    "bugs": {
-        "url": "https://github.com/humanspeak/svelte-markdown/issues"
-    },
-    "keywords": [
-        "svelte",
-        "markdown",
-        "renderer",
-        "parser",
-        "marked",
-        "component",
-        "sveltekit",
-        "svelte5",
-        "md",
-        "documentation",
-        "html",
-        "converter",
-        "formatting"
-    ],
-    "tags": [
-        "svelte",
-        "markdown"
-    ],
-    "author": "Humanspeak, Inc.",
-    "license": "MIT",
-    "funding": {
-        "type": "github",
-        "url": "https://github.com/sponsors/humanspeak"
+    "volta": {
+        "node": "22.12.0"
     },
     "publishConfig": {
         "access": "public"
@@ -122,7 +121,8 @@
             "@asamuzakjp/css-color": "1.0.0"
         }
     },
-    "volta": {
-        "node": "22.12.0"
-    }
+    "tags": [
+        "svelte",
+        "markdown"
+    ]
 }
