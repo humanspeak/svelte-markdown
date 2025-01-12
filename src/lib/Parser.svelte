@@ -110,7 +110,10 @@
                                 {...cellRest}
                             >
                                 {#if cells.tokens?.[0]?.type === 'html'}
-                                    {@const token = cells.tokens[0] as Token & { tag: string, tokens?: Token[] }}
+                                    {@const token = cells.tokens[0] as Token & {
+                                        tag: string
+                                        tokens?: Token[]
+                                    }}
                                     {@const { tag, ...localRest } = token}
                                     {@const htmlTag = tag as keyof typeof Html}
                                     {#if htmlTag in Html}
