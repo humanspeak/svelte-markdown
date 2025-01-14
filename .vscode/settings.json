@@ -5,8 +5,5 @@
         "source.fixAll": "explicit",
         "source.fixAll.eslint": "explicit"
     },
-    "editor.formatOnPaste": true,
-    "files.exclude": {
-        "**/node_modules": true,
-    }
+    "editor.formatOnPaste": true
 }

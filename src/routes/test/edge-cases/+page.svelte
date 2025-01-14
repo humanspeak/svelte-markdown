@@ -1,6 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
-    /* eslint-disable no-irregular-whitespace, no-useless-escape */
+
     const edgeCaseExamples = {
         empty: '',
         whitespace: '   \n   \t   ',
@@ -8,7 +8,7 @@
         //     .fill(0)
         //     .map((_, i) => `${'*'.repeat(i + 1)} Level ${i}`)
         //     .join('\n'),
-        // @eslint-disable-next-line
+        /* eslint-disable */
         unicode: `# 你好，世界！
 ## مرحبا بالعالم
 ### Привет, мир!

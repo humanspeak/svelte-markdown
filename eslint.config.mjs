@@ -21,6 +21,7 @@ export default [
             '**/.DS_Store',
             '**/node_modules',
             'postcss.config.cjs',
+            'coverage',
             '**/build',
             '.svelte-kit',
             'package',
@@ -52,7 +53,6 @@ export default [
                 ...globals.browser,
                 ...globals.node
             },
-
             parser: tsParser,
             ecmaVersion: 2020,
             sourceType: 'module',
@@ -60,7 +60,6 @@ export default [
                 extraFileExtensions: ['.svelte']
             }
         },
-
         rules: {
             semi: ['warn', 'never'],
             quotes: ['error', 'single'],
@@ -112,12 +111,10 @@ export default [
     },
     {
         files: ['**/*.svelte'],
-
         languageOptions: {
             parser: parser,
             ecmaVersion: 5,
             sourceType: 'script',
-
             parserOptions: {
                 parser: '@typescript-eslint/parser'
             }
