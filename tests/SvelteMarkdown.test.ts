@@ -69,4 +69,59 @@ test.describe('SvelteMarkdown', () => {
         await expect(page.locator('em')).toHaveText('italic text')
         await expect(page.locator('a')).toHaveAttribute('href', 'https://example.com')
     })
+
+    test('should handle unordered nested lists', async ({ page }) => {
+        await page.goto('/test/reactivity')
+        const textarea = page.getByTestId('markdown-input')
+
+        // Test with more complex markdown
+        const complexMarkdown = `
+- List item 1
+  - List item 2
+        `.trim()
+
+        await textarea.clear()
+        await textarea.fill(complexMarkdown)
+
+        // Verify complex markdown rendering
+        await expect(page.locator('.preview>ul>li')).toHaveCount(1)
+        await expect(page.locator('.preview>ul>li>ul>li')).toHaveCount(1)
+        await expect(page.locator('ul li')).toHaveCount(2)
+    })
+    test('should handle ordered nested lists', async ({ page }) => {
+        await page.goto('/test/reactivity')
+        const textarea = page.getByTestId('markdown-input')
+
+        // Test with more complex markdown
+        const complexMarkdown = `
+1. List item 1
+   1. List item 2
+        `.trim()
+
+        await textarea.clear()
+        await textarea.fill(complexMarkdown)
+
+        // Verify complex markdown rendering
+        await expect(page.locator('.preview>ol>li')).toHaveCount(1)
+        await expect(page.locator('.preview>ol>li>ol>li')).toHaveCount(1)
+        await expect(page.locator('ol li')).toHaveCount(2)
+    })
+    test('should handle mixed nested lists', async ({ page }) => {
+        await page.goto('/test/reactivity')
+        const textarea = page.getByTestId('markdown-input')
+
+        // Test with more complex markdown
+        const complexMarkdown = `
+- List item 1
+   1. List item 2
+        `.trim()
+
+        await textarea.clear()
+        await textarea.fill(complexMarkdown)
+
+        // Verify complex markdown rendering
+        await expect(page.locator('.preview>ul>li')).toHaveCount(1)
+        await expect(page.locator('.preview>ul>li>ol>li')).toHaveCount(1)
+        await expect(page.locator('li')).toHaveCount(2)
+    })
 })

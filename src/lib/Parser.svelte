@@ -140,22 +140,21 @@
     {:else if type === 'list'}
         {#if ordered}
             <renderers.list {ordered} {...rest}>
-                {@const items = rest.items as Props[]}
+                {@const { items, ...parserRest }: {items: Props[]} = rest}
                 {#each items as item}
                     {@const OrderedListComponent = renderers.orderedlistitem || renderers.listitem}
                     <OrderedListComponent {...item}>
-                        <Parser tokens={item.tokens} {renderers} />
+                        <Parser tokens={item.tokens} {renderers} {...parserRest} />
                     </OrderedListComponent>
                 {/each}
             </renderers.list>
         {:else}
             <renderers.list {ordered} {...rest}>
-                {@const items = rest.items as Props[]}
+                {@const { items, ...parserRest }: {items: Props[]} = rest}
                 {#each items as item}
-                    {@const UnorderedListComponent =
-                        renderers.unorderedlistitem || renderers.listitem}
-                    <UnorderedListComponent {...item} {...rest}>
-                        <Parser tokens={item.tokens} {renderers} {...rest} />
+                    {@const UnorderedListComponent = renderers.unorderedlistitem || renderers.listitem}
+                    <UnorderedListComponent {...item}>
+                        <Parser tokens={item.tokens} {renderers} {...parserRest} />
                     </UnorderedListComponent>
                 {/each}
             </renderers.list>
