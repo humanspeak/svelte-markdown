@@ -1,6 +1,6 @@
 {
     "name": "@humanspeak/svelte-markdown",
-    "version": "0.7.9",
+    "version": "0.7.10",
     "description": "A powerful, customizable markdown renderer for Svelte with TypeScript support",
     "keywords": [
         "svelte",
@@ -91,7 +91,7 @@
         "eslint-config-prettier": "^10.0.1",
         "eslint-plugin-svelte": "^2.46.1",
         "globals": "^15.14.0",
-        "jsdom": "^26.0.0",
+        "jsdom": "^25.0.1",
         "prettier": "^3.4.2",
         "prettier-plugin-organize-imports": "^4.1.0",
         "prettier-plugin-svelte": "^3.3.3",
