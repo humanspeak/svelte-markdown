@@ -2,6 +2,7 @@ import '@testing-library/jest-dom'
 import { render, screen } from '@testing-library/svelte'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
+import type { SvelteMarkdownProps } from './types.js'
 
 beforeEach(() => {
     vi.useFakeTimers()
@@ -84,24 +85,22 @@ describe('testing default renderers', () => {
     })
 
     describe('renders a link', () => {
-        test('renders link title', () => {
-            render(SvelteMarkdown, {
-                source: '[link](https://pablo.berganza.dev "link title")'
-            })
+        const source = '[link](https://example.com "link title")'
 
-            const element = screen.getByRole('link', { title: /link title/ })
+        beforeEach(() => {
+            render(SvelteMarkdown, { source })
+        })
+
+        test('renders link with title attribute', () => {
+            const element = screen.getByTitle('link title')
             expect(element).toBeInTheDocument()
             expect(element).toHaveTextContent('link')
         })
 
-        test('renders link name', () => {
-            render(SvelteMarkdown, {
-                source: '[link](https://pablo.berganza.dev "link title")'
-            })
-
-            const element = screen.getByRole('link', { name: /link/ })
+        test('renders link with correct text', () => {
+            const element = screen.getByText('link')
             expect(element).toBeInTheDocument()
-            expect(element).toHaveTextContent('link')
+            expect(element.tagName).toBe('A')
         })
     })
 
@@ -129,7 +128,7 @@ describe('testing default renderers', () => {
                     options: {
                         headerPrefix: 'test-'
                     }
-                }
+                } as unknown as SvelteMarkdownProps & { [key: string]: unknown }
             })
 
             const heading = container.querySelector('h1')
@@ -152,7 +151,7 @@ describe('testing default renderers', () => {
             render(SvelteMarkdown, {
                 source: '# This is a title',
                 options: { headerIds: false }
-            })
+            } as unknown as SvelteMarkdownProps & { [key: string]: unknown })
 
             const element = screen.getByRole('heading', { name: /This is a title/ })
             expect(element).not.toHaveAttribute('id')
@@ -161,7 +160,7 @@ describe('testing default renderers', () => {
 
     test('renders an image', () => {
         render(SvelteMarkdown, {
-            source: '![Image](https://pablo.berganza.dev/img/profile-pic-400.jpeg "image title")'
+            source: '![Image](https://example.com/img/profile-pic-400.jpeg "image title")'
         })
 
         const element = screen.getByRole('img', { name: /Image/ })
@@ -325,19 +324,22 @@ describe('mixed markdown and HTML table rendering', () => {
 
         // Check nested formatting
         const nestedCell = rows?.[0].querySelectorAll('td')[1]
-        expect(nestedCell.querySelector('div strong')).toBeInTheDocument()
-        expect(nestedCell.querySelector('div em')).toBeInTheDocument()
+        expect(nestedCell).toBeDefined()
+        expect(nestedCell?.querySelector('div strong')).toBeInTheDocument()
+        expect(nestedCell?.querySelector('div em')).toBeInTheDocument()
 
         // Check mixed list - updated to use proper HTML list structure
         const listCell = rows?.[1].querySelectorAll('td')[1]
-        const ul = listCell.querySelector('ul')
+        expect(listCell).toBeDefined()
+        const ul = listCell?.querySelector('ul')
         expect(ul).toBeInTheDocument()
         const listItems = ul?.querySelectorAll('li')
         expect(listItems).toHaveLength(2)
 
         // Check code formatting
         const codeCell = rows?.[2].querySelectorAll('td')[1]
-        expect(codeCell.querySelector('code')).toBeInTheDocument()
+        expect(codeCell).toBeDefined()
+        expect(codeCell?.querySelector('code')).toBeInTheDocument()
     })
 
     test('handles complex table cell alignments with mixed content', () => {
@@ -355,13 +357,13 @@ describe('mixed markdown and HTML table rendering', () => {
 
         // Check alignments and content
         const firstRow = rows?.[0].querySelectorAll('td')
-        // Only check center and right alignment since left is default
-        expect(firstRow[1]).toHaveStyle({ textAlign: 'center' })
-        expect(firstRow[2]).toHaveStyle({ textAlign: 'right' })
+        expect(firstRow).toBeDefined()
+        expect(firstRow?.[1]).toHaveStyle({ textAlign: 'center' })
+        expect(firstRow?.[2]).toHaveStyle({ textAlign: 'right' })
 
         // Check mixed content rendering
-        expect(firstRow[0].querySelector('em')).toBeInTheDocument()
-        expect(firstRow[1].querySelector('strong')).toBeInTheDocument()
-        expect(firstRow[2].querySelector('a')).toBeInTheDocument()
+        expect(firstRow?.[0].querySelector('em')).toBeInTheDocument()
+        expect(firstRow?.[1].querySelector('strong')).toBeInTheDocument()
+        expect(firstRow?.[2].querySelector('a')).toBeInTheDocument()
     })
 })

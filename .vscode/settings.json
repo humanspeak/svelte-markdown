@@ -1,15 +1,9 @@
 {
     "editor.formatOnSave": true,
-    "eslint.validate": ["typescript"],
+    "editor.defaultFormatter": "trunk.io",
     "editor.codeActionsOnSave": {
         "source.fixAll": "explicit",
         "source.fixAll.eslint": "explicit"
     },
-    "prettier.configPath": ".prettierrc",
-    "prettier.prettierPath": "./node_modules/prettier",
-    "prettier.useEditorConfig": false,
-    "editor.formatOnPaste": true,
-    "files.exclude": {
-        "**/node_modules": true,
-    }
+    "editor.formatOnPaste": true
 }

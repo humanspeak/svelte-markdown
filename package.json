@@ -2,89 +2,6 @@
     "name": "@humanspeak/svelte-markdown",
     "version": "0.7.10",
     "description": "A powerful, customizable markdown renderer for Svelte with TypeScript support",
-    "type": "module",
-    "svelte": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "svelte": "./dist/index.js"
-        }
-    },
-    "files": [
-        "dist",
-        "!dist/**/*.test.*",
-        "!dist/**/*.spec.*"
-    ],
-    "sideEffects": [
-        "**/*.css"
-    ],
-    "scripts": {
-        "dev": "vite dev",
-        "build": "vite build && npm run package",
-        "package": "svelte-kit sync && svelte-package && publint",
-        "prepublishOnly": "npm run package",
-        "preview": "vite preview",
-        "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-        "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-        "test": "vitest run --coverage",
-        "test:only": "vitest run",
-        "test:watch": "vitest",
-        "lint": "prettier --check . && eslint .",
-        "lint:fix": "npm run format && eslint . --fix",
-        "format": "prettier --write .",
-        "test:e2e": "playwright test",
-        "test:e2e:ui": "playwright test --ui",
-        "test:e2e:debug": "playwright test --debug",
-        "test:e2e:report": "playwright show-report"
-    },
-    "dependencies": {
-        "github-slugger": "^2.0.0",
-        "htmlparser2": "^10.0.0",
-        "marked": "^15.0.6"
-    },
-    "peerDependencies": {
-        "svelte": "^5.0.0"
-    },
-    "devDependencies": {
-        "@eslint/eslintrc": "^3.2.0",
-        "@eslint/js": "^9.17.0",
-        "@playwright/test": "^1.49.1",
-        "@sveltejs/adapter-auto": "^3.3.1",
-        "@sveltejs/kit": "^2.15.2",
-        "@sveltejs/package": "^2.3.7",
-        "@sveltejs/vite-plugin-svelte": "^5.0.3",
-        "@testing-library/jest-dom": "^6.6.3",
-        "@testing-library/svelte": "^5.2.6",
-        "@testing-library/user-event": "^14.5.2",
-        "@types/node": "^22.10.5",
-        "@typescript-eslint/eslint-plugin": "^8.19.1",
-        "@typescript-eslint/parser": "^8.19.1",
-        "@vitest/coverage-v8": "^3.0.0-beta.4",
-        "eslint": "^9.17.0",
-        "eslint-config-prettier": "^9.1.0",
-        "eslint-plugin-svelte": "^2.46.1",
-        "globals": "^15.14.0",
-        "jsdom": "^25.0.1",
-        "prettier": "^3.4.2",
-        "prettier-plugin-organize-imports": "^4.1.0",
-        "prettier-plugin-svelte": "^3.3.2",
-        "prettier-plugin-tailwindcss": "^0.6.9",
-        "publint": "^0.3.0",
-        "svelte": "^5.17.3",
-        "svelte-check": "^4.1.3",
-        "typescript": "^5.7.3",
-        "vite": "^6.0.7",
-        "vitest": "^3.0.0-beta.4"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/humanspeak/svelte-markdown.git"
-    },
-    "homepage": "https://markdown.svelte.page",
-    "bugs": {
-        "url": "https://github.com/humanspeak/svelte-markdown/issues"
-    },
     "keywords": [
         "svelte",
         "markdown",
@@ -100,15 +17,97 @@
         "converter",
         "formatting"
     ],
-    "tags": [
-        "svelte",
-        "markdown"
-    ],
-    "author": "Humanspeak, Inc.",
-    "license": "MIT",
+    "homepage": "https://markdown.svelte.page",
+    "bugs": {
+        "url": "https://github.com/humanspeak/svelte-markdown/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/humanspeak/svelte-markdown.git"
+    },
     "funding": {
         "type": "github",
         "url": "https://github.com/sponsors/humanspeak"
+    },
+    "license": "MIT",
+    "author": "Humanspeak, Inc.",
+    "sideEffects": [
+        "**/*.css"
+    ],
+    "type": "module",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "svelte": "./dist/index.js"
+        }
+    },
+    "svelte": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist",
+        "!dist/**/*.test.*",
+        "!dist/**/*.spec.*"
+    ],
+    "scripts": {
+        "build": "vite build && npm run package",
+        "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+        "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+        "dev": "vite dev",
+        "format": "prettier --write .",
+        "lint": "prettier --check . && eslint .",
+        "lint:fix": "npm run format && eslint . --fix",
+        "package": "svelte-kit sync && svelte-package && publint",
+        "prepublishOnly": "npm run package",
+        "preview": "vite preview",
+        "test": "vitest run --coverage",
+        "test:e2e": "playwright test",
+        "test:e2e:debug": "playwright test --debug",
+        "test:e2e:report": "playwright show-report",
+        "test:e2e:ui": "playwright test --ui",
+        "test:only": "vitest run",
+        "test:watch": "vitest"
+    },
+    "dependencies": {
+        "github-slugger": "^2.0.0",
+        "htmlparser2": "^10.0.0",
+        "marked": "^15.0.6"
+    },
+    "devDependencies": {
+        "@eslint/eslintrc": "^3.2.0",
+        "@eslint/js": "^9.18.0",
+        "@playwright/test": "^1.49.1",
+        "@sveltejs/adapter-auto": "^3.3.1",
+        "@sveltejs/kit": "^2.15.2",
+        "@sveltejs/package": "^2.3.7",
+        "@sveltejs/vite-plugin-svelte": "^5.0.3",
+        "@testing-library/jest-dom": "^6.6.3",
+        "@testing-library/svelte": "^5.2.6",
+        "@testing-library/user-event": "^14.5.2",
+        "@types/node": "^22.10.6",
+        "@typescript-eslint/eslint-plugin": "^8.20.0",
+        "@typescript-eslint/parser": "^8.20.0",
+        "@vitest/coverage-v8": "^3.0.0-beta.4",
+        "eslint": "^9.18.0",
+        "eslint-config-prettier": "^10.0.1",
+        "eslint-plugin-svelte": "^2.46.1",
+        "globals": "^15.14.0",
+        "jsdom": "^25.0.1",
+        "prettier": "^3.4.2",
+        "prettier-plugin-organize-imports": "^4.1.0",
+        "prettier-plugin-svelte": "^3.3.3",
+        "prettier-plugin-tailwindcss": "^0.6.9",
+        "publint": "^0.3.2",
+        "svelte": "^5.18.0",
+        "svelte-check": "^4.1.4",
+        "typescript": "^5.7.3",
+        "vite": "^6.0.7",
+        "vitest": "^3.0.0-beta.4"
+    },
+    "peerDependencies": {
+        "svelte": "^5.0.0"
+    },
+    "volta": {
+        "node": "22.12.0"
     },
     "publishConfig": {
         "access": "public"
@@ -122,7 +121,8 @@
             "@asamuzakjp/css-color": "1.0.0"
         }
     },
-    "volta": {
-        "node": "22.12.0"
-    }
+    "tags": [
+        "svelte",
+        "markdown"
+    ]
 }

@@ -1,8 +1,11 @@
 name: Cache Cleanup
 
+permissions:
+    actions: read
+
 on:
     schedule:
-        - cron: '0 0 1 * *' # Monthly cleanup
+        - cron: 0 0 1 * * # Monthly cleanup
 
 jobs:
     cleanup:
@@ -12,7 +15,7 @@ jobs:
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   REPO: ${{ github.repository }}
-                  BRANCH: 'main'
+                  BRANCH: main
               run: |
                   gh extension install actions/gh-actions-cache
 
