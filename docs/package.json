@@ -19,17 +19,17 @@
         "test:unit": "vitest"
     },
     "dependencies": {
-        "@sentry/cloudflare": "^8.48.0",
-        "@sentry/sveltekit": "^8.48.0"
+        "@sentry/cloudflare": "^8.50.0",
+        "@sentry/sveltekit": "^8.50.0"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20250109.0",
         "@humanspeak/svelte-markdown": "file:..",
-        "@internationalized/date": "^3.6.0",
+        "@internationalized/date": "^3.7.0",
         "@playwright/test": "^1.49.1",
-        "@sveltejs/adapter-auto": "^3.3.1",
-        "@sveltejs/adapter-cloudflare": "^5.0.0",
-        "@sveltejs/kit": "^2.15.2",
+        "@sveltejs/adapter-auto": "^4.0.0",
+        "@sveltejs/adapter-cloudflare": "^5.0.1",
+        "@sveltejs/kit": "^2.15.3",
         "@sveltejs/vite-plugin-svelte": "^5.0.3",
         "@tailwindcss/aspect-ratio": "^0.4.2",
         "@tailwindcss/container-queries": "^0.1.1",
@@ -53,9 +53,9 @@
         "prettier": "^3.4.2",
         "prettier-plugin-organize-imports": "^4.1.0",
         "prettier-plugin-svelte": "^3.3.3",
-        "prettier-plugin-tailwindcss": "^0.6.9",
-        "puppeteer": "^24.0.0",
-        "shiki": "^1.27.0",
+        "prettier-plugin-tailwindcss": "^0.6.10",
+        "puppeteer": "^24.1.0",
+        "shiki": "^1.27.2",
         "svelte": "^5.18.0",
         "svelte-check": "^4.1.4",
         "svelte-sonner": "^0.3.28",
@@ -69,7 +69,7 @@
         "typescript-eslint": "^8.20.0",
         "vaul-svelte": "^1.0.0-next.3",
         "vite": "^6.0.7",
-        "vitest": "^2.1.8",
+        "vitest": "^3.0.0",
         "zod": "^3.24.1"
     },
     "volta": {
