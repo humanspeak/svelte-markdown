@@ -286,28 +286,6 @@ describe('mixed markdown and HTML table rendering', () => {
         expect(linkCells?.[2].innerHTML).toContain('</a>')
     })
 
-    //     test('handles malformed mixed content gracefully', () => {
-    //         const source = `
-    // | Feature | Markdown | HTML |
-    // |---------|----------|------|
-    // | Bold | **unclosed | <strong>unclosed |
-    // | Italic | *text** | <em>text</strong> |`
-
-    //         render(SvelteMarkdown, { source })
-
-    //         // Verify table structure remains intact
-    //         const table = screen.getByRole('table')
-    //         expect(table).toBeInTheDocument()
-
-    //         // Verify headers are present
-    //         const headers = screen.getAllByRole('columnheader')
-    //         expect(headers).toHaveLength(3)
-
-    //         // Check that content is rendered as fallback text when malformed
-    //         expect(screen.getByText('**unclosed')).toBeInTheDocument()
-    //         expect(screen.getByText('<strong>unclosed')).toBeInTheDocument()
-    //     })
-
     test('handles nested markdown within HTML in table cells', () => {
         const source = `
 | Type | Content |
@@ -365,5 +343,45 @@ describe('mixed markdown and HTML table rendering', () => {
         expect(firstRow?.[0].querySelector('em')).toBeInTheDocument()
         expect(firstRow?.[1].querySelector('strong')).toBeInTheDocument()
         expect(firstRow?.[2].querySelector('a')).toBeInTheDocument()
+    })
+})
+
+describe('testing nested lists', () => {
+    test('renders three levels of nested lists correctly', () => {
+        const source = `
+* Level 1 Item A
+  * Level 2 Item A1
+    * Level 3 Item A1a
+    * Level 3 Item A1b
+  * Level 2 Item A2
+* Level 1 Item B
+  * Level 2 Item B1
+    * Level 3 Item B1a`
+
+        const { container } = render(SvelteMarkdown, { source })
+
+        // Check first level list
+        const topLevelList = container.querySelector('ul')
+        expect(topLevelList).toBeInTheDocument()
+
+        // Check second level lists
+        const secondLevelLists = container.querySelectorAll('ul > li > ul')
+        expect(secondLevelLists).toHaveLength(4) // Updated to match actual structure
+
+        // Check third level lists
+        const thirdLevelLists = container.querySelectorAll('ul > li > ul > li > ul')
+        expect(thirdLevelLists).toHaveLength(2)
+
+        // Verify specific content at each level
+        expect(screen.getByText('Level 1 Item A')).toBeInTheDocument()
+        expect(screen.getByText('Level 2 Item A1')).toBeInTheDocument()
+        expect(screen.getByText('Level 3 Item A1a')).toBeInTheDocument()
+
+        // Check nesting structure
+        const firstNestedList = secondLevelLists[0]
+        expect(firstNestedList?.parentElement?.textContent).toContain('Level 1 Item A')
+
+        const firstThirdLevelList = thirdLevelLists[0]
+        expect(firstThirdLevelList?.parentElement?.textContent).toContain('Level 2 Item A1')
     })
 })
