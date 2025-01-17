@@ -152,7 +152,8 @@
             <renderers.list {ordered} {...rest}>
                 {@const { items, ...parserRest }: {items: Props[]} = rest}
                 {#each items as item}
-                    {@const UnorderedListComponent = renderers.unorderedlistitem || renderers.listitem}
+                    {@const UnorderedListComponent =
+                        renderers.unorderedlistitem || renderers.listitem}
                     <UnorderedListComponent {...item}>
                         <Parser tokens={item.tokens} {renderers} {...parserRest} />
                     </UnorderedListComponent>
