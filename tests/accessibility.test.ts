@@ -5,7 +5,6 @@ test.describe('Accessibility Tests', () => {
         // Add a delay to ensure server is ready
         await new Promise((resolve) => setTimeout(resolve, 1000))
     })
-
     test('should maintain proper heading hierarchy', async ({ page }) => {
         try {
             await page.goto('/test/accessibility', {
