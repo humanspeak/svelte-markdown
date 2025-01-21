@@ -5,7 +5,6 @@ permissions:
     contents: read
     packages: read
     pull-requests: read
-    id-token: write
 
 # 2. Trigger conditions
 on:
@@ -147,6 +146,7 @@ jobs:
             packages: write
             issues: write
             pull-requests: write
+            id-token: write
 
         steps:
             - name: Checkout
