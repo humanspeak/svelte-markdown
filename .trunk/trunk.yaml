@@ -39,7 +39,7 @@ lint:
               - javascript
     enabled:
         - sort-package-json@2.14.0
-        - actionlint@1.7.6
+        - actionlint@1.7.7
         - checkov@3.2.353
         - eslint@9.18.0:
               config: eslint.config.mjs
