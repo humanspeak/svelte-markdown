@@ -5,6 +5,7 @@ permissions:
     contents: read
     packages: read
     pull-requests: read
+    id-token: write
 
 # 2. Trigger conditions
 on:
@@ -340,7 +341,7 @@ jobs:
                   # Ensure we're publishing to the correct scope
                   rm -f ./.npmrc
                   npm config set @humanspeak:registry https://registry.npmjs.org/
-                  npm publish --access public
+                  npm publish --provenance --access public
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}
 
