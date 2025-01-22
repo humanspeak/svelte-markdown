@@ -14,7 +14,7 @@ export default defineConfig({
         globals: true,
         environment: 'jsdom',
         setupFiles: ['vitest.setup.ts'],
-        coverage: { reporter: 'lcov' },
+        coverage: { reporter: 'lcov', exclude: ['docs/**'] },
         exclude: [
             ...configDefaults.exclude,
             'node_modules/**',
