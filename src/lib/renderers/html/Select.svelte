@@ -9,4 +9,6 @@
     const { children, attributes }: Props = $props()
 </script>
 
-<select {...attributes}>{@render children?.()}</select>
+<select {...attributes}>
+    {@render children?.()}
+</select>

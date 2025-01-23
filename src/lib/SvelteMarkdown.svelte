@@ -71,7 +71,7 @@
     } = $props()
 
     const combinedOptions = { ...defaultOptions, ...options }
-    const slugger = source ? new Slugger() : undefined
+    const slugger = new Slugger()
 
     const tokens = $derived.by(() => {
         const lexer = new Lexer(combinedOptions)
