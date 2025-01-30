@@ -7,7 +7,7 @@ cli:
 plugins:
     sources:
         - id: trunk
-          ref: v1.6.6
+          ref: v1.6.7
           uri: https://github.com/trunk-io/plugins
 # Many linters and tools depend on runtimes - configure them here. (https://docs.trunk.io/runtimes)
 runtimes:
@@ -40,8 +40,8 @@ lint:
     enabled:
         - sort-package-json@2.14.0
         - actionlint@1.7.7
-        - checkov@3.2.356
-        - eslint@9.18.0:
+        - checkov@3.2.358
+        - eslint@9.19.0:
               config: eslint.config.mjs
               packages:
                   - '@typescript-eslint/eslint-plugin'
@@ -50,7 +50,7 @@ lint:
                   - '@eslint/js'
                   - eslint-plugin-svelte
         - git-diff-check
-        - markdownlint@0.43.0
+        - markdownlint@0.44.0
         - osv-scanner@1.9.2
         - oxipng@9.1.3
         - prettier@3.4.2:
@@ -62,7 +62,7 @@ lint:
         - shfmt@3.6.0
         - svgo@3.3.2
         - taplo@0.9.3
-        - trufflehog@3.88.2
+        - trufflehog@3.88.3
         - yamllint@1.35.1
 actions:
     enabled:

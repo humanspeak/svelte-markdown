@@ -1,5 +1,5 @@
 #:schema node_modules/wrangler/config-schema.json
-name = "sveltemarkdown-com"
+name = "svelte-page-markdown"
 compatibility_date = "2025-01-09"
 pages_build_output_dir = ".svelte-kit/cloudflare"
 compatibility_flags = ["nodejs_compat"]
