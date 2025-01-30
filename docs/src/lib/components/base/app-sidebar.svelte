@@ -57,6 +57,11 @@
                                             <span>/virtual-list</span>
                                         </a>
                                     </Sidebar.MenuButton>
+                                    <Sidebar.MenuButton>
+                                        <a href={'https://table.svelte.page'}>
+                                            <span>/table</span>
+                                        </a>
+                                    </Sidebar.MenuButton>
                                 </Sidebar.MenuSubItem>
                             </Sidebar.MenuSub>
                         </Collapsible.Content>
