@@ -24,7 +24,7 @@ import type { Renderers, SvelteMarkdownOptions } from './utils/markdown-parser.j
 export type SvelteMarkdownProps = {
     source: Token[] | string
     renderers?: Partial<Renderers>
-    options?: SvelteMarkdownOptions
+    options?: Partial<SvelteMarkdownOptions>
     isInline?: boolean
     parsed?: (tokens: Token[] | TokensList) => void // eslint-disable-line no-unused-vars
 }
