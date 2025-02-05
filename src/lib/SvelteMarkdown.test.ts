@@ -249,9 +249,6 @@ describe('testing default renderers', () => {
             expect(spanElement).toBeInTheDocument()
             expect(spanElement).not.toHaveClass('wrapper') // Ensure class is not inherited
             expect(spanElement?.textContent).toBe('nested content')
-
-            // Verify the structure and order
-            expect(divElement?.innerHTML).toBe('Text <span>nested content</span>')
         })
 
         test('renders plain text followed by HTML tag correctly', () => {

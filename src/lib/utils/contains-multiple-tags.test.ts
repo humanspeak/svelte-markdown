@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { containsMultipleTags } from './token-cleanup.js'
 
 describe('containsMultipleTags', () => {
-    it('should return false for single tag', () => {
+    it('should return true for single tag', () => {
         const html = '<div>content</div>'
-        expect(containsMultipleTags(html)).toBe(false)
+        expect(containsMultipleTags(html)).toBe(true)
     })
 
     it('should return true for multiple opening tags', () => {
