@@ -19,12 +19,12 @@
     <DrawerPrimitive.Content
         bind:ref
         class={cn(
-            'fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background',
+            'bg-background fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border',
             className
         )}
         {...restProps}
     >
-        <div class="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted"></div>
+        <div class="bg-muted mx-auto mt-4 h-2 w-[100px] rounded-full"></div>
         {@render children?.()}
     </DrawerPrimitive.Content>
 </DrawerPrimitive.Portal>
