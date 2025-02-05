@@ -10,10 +10,10 @@
         <Tooltip.Root>
             <Tooltip.Trigger class={buttonVariants({ variant: 'ghost', size: 'icon' })}>
                 <i
-                    class="fa-solid fa-sun-bright fa-fw rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+                    class="fa-solid fa-sun-bright fa-fw scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90"
                 ></i>
                 <i
-                    class="fa-solid fa-moon fa-fw absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+                    class="fa-solid fa-moon fa-fw absolute scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"
                 ></i>
                 <span class="sr-only">Toggle theme</span>
             </Tooltip.Trigger>
