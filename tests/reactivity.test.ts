@@ -124,4 +124,47 @@ test.describe('SvelteMarkdown', () => {
         await expect(page.locator('.preview>ul>li>ol>li')).toHaveCount(1)
         await expect(page.locator('li')).toHaveCount(2)
     })
+
+    test('renders HTML tags correctly after plain text', async ({ page }) => {
+        // Navigate to the test page
+        await page.goto('/test/reactivity')
+
+        // Add markdown content with text followed by HTML
+        const markdown = 'Some text!!!\n\n<h1>Something</h1>'
+
+        const textarea = page.getByTestId('markdown-input')
+        await textarea.clear()
+        await textarea.fill(markdown)
+
+        // Wait for the rendering to complete
+        await page.waitForSelector('h1')
+
+        // Verify the text content is rendered correctly
+        const paragraph = await page.locator('p').first()
+        await expect(paragraph).toHaveText('Some text!!!')
+
+        // Verify the HTML tag is rendered correctly
+        const heading = await page.locator('h1')
+        await expect(heading).toHaveText('Something')
+
+        // Verify the order of elements
+        const elements = await page.locator('div.preview > *').all()
+        expect(elements.length).toBe(2)
+        await expect(elements[0]).toHaveText('Some text!!!')
+        await expect(elements[1]).toHaveText('Something')
+    })
+
+    test('renders nested HTML tags correctly', async ({ page }) => {
+        await page.goto('/test/reactivity')
+
+        // Test with nested HTML structure
+        const markdown = '<div class="wrapper">Text <span>nested content</span></div>'
+        const textarea = page.getByTestId('markdown-input')
+        await textarea.clear()
+        await textarea.fill(markdown)
+
+        // Verify the structure
+        await expect(page.locator('div.wrapper')).toBeVisible()
+        await expect(page.locator('div.wrapper > span')).not.toHaveClass('wrapper')
+    })
 })

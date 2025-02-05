@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { containsMultipleTags } from './token-cleanup.js'
 
 describe('containsMultipleTags', () => {
-    it('should return false for single tag', () => {
+    it('should return true for single tag', () => {
         const html = '<div>content</div>'
-        expect(containsMultipleTags(html)).toBe(false)
+        expect(containsMultipleTags(html)).toBe(true)
     })
 
     it('should return true for multiple opening tags', () => {
@@ -58,6 +58,11 @@ describe('containsMultipleTags', () => {
 
     it('should handle tags with whitespace', () => {
         const html = '<div ><span >content</span ></div >'
+        expect(containsMultipleTags(html)).toBe(true)
+    })
+
+    it('it should return true if it starts with and ends with the same tag and only those tags', () => {
+        const html = '<div>content</div>'
         expect(containsMultipleTags(html)).toBe(true)
     })
 })

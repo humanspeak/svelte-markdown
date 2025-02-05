@@ -123,7 +123,11 @@
                                                 <Parser
                                                     tokens={token.tokens}
                                                     {renderers}
-                                                    {...localRest}
+                                                    {...Object.fromEntries(
+                                                        Object.entries(localRest).filter(
+                                                            ([key]) => key !== 'attributes'
+                                                        )
+                                                    )}
                                                 />
                                             {/if}
                                         </HtmlComponent>
@@ -168,7 +172,13 @@
             {@const tokens = (rest.tokens as Token[]) ?? ([] as Token[])}
             <HtmlComponent {...rest}>
                 {#if tokens.length}
-                    <Parser {tokens} {renderers} {...localRest} />
+                    <Parser
+                        {tokens}
+                        {renderers}
+                        {...Object.fromEntries(
+                            Object.entries(localRest).filter(([key]) => key !== 'attributes')
+                        )}
+                    />
                 {/if}
             </HtmlComponent>
         {:else}
