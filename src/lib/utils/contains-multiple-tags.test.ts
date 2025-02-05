@@ -60,4 +60,9 @@ describe('containsMultipleTags', () => {
         const html = '<div ><span >content</span ></div >'
         expect(containsMultipleTags(html)).toBe(true)
     })
+
+    it('it should return true if it starts with and ends with the same tag and only those tags', () => {
+        const html = '<div>content</div>'
+        expect(containsMultipleTags(html)).toBe(true)
+    })
 })

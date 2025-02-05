@@ -232,6 +232,55 @@ describe('testing default renderers', () => {
             expect(screen.getByText('inline code')).toHaveProperty('nodeName', 'CODE')
             expect(screen.getByText('italic')).toHaveProperty('nodeName', 'EM')
         })
+
+        test('renders nested HTML elements with proper class inheritance', () => {
+            const { container } = render(SvelteMarkdown, {
+                source: '<div class="wrapper">Text <span>nested content</span></div>'
+            })
+
+            // Check the div element
+            const divElement = container.querySelector('.wrapper')
+            expect(divElement).toBeInTheDocument()
+            expect(divElement).toHaveClass('wrapper')
+            expect(divElement?.innerHTML).toContain('Text')
+
+            // Check the span element
+            const spanElement = divElement?.querySelector('span')
+            expect(spanElement).toBeInTheDocument()
+            expect(spanElement).not.toHaveClass('wrapper') // Ensure class is not inherited
+            expect(spanElement?.textContent).toBe('nested content')
+
+            // Verify the structure and order
+            expect(divElement?.innerHTML).toBe('Text <span>nested content</span>')
+        })
+
+        test('renders plain text followed by HTML tag correctly', () => {
+            const { container } = render(SvelteMarkdown, {
+                source: 'Hi!!!\n<h1>test</h1>'
+            })
+
+            // Check the text content is in a paragraph
+            const paragraphElement = container.querySelector('p')
+            expect(paragraphElement).toBeInTheDocument()
+            expect(paragraphElement?.textContent).toBe('Hi!!!')
+
+            // Check the h1 element
+            const headingElement = container.querySelector('h1')
+            expect(headingElement).toBeInTheDocument()
+            expect(headingElement?.textContent).toBe('test')
+
+            // Verify the order of elements
+            const elements = Array.from(container.children)
+            expect(elements).toHaveLength(2)
+            expect(elements[0].tagName).toBe('P')
+            expect(elements[1].tagName).toBe('H1')
+            expect(elements[0].textContent).toBe('Hi!!!')
+            expect(elements[1].textContent).toBe('test')
+
+            // Ensure no unwanted nesting
+            expect(paragraphElement?.querySelector('h1')).toBeNull()
+            expect(headingElement?.parentElement).not.toBe(paragraphElement)
+        })
     })
 })
 
