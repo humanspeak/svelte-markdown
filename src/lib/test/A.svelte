@@ -9,4 +9,4 @@
     const { children, attributes }: Props = $props()
 </script>
 
-<div data-markdown-test="data-markdown-test-div" {...attributes}>{@render children?.()}</div>
+<a data-markdown-test="data-markdown-test-a" {...attributes}>{@render children?.()}</a>

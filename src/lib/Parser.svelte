@@ -116,8 +116,8 @@
                                     }}
                                     {@const { tag, ...localRest } = token}
                                     {@const htmlTag = tag as keyof typeof Html}
-                                    {#if htmlTag in Html}
-                                        {@const HtmlComponent = Html[htmlTag]}
+                                    {#if htmlTag in renderers.html}
+                                        {@const HtmlComponent = renderers.html[htmlTag]}
                                         <HtmlComponent {...token}>
                                             {#if token.tokens?.length}
                                                 <Parser
@@ -167,8 +167,8 @@
     {:else if type === 'html'}
         {@const { tag, ...localRest } = rest}
         {@const htmlTag = rest.tag as keyof typeof Html}
-        {#if htmlTag in Html}
-            {@const HtmlComponent = Html[htmlTag]}
+        {#if htmlTag in renderers.html}
+            {@const HtmlComponent = renderers.html[htmlTag]}
             {@const tokens = (rest.tokens as Token[]) ?? ([] as Token[])}
             <HtmlComponent {...rest}>
                 {#if tokens.length}
