@@ -2,7 +2,7 @@
 # To learn more about the format of this file, see https://docs.trunk.io/reference/trunk-yaml
 version: 0.1
 cli:
-    version: 1.22.9
+    version: 1.22.10
 # Trunk provides extensibility via plugins. (https://docs.trunk.io/plugins)
 plugins:
     sources:
@@ -40,7 +40,7 @@ lint:
     enabled:
         - sort-package-json@2.14.0
         - actionlint@1.7.7
-        - checkov@3.2.358
+        - checkov@3.2.368
         - eslint@9.19.0:
               config: eslint.config.mjs
               packages:
@@ -62,7 +62,7 @@ lint:
         - shfmt@3.6.0
         - svgo@3.3.2
         - taplo@0.9.3
-        - trufflehog@3.88.3
+        - trufflehog@3.88.5
         - yamllint@1.35.1
 actions:
     enabled:
