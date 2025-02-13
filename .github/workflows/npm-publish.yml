@@ -58,8 +58,14 @@ jobs:
                     fi
 
                     # Check for console.log
-                    if grep -l "console\.log" "$file" > /dev/null; then
+                    if grep -il "console\.\(log\|debug\)" "$file" > /dev/null; then
                       echo "::error file=$file::Found console.log in $file"
+                      has_debug=true
+                    fi
+
+                    # Check for debugger statements
+                    if grep -l "debugger;" "$file" > /dev/null; then
+                      echo "::error file=$file::Found debugger statement in $file"
                       has_debug=true
                     fi
 
