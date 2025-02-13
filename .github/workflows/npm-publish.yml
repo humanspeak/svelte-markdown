@@ -107,33 +107,38 @@ jobs:
                     $has_debug && return 1 || return 0
                   }
 
-                  # Capture all output
+                  # Set up file descriptor for output capture
                   exec 5>&1
+
+                  # Run checks and capture output
                   OUTPUT=$(
-                    # Check files and collect output
-                    has_errors=0
+                    {
+                      has_errors=0
 
-                    # Check Svelte files
-                    while IFS= read -r file; do
-                      if ! check_file "$file"; then
-                        has_errors=1
-                      fi
-                    done < <(find src/lib -type f -name "*.svelte" ! -path "*/test/*")
+                      # Check Svelte files
+                      while IFS= read -r file; do
+                        if ! check_file "$file"; then
+                          has_errors=1
+                        fi
+                      done < <(find src/lib -type f -name "*.svelte" ! -path "*/test/*")
 
-                    # Check TypeScript files
-                    while IFS= read -r file; do
-                      if ! check_file "$file"; then
-                        has_errors=1
-                      fi
-                    done < <(find src/lib -type f -name "*.ts" ! -name "*.test.ts" ! -path "*/test/*")
+                      # Check TypeScript files
+                      while IFS= read -r file; do
+                        if ! check_file "$file"; then
+                          has_errors=1
+                        fi
+                      done < <(find src/lib -type f -name "*.ts" ! -name "*.test.ts" ! -path "*/test/*")
 
-                    exit $has_errors
-                  | tee >(cat - >&5))
+                      exit $has_errors
+                    } | tee >(cat >&5)
+                  )
 
                   # Store output for the next step
-                  echo "DEBUG_OUTPUT<<EOF" >> $GITHUB_ENV
-                  echo "$OUTPUT" >> $GITHUB_ENV
-                  echo "EOF" >> $GITHUB_ENV
+                  {
+                    echo "DEBUG_OUTPUT<<EOF"
+                    echo "$OUTPUT"
+                    echo "EOF"
+                  } >> $GITHUB_ENV
 
                   # Exit with the original error code
                   [[ $OUTPUT == *"::error"* ]] && exit 1 || exit 0
