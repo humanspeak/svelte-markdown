@@ -277,7 +277,7 @@ jobs:
               if: always()
               with:
                   name: junit-playwright.xml
-                  path: /
+                  path: junit-playwright.xml
                   retention-days: 10
 
     # 4. Coverage reporting (depends on tests)
