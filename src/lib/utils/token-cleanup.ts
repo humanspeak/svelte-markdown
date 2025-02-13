@@ -223,7 +223,7 @@ export const containsMultipleTags = (html: string): boolean => {
     // Count the number of opening and closing tags
     const openingTags = html.match(/<[a-zA-Z][^>]*>/g) || []
     const closingTags = html.match(/<\/[a-zA-Z][^>]*>/g) || []
-
+    console.log(openingTags, closingTags)
     // Return true if:
     // 1. There are multiple opening tags OR
     // 2. There are multiple closing tags OR

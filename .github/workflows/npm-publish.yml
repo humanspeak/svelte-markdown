@@ -35,8 +35,82 @@ on:
                 type: string
 
 jobs:
+    debug-check:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  persist-credentials: false
+                  token: ${{ secrets.ACTIONS_KEY }}
+
+            - name: Check for debugging statements
+              run: |
+                  # Function to check file content
+                  check_file() {
+                    local file="$1"
+                    local has_debug=false
+
+                    # Check for $inspect
+                    if grep -l "\$inspect" "$file" > /dev/null; then
+                      echo "::error file=$file::Found \$inspect in $file"
+                      has_debug=true
+                    fi
+
+                    # Check for console.log
+                    if grep -il "console\.\(log\|debug\)" "$file" > /dev/null; then
+                      echo "::error file=$file::Found console.log in $file"
+                      has_debug=true
+                    fi
+
+                    # Check for debugger statements
+                    if grep -l "debugger;" "$file" > /dev/null; then
+                      echo "::error file=$file::Found debugger statement in $file"
+                      has_debug=true
+                    fi
+
+                    $has_debug && return 1 || return 0
+                  }
+
+                  # Initialize error flag
+                  has_errors=0
+
+                  # Check Svelte files in lib (excluding test directory)
+                  while IFS= read -r file; do
+                    if ! check_file "$file"; then
+                      has_errors=1
+                    fi
+                  done < <(find src/lib -type f -name "*.svelte" ! -path "*/test/*")
+
+                  # Check TypeScript files in lib (excluding .test.ts and test directory)
+                  while IFS= read -r file; do
+                    if ! check_file "$file"; then
+                      has_errors=1
+                    fi
+                  done < <(find src/lib -type f -name "*.ts" ! -name "*.test.ts" ! -path "*/test/*")
+
+                  # Exit with error if debugging statements were found
+                  exit $has_errors
+
+            - name: Upload Results
+              if: failure()
+              uses: actions/github-script@v7
+              with:
+                  github-token: ${{ secrets.ACTIONS_KEY }}
+                  script: |
+                      const fs = require('fs');
+                      const { owner, repo } = context.repo;
+
+                      github.rest.issues.createComment({
+                          issue_number: context.issue.number,
+                          owner: owner,
+                          repo: repo,
+                          body: '❌ Debug statements check failed. Please remove all `$inspect` and `console.log` statements from production code.'
+                      });
+
     # 3. Testing jobs (grouped together)
     build:
+        needs: debug-check
         runs-on: ubuntu-latest
         strategy:
             matrix:
