@@ -90,7 +90,7 @@
         if (!tokens) return
         parsed(tokens)
     })
-    $inspect(renderers.html)
+
     const combinedRenderers = {
         ...defaultRenderers,
         ...renderers,
