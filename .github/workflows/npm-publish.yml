@@ -13,11 +13,11 @@ on:
         branches:
             - main
         paths:
+            - src/**
+            - tests/**
+            - package.json
+            - package-lock.json
             - .github/workflows/npm-publish.yml
-            - '!.github/**'
-            - '!docs/**'
-            - '!PRD.md'
-            - '!README.md'
     workflow_dispatch:
         inputs:
             # trunk-ignore(checkov/CKV_GHA_7): We need manual version control for releases
