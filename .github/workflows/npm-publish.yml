@@ -35,7 +35,22 @@ on:
                 type: string
 
 jobs:
+    check-if-merged:
+        runs-on: ubuntu-latest
+        outputs:
+            should_run: ${{ steps.check.outputs.should_run }}
+        steps:
+            - id: check
+              run: |
+                  if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.merged }}" != "true" ]]; then
+                    echo "should_run=false" >> $GITHUB_OUTPUT
+                  else
+                    echo "should_run=true" >> $GITHUB_OUTPUT
+                  fi
+
     debug-check:
+        needs: check-if-merged
+        if: needs.check-if-merged.outputs.should_run == 'true'
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -50,47 +65,77 @@ jobs:
                   check_file() {
                     local file="$1"
                     local has_debug=false
+                    local debug_output=""
 
                     # Check for $inspect
-                    if grep -l "\$inspect" "$file" > /dev/null; then
-                      echo "::error file=$file::Found \$inspect in $file"
+                    if grep -n "\$inspect" "$file" > /dev/null; then
+                      match=$(grep -n "\$inspect.*" "$file" | head -n 1)
+                      line_num=$(echo "$match" | cut -d: -f1)
+                      statement=$(echo "$match" | cut -d: -f2-)
+                      echo "::error file=$file::Found \$inspect statement on line $line_num: $statement"
                       has_debug=true
                     fi
 
                     # Check for console.log
-                    if grep -il "console\.\(log\|debug\)" "$file" > /dev/null; then
-                      echo "::error file=$file::Found console.log in $file"
+                    if grep -n "console\.log" "$file" > /dev/null; then
+                      match=$(grep -n "console\.log.*" "$file" | head -n 1)
+                      line_num=$(echo "$match" | cut -d: -f1)
+                      statement=$(echo "$match" | cut -d: -f2-)
+                      echo "::error file=$file::Found console.log statement on line $line_num: $statement"
+                      has_debug=true
+                    fi
+
+                    # Check for console.debug
+                    if grep -n "console\.debug" "$file" > /dev/null; then
+                      match=$(grep -n "console\.debug.*" "$file" | head -n 1)
+                      line_num=$(echo "$match" | cut -d: -f1)
+                      statement=$(echo "$match" | cut -d: -f2-)
+                      echo "::error file=$file::Found console.debug statement on line $line_num: $statement"
                       has_debug=true
                     fi
 
                     # Check for debugger statements
-                    if grep -l "debugger;" "$file" > /dev/null; then
-                      echo "::error file=$file::Found debugger statement in $file"
+                    if grep -n "debugger;" "$file" > /dev/null; then
+                      match=$(grep -n "debugger;" "$file" | head -n 1)
+                      line_num=$(echo "$match" | cut -d: -f1)
+                      statement=$(echo "$match" | cut -d: -f2-)
+                      echo "::error file=$file::Found debugger statement on line $line_num: $statement"
                       has_debug=true
                     fi
 
                     $has_debug && return 1 || return 0
                   }
 
-                  # Initialize error flag
-                  has_errors=0
+                  # Capture all output
+                  exec 5>&1
+                  OUTPUT=$(
+                    # Check files and collect output
+                    has_errors=0
 
-                  # Check Svelte files in lib (excluding test directory)
-                  while IFS= read -r file; do
-                    if ! check_file "$file"; then
-                      has_errors=1
-                    fi
-                  done < <(find src/lib -type f -name "*.svelte" ! -path "*/test/*")
+                    # Check Svelte files
+                    while IFS= read -r file; do
+                      if ! check_file "$file"; then
+                        has_errors=1
+                      fi
+                    done < <(find src/lib -type f -name "*.svelte" ! -path "*/test/*")
 
-                  # Check TypeScript files in lib (excluding .test.ts and test directory)
-                  while IFS= read -r file; do
-                    if ! check_file "$file"; then
-                      has_errors=1
-                    fi
-                  done < <(find src/lib -type f -name "*.ts" ! -name "*.test.ts" ! -path "*/test/*")
+                    # Check TypeScript files
+                    while IFS= read -r file; do
+                      if ! check_file "$file"; then
+                        has_errors=1
+                      fi
+                    done < <(find src/lib -type f -name "*.ts" ! -name "*.test.ts" ! -path "*/test/*")
 
-                  # Exit with error if debugging statements were found
-                  exit $has_errors
+                    exit $has_errors
+                  | tee >(cat - >&5))
+
+                  # Store output for the next step
+                  echo "DEBUG_OUTPUT<<EOF" >> $GITHUB_ENV
+                  echo "$OUTPUT" >> $GITHUB_ENV
+                  echo "EOF" >> $GITHUB_ENV
+
+                  # Exit with the original error code
+                  [[ $OUTPUT == *"::error"* ]] && exit 1 || exit 0
 
             - name: Upload Results
               if: failure()
@@ -101,16 +146,35 @@ jobs:
                       const fs = require('fs');
                       const { owner, repo } = context.repo;
 
+                      // Get the debug check output
+                      const debugOutput = process.env.DEBUG_OUTPUT || '';
+
+                      let commentBody = '❌ Debug statements check failed.\n\nFound debugging statements in the following locations:\n\n';
+
+                      // Add each error location to the comment
+                      debugOutput.split('\n').forEach(line => {
+                          if (line.includes('::error file=')) {
+                              const match = line.match(/::error file=(.+?)::(.+)/);
+                              if (match) {
+                                  const [_, file, message] = match;
+                                  commentBody += `- ${file}: ${message}\n`;
+                              }
+                          }
+                      });
+
+                      commentBody += '\nPlease remove these debugging statements before merging.';
+
                       github.rest.issues.createComment({
                           issue_number: context.issue.number,
                           owner: owner,
                           repo: repo,
-                          body: '❌ Debug statements check failed. Please remove all `$inspect` and `console.log` statements from production code.'
+                          body: commentBody
                       });
 
     # 3. Testing jobs (grouped together)
     build:
-        needs: debug-check
+        needs: [check-if-merged, debug-check]
+        if: needs.check-if-merged.outputs.should_run == 'true'
         runs-on: ubuntu-latest
         strategy:
             matrix:
@@ -163,6 +227,8 @@ jobs:
                       ${{ runner.os }}-node-
 
     playwright-tests:
+        needs: [check-if-merged, debug-check]
+        if: needs.check-if-merged.outputs.should_run == 'true'
         timeout-minutes: 60
         runs-on: ubuntu-latest
         steps:
@@ -201,9 +267,9 @@ jobs:
 
     # 4. Coverage reporting (depends on tests)
     coverage-report:
-        needs: [build, playwright-tests]
+        needs: [check-if-merged, build, playwright-tests]
+        if: needs.check-if-merged.outputs.should_run == 'true'
         runs-on: ubuntu-latest
-        if: ${{ always() }}
         steps:
             - name: Coveralls Finished
               uses: coverallsapp/github-action@v2
@@ -213,7 +279,8 @@ jobs:
 
     # 5. Publishing job (main deployment logic)
     publish-github-packages:
-        needs: [build, playwright-tests, coverage-report]
+        needs: [check-if-merged, build, playwright-tests, coverage-report]
+        if: needs.check-if-merged.outputs.should_run == 'true'
         runs-on: ubuntu-latest
         permissions:
             contents: write
