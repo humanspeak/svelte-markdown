@@ -26,18 +26,21 @@
 
     let source = ''
     let selectedExample = 'empty'
+
+    // Define type for the keys of edgeCaseExamples
+    type ExampleKey = keyof typeof edgeCaseExamples
 </script>
 
 <div class="container">
     <div class="controls">
         <h2>Edge Case Tests</h2>
         <div class="buttons">
-            {#each Object.entries(edgeCaseExamples) as [key, _]}
+            {#each Object.entries(edgeCaseExamples) as [key, _], index (index)}
                 <button
                     class:active={selectedExample === key}
-                    on:click={() => {
+                    onclick={() => {
                         selectedExample = key
-                        source = edgeCaseExamples[key]
+                        source = edgeCaseExamples[key as ExampleKey]
                     }}
                 >
                     {key}
