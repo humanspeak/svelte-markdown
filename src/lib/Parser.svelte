@@ -77,7 +77,7 @@
 
 {#if !type}
     {#if tokens}
-        {#each tokens as token}
+        {#each tokens as token, index (index)}
             {@const { text: _text, raw: _raw, ...parserRest } = rest}
             <Parser {...token} {renderers} {...parserRest} />
         {/each}
@@ -87,7 +87,7 @@
         <renderers.table {...rest}>
             <renderers.tablehead {...rest}>
                 <renderers.tablerow {...rest}>
-                    {#each header ?? [] as headerItem, i}
+                    {#each header ?? [] as headerItem, i (i)}
                         {@const { align: _align, ...cellRest } = rest}
                         <renderers.tablecell
                             header={true}
@@ -100,9 +100,9 @@
                 </renderers.tablerow>
             </renderers.tablehead>
             <renderers.tablebody {...rest}>
-                {#each rows ?? [] as row}
+                {#each rows ?? [] as row, i (i)}
                     <renderers.tablerow {...rest}>
-                        {#each row ?? [] as cells, i}
+                        {#each row ?? [] as cells, i (i)}
                             {@const { align: _align, ...cellRest } = rest}
                             <renderers.tablecell
                                 header={false}
@@ -145,7 +145,7 @@
         {#if ordered}
             <renderers.list {ordered} {...rest}>
                 {@const { items, ...parserRest }: {items: Props[]} = rest}
-                {#each items as item}
+                {#each items as item, index (index)}
                     {@const OrderedListComponent = renderers.orderedlistitem || renderers.listitem}
                     <OrderedListComponent {...item}>
                         <Parser tokens={item.tokens} {renderers} {...parserRest} />
@@ -155,7 +155,7 @@
         {:else}
             <renderers.list {ordered} {...rest}>
                 {@const { items, ...parserRest }: {items: Props[]} = rest}
-                {#each items as item}
+                {#each items as item, index (index)}
                     {@const UnorderedListComponent =
                         renderers.unorderedlistitem || renderers.listitem}
                     <UnorderedListComponent {...item}>
