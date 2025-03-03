@@ -38,9 +38,9 @@ lint:
               - svelte
               - javascript
     enabled:
-        - sort-package-json@2.15.0
+        - sort-package-json@2.15.1
         - actionlint@1.7.7
-        - checkov@3.2.378
+        - checkov@3.2.379
         - eslint@9.21.0:
               packages:
                   - '@typescript-eslint/eslint-plugin'
@@ -55,7 +55,7 @@ lint:
         - markdownlint@0.44.0
         - osv-scanner@1.9.2
         - oxipng@9.1.4
-        - prettier@3.5.2:
+        - prettier@3.5.3:
               packages:
                   - prettier-plugin-svelte
                   - prettier-plugin-organize-imports
