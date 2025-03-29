@@ -18,6 +18,7 @@ import {
     List,
     ListItem,
     Paragraph,
+    RawText,
     Strong,
     Table,
     TableBody,
@@ -51,6 +52,9 @@ export type RendererComponent = Component<any, any, any> | undefined | null // e
 export type Renderers = {
     // Special HTML renderer
     html: HtmlRenderers
+
+    // Raw text renderer
+    rawtext: RendererComponent
 
     // Block elements
     heading: RendererComponent
@@ -117,7 +121,8 @@ export const defaultRenderers: Renderers = {
     html: Html,
     blockquote: Blockquote,
     code: Code,
-    br: Br
+    br: Br,
+    rawtext: RawText
 }
 
 /**

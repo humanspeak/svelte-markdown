@@ -195,7 +195,7 @@
                 {@const { text: _text, raw: _raw, ...parserRest } = rest}
                 <Parser {tokens} {renderers} {...parserRest} />
             {:else}
-                {rest.raw}
+                <renderers.rawtext text={rest.raw} />
             {/if}
         </GeneralComponent>
     {/if}

@@ -128,4 +128,19 @@ Regular paragraph
         await expect(div).toHaveText('updated')
         await expect(div).toHaveAttribute('data-markdown-test', 'data-markdown-test-div')
     })
+
+    test('should convert &nbsp; to regular space in headers', async ({ page }) => {
+        const markdown = '&nbsp;Hello'
+        const textarea = page.getByTestId('markdown-input')
+        await textarea.clear()
+        await textarea.fill(markdown)
+
+        // Wait for the preview to update
+        await page.waitForSelector('.preview')
+
+        // Verify the header text has a regular space instead of &nbsp;
+        const header = page.locator('p')
+        await expect(header).toBeVisible()
+        await expect(header).toHaveText(' Hello')
+    })
 })
