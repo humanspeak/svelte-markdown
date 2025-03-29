@@ -1,16 +1,18 @@
 <script lang="ts">
     import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
+    import A from '$lib/test/A.svelte'
     import Div from '$lib/test/Div.svelte'
     import H1 from '$lib/test/H1.svelte'
-    import A from '$lib/test/A.svelte'
+    import RawText from '$lib/test/RawText.svelte'
 
-    let source = '# Hello'
+    let source = '#&nbsp;Hello'
     const renderers = {
         html: {
             div: Div,
             h1: H1,
             a: A
-        }
+        },
+        rawtext: RawText
     }
 </script>
 

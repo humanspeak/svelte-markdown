@@ -24,6 +24,7 @@ A powerful, customizable markdown renderer for Svelte with TypeScript support. B
 - ♿ WCAG 2.1 accessibility compliance
 - 🧪 Comprehensive test coverage (vitest and playwright)
 - 🔄 Svelte 5 runes compatibility
+- 🛡️ XSS protection and sanitization
 
 ## Installation
 
@@ -175,6 +176,7 @@ Seamlessly mix HTML and Markdown:
 - `codespan` - Inline code (`<code>`)
 - `code` - Block of code (`<pre><code>`)
 - `html` - HTML node
+- `rawtext` - All other text that is going to be included in an object above
 
 ### Optional List Renderers
 
@@ -241,6 +243,15 @@ The component emits a `parsed` event when tokens are calculated:
 | renderers | `Partial<Renderers>`    | Custom component overrides            |
 | options   | `SvelteMarkdownOptions` | Marked parser configuration           |
 | isInline  | `boolean`               | Toggle inline parsing mode            |
+
+## Security
+
+The package includes several security features:
+
+- XSS protection through HTML sanitization
+- Secure HTML parsing with HTMLParser2
+- Safe handling of HTML entities
+- Protection against malicious markdown injection
 
 ## License
 
