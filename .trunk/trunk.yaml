@@ -64,7 +64,7 @@ lint:
         - shfmt@3.6.0
         - svgo@3.3.2
         - taplo@0.9.3
-        - trufflehog@3.88.18
+        - trufflehog@3.88.20
         - yamllint@1.37.0
 actions:
     enabled:

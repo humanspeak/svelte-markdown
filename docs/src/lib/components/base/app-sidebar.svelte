@@ -53,12 +53,12 @@
                             <Sidebar.MenuSub>
                                 <Sidebar.MenuSubItem>
                                     <Sidebar.MenuButton>
-                                        <a href={'https://virtuallist.svelte.page'}>
+                                        <a href="https://virtuallist.svelte.page">
                                             <span>/virtual-list</span>
                                         </a>
                                     </Sidebar.MenuButton>
                                     <Sidebar.MenuButton>
-                                        <a href={'https://table.svelte.page'}>
+                                        <a href="https://table.svelte.page">
                                             <span>/table</span>
                                         </a>
                                     </Sidebar.MenuButton>
@@ -93,21 +93,21 @@
                             <Sidebar.MenuSub>
                                 <Sidebar.MenuSubItem>
                                     <Sidebar.MenuButton>
-                                        <a href={'https://humanspeak.com'} target="_blank">
+                                        <a href="https://humanspeak.com" target="_blank">
                                             <span>Humanspeak</span>
                                         </a>
                                     </Sidebar.MenuButton>
                                 </Sidebar.MenuSubItem>
                                 <Sidebar.MenuSubItem>
                                     <Sidebar.MenuButton>
-                                        <a href={'https://beye.ai'} target="_blank">
+                                        <a href="https://beye.ai" target="_blank">
                                             <span>B/eye</span>
                                         </a>
                                     </Sidebar.MenuButton>
                                 </Sidebar.MenuSubItem>
                                 <Sidebar.MenuSubItem>
                                     <Sidebar.MenuButton>
-                                        <a href={'https://shadcn-svelte.com'} target="_blank">
+                                        <a href="https://shadcn-svelte.com" target="_blank">
                                             <span>Shadcn</span>
                                         </a>
                                     </Sidebar.MenuButton>
@@ -115,7 +115,7 @@
                                 <Sidebar.MenuSubItem>
                                     <Sidebar.MenuButton>
                                         <a
-                                            href={'https://github.com/pablo-abc/svelte-markdown'}
+                                            href="https://github.com/pablo-abc/svelte-markdown"
                                             target="_blank"
                                         >
                                             <span>Svelte 4 Version</span>
