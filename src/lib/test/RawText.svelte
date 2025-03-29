@@ -3,8 +3,6 @@
         text?: string
     }
     const { text }: Props = $props()
-
-    $inspect('RawText.svelte', text)
 </script>
 
 <!-- trunk-ignore(eslint/svelte/no-at-html-tags) -->
