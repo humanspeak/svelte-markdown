@@ -2,7 +2,7 @@
 # To learn more about the format of this file, see https://docs.trunk.io/reference/trunk-yaml
 version: 0.1
 cli:
-    version: 1.22.10
+    version: 1.22.11
 # Trunk provides extensibility via plugins. (https://docs.trunk.io/plugins)
 plugins:
     sources:
@@ -38,10 +38,10 @@ lint:
               - svelte
               - javascript
     enabled:
-        - sort-package-json@2.15.1
+        - sort-package-json@3.0.0
         - actionlint@1.7.7
-        - checkov@3.2.379
-        - eslint@9.21.0:
+        - checkov@3.2.394
+        - eslint@9.23.0:
               packages:
                   - '@typescript-eslint/eslint-plugin'
                   - '@typescript-eslint/parser'
@@ -53,7 +53,7 @@ lint:
                   - eslint-plugin-import
         - git-diff-check
         - markdownlint@0.44.0
-        - osv-scanner@1.9.2
+        - osv-scanner@2.0.0
         - oxipng@9.1.4
         - prettier@3.5.3:
               packages:
@@ -64,8 +64,8 @@ lint:
         - shfmt@3.6.0
         - svgo@3.3.2
         - taplo@0.9.3
-        - trufflehog@3.88.14
-        - yamllint@1.35.1
+        - trufflehog@3.88.18
+        - yamllint@1.37.0
 actions:
     enabled:
         - trunk-announce
