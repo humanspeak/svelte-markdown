@@ -176,6 +176,7 @@ Seamlessly mix HTML and Markdown:
 - `codespan` - Inline code (`<code>`)
 - `code` - Block of code (`<pre><code>`)
 - `html` - HTML node
+- `rawtext` - All other text that is going to be included in an object above
 
 ### Optional List Renderers
 
