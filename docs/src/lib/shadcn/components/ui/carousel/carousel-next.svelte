@@ -1,5 +1,5 @@
 <script lang="ts">
-    import ArrowRight from 'lucide-svelte/icons/arrow-right'
+    import ArrowRight from '@lucide/svelte/icons/arrow-right'
     import type { WithoutChildren } from 'bits-ui'
     import { getEmblaContext } from './context.js'
     import { cn } from '$lib/shadcn/utils.js'
@@ -22,7 +22,7 @@
     class={cn(
         'absolute size-8 touch-manipulation rounded-full',
         emblaCtx.orientation === 'horizontal'
-            ? 'top-1/2 -right-12 -translate-y-1/2'
+            ? '-right-12 top-1/2 -translate-y-1/2'
             : '-bottom-12 left-1/2 -translate-x-1/2 rotate-90',
         className
     )}

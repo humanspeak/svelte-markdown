@@ -38,7 +38,7 @@ export default [
             globals: {
                 ...globals.browser,
                 ...globals.node
-            },
+            }
         },
 
         rules: {
@@ -92,7 +92,7 @@ export default [
     {
         /* location of your components where you would like to apply these rules  */
         files: ['**/shadcn/components/ui/**/*.svelte', '**/shadcn/components/ui/**/*.ts'],
-         languageOptions: {
+        languageOptions: {
             parserOptions: {
                 parser: ts.parser
             }
