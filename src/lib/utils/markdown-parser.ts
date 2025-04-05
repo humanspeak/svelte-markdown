@@ -1,8 +1,9 @@
 export { default as Slugger } from 'github-slugger'
-export { Lexer, type Token, type Tokens, type TokensList } from 'marked'
+export { Lexer, type MarkedOptions, type Token, type Tokens, type TokensList } from 'marked'
 import type { Component } from 'svelte'
 import { type HtmlRenderers } from '../renderers/html/index.js'
 
+import type { SvelteMarkdownOptions } from '$lib/types.js'
 import {
     Blockquote,
     Br,
@@ -126,51 +127,6 @@ export const defaultRenderers: Renderers = {
 }
 
 /**
- * Configuration options for SvelteMarkdown parser.
- * Extends marked options with additional Svelte-specific configurations.
- *
- * @interface SvelteMarkdownOptions
- *
- * @property {string|null} baseUrl - Base URL for relative links
- * @property {boolean} breaks - Enable line breaks in output
- * @property {boolean} gfm - Enable GitHub Flavored Markdown
- * @property {boolean} headerIds - Auto-generate header IDs
- * @property {string} headerPrefix - Prefix for header IDs
- * @property {Function|null} highlight - Syntax highlighting function
- * @property {string} langPrefix - Prefix for code block language classes
- * @property {boolean} mangle - Encode email addresses
- * @property {boolean} pedantic - Conform to original markdown spec
- * @property {Object|null} renderer - Custom renderer
- * @property {boolean} sanitize - Sanitize HTML input
- * @property {Function|null} sanitizer - Custom sanitizer function
- * @property {boolean} silent - Suppress error output
- * @property {boolean} smartLists - Use smarter list behavior
- * @property {boolean} smartypants - Use smart punctuation
- * @property {Object|null} tokenizer - Custom tokenizer
- * @property {boolean} xhtml - Generate XHTML-compliant tags
- */
-export type SvelteMarkdownOptions = {
-    baseUrl: string | null
-    breaks: boolean
-    gfm: boolean
-    headerIds: boolean
-    tables: boolean
-    headerPrefix: string
-    highlight: null
-    langPrefix: string
-    mangle: boolean
-    pedantic: boolean
-    renderer: null
-    sanitize: boolean
-    sanitizer: null
-    silent: boolean
-    smartLists: boolean
-    smartypants: boolean
-    tokenizer: null
-    xhtml: boolean
-}
-
-/**
  * Default configuration options for the markdown parser.
  * Provides sensible defaults while allowing for customization.
  *
@@ -184,22 +140,16 @@ export type SvelteMarkdownOptions = {
  * @const {SvelteMarkdownOptions}
  */
 export const defaultOptions: SvelteMarkdownOptions = {
-    baseUrl: null,
+    async: false,
     breaks: false,
     gfm: true,
-    tables: true,
-    headerIds: true,
-    headerPrefix: '',
-    highlight: null,
-    langPrefix: 'language-',
-    mangle: true,
     pedantic: false,
     renderer: null,
-    sanitize: false,
-    sanitizer: null,
     silent: false,
-    smartLists: false,
-    smartypants: false,
     tokenizer: null,
-    xhtml: false
+    walkTokens: null,
+
+    // Custom options
+    headerIds: true,
+    headerPrefix: ''
 }

@@ -19,12 +19,17 @@
  */
 
 import type { Token, TokensList } from 'marked'
-import type { Renderers, SvelteMarkdownOptions } from './utils/markdown-parser.js'
+import type { MarkedOptions, Renderers } from './utils/markdown-parser.js'
 
-export type SvelteMarkdownProps = {
+export type SvelteMarkdownProps<T extends Renderers = Renderers> = {
     source: Token[] | string
-    renderers?: Partial<Renderers>
+    renderers?: Partial<T>
     options?: Partial<SvelteMarkdownOptions>
     isInline?: boolean
     parsed?: (tokens: Token[] | TokensList) => void // eslint-disable-line no-unused-vars
+}
+
+export interface SvelteMarkdownOptions extends MarkedOptions {
+    headerIds?: boolean
+    headerPrefix?: string
 }

@@ -1,7 +1,14 @@
 // Reexport your entry components here
-import type { SvelteMarkdownOptions, Token, TokensList } from '$lib/utils/markdown-parser.js'
+import type { RendererComponent, Renderers, Token, TokensList } from '$lib/utils/markdown-parser.js'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
-import type { SvelteMarkdownProps } from './types.js'
+import type { SvelteMarkdownOptions, SvelteMarkdownProps } from './types.js'
 
 export default SvelteMarkdown
-export type { SvelteMarkdownOptions, SvelteMarkdownProps, Token, TokensList }
+export type {
+    RendererComponent,
+    Renderers,
+    SvelteMarkdownOptions,
+    SvelteMarkdownProps,
+    Token,
+    TokensList
+}
