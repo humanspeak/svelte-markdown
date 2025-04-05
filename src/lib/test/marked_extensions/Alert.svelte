@@ -6,6 +6,8 @@
         raw: string
     }
 
+    // trunk-ignore(eslint/@typescript-eslint/no-unused-vars)
+    // trunk-ignore(eslint/no-unused-vars)
     const { type, level, text, raw }: Props = $props()
 
     const displayLevel = $derived(level?.toLowerCase())
