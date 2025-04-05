@@ -1,9 +1,9 @@
 <script lang="ts">
     import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
-    import A from '$lib/test/A.svelte'
-    import Div from '$lib/test/Div.svelte'
-    import H1 from '$lib/test/H1.svelte'
-    import RawText from '$lib/test/RawText.svelte'
+    import A from '$lib/test/extendability/A.svelte'
+    import Div from '$lib/test/extendability/Div.svelte'
+    import H1 from '$lib/test/extendability/H1.svelte'
+    import RawText from '$lib/test/extendability/RawText.svelte'
 
     let source = '#&nbsp;Hello'
     const renderers = {

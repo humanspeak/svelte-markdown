@@ -1,7 +1,7 @@
 <script lang="ts">
     import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
     import { marked, type TokenizerExtension } from 'marked'
-    import Alert from '$lib/test/Alert.svelte'
+    import Alert from '$lib/test/marked_extensions/Alert.svelte'
 
     const htmlBody = `
 > [!WARNING]
