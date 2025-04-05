@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Snippet } from 'svelte'
-    import type { SvelteMarkdownOptions } from '../utils/markdown-parser.js'
+    import type { SvelteMarkdownOptions } from '$lib/types.js'
 
     interface Props {
         depth: number

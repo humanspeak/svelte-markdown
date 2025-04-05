@@ -43,23 +43,23 @@
      *
      */
 
-    import Parser from './Parser.svelte'
-    import Html from './renderers/html/index.js'
+    import Parser from '$lib/Parser.svelte'
+    import Html from '$lib/renderers/html/index.js'
     import type {
         Renderers,
         Token,
         TokensList,
         Tokens,
         RendererComponent
-    } from './utils/markdown-parser.js'
+    } from '$lib/utils/markdown-parser.js'
 
-    interface Props {
+    interface Props<T extends Renderers = Renderers> {
         type?: string
         tokens?: Token[] | TokensList
         header?: Tokens.TableCell[]
         rows?: Tokens.TableCell[][]
         ordered?: boolean
-        renderers: Renderers
+        renderers: T
     }
 
     const {
@@ -116,8 +116,9 @@
                                     }}
                                     {@const { tag, ...localRest } = token}
                                     {@const htmlTag = tag as keyof typeof Html}
-                                    {#if htmlTag in renderers.html}
-                                        {@const HtmlComponent = renderers.html[htmlTag]}
+                                    {#if renderers.html && htmlTag in renderers.html}
+                                        {@const HtmlComponent =
+                                            renderers.html[htmlTag as keyof typeof renderers.html]}
                                         <HtmlComponent {...token}>
                                             {#if token.tokens?.length}
                                                 <Parser
@@ -167,8 +168,8 @@
     {:else if type === 'html'}
         {@const { tag, ...localRest } = rest}
         {@const htmlTag = rest.tag as keyof typeof Html}
-        {#if htmlTag in renderers.html}
-            {@const HtmlComponent = renderers.html[htmlTag]}
+        {#if renderers.html && htmlTag in renderers.html}
+            {@const HtmlComponent = renderers.html[htmlTag as keyof typeof renderers.html]}
             {@const tokens = (rest.tokens as Token[]) ?? ([] as Token[])}
             <HtmlComponent {...rest}>
                 {#if tokens.length}
@@ -189,7 +190,7 @@
             />
         {/if}
     {:else}
-        {@const GeneralComponent = renderers[type as keyof Renderers] as RendererComponent}
+        {@const GeneralComponent = renderers[type as keyof typeof renderers] as RendererComponent}
         <GeneralComponent {...rest}>
             {#if tokens}
                 {@const { text: _text, raw: _raw, ...parserRest } = rest}

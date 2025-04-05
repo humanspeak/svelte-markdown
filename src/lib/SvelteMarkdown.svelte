@@ -46,23 +46,22 @@
      * - Provides parsed callback for external token access
      */
 
+    import Parser from '$lib/Parser.svelte'
+    import { type SvelteMarkdownProps } from '$lib/types.js'
     import {
-        Lexer,
         defaultOptions,
         defaultRenderers,
+        Lexer,
         Slugger,
         type Token,
-        type TokensList,
-        type SvelteMarkdownOptions
-    } from './utils/markdown-parser.js'
-    import Parser from './Parser.svelte'
-    import { shrinkHtmlTokens } from './utils/token-cleanup.js'
-    import { type SvelteMarkdownProps } from './types.js'
+        type TokensList
+    } from '$lib/utils/markdown-parser.js'
+    import { shrinkHtmlTokens } from '$lib/utils/token-cleanup.js'
 
     const {
         source = [],
         renderers = {},
-        options = {} as SvelteMarkdownOptions,
+        options = {},
         isInline = false,
         parsed = () => {},
         ...rest
