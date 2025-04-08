@@ -42,11 +42,14 @@ jobs:
             should_run: ${{ steps.check.outputs.should_run }}
         steps:
             - id: check
+              env:
+                  EVENT_NAME: ${{ github.event_name }}
+                  PR_MERGED: ${{ github.event.pull_request.merged }}
               run: |
-                  if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.merged }}" != "true" ]]; then
-                    echo "should_run=false" >> $GITHUB_OUTPUT
+                  if [[ "$EVENT_NAME" == "pull_request" && "$PR_MERGED" != "true" ]]; then
+                      echo "should_run=false" >> $GITHUB_OUTPUT
                   else
-                    echo "should_run=true" >> $GITHUB_OUTPUT
+                      echo "should_run=true" >> $GITHUB_OUTPUT
                   fi
 
     debug-check:
