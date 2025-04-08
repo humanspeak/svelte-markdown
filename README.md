@@ -25,6 +25,33 @@ A powerful, customizable markdown renderer for Svelte with TypeScript support. B
 - 🧪 Comprehensive test coverage (vitest and playwright)
 - 🔄 Svelte 5 runes compatibility
 - 🛡️ XSS protection and sanitization
+- 🎨 Custom Marked extensions support (e.g., GitHub-style alerts)
+- 🔍 Improved attribute handling and component isolation
+- 📦 Enhanced token cleanup and nested content support
+
+## Recent Updates
+
+### New Features
+
+- Improved HTML attribute isolation for nested components
+- Enhanced token cleanup for better nested content handling
+- Added proper attribute inheritance control
+- Implemented strict debugging checks in CI/CD pipeline
+
+### Testing Improvements
+
+- Enhanced Playwright E2E test coverage
+- Added comprehensive tests for custom extensions
+- Improved test reliability with proper component mounting checks
+- Added specific test cases for nested component scenarios
+
+### CI/CD Enhancements
+
+- Added automated debugging statement detection
+- Improved release workflow with GPG signing
+- Enhanced PR validation and automated version bumping
+- Added manual workflow triggers for better release control
+- Implemented monthly cache cleanup
 
 ## Installation
 
