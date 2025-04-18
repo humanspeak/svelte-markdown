@@ -4,9 +4,16 @@
     interface Props {
         children?: Snippet
         attributes?: Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
+        text?: string
     }
 
-    const { children, attributes }: Props = $props()
+    const { children, attributes, text }: Props = $props()
 </script>
 
-<a data-markdown-test="data-markdown-test-a" {...attributes}>{@render children?.()}</a>
+<a data-markdown-test="data-markdown-test-a" {...attributes}>
+    {#if children}
+        {@render children?.()}
+    {:else}
+        {text}
+    {/if}
+</a>
