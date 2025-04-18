@@ -143,7 +143,11 @@ Here's a complete example of a custom renderer with TypeScript support:
 </script>
 
 <a {href} {title} class="custom-link">
-    {@render children?.() ?? text}
+    {#if children}
+        {@render children?.()}
+    {:else}
+        {text}
+    {/if}
 </a>
 ```
 
