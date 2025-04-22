@@ -136,20 +136,17 @@ Here's a complete example of a custom renderer with TypeScript support:
         children?: Snippet
         href?: string
         title?: string
-        text?: string
     }
 
-    const { href = '', title = '', text = '', children }: Props = $props()
+    const { href = '', title = '', children }: Props = $props()
 </script>
 
 <a {href} {title} class="custom-link">
-    {#if children}
-        {@render children?.()}
-    {:else}
-        {text}
-    {/if}
+    {@render children?.()}
 </a>
 ```
+
+If you would like to extend other renderers please take a look inside the [renderers folder](https://github.com/humanspeak/svelte-markdown/tree/main/src/lib/renderers) for the default implentation of them. If you would like feature additions please feel free to open an issue!
 
 ## Advanced Features
 
