@@ -2,7 +2,7 @@
     import SvelteMarkdown, { type Renderers } from '$lib/index.js'
     import CustomRenderer from '$lib/test/issue-192/CustomRenderer.svelte'
 
-    const source = `
+    let source = `
 # This is a header
 
 This is a paragraph with **bold** and <em>mixed HTML</em>.
@@ -11,6 +11,8 @@ This is a paragraph with **bold** and <em>mixed HTML</em>.
 * And a [link](https://svelte.dev)
   * With nested items
   * Supporting full markdown
+
+[![MPF](https://humanspeak.com/jason.jpg)](https://humanspeak.com/jason.jpg)
 `
 
     const renderers: Partial<Renderers> = {
@@ -18,4 +20,10 @@ This is a paragraph with **bold** and <em>mixed HTML</em>.
     }
 </script>
 
-<SvelteMarkdown {source} {renderers} />
+<div class="container">
+    <textarea bind:value={source} placeholder="Enter markdown here" data-testid="markdown-input">
+    </textarea>
+    <div class="preview">
+        <SvelteMarkdown {source} {renderers} />
+    </div>
+</div>
