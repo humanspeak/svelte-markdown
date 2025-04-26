@@ -12,7 +12,7 @@ This is a paragraph with **bold** and <em>mixed HTML</em>.
   * With nested items
   * Supporting full markdown
 
-[![MPF](https://humanspeak.com/jason.jpg)](https://humanspeak.com/jason.jpg)
+[![MPF](https://avatars.githubusercontent.com/u/162604590?u=548f358e716a223731ab372776a09723cf815f4d&v=4&size=80)](https://avatars.githubusercontent.com/u/162604590?u=548f358e716a223731ab372776a09723cf815f4d&v=4&size=80)
 `
 
     const renderers: Partial<Renderers> = {
