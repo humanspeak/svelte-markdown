@@ -5,7 +5,6 @@
         children?: Snippet
         href?: string
         title?: string
-        text?: string
     }
 
     const { href = '', title = '', children }: Props = $props()
