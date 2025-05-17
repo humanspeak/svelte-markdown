@@ -79,7 +79,7 @@
     {#if tokens}
         {#each tokens as token, index (index)}
             {@const { text: _text, raw: _raw, ...parserRest } = rest}
-            <Parser {...token} {renderers} {...parserRest} />
+            <Parser {...parserRest} {...token} {renderers} />
         {/each}
     {/if}
 {:else if type in renderers}
@@ -149,7 +149,7 @@
                 {#each items as item, index (index)}
                     {@const OrderedListComponent = renderers.orderedlistitem || renderers.listitem}
                     <OrderedListComponent {...item}>
-                        <Parser tokens={item.tokens} {renderers} {...parserRest} />
+                        <Parser {...parserRest} tokens={item.tokens} {renderers} />
                     </OrderedListComponent>
                 {/each}
             </renderers.list>
@@ -160,7 +160,7 @@
                     {@const UnorderedListComponent =
                         renderers.unorderedlistitem || renderers.listitem}
                     <UnorderedListComponent {...item}>
-                        <Parser tokens={item.tokens} {renderers} {...parserRest} />
+                        <Parser {...parserRest} tokens={item.tokens} {renderers} />
                     </UnorderedListComponent>
                 {/each}
             </renderers.list>
@@ -194,7 +194,7 @@
         <GeneralComponent {...rest}>
             {#if tokens}
                 {@const { text: _text, raw: _raw, ...parserRest } = rest}
-                <Parser {tokens} {renderers} {...parserRest} />
+                <Parser {...parserRest} {tokens} {renderers} />
             {:else}
                 <renderers.rawtext text={rest.raw} />
             {/if}

@@ -44,6 +44,7 @@ A powerful, customizable markdown renderer for Svelte with TypeScript support. B
 - Added comprehensive tests for custom extensions
 - Improved test reliability with proper component mounting checks
 - Added specific test cases for nested component scenarios
+- **Note:** Performance tests use a higher threshold for Firefox due to slower execution in CI environments. See `tests/performance.test.ts` for details.
 
 ### CI/CD Enhancements
 
