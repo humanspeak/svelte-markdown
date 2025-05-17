@@ -275,5 +275,27 @@ describe('Token Cleanup Utilities', () => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             expect((result[0] as any).rows[0][0].tokens[0].tag).toBe('strong')
         })
+
+        it('should add listItemIndex to each list item', () => {
+            const tokens: Token[] = [
+                {
+                    type: 'list',
+                    raw: '- item1\n- item2\n- item3',
+                    items: [
+                        { type: 'list_item', raw: '- item1', text: 'item1', tokens: [] },
+                        { type: 'list_item', raw: '- item2', text: 'item2', tokens: [] },
+                        { type: 'list_item', raw: '- item3', text: 'item3', tokens: [] }
+                    ]
+                }
+            ]
+            const result = shrinkHtmlTokens(tokens)
+            expect(result).toHaveLength(1)
+            expect(result[0].type).toBe('list')
+            const listToken = result[0] as Token & { items: any[] }
+            // Check that each item has the correct listItemIndex
+            expect(listToken.items[0].listItemIndex).toBe(0)
+            expect(listToken.items[1].listItemIndex).toBe(1)
+            expect(listToken.items[2].listItemIndex).toBe(2)
+        })
     })
 })

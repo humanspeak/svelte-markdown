@@ -1,5 +1,5 @@
 import * as htmlparser2 from 'htmlparser2'
-import type { Token } from 'marked'
+import type { Token, Tokens } from 'marked'
 
 /**
  * Matches HTML tags with comprehensive coverage of edge cases.
@@ -261,7 +261,14 @@ export const containsMultipleTags = (html: string): boolean => {
 export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
     const result: Token[] = []
     for (const token of tokens) {
-        if (token.type === 'table') {
+        if (token.type === 'list') {
+            token.items = token.items.map((item: Tokens.ListItem, index: number) => ({
+                ...item,
+                listItemIndex: index,
+                tokens: item.tokens ? shrinkHtmlTokens(item.tokens) : []
+            }))
+            result.push(token)
+        } else if (token.type === 'table') {
             // Process header cells
             if (token.header) {
                 token.header = token.header.map((cell) => ({
