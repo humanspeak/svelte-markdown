@@ -20,8 +20,6 @@
     }
 
     setContext('CustomList', {
-        index,
-        items,
         onChange
     })
 </script>

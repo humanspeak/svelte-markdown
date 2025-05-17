@@ -12,7 +12,12 @@
     const myContext = getContext<{
         // trunk-ignore(eslint/no-unused-vars)
         onChange: (index: number, value: boolean) => void
-    }>('CustomList')
+    }>('CustomList') ?? {
+        // trunk-ignore(eslint/no-unused-vars,eslint/@typescript-eslint/no-unused-vars)
+        onChange: (index: number, value: boolean) => {
+            console.warn(`CustomListItem used outside of CustomList context (index: ${index})`)
+        }
+    }
 
     const onChange = (event: Event) => {
         const target = event.currentTarget as HTMLInputElement
