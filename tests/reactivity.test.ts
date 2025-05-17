@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('SvelteMarkdown', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto('/test/reactivity', { waitUntil: 'networkidle' })
+    })
     test('should render new content without accumulating previous content', async ({ page }) => {
-        // Navigate to the test page
-        await page.goto('/test/reactivity')
-
         // Get the textarea
         const textarea = page.getByTestId('markdown-input')
 
@@ -21,7 +21,6 @@ test.describe('SvelteMarkdown', () => {
     })
 
     test('should handle multiple content updates correctly', async ({ page }) => {
-        await page.goto('/test/reactivity')
         const textarea = page.getByTestId('markdown-input')
 
         // Series of updates
@@ -43,7 +42,6 @@ test.describe('SvelteMarkdown', () => {
     })
 
     test('should handle complex markdown updates', async ({ page }) => {
-        await page.goto('/test/reactivity')
         const textarea = page.getByTestId('markdown-input')
 
         // Test with more complex markdown
@@ -71,7 +69,6 @@ test.describe('SvelteMarkdown', () => {
     })
 
     test('should handle unordered nested lists', async ({ page }) => {
-        await page.goto('/test/reactivity')
         const textarea = page.getByTestId('markdown-input')
 
         // Test with more complex markdown
@@ -89,7 +86,6 @@ test.describe('SvelteMarkdown', () => {
         await expect(page.locator('ul li')).toHaveCount(2)
     })
     test('should handle ordered nested lists', async ({ page }) => {
-        await page.goto('/test/reactivity')
         const textarea = page.getByTestId('markdown-input')
 
         // Test with more complex markdown
@@ -107,7 +103,6 @@ test.describe('SvelteMarkdown', () => {
         await expect(page.locator('ol li')).toHaveCount(2)
     })
     test('should handle mixed nested lists', async ({ page }) => {
-        await page.goto('/test/reactivity')
         const textarea = page.getByTestId('markdown-input')
 
         // Test with more complex markdown
@@ -126,9 +121,6 @@ test.describe('SvelteMarkdown', () => {
     })
 
     test('renders HTML tags correctly after plain text', async ({ page }) => {
-        // Navigate to the test page
-        await page.goto('/test/reactivity')
-
         // Add markdown content with text followed by HTML
         const markdown = 'Some text!!!\n\n<h1>Something</h1>'
 
@@ -155,8 +147,6 @@ test.describe('SvelteMarkdown', () => {
     })
 
     test('renders nested HTML tags correctly', async ({ page }) => {
-        await page.goto('/test/reactivity')
-
         // Test with nested HTML structure
         const markdown = '<div class="wrapper">Text <span>nested content</span></div>'
         const textarea = page.getByTestId('markdown-input')
