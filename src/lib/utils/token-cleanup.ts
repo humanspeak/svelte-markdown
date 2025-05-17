@@ -1,4 +1,4 @@
-import { Parser } from 'htmlparser2'
+import * as htmlparser2 from 'htmlparser2'
 import type { Token } from 'marked'
 
 /**
@@ -128,7 +128,7 @@ export const parseHtmlBlock = (html: string): Token[] => {
         /^(br|hr|img|input|link|meta|area|base|col|embed|keygen|param|source|track|wbr)$/i
     const openTags: string[] = []
 
-    const parser = new Parser(
+    const parser = new htmlparser2.Parser(
         {
             onopentag: (name, attributes) => {
                 if (currentText.trim()) {
