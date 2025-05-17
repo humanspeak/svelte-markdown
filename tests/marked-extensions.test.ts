@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test.describe('Alert Tokenizer Extension', () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto('/test/marked_extensions')
+        await page.goto('/test/marked-extensions')
         await page.waitForSelector('[data-testid="markdown-input"]')
     })
 
