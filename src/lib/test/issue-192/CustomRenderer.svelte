@@ -8,13 +8,9 @@
         text?: string
     }
 
-    const { href = '', title = '', text = '', children }: Props = $props()
+    const { href = '', title = '', children }: Props = $props()
 </script>
 
 <a {href} {title} class="custom-link">
-    {#if children}
-        {@render children?.()}
-    {:else}
-        {text}
-    {/if}
+    {@render children?.()}
 </a>
