@@ -1,3 +1,4 @@
+import Action from './card-action.svelte'
 import Content from './card-content.svelte'
 import Description from './card-description.svelte'
 import Footer from './card-footer.svelte'
@@ -6,8 +7,10 @@ import Title from './card-title.svelte'
 import Root from './card.svelte'
 
 export {
+    Action,
     //
     Root as Card,
+    Action as CardAction,
     Content as CardContent,
     Description as CardDescription,
     Footer as CardFooter,

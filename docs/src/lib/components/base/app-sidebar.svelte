@@ -13,7 +13,7 @@
                     {#snippet child({ props }: { props: Record<string, unknown> })}
                         <a href="##" {...props}>
                             <div class="flex w-full gap-2">
-                                {#if $mode === 'dark'}
+                                {#if mode.current === 'dark'}
                                     <img
                                         src="./humanspeak-dark.svg"
                                         alt="humanspeak logo"
@@ -60,6 +60,11 @@
                                     <Sidebar.MenuButton>
                                         <a href="https://table.svelte.page">
                                             <span>/table</span>
+                                        </a>
+                                    </Sidebar.MenuButton>
+                                    <Sidebar.MenuButton>
+                                        <a href="https://diff.svelte.page">
+                                            <span>/diff</span>
                                         </a>
                                     </Sidebar.MenuButton>
                                 </Sidebar.MenuSubItem>

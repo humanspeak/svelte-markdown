@@ -1,5 +1,5 @@
 <script lang="ts">
-    import ArrowLeft from '@lucide/svelte/icons/arrow-left'
+    import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left'
     import type { WithoutChildren } from 'bits-ui'
     import { getEmblaContext } from './context.js'
     import { cn } from '$lib/shadcn/utils.js'
@@ -17,12 +17,13 @@
 </script>
 
 <Button
+    data-slot="carousel-previous"
     {variant}
     {size}
     class={cn(
-        'absolute size-8 touch-manipulation rounded-full',
+        'absolute size-8 rounded-full',
         emblaCtx.orientation === 'horizontal'
-            ? '-left-12 top-1/2 -translate-y-1/2'
+            ? 'top-1/2 -left-12 -translate-y-1/2'
             : '-top-12 left-1/2 -translate-x-1/2 rotate-90',
         className
     )}
@@ -32,6 +33,6 @@
     {...restProps}
     bind:ref
 >
-    <ArrowLeft class="size-4" />
+    <ArrowLeftIcon class="size-4" />
     <span class="sr-only">Previous slide</span>
 </Button>

@@ -1,4 +1,4 @@
-import type { WithElementRef } from 'bits-ui'
+import type { WithElementRef } from '$lib/shadcn/utils.js'
 import type { EmblaCarouselSvelteType, default as emblaCarouselSvelte } from 'embla-carousel-svelte'
 import { getContext, hasContext, setContext } from 'svelte'
 import type { HTMLAttributes } from 'svelte/elements'

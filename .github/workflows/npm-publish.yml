@@ -12,6 +12,7 @@ on:
         types: [closed]
         branches:
             - main
+            - '!dependabot/**'
         paths:
             - src/**
             - tests/**
@@ -71,36 +72,36 @@ jobs:
                     local has_debug=false
                     local debug_output=""
 
-                    # Check for $inspect
-                    if grep -n "\$inspect" "$file" > /dev/null; then
-                      match=$(grep -n "\$inspect.*" "$file" | head -n 1)
+                    # Check for $inspect (not in comments)
+                    if grep -n -P '^(?!\s*//|\s*/\*|\s*\*).*\$inspect' "$file" > /dev/null; then
+                      match=$(grep -n -P '^(?!\s*//|\s*/\*|\s*\*).*\$inspect.*' "$file" | head -n 1)
                       line_num=$(echo "$match" | cut -d: -f1)
                       statement=$(echo "$match" | cut -d: -f2-)
                       echo "::error file=$file::Found \$inspect statement on line $line_num: $statement"
                       has_debug=true
                     fi
 
-                    # Check for console.log
-                    if grep -n "console\.log" "$file" > /dev/null; then
-                      match=$(grep -n "console\.log.*" "$file" | head -n 1)
+                    # Check for console.log (not in comments)
+                    if grep -n -P '^(?!\s*//|\s*/\*|\s*\*).*console\.log' "$file" > /dev/null; then
+                      match=$(grep -n -P '^(?!\s*//|\s*/\*|\s*\*).*console\.log.*' "$file" | head -n 1)
                       line_num=$(echo "$match" | cut -d: -f1)
                       statement=$(echo "$match" | cut -d: -f2-)
                       echo "::error file=$file::Found console.log statement on line $line_num: $statement"
                       has_debug=true
                     fi
 
-                    # Check for console.debug
-                    if grep -n "console\.debug" "$file" > /dev/null; then
-                      match=$(grep -n "console\.debug.*" "$file" | head -n 1)
+                    # Check for console.debug (not in comments)
+                    if grep -n -P '^(?!\s*//|\s*/\*|\s*\*).*console\.debug' "$file" > /dev/null; then
+                      match=$(grep -n -P '^(?!\s*//|\s*/\*|\s*\*).*console\.debug.*' "$file" | head -n 1)
                       line_num=$(echo "$match" | cut -d: -f1)
                       statement=$(echo "$match" | cut -d: -f2-)
                       echo "::error file=$file::Found console.debug statement on line $line_num: $statement"
                       has_debug=true
                     fi
 
-                    # Check for debugger statements
-                    if grep -n "debugger;" "$file" > /dev/null; then
-                      match=$(grep -n "debugger;" "$file" | head -n 1)
+                    # Check for debugger statements (not in comments)
+                    if grep -n -P '^(?!\s*//|\s*/\*|\s*\*).*debugger;' "$file" > /dev/null; then
+                      match=$(grep -n -P '^(?!\s*//|\s*/\*|\s*\*).*debugger;' "$file" | head -n 1)
                       line_num=$(echo "$match" | cut -d: -f1)
                       statement=$(echo "$match" | cut -d: -f2-)
                       echo "::error file=$file::Found debugger statement on line $line_num: $statement"

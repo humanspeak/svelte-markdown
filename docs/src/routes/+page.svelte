@@ -18,7 +18,7 @@ Hey there! This is a *fun* example of mixing **Markdown** and <em>HTML</em> toge
 |---------|:--------:|-----:|
 | Bold | **text** | <strong>text</strong> |
 | Italic | *text* | <em>text</em> |
-| Links | [text](url) | <a href="url">text</a> |
+| Links | [npm](https://www.npmjs.com/package/@humanspeak/svelte-markdown) | <a href="https://github.com/humanspeak/svelte-markdown">github</a> |
 
 Here's a quote for you:
 > "The best of both worlds" - <cite>Someone who loves markdown & HTML</cite>
@@ -53,10 +53,10 @@ Happy coding! <span style="color: hotpink">♥</span>`
 </script>
 
 <MainContainer>
-    <div class="h-full w-full">
-        <div class="flex h-full justify-center p-8">
-            <div class="grid h-full w-full grid-cols-[25%_auto] gap-8">
-                <div class="h-full">
+    <div class="flex h-full w-full min-h-0">
+        <div class="flex h-full justify-center p-4 min-h-0 w-full">
+            <div class="grid h-full w-full min-h-0 grid-cols-[25%_auto] gap-8">
+                <div class="h-full min-h-0">
                     <Card.Root class="flex h-full flex-col">
                         <Card.Header>
                             <Card.Title>Editor</Card.Title>
@@ -72,15 +72,15 @@ Happy coding! <span style="color: hotpink">♥</span>`
                         </Card.Content>
                     </Card.Root>
                 </div>
-                <div class="h-auto min-h-max">
+                <div class="h-auto min-h-0">
                     <Card.Root class="flex h-full w-full flex-col">
                         <Card.Header>
                             <Card.Title>Markdown</Card.Title>
                             <Card.Description>Your renderded markdown 👩🏼‍💻</Card.Description>
                         </Card.Header>
-                        <Card.Content class="flex-1">
+                        <Card.Content class="flex-1 flex flex-col min-h-0">
                             <div
-                                class="h-full w-full overflow-y-auto rounded-md border p-4"
+                                class="flex-1 h-full min-h-0 w-full overflow-y-auto rounded-md border p-4"
                                 id="markdown"
                             >
                                 <SvelteMarkdown {source} parsed={showParsed} />
