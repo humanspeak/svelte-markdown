@@ -7,9 +7,13 @@ import {
 } from '@tanstack/table-core'
 
 /**
- * Creates a reactive TanStack table object for Svelte.
- * @param options Table options to create the table with.
- * @returns A reactive table object.
+ * Creates a reactive TanStack table instance integrated with Svelte's reactivity system.
+ *
+ * Merges default and user-provided options, manages table state reactively, and ensures state changes are synchronized with Svelte's lifecycle.
+ *
+ * @param options - Table configuration options.
+ * @returns A TanStack table object with Svelte-compatible reactivity.
+ *
  * @example
  * ```svelte
  * <script>
@@ -22,13 +26,13 @@ import {
  *       <tr>
  *         {#each headerGroup.headers as header}
  *           <th colspan={header.colSpan}>
- *         	   <FlexRender content={header.column.columnDef.header} context={header.getContext()} />
- *         	 </th>
+ *             <FlexRender content={header.column.columnDef.header} context={header.getContext()} />
+ *           </th>
  *         {/each}
  *       </tr>
  *     {/each}
  *   </thead>
- * 	 <!-- ... -->
+ *   <!-- ... -->
  * </table>
  * ```
  */
@@ -87,7 +91,15 @@ type Intersection<T extends readonly unknown[]> = (T extends [infer H, ...infer 
  *
  * Proxy-based to avoid known WebKit recursion issue.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/**
+ * Lazily merges multiple objects or thunks into a single proxy object, preserving getter semantics and property descriptors.
+ *
+ * Each source can be an object or a function returning an object (or null/undefined). Property access, presence checks, and key enumeration are resolved dynamically, with later sources taking precedence over earlier ones.
+ *
+ * @returns A proxy representing the intersection of all source objects.
+ *
+ * @remark This function avoids recursion issues in certain JavaScript engines by using a proxy-based approach and does not eagerly evaluate thunks or copy properties.
+ */
 export function mergeObjects<Sources extends readonly MaybeThunk<any>[]>(
     ...sources: Sources
 ): Intersection<{ [K in keyof Sources]: Sources[K] }> {

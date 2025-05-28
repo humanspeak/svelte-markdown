@@ -53,25 +53,21 @@ export class RenderSnippetConfig<TProps> {
 }
 
 /**
- * A helper function to help create cells from Svelte components through ColumnDef's `cell` and `header` properties.
+ * Creates a configuration object for rendering a Svelte component in a table cell or header.
  *
- * This is only to be used with Svelte Components - use `renderSnippet` for Svelte Snippets.
+ * Use this function with Svelte components to generate a {@link RenderComponentConfig} for use in column definitions.
  *
- * @param component A Svelte component
- * @param props The props to pass to `component`
- * @returns A `RenderComponentConfig` object that helps svelte-table know how to render the header/cell component.
+ * @param component - The Svelte component to render.
+ * @param props - Optional props to pass to the component.
+ * @returns A {@link RenderComponentConfig} instructing the table how to render the component.
+ *
  * @example
- * ```ts
- * // +page.svelte
- * const defaultColumns = [
+ * const columns = [
  *   columnHelper.accessor('name', {
  *     header: header => renderComponent(SortHeader, { label: 'Name', header }),
  *   }),
- *   columnHelper.accessor('state', {
- *     header: header => renderComponent(SortHeader, { label: 'State', header }),
- *   }),
- * ]
- * ```
+ * ];
+ *
  * @see {@link https://tanstack.com/table/latest/docs/guide/column-defs}
  */
 export function renderComponent<
@@ -83,17 +79,15 @@ export function renderComponent<
 }
 
 /**
- * A helper function to help create cells from Svelte Snippets through ColumnDef's `cell` and `header` properties.
+ * Creates a configuration object for rendering a Svelte snippet in a table column cell or header.
  *
- * The snippet must only take one parameter.
+ * Use this function to specify a Svelte snippet and its parameters for use with table column definitions. Intended only for snippets; for Svelte components, use {@link renderComponent}.
  *
- * This is only to be used with Snippets - use `renderComponent` for Svelte Components.
+ * @param snippet - The Svelte snippet function to render.
+ * @param params - Parameters to pass to the snippet. Defaults to an empty object.
+ * @returns A {@link RenderSnippetConfig} describing how to render the snippet in the table.
  *
- * @param snippet
- * @param params
- * @returns - A `RenderSnippetConfig` object that helps svelte-table know how to render the header/cell snippet.
  * @example
- * ```ts
  * // +page.svelte
  * const defaultColumns = [
  *   columnHelper.accessor('name', {
@@ -103,7 +97,7 @@ export function renderComponent<
  *     cell: cell => renderSnippet(stateSnippet, { state: cell.row.state }),
  *   }),
  * ]
- * ```
+ *
  * @see {@link https://tanstack.com/table/latest/docs/guide/column-defs}
  */
 export function renderSnippet<TProps>(snippet: Snippet<[TProps]>, params: TProps = {} as TProps) {
