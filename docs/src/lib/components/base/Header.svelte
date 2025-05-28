@@ -12,7 +12,7 @@
     <!-- Empty left column -->
     <h1 class="text-center text-4xl font-extrabold">
         <div class="flex w-full items-center justify-center gap-2">
-            {#if $mode === 'dark'}
+            {#if mode.current === 'dark'}
                 <img src="./humanspeak-dark.svg" alt="humanspeak logo" class="h-10" />
             {:else}
                 <img src="./humanspeak.svg" alt="humanspeak logo" class="h-10" />

@@ -1,8 +1,7 @@
 <script lang="ts">
-    import type { WithElementRef } from 'bits-ui'
     import type { HTMLAttributes } from 'svelte/elements'
     import { getEmblaContext } from './context.js'
-    import { cn } from '$lib/shadcn/utils.js'
+    import { cn, type WithElementRef } from '$lib/shadcn/utils.js'
 
     let {
         ref = $bindable(null),
@@ -16,6 +15,7 @@
 
 <div
     bind:this={ref}
+    data-slot="carousel-item"
     role="group"
     aria-roledescription="slide"
     class={cn(

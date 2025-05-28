@@ -34,21 +34,21 @@
         <!-- Header Section -->
         <div class="flex flex-col space-y-8">
             <div
-                class="flex flex-shrink-0 text-lg font-medium uppercase tracking-wider text-white/80"
+                class="flex flex-shrink-0 text-lg font-medium tracking-wider text-white/80 uppercase"
             >
                 {type === 'og' ? 'High Performance Markdown Parser' : 'Markdown Parser Component'}
             </div>
             <h1
                 class:text-8xl={type === 'og'}
                 class:text-7xl={type === 'twitter'}
-                class="font-bold leading-tight tracking-tight"
+                class="leading-tight font-bold tracking-tight"
             >
                 Svelte Markdown
             </h1>
             <p
                 class:text-4xl={type === 'og'}
                 class:text-3xl={type === 'twitter'}
-                class="max-w-3xl font-medium leading-relaxed text-white/90"
+                class="max-w-3xl leading-relaxed font-medium text-white/90"
             >
                 Transform markdown into customizable Svelte components
             </p>
