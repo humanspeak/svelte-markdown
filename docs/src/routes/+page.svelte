@@ -18,7 +18,7 @@ Hey there! This is a *fun* example of mixing **Markdown** and <em>HTML</em> toge
 |---------|:--------:|-----:|
 | Bold | **text** | <strong>text</strong> |
 | Italic | *text* | <em>text</em> |
-| Links | [text](url) | <a href="url">text</a> |
+| Links | [npm](https://www.npmjs.com/package/@humanspeak/svelte-markdown) | <a href="https://github.com/humanspeak/svelte-markdown">github</a> |
 
 Here's a quote for you:
 > "The best of both worlds" - <cite>Someone who loves markdown & HTML</cite>
