@@ -81,7 +81,6 @@ Happy coding! <span style="color: hotpink">♥</span>`
                         <Card.Content class="flex min-h-0 flex-1 flex-col">
                             <div
                                 class="h-full min-h-0 w-full flex-1 overflow-y-auto rounded-md border p-4"
-                                id="markdown"
                             >
                                 <SvelteMarkdown {source} parsed={showParsed} />
                             </div>
