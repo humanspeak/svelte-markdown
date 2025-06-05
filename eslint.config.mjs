@@ -43,7 +43,6 @@ export default [
         },
         rules: {
             semi: ['warn', 'never'],
-            quotes: ['error', 'single'],
             'dot-location': ['warn', 'property'],
             'guard-for-in': ['warn'],
             'no-multi-spaces': ['warn'],
@@ -96,6 +95,26 @@ export default [
             parserOptions: {
                 parser: ts.parser
             }
+        }
+    },
+    {
+        /* location of your components where you would like to apply these rules  */
+        files: ['**/shadcn/components/ui/**/*.svelte', '**/shadcn/components/ui/**/*.ts'],
+        languageOptions: {
+            parserOptions: {
+                parser: ts.parser
+            }
+        },
+        rules: {
+            '@typescript-eslint/no-unused-vars': [
+                'warn',
+                {
+                    argsIgnorePattern: '^_',
+                    varsIgnorePattern: '^\\$\\$(Props|Events|Slots|Generic)$'
+                }
+            ],
+            'prefer-const': ['off'],
+            'no-unused-vars': ['off']
         }
     }
 ]
