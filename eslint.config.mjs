@@ -26,7 +26,6 @@ export default [
             '**/yarn.lock',
             'src/routes/poc',
             '**/dist',
-            'docs/',
             '**/*.test.ts'
         ]
     },
