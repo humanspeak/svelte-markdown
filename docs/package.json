@@ -60,7 +60,7 @@
         "@typescript-eslint/eslint-plugin": "^8.33.0",
         "@typescript-eslint/parser": "^8.33.0",
         "autoprefixer": "^10.4.21",
-        "bits-ui": "^2.2.0",
+        "bits-ui": "^2.4.1",
         "clsx": "^2.1.1",
         "embla-carousel-svelte": "^8.6.0",
         "eslint": "^9.27.0",

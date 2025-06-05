@@ -1,0 +1,9 @@
+{
+    "recommendations": [
+        "coderabbit.coderabbit-vscode",
+        "svelte.svelte-vscode",
+        "bradlc.vscode-tailwindcss",
+        "trunk.io",
+        "vitest.explorer"
+    ]
+}
