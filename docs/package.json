@@ -37,7 +37,8 @@
     },
     "dependencies": {
         "@sentry/cloudflare": "^9.27.0",
-        "@sentry/sveltekit": "^9.27.0"
+        "@sentry/sveltekit": "^9.27.0",
+        "posthog-js": "^1.249.4"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20250605.0",
@@ -55,7 +56,6 @@
         "@tailwindcss/forms": "^0.5.10",
         "@tailwindcss/typography": "^0.5.16",
         "@tailwindcss/vite": "^4.1.8",
-        "@tanstack/table-core": "^8.21.3",
         "@types/eslint": "^9.6.1",
         "@typescript-eslint/eslint-plugin": "^8.33.1",
         "@typescript-eslint/parser": "^8.33.1",
