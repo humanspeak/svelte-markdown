@@ -3,6 +3,16 @@ description: Set up dependencies for Trunk Code Quality
 runs:
     using: composite
     steps:
+        - name: Setup Node.js
+          uses: actions/setup-node@v4
+          with:
+              node-version: '22'
+              cache: npm
         - name: Install Root NodeJS dependencies
           shell: bash
-          run: npm install
+          run: |
+              npm ci --prefer-offline --no-audit
+              if [ $? -ne 0 ]; then
+                echo "Failed to install dependencies"
+                exit 1
+              fi

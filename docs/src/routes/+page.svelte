@@ -53,9 +53,9 @@ Happy coding! <span style="color: hotpink">♥</span>`
 </script>
 
 <MainContainer>
-    <div class="flex h-full w-full min-h-0">
-        <div class="flex h-full justify-center p-4 min-h-0 w-full">
-            <div class="grid h-full w-full min-h-0 grid-cols-[25%_auto] gap-8">
+    <div class="flex h-full min-h-0 w-full">
+        <div class="flex h-full min-h-0 w-full justify-center p-4">
+            <div class="grid h-full min-h-0 w-full grid-cols-[25%_auto] gap-8">
                 <div class="h-full min-h-0">
                     <Card.Root class="flex h-full flex-col">
                         <Card.Header>
@@ -78,10 +78,9 @@ Happy coding! <span style="color: hotpink">♥</span>`
                             <Card.Title>Markdown</Card.Title>
                             <Card.Description>Your renderded markdown 👩🏼‍💻</Card.Description>
                         </Card.Header>
-                        <Card.Content class="flex-1 flex flex-col min-h-0">
+                        <Card.Content class="flex min-h-0 flex-1 flex-col">
                             <div
-                                class="flex-1 h-full min-h-0 w-full overflow-y-auto rounded-md border p-4"
-                                id="markdown"
+                                class="h-full min-h-0 w-full flex-1 overflow-y-auto rounded-md border p-4"
                             >
                                 <SvelteMarkdown {source} parsed={showParsed} />
                             </div>
