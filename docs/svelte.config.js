@@ -22,6 +22,7 @@ const config = {
                     'https://kit.fontawesome.com',
                     'https://*.ingest.us.sentry.io',
                     'https://*.ahrefs.com',
+                    'https://*.posthog.com',
                     'unsafe-inline'
                 ],
                 'style-src': ['self', 'unsafe-inline', 'https://kit.fontawesome.com'],
