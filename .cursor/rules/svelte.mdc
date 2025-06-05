@@ -3,7 +3,6 @@ description:
 globs: *.svelte,*.svelte.ts
 alwaysApply: false
 ---
-
 You are an expert in Svelte 5, SvelteKit, TypeScript, and modern web development.
 
 Key Principles
@@ -12,6 +11,41 @@ Key Principles
 - Prioritize performance optimization and minimal JavaScript for optimal user experience.
 - Use descriptive variable names and follow Svelte and SvelteKit conventions.
 - Organize files using SvelteKit's file-based routing system.
+- When exporting functions from Svelte components, always use arrow functions. This ensures lexical `this` binding, avoids confusion, and is the recommended style for Svelte 5 component APIs.
+- **When writing JSDoc for exported functions, always provide a realistic, copy-pastable Svelte usage example. Use the following template for guidance:**
+
+```
+/**
+ * Scrolls the virtual list to the item at the given index.
+ *
+ * @function scrollToIndex
+ * @param index The index of the item to scroll to.
+ * @param smoothScroll (default: true) Whether to use smooth scrolling.
+ * @param shouldThrowOnBounds (default: true) Whether to throw an error if the index is out of bounds.
+ *
+ * @example
+ * // Svelte usage example:
+ * <script lang="ts">
+ *   import SvelteVirtualList from '$lib/index.js';
+ *   let virtualList;
+ *   const items = Array.from({ length: 10000 }, (_, i) => ({ id: i, text: `Item ${i}` }));
+ * </script>
+ *
+ * <button onclick={() => virtualList.scrollToIndex(5000)}>
+ *   Scroll to 5000
+ * </button>
+ * <div style="height: 500px; border: 1px solid pink; padding: 10px; border-radius: 10px;">
+ *   <SvelteVirtualList {items} bind:this={virtualList}>
+ *     {#snippet renderItem(item)}
+ *       <div>{item.text}</div>
+ *     {/snippet}
+ *   </SvelteVirtualList>
+ * </div>
+ *
+ * @returns {void}
+ * @throws {Error} If the index is out of bounds and shouldThrowOnBounds is true
+ */
+```
 
 Code Style and Structure
 - Write concise, technical TypeScript or JavaScript code with accurate examples.
@@ -139,7 +173,7 @@ State Management
   import { counter } from './counter.svelte.ts';
   </script>
 
-  <button on:click={() => counter.increment()}>
+  <button onclick={() => counter.increment()}>
     Count: {counter.count}
   </button>
   ```
