@@ -9,6 +9,8 @@
         items?: HTMLInputElement[]
     }
 
+    // trunk-ignore(eslint/@typescript-eslint/no-unused-vars)
+    // trunk-ignore(eslint/no-unused-vars)
     const { ordered = false, start = 1, index = 0, items = [], children }: Props = $props()
 
     const checked = $state(items.map(() => false))

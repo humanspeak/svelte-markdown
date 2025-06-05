@@ -38,7 +38,6 @@ Happy coding! <span style="color: hotpink">♥</span>`
     let source = $state(text.value)
     let timeout: number | null = null
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const onChangeTextArea = (_event: Event) => {
         if (!window) return
         if (timeout) clearTimeout(timeout)

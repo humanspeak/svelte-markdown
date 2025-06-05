@@ -2,6 +2,7 @@
 
 import { browser } from '$app/environment'
 
+/* trunk-ignore(eslint) */
 export class LocalStore<T> {
     value = $state<T>() as T
     #key = ''

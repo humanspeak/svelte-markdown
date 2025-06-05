@@ -43,7 +43,6 @@ export default [
 
         rules: {
             semi: ['warn', 'never'],
-            quotes: ['error', 'single'],
             'dot-location': ['warn', 'property'],
             'guard-for-in': ['warn'],
             'no-multi-spaces': ['warn'],
