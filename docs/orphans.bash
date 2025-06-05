@@ -9,6 +9,7 @@ NC='\033[0m' # No Color
 # Default values
 SRC_DIR="src"
 DRY_RUN=false
+INCLUDE_SHADCN=false
 MAX_JOBS=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 
 # Help function
@@ -17,10 +18,11 @@ show_help() {
 	echo "Find and optionally remove unused Svelte components. 🧹"
 	echo
 	echo "Options:"
-	echo "  -h, --help     Show this help message 📖"
-	echo "  -d, --dir      Specify source directory (default: src) 📁"
-	echo "  --dry-run      Show what would be deleted without actually deleting 🔍"
-	echo "  -j, --jobs     Number of parallel jobs (default: auto) 🚀"
+	echo "  -h, --help           Show this help message 📖"
+	echo "  -d, --dir            Specify source directory (default: src) 📁"
+	echo "  --dry-run            Show what would be deleted without actually deleting 🔍"
+	echo "  -j, --jobs           Number of parallel jobs (default: auto) 🚀"
+	echo "  --include-shadcn     Include shadcn components in the check 🔍"
 }
 
 # Parse command line arguments
@@ -35,6 +37,7 @@ while [[ $# -gt 0 ]]; do
 		shift
 		;;
 	--dry-run) DRY_RUN=true ;;
+	--include-shadcn) INCLUDE_SHADCN=true ;;
 	-j | --jobs)
 		MAX_JOBS="$2"
 		shift
@@ -58,7 +61,7 @@ COMPONENTS_JSON="${SRC_DIR}/../components.json"
 SHADCN_DIR=""
 
 # Check for components.json and get shadcn components directory
-if [[ -f ${COMPONENTS_JSON} ]]; then
+if [[ -f ${COMPONENTS_JSON} ]] && [[ ${INCLUDE_SHADCN} == false ]]; then
 	echo -e "${YELLOW}Found components.json - will exclude shadcn components 🎯${NC}"
 	# Extract the components directory from components.json using grep and cut
 	if grep_result=$(grep -o '"components": *"[^"]*"' "${COMPONENTS_JSON}"); then
@@ -70,6 +73,8 @@ if [[ -f ${COMPONENTS_JSON} ]]; then
 		SHADCN_DIR="${SRC_DIR}/lib/${SHADCN_DIR}/ui"
 		echo -e "${YELLOW}Excluding components in: ${SHADCN_DIR} 📂${NC}"
 	fi
+elif [[ ${INCLUDE_SHADCN} == true ]]; then
+	echo -e "${YELLOW}Including shadcn components in the check 🔍${NC}"
 fi
 
 # Create a temporary file to store results
@@ -146,23 +151,13 @@ wait
 echo
 echo
 
-# Create a temporary file to store results
-declare temp_file
-temp_file=$(mktemp)
-
-# Read results and display progress
+# Read results and display summary
 unused_files=()
 while IFS=: read -r file status; do
 	if [[ ${status} == "unused" ]]; then
-		echo -n -e "${RED}x${NC}"
 		unused_files+=("${file}")
-	else
-		echo -n -e "${GREEN}.${NC}"
 	fi
 done <"${temp_file}"
-
-# Clean up temporary file
-rm "${temp_file}"
 
 # Print unused files
 if [[ ${#unused_files[@]} -eq 0 ]]; then
@@ -170,39 +165,36 @@ if [[ ${#unused_files[@]} -eq 0 ]]; then
 	exit 0
 fi
 
+# Handle file deletion
+echo -e "\nFound ${#unused_files[@]} unused components:"
 for file in "${unused_files[@]}"; do
-	echo -e "${RED}Unused Svelte file: ${file} 🗑️${NC}"
+	echo -e "${RED}  - ${file}${NC}"
 done
 
-# Handle file deletion
-if [[ ${#unused_files[@]} -gt 0 ]]; then
-	echo -e "\nFound ${#unused_files[@]} unused components:"
-	for file in "${unused_files[@]}"; do
-		echo -e "${RED}  - ${file}${NC}"
-	done
-
-	if [[ ${DRY_RUN} == true ]]; then
-		echo -e "${YELLOW}Dry run: Files would be deleted 🔍${NC}"
-		exit 0
-	fi
-
-	echo -e -n "${GREEN}Do you want to delete these ${#unused_files[@]} files? (y/N) 🗑️ ${NC}"
-	read -r answer
-
-	if [[ ${answer} =~ ^[Yy] ]]; then
-		deleted=0
-		failed=0
-		for file in "${unused_files[@]}"; do
-			if rm "${file}"; then
-				echo -e "${GREEN}Deleted: ${file} ✅${NC}"
-				((deleted++))
-			else
-				echo -e "${RED}Failed to delete: ${file} ❌${NC}"
-				((failed++))
-			fi
-		done
-		echo -e "\n${GREEN}Summary: Deleted ${deleted} files, Failed to delete ${failed} files${NC}"
-	else
-		echo -e "${YELLOW}Operation cancelled by user${NC}"
-	fi
+if [[ ${DRY_RUN} == true ]]; then
+	echo -e "${YELLOW}Dry run: Files would be deleted 🔍${NC}"
+	exit 0
 fi
+
+echo -e -n "${GREEN}Do you want to delete these ${#unused_files[@]} files? (y/N) 🗑️ ${NC}"
+read -r answer
+
+if [[ ${answer} =~ ^[Yy] ]]; then
+	deleted=0
+	failed=0
+	for file in "${unused_files[@]}"; do
+		if rm "${file}"; then
+			echo -e "${GREEN}Deleted: ${file} ✅${NC}"
+			((deleted++))
+		else
+			echo -e "${RED}Failed to delete: ${file} ❌${NC}"
+			((failed++))
+		fi
+	done
+	echo -e "\n${GREEN}Summary: Deleted ${deleted} files, Failed to delete ${failed} files${NC}"
+else
+	echo -e "${YELLOW}Operation cancelled by user${NC}"
+fi
+
+# Clean up temporary file
+rm "${temp_file}"
