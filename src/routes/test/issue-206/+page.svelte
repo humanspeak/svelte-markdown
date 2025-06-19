@@ -11,6 +11,10 @@
 - Hello.
 
 1. World.
+
+| Table |
+|-------|
+| Cell |
 `
 
     const parsed = async (parsedTokens: Token[] | TokensList) => {
@@ -23,8 +27,7 @@
             del: null
         },
         listitem: null,
-        orderedlistitem: null,
-        unorderedlistitem: null
+        tablecell: null
     }
 </script>
 
