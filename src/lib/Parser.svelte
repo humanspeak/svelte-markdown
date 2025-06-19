@@ -83,68 +83,74 @@
         {/each}
     {/if}
 {:else if type in renderers}
-    {#if type === 'table'}
+    {#if type === 'table' && renderers.table && renderers.tablerow && renderers.tablecell}
         <renderers.table {...rest}>
-            <renderers.tablehead {...rest}>
-                <renderers.tablerow {...rest}>
-                    {#each header ?? [] as headerItem, i (i)}
-                        {@const { align: _align, ...cellRest } = rest}
-                        <renderers.tablecell
-                            header={true}
-                            align={(rest.align as string[])[i]}
-                            {...cellRest}
-                        >
-                            <Parser tokens={headerItem.tokens} {renderers} />
-                        </renderers.tablecell>
-                    {/each}
-                </renderers.tablerow>
-            </renderers.tablehead>
-            <renderers.tablebody {...rest}>
-                {#each rows ?? [] as row, i (i)}
+            {#if renderers.tablehead}
+                <renderers.tablehead {...rest}>
                     <renderers.tablerow {...rest}>
-                        {#each row ?? [] as cells, i (i)}
+                        {#each header ?? [] as headerItem, i (i)}
                             {@const { align: _align, ...cellRest } = rest}
                             <renderers.tablecell
-                                header={false}
+                                header={true}
                                 align={(rest.align as string[])[i]}
                                 {...cellRest}
                             >
-                                {#if cells.tokens?.[0]?.type === 'html'}
-                                    {@const token = cells.tokens[0] as Token & {
-                                        tag: string
-                                        tokens?: Token[]
-                                    }}
-                                    {@const { tag, ...localRest } = token}
-                                    {@const htmlTag = tag as keyof typeof Html}
-                                    {#if renderers.html && htmlTag in renderers.html}
-                                        {@const HtmlComponent =
-                                            renderers.html[htmlTag as keyof typeof renderers.html]}
-                                        {#if HtmlComponent}
-                                            <HtmlComponent {...token}>
-                                                {#if token.tokens?.length}
-                                                    <Parser
-                                                        tokens={token.tokens}
-                                                        {renderers}
-                                                        {...Object.fromEntries(
-                                                            Object.entries(localRest).filter(
-                                                                ([key]) => key !== 'attributes'
-                                                            )
-                                                        )}
-                                                    />
-                                                {/if}
-                                            </HtmlComponent>
-                                        {/if}
-                                    {/if}
-                                {:else}
-                                    <Parser tokens={cells.tokens} {renderers} />
-                                {/if}
+                                <Parser tokens={headerItem.tokens} {renderers} />
                             </renderers.tablecell>
                         {/each}
                     </renderers.tablerow>
-                {/each}
-            </renderers.tablebody>
+                </renderers.tablehead>
+            {/if}
+            {#if renderers.tablebody}
+                <renderers.tablebody {...rest}>
+                    {#each rows ?? [] as row, i (i)}
+                        <renderers.tablerow {...rest}>
+                            {#each row ?? [] as cells, i (i)}
+                                {@const { align: _align, ...cellRest } = rest}
+                                <renderers.tablecell
+                                    header={false}
+                                    align={(rest.align as string[])[i]}
+                                    {...cellRest}
+                                >
+                                    {#if cells.tokens?.[0]?.type === 'html'}
+                                        {@const token = cells.tokens[0] as Token & {
+                                            tag: string
+                                            tokens?: Token[]
+                                        }}
+                                        {@const { tag, ...localRest } = token}
+                                        {@const htmlTag = tag as keyof typeof Html}
+                                        {#if renderers.html && htmlTag in renderers.html}
+                                            {@const HtmlComponent =
+                                                renderers.html[
+                                                    htmlTag as keyof typeof renderers.html
+                                                ]}
+                                            {#if HtmlComponent}
+                                                <HtmlComponent {...token}>
+                                                    {#if token.tokens?.length}
+                                                        <Parser
+                                                            tokens={token.tokens}
+                                                            {renderers}
+                                                            {...Object.fromEntries(
+                                                                Object.entries(localRest).filter(
+                                                                    ([key]) => key !== 'attributes'
+                                                                )
+                                                            )}
+                                                        />
+                                                    {/if}
+                                                </HtmlComponent>
+                                            {/if}
+                                        {/if}
+                                    {:else}
+                                        <Parser tokens={cells.tokens} {renderers} />
+                                    {/if}
+                                </renderers.tablecell>
+                            {/each}
+                        </renderers.tablerow>
+                    {/each}
+                </renderers.tablebody>
+            {/if}
         </renderers.table>
-    {:else if type === 'list'}
+    {:else if type === 'list' && renderers.list}
         {#if ordered}
             <renderers.list {ordered} {...rest}>
                 {@const { items, ...parserRest }: {items: Props[]} = rest}
