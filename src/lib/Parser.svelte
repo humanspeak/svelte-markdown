@@ -119,19 +119,21 @@
                                     {#if renderers.html && htmlTag in renderers.html}
                                         {@const HtmlComponent =
                                             renderers.html[htmlTag as keyof typeof renderers.html]}
-                                        <HtmlComponent {...token}>
-                                            {#if token.tokens?.length}
-                                                <Parser
-                                                    tokens={token.tokens}
-                                                    {renderers}
-                                                    {...Object.fromEntries(
-                                                        Object.entries(localRest).filter(
-                                                            ([key]) => key !== 'attributes'
-                                                        )
-                                                    )}
-                                                />
-                                            {/if}
-                                        </HtmlComponent>
+                                        {#if HtmlComponent}
+                                            <HtmlComponent {...token}>
+                                                {#if token.tokens?.length}
+                                                    <Parser
+                                                        tokens={token.tokens}
+                                                        {renderers}
+                                                        {...Object.fromEntries(
+                                                            Object.entries(localRest).filter(
+                                                                ([key]) => key !== 'attributes'
+                                                            )
+                                                        )}
+                                                    />
+                                                {/if}
+                                            </HtmlComponent>
+                                        {/if}
                                     {/if}
                                 {:else}
                                     <Parser tokens={cells.tokens} {renderers} />
@@ -148,9 +150,11 @@
                 {@const { items, ...parserRest }: {items: Props[]} = rest}
                 {#each items as item, index (index)}
                     {@const OrderedListComponent = renderers.orderedlistitem || renderers.listitem}
-                    <OrderedListComponent {...item}>
-                        <Parser {...parserRest} tokens={item.tokens} {renderers} />
-                    </OrderedListComponent>
+                    {#if OrderedListComponent}
+                        <OrderedListComponent {...item}>
+                            <Parser {...parserRest} tokens={item.tokens} {renderers} />
+                        </OrderedListComponent>
+                    {/if}
                 {/each}
             </renderers.list>
         {:else}
@@ -159,9 +163,11 @@
                 {#each items as item, index (index)}
                     {@const UnorderedListComponent =
                         renderers.unorderedlistitem || renderers.listitem}
-                    <UnorderedListComponent {...item}>
-                        <Parser {...parserRest} tokens={item.tokens} {renderers} />
-                    </UnorderedListComponent>
+                    {#if UnorderedListComponent}
+                        <UnorderedListComponent {...item}>
+                            <Parser {...parserRest} tokens={item.tokens} {renderers} />
+                        </UnorderedListComponent>
+                    {/if}
                 {/each}
             </renderers.list>
         {/if}
@@ -170,18 +176,20 @@
         {@const htmlTag = rest.tag as keyof typeof Html}
         {#if renderers.html && htmlTag in renderers.html}
             {@const HtmlComponent = renderers.html[htmlTag as keyof typeof renderers.html]}
-            {@const tokens = (rest.tokens as Token[]) ?? ([] as Token[])}
-            <HtmlComponent {...rest}>
-                {#if tokens.length}
-                    <Parser
-                        {tokens}
-                        {renderers}
-                        {...Object.fromEntries(
-                            Object.entries(localRest).filter(([key]) => key !== 'attributes')
-                        )}
-                    />
-                {/if}
-            </HtmlComponent>
+            {#if HtmlComponent}
+                {@const tokens = (rest.tokens as Token[]) ?? ([] as Token[])}
+                <HtmlComponent {...rest}>
+                    {#if tokens.length}
+                        <Parser
+                            {tokens}
+                            {renderers}
+                            {...Object.fromEntries(
+                                Object.entries(localRest).filter(([key]) => key !== 'attributes')
+                            )}
+                        />
+                    {/if}
+                </HtmlComponent>
+            {/if}
         {:else}
             <Parser
                 tokens={(rest.tokens as Token[]) ?? ([] as Token[])}
@@ -191,13 +199,15 @@
         {/if}
     {:else}
         {@const GeneralComponent = renderers[type as keyof typeof renderers] as RendererComponent}
-        <GeneralComponent {...rest}>
-            {#if tokens}
-                {@const { text: _text, raw: _raw, ...parserRest } = rest}
-                <Parser {...parserRest} {tokens} {renderers} />
-            {:else}
-                <renderers.rawtext text={rest.raw} />
-            {/if}
-        </GeneralComponent>
+        {#if GeneralComponent}
+            <GeneralComponent {...rest}>
+                {#if tokens}
+                    {@const { text: _text, raw: _raw, ...parserRest } = rest}
+                    <Parser {...parserRest} {tokens} {renderers} />
+                {:else}
+                    <renderers.rawtext text={rest.raw} />
+                {/if}
+            </GeneralComponent>
+        {/if}
     {/if}
 {/if}
