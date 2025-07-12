@@ -9,5 +9,5 @@
 </script>
 
 <div>
-    <p>{text} {someDeepVariable?.text ?? 'no text'}</p>
+    <p data-testid="rawtext">{text} {someDeepVariable?.text ?? 'no text'}</p>
 </div>
