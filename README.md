@@ -74,19 +74,16 @@ This package carefully selects its dependencies to provide a robust and maintain
 ### Core Dependencies
 
 - **marked**
-
     - Industry-standard markdown parser
     - Battle-tested in production
     - Extensive security features
 
 - **github-slugger**
-
     - GitHub-style heading ID generation
     - Unicode support
     - Collision handling
 
 - **htmlparser2**
-
     - High-performance HTML parsing
     - Streaming capabilities
     - Security-focused design

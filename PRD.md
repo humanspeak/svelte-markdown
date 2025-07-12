@@ -40,7 +40,6 @@
 ### Dependencies
 
 - Core Dependencies:
-
     - marked: ^15.0.5
     - github-slugger: ^2.0.0
     - htmlparser2: ^10.0.0
@@ -84,7 +83,6 @@
 ### Edge Case Handling
 
 - Input Validation
-
     - Empty markdown strings
     - Non-string inputs
     - Malformed HTML within markdown
@@ -92,7 +90,6 @@
     - Zero-width spaces and invisible characters
 
 - Component Behavior
-
     - Recursive component rendering
     - Circular reference detection
     - Dynamic component loading

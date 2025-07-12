@@ -23,7 +23,6 @@ export default [
             '**/pnpm-lock.yaml',
             '**/package-lock.json',
             '**/yarn.lock',
-            'src/routes/poc',
             '**/dist',
             'vite.config.ts.*'
         ]
