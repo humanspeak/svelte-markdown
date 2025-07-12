@@ -4,8 +4,6 @@
         someDeepVariable?: Record<string, string>
     }
     const { text, someDeepVariable }: Props = $props()
-
-    $inspect('someDeepVariable', someDeepVariable)
 </script>
 
 <div>
