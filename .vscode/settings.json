@@ -8,5 +8,8 @@
     "editor.formatOnPaste": true,
     "[json]": {
         "editor.defaultFormatter": "trunk.io"
+    },
+    "[svelte]": {
+        "editor.defaultFormatter": "trunk.io"
     }
 }
