@@ -1,5 +1,5 @@
 <script lang="ts">
-    import SvelteMarkdown, { type Renderers, type Token, type TokensList } from '$lib/index.js'
+    import SvelteMarkdown, { type Token, type TokensList } from '$lib/index.js'
 
     let source = `
 
