@@ -16,6 +16,13 @@ const HTML_TAG_PATTERN = /<\/?([a-zA-Z][a-zA-Z0-9-]{0,})(?:\s+[^>]*)?>/
 const htmlTagRegex = new RegExp(HTML_TAG_PATTERN)
 
 /**
+ * Regex pattern for self-closing HTML tags.
+ * @const {RegExp}
+ */
+const SELF_CLOSING_TAGS =
+    /^(br|hr|img|input|link|meta|area|base|col|embed|keygen|param|source|track|wbr)$/i
+
+/**
  * Analyzes a string to determine if it contains an HTML tag and its characteristics.
  *
  * @param {string} raw - Raw string potentially containing an HTML tag
@@ -48,15 +55,12 @@ export const isHtmlOpenTag = (raw: string): { tag: string; isOpening: boolean } 
  * @returns {Token} Formatted token with proper self-closing syntax
  */
 const formatSelfClosingHtmlToken = (token: Token): Token => {
-    const selfClosingTags =
-        /^(br|hr|img|input|link|meta|area|base|col|embed|keygen|param|source|track|wbr)$/i
-
     // Extract tag name from raw HTML
     const tagMatch = token.raw.match(/<\/?([a-zA-Z][a-zA-Z0-9-]*)/i)
     if (!tagMatch) return token
 
     const tagName = tagMatch[1]
-    if (!selfClosingTags.test(tagName)) return token
+    if (!SELF_CLOSING_TAGS.test(tagName)) return token
 
     // If it's a self-closing tag and doesn't already end with />, format it properly
     if (!token.raw.endsWith('/>')) {
@@ -156,8 +160,6 @@ export const extractAttributes = (raw: string): Record<string, string> => {
 export const parseHtmlBlock = (html: string): Token[] => {
     const tokens: Token[] = []
     let currentText = ''
-    const selfClosingTags =
-        /^(br|hr|img|input|link|meta|area|base|col|embed|keygen|param|source|track|wbr)$/i
     const openTags: string[] = []
 
     const parser = new htmlparser2.Parser(
@@ -172,7 +174,7 @@ export const parseHtmlBlock = (html: string): Token[] => {
                     currentText = ''
                 }
 
-                if (selfClosingTags.test(name)) {
+                if (SELF_CLOSING_TAGS.test(name)) {
                     tokens.push({
                         type: 'html',
                         raw: `<${name}${Object.entries(attributes)
@@ -208,7 +210,7 @@ export const parseHtmlBlock = (html: string): Token[] => {
 
                 // Only add closing tag if we found its opening tag
                 // and it's not a self-closing tag
-                if (openTags.includes(name) && !selfClosingTags.test(name)) {
+                if (openTags.includes(name) && !SELF_CLOSING_TAGS.test(name)) {
                     if (html.includes(`</${name}>`)) {
                         tokens.push({
                             type: 'html',
