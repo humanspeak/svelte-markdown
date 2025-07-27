@@ -9,6 +9,7 @@ import B from './B.svelte'
 import Bdi from './Bdi.svelte'
 import Bdo from './Bdo.svelte'
 import Blockquote from './Blockquote.svelte'
+import Br from './Br.svelte'
 import Button from './Button.svelte'
 import Canvas from './Canvas.svelte'
 import Cite from './Cite.svelte'
@@ -97,6 +98,7 @@ export const Html: HtmlRenderers = {
     bdi: Bdi,
     bdo: Bdo,
     blockquote: Blockquote,
+    br: Br,
     button: Button,
     canvas: Canvas,
     cite: Cite,

@@ -16,6 +16,13 @@ const HTML_TAG_PATTERN = /<\/?([a-zA-Z][a-zA-Z0-9-]{0,})(?:\s+[^>]*)?>/
 const htmlTagRegex = new RegExp(HTML_TAG_PATTERN)
 
 /**
+ * Regex pattern for self-closing HTML tags.
+ * @const {RegExp}
+ */
+const SELF_CLOSING_TAGS =
+    /^(br|hr|img|input|link|meta|area|base|col|embed|keygen|param|source|track|wbr)$/i
+
+/**
  * Analyzes a string to determine if it contains an HTML tag and its characteristics.
  *
  * @param {string} raw - Raw string potentially containing an HTML tag
@@ -38,6 +45,35 @@ export const isHtmlOpenTag = (raw: string): { tag: string; isOpening: boolean } 
     const match = raw.match(HTML_TAG_PATTERN)
     if (!match) return null
     return { tag: match[1], isOpening: !raw.startsWith('</') }
+}
+
+/**
+ * Formats individual HTML tokens to ensure self-closing tags are properly formatted.
+ * This handles cases like <br> -> <br/> without affecting the token structure.
+ *
+ * @param {Token} token - HTML token to format
+ * @returns {Token} Formatted token with proper self-closing syntax
+ */
+const formatSelfClosingHtmlToken = (token: Token): Token => {
+    // Extract tag name from raw HTML
+    const tagMatch = token.raw.match(/<\/?([a-zA-Z][a-zA-Z0-9-]*)/i)
+    if (!tagMatch) return token
+
+    const tagName = tagMatch[1]
+    if (!SELF_CLOSING_TAGS.test(tagName)) return token
+
+    // If it's a self-closing tag and doesn't already end with />, format it properly
+    if (!token.raw.endsWith('/>')) {
+        const formattedRaw = token.raw.replace(/\s*>$/, '/>')
+        return {
+            ...token,
+            raw: formattedRaw,
+            tag: tagName,
+            attributes: extractAttributes(token.raw)
+        }
+    }
+
+    return token
 }
 
 /**
@@ -124,8 +160,6 @@ export const extractAttributes = (raw: string): Record<string, string> => {
 export const parseHtmlBlock = (html: string): Token[] => {
     const tokens: Token[] = []
     let currentText = ''
-    const selfClosingTags =
-        /^(br|hr|img|input|link|meta|area|base|col|embed|keygen|param|source|track|wbr)$/i
     const openTags: string[] = []
 
     const parser = new htmlparser2.Parser(
@@ -140,9 +174,7 @@ export const parseHtmlBlock = (html: string): Token[] => {
                     currentText = ''
                 }
 
-                openTags.push(name)
-
-                if (selfClosingTags.test(name)) {
+                if (SELF_CLOSING_TAGS.test(name)) {
                     tokens.push({
                         type: 'html',
                         raw: `<${name}${Object.entries(attributes)
@@ -152,6 +184,7 @@ export const parseHtmlBlock = (html: string): Token[] => {
                         attributes
                     })
                 } else {
+                    openTags.push(name)
                     tokens.push({
                         type: 'html',
                         raw: `<${name}${Object.entries(attributes)
@@ -177,7 +210,7 @@ export const parseHtmlBlock = (html: string): Token[] => {
 
                 // Only add closing tag if we found its opening tag
                 // and it's not a self-closing tag
-                if (openTags.includes(name) && !selfClosingTags.test(name)) {
+                if (openTags.includes(name) && !SELF_CLOSING_TAGS.test(name)) {
                     if (html.includes(`</${name}>`)) {
                         tokens.push({
                             type: 'html',
@@ -240,6 +273,7 @@ export const containsMultipleTags = (html: string): boolean => {
  *
  * Key features:
  * - Breaks down complex HTML structures into atomic tokens
+ * - Formats self-closing tags with proper syntax (e.g., <br> -> <br/>)
  * - Maintains attribute information
  * - Preserves proper nesting relationships
  * - Handles malformed HTML gracefully
@@ -271,6 +305,7 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
         } else if (token.type === 'table') {
             // Process header cells
             if (token.header) {
+                // @ts-expect-error: expected any
                 token.header = token.header.map((cell) => ({
                     ...cell,
                     tokens: cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
@@ -279,7 +314,9 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
 
             // Process row cells
             if (token.rows) {
+                // @ts-expect-error: expected any
                 token.rows = token.rows.map((row) =>
+                    // @ts-expect-error: expected any
                     row.map((cell) => ({
                         ...cell,
                         tokens: cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
@@ -290,6 +327,10 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
         } else if (token.type === 'html' && containsMultipleTags(token.raw)) {
             // Parse HTML with multiple tags into separate tokens
             result.push(...parseHtmlBlock(token.raw))
+        } else if (token.type === 'html') {
+            // Format self-closing tags properly (e.g., <br> -> <br/>)
+            const formattedToken = formatSelfClosingHtmlToken(token)
+            result.push(formattedToken)
         } else {
             result.push(token)
         }
