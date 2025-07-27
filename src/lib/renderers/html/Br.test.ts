@@ -3,17 +3,17 @@ import { describe, expect, it } from 'vitest'
 import Br from './Br.svelte'
 
 describe('Br Component', () => {
-    it('should render bold element', () => {
+    it('should render br element with class attribute', () => {
         const { container } = render(Br, {
             props: {
                 attributes: {
-                    class: 'bold-text'
+                    class: 'line-break'
                 }
             }
         })
         const br = container.querySelector('br')
         expect(br).toBeTruthy()
-        expect(br?.getAttribute('class')).toBe('bold-text')
+        expect(br?.getAttribute('class')).toBe('line-break')
     })
 
     it('should handle additional attributes', () => {
