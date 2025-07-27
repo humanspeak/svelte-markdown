@@ -3,7 +3,7 @@
         attributes?: Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
     }
 
-    const { attributes }: Props = $props()
+    const { attributes = {} }: Props = $props()
 </script>
 
 <br {...attributes} />

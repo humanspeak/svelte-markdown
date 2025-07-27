@@ -20,14 +20,14 @@ describe('Br Component', () => {
         const { container } = render(Br, {
             props: {
                 attributes: {
-                    id: 'bold-1',
+                    id: 'br-1',
                     lang: 'en',
                     dir: 'ltr'
                 }
             }
         })
         const br = container.querySelector('br')
-        expect(br?.getAttribute('id')).toBe('bold-1')
+        expect(br?.getAttribute('id')).toBe('br-1')
         expect(br?.getAttribute('lang')).toBe('en')
         expect(br?.getAttribute('dir')).toBe('ltr')
     })
