@@ -140,8 +140,6 @@ export const parseHtmlBlock = (html: string): Token[] => {
                     currentText = ''
                 }
 
-                openTags.push(name)
-
                 if (selfClosingTags.test(name)) {
                     tokens.push({
                         type: 'html',
@@ -152,6 +150,7 @@ export const parseHtmlBlock = (html: string): Token[] => {
                         attributes
                     })
                 } else {
+                    openTags.push(name)
                     tokens.push({
                         type: 'html',
                         raw: `<${name}${Object.entries(attributes)
