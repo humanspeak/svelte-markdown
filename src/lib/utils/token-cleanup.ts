@@ -41,6 +41,38 @@ export const isHtmlOpenTag = (raw: string): { tag: string; isOpening: boolean } 
 }
 
 /**
+ * Formats individual HTML tokens to ensure self-closing tags are properly formatted.
+ * This handles cases like <br> -> <br/> without affecting the token structure.
+ *
+ * @param {Token} token - HTML token to format
+ * @returns {Token} Formatted token with proper self-closing syntax
+ */
+const formatSelfClosingHtmlToken = (token: Token): Token => {
+    const selfClosingTags =
+        /^(br|hr|img|input|link|meta|area|base|col|embed|keygen|param|source|track|wbr)$/i
+
+    // Extract tag name from raw HTML
+    const tagMatch = token.raw.match(/<\/?([a-zA-Z][a-zA-Z0-9-]*)/i)
+    if (!tagMatch) return token
+
+    const tagName = tagMatch[1]
+    if (!selfClosingTags.test(tagName)) return token
+
+    // If it's a self-closing tag and doesn't already end with />, format it properly
+    if (!token.raw.endsWith('/>')) {
+        const formattedRaw = token.raw.replace(/\s*>$/, '/>')
+        return {
+            ...token,
+            raw: formattedRaw,
+            tag: tagName,
+            attributes: extractAttributes(token.raw)
+        }
+    }
+
+    return token
+}
+
+/**
  * Parses HTML attributes from a tag string into a structured object.
  * Handles both single and double quoted attributes.
  *
@@ -289,6 +321,10 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
         } else if (token.type === 'html' && containsMultipleTags(token.raw)) {
             // Parse HTML with multiple tags into separate tokens
             result.push(...parseHtmlBlock(token.raw))
+        } else if (token.type === 'html') {
+            // Format self-closing tags properly (e.g., <br> -> <br/>)
+            const formattedToken = formatSelfClosingHtmlToken(token)
+            result.push(formattedToken)
         } else {
             result.push(token)
         }

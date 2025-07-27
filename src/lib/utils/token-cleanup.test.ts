@@ -297,5 +297,37 @@ describe('Token Cleanup Utilities', () => {
             expect(listToken.items[1].listItemIndex).toBe(1)
             expect(listToken.items[2].listItemIndex).toBe(2)
         })
+
+        it('should format individual self-closing HTML tags properly', () => {
+            const tokens: Token[] = [
+                { type: 'codespan', raw: '`key=10`', text: 'key=10' },
+                { type: 'html', raw: '<br>', text: '<br>' },
+                { type: 'codespan', raw: '`key>=2024-01-01`', text: 'key>=2024-01-01' }
+            ]
+
+            const result = shrinkHtmlTokens(tokens)
+            expect(result).toHaveLength(3)
+
+            // First token should remain unchanged codespan
+            expect(result[0]).toMatchObject({
+                type: 'codespan',
+                raw: '`key=10`',
+                text: 'key=10'
+            })
+
+            // Second token should be formatted as self-closing br
+            expect(result[1]).toMatchObject({
+                type: 'html',
+                raw: '<br/>',
+                tag: 'br'
+            })
+
+            // Third token should remain unchanged codespan
+            expect(result[2]).toMatchObject({
+                type: 'codespan',
+                raw: '`key>=2024-01-01`',
+                text: 'key>=2024-01-01'
+            })
+        })
     })
 })
