@@ -109,44 +109,13 @@
                                 {#each row ?? [] as cells, i (i)}
                                     {@const { align: _align, ...cellRest } = rest}
                                     <renderers.tablecell
+                                        {...cellRest}
                                         header={false}
                                         align={(rest.align as string[])[i]}
-                                        {...cellRest}
                                     >
-                                        {#if cells.tokens?.[0]?.type === 'html'}
-                                            {@const token = cells.tokens[0] as Token & {
-                                                tag: string
-                                                tokens?: Token[]
-                                            }}
-                                            {@const { tag, ...localRest } = token}
-                                            {@const htmlTag = tag as keyof typeof Html}
-                                            {#if renderers.html && htmlTag in renderers.html}
-                                                {@const HtmlComponent =
-                                                    renderers.html[
-                                                        htmlTag as keyof typeof renderers.html
-                                                    ]}
-                                                {#if HtmlComponent}
-                                                    <HtmlComponent {...token}>
-                                                        {#if token.tokens?.length}
-                                                            <Parser
-                                                                tokens={token.tokens}
-                                                                {renderers}
-                                                                {...Object.fromEntries(
-                                                                    Object.entries(
-                                                                        localRest
-                                                                    ).filter(
-                                                                        ([key]) =>
-                                                                            key !== 'attributes'
-                                                                    )
-                                                                )}
-                                                            />
-                                                        {/if}
-                                                    </HtmlComponent>
-                                                {/if}
-                                            {/if}
-                                        {:else}
-                                            <Parser tokens={cells.tokens} {renderers} />
-                                        {/if}
+                                        {#each cells.tokens ?? [] as cellToken, index (index)}
+                                            <Parser {...cellRest} {...cellToken} {renderers} />
+                                        {/each}
                                     </renderers.tablecell>
                                 {/each}
                             </renderers.tablerow>
