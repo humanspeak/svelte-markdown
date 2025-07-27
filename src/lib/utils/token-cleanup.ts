@@ -273,6 +273,7 @@ export const containsMultipleTags = (html: string): boolean => {
  *
  * Key features:
  * - Breaks down complex HTML structures into atomic tokens
+ * - Formats self-closing tags with proper syntax (e.g., <br> -> <br/>)
  * - Maintains attribute information
  * - Preserves proper nesting relationships
  * - Handles malformed HTML gracefully
@@ -304,6 +305,7 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
         } else if (token.type === 'table') {
             // Process header cells
             if (token.header) {
+                // @ts-expect-error: expected any
                 token.header = token.header.map((cell) => ({
                     ...cell,
                     tokens: cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
@@ -312,7 +314,9 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
 
             // Process row cells
             if (token.rows) {
+                // @ts-expect-error: expected any
                 token.rows = token.rows.map((row) =>
+                    // @ts-expect-error: expected any
                     row.map((cell) => ({
                         ...cell,
                         tokens: cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
