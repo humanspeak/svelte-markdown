@@ -1,0 +1,65 @@
+name: Run tests
+
+permissions:
+    contents: read
+
+on:
+    workflow_call:
+    pull_request:
+        branches:
+            - main
+            - '!dependabot/**'
+        paths:
+            - src/**
+            - tests/**
+            - '!docs/**'
+            - package.json
+            - package-lock.json
+            - .github/workflows/run-tests.yml
+
+jobs:
+    run-tests:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
+              with:
+                  persist-credentials: false
+
+            - name: Use Node.js - 22
+              uses: actions/setup-node@v4 # zizmor: ignore[unpinned-uses]
+              with:
+                  node-version: 22
+                  cache: npm
+
+            - name: Cache build artifacts
+              uses: actions/cache@v4 # zizmor: ignore[unpinned-uses]
+              with:
+                  path: |
+                      .svelte-kit
+                      dist
+                  key: ${{ runner.os }}-build-${{ hashFiles('src/**/*', 'package-lock.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-build-
+
+            - name: Cache test artifacts
+              uses: actions/cache@v4 # zizmor: ignore[unpinned-uses]
+              with:
+                  path: |
+                      node_modules/.vitest
+                      test-results
+                  key: ${{ runner.os }}-vitest-${{ hashFiles('package-lock.json', 'src/**/*.{test,spec}.{js,ts}', 'tests/**/*.{test,spec}.{js,ts}', 'vitest.config.ts') }}
+                  restore-keys: |
+                      ${{ runner.os }}-vitest-
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Run unit tests
+              run: npm test
+
+            - name: Install Playwright browsers
+              run: npx playwright install --with-deps
+
+            - name: Run e2e tests
+              run: npm run test:e2e
