@@ -2,7 +2,6 @@
 
 import { browser } from '$app/environment'
 
-/* trunk-ignore(eslint) */
 export class LocalStore<T> {
     value = $state<T>() as T
     #key = ''
@@ -12,16 +11,20 @@ export class LocalStore<T> {
         return this.#key
     }
 
-    constructor(key: string, value: T) {
+    constructor(key: string, value: T, forceValue: T | null = null) {
         this.#key = key
 
         if (browser) {
             this.#storage = localStorage
-            const item = this.#storage.getItem(key)
-            if (item) {
-                this.value = this.deserialize(item)
+            if (forceValue) {
+                this.value = forceValue
             } else {
-                this.value = value
+                const item = this.#storage.getItem(key)
+                if (item) {
+                    this.value = this.deserialize(item)
+                } else {
+                    this.value = value
+                }
             }
 
             $effect(() => {
@@ -42,6 +45,6 @@ export class LocalStore<T> {
     }
 }
 
-export function localStore<T>(key: string, value: T) {
-    return new LocalStore(key, value)
+export function localStore<T>(key: string, value: T, forceValue: T | null = null) {
+    return new LocalStore(key, value, forceValue)
 }

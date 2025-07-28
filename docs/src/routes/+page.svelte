@@ -4,6 +4,16 @@
     import SvelteMarkdown, { type Token, type TokensList } from '@humanspeak/svelte-markdown'
     import * as Card from '$lib/shadcn/components/ui/card/index.js'
     import MainContainer from '$lib/components/MainContainer.svelte'
+    import { page } from '$app/state'
+
+    let urlText = page.url.searchParams.get('markdown')
+    if (urlText) {
+        try {
+            urlText = decodeURIComponent(urlText)
+        } catch {
+            urlText = null
+        }
+    }
 
     const ogText = `# Welcome to My Markdown Playground! 🎨
 
@@ -34,7 +44,7 @@ Here's a hidden surprise! 🎉
 
 Happy coding! <span style="color: hotpink">♥</span>`
 
-    const text = localStore<string>('markdown', ogText)
+    const text = localStore<string>('markdown', ogText, urlText)
     let source = $state(text.value)
     let timeout: number | null = null
 
