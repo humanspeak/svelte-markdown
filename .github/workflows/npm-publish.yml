@@ -15,7 +15,9 @@ on:
             - '!dependabot/**'
         paths:
             - src/**
-            - tests/**
+            - '!tests/**'
+            - '!src/lib/test/**'
+            - '!src/routes/**'
             - package.json
             - package-lock.json
             - .github/workflows/npm-publish.yml
