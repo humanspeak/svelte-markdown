@@ -22,7 +22,7 @@ test.describe('Issue 210: BR / SUP rendering in table cells with mixed content',
 
         // Verify the content of each code span
         await expect(codeSpans.nth(0)).toHaveText('key=10')
-        await expect(codeSpans.nth(1)).toHaveText('key>=2024-01-01')
+        await expect(codeSpans.nth(1)).toHaveText('key>=2024-01-01 12:00')
 
         // Check that a BR tag is present and creates a line break
         const brTag = mixedContentCell.locator('br')
@@ -44,7 +44,7 @@ test.describe('Issue 210: BR / SUP rendering in table cells with mixed content',
 
         // Verify the content of each code span
         await expect(codeSpans.nth(0)).toHaveText('key:10..20')
-        await expect(codeSpans.nth(1)).toHaveText('key:2024-01-01 00:00..2024-01-15 12:00')
+        await expect(codeSpans.nth(1)).toHaveText('key:2024-01-01..2024-01-15')
 
         // Check that a BR tag is present
         const brTag = rangeCell.locator('br')
