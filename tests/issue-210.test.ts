@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test.describe('Issue 210: BR rendering in table cells with mixed content', () => {
+test.describe('Issue 210: BR / SUP rendering in table cells with mixed content', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/test/issue-210', { waitUntil: 'networkidle' })
     })
@@ -73,6 +73,35 @@ test.describe('Issue 210: BR rendering in table cells with mixed content', () =>
         // Check that a BR tag is present
         const brTag = logicalCell.locator('br')
         await expect(brTag).toHaveCount(1)
+    })
+
+    test('should render SUP tags properly for footnote references', async ({ page }) => {
+        // Find the table cell with numeric operators that contains a footnote reference
+        const numericCell = page.locator('td').filter({ hasText: 'keyword_numeric' }).first()
+        await expect(numericCell).toBeVisible()
+
+        // Check that a SUP tag is present for the footnote
+        const supTag = numericCell.locator('sup')
+        await expect(supTag).toHaveCount(1)
+
+        // Verify the content of the SUP tag (should be "1")
+        await expect(supTag).toHaveText('1')
+
+        // Find the range query cell that also contains a footnote reference
+        const rangeCell = page.locator('td').filter({ hasText: 'keyword_date' }).first()
+        await expect(rangeCell).toBeVisible()
+
+        // Check that this cell also has a SUP tag
+        const rangeCellSup = rangeCell.locator('sup')
+        await expect(rangeCellSup).toHaveCount(1)
+        await expect(rangeCellSup).toHaveText('1')
+
+        // Verify both footnote references appear in the context of "See below"
+        const numericCellText = await numericCell.textContent()
+        expect(numericCellText).toContain('See below')
+
+        const rangeCellText = await rangeCell.textContent()
+        expect(rangeCellText).toContain('See below')
     })
 
     test('should render table structure correctly', async ({ page }) => {
