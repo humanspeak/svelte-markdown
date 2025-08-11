@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import SvelteMarkdown, { type SvelteMarkdownOptions, type Token, type TokensList } from './index'
+import SvelteMarkdown, {
+    type SvelteMarkdownOptions,
+    type SvelteMarkdownProps,
+    type Token,
+    type TokensList
+} from './index.js'
 
 describe('index.ts exports', () => {
     it('should export SvelteMarkdown as default export', () => {
@@ -24,7 +29,7 @@ describe('index.ts exports', () => {
         expect(dummyToken).toBeDefined()
 
         // Create dummy tokens list to verify type exports
-        const dummyTokensList: TokensList = [dummyToken]
+        const dummyTokensList: TokensList = Object.assign([dummyToken], { links: {} as any })
         expect(dummyTokensList).toBeDefined()
         expect(Array.isArray(dummyTokensList)).toBe(true)
     })
