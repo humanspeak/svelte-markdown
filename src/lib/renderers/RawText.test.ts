@@ -7,4 +7,11 @@ describe('RawText (markdown)', () => {
         const { container } = render(RawText, { props: { text: 'hello' } })
         expect(container.textContent).toBe('hello')
     })
+
+    it('does not parse HTML in text', () => {
+        const { container } = render(RawText, { props: { text: '<em>hi</em>' } })
+        // HTML tags must be treated as plain text
+        expect(container.querySelector('em')).toBeNull()
+        expect(container.textContent).toBe('<em>hi</em>')
+    })
 })
