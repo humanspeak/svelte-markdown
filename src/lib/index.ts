@@ -1,5 +1,5 @@
 // Reexport your entry components here
-import Html, { type HtmlRenderers } from '$lib/renderers/html/index.js'
+import { type HtmlRenderers } from '$lib/renderers/html/index.js'
 import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
 import type { SvelteMarkdownOptions, SvelteMarkdownProps } from '$lib/types.js'
 import {
@@ -13,12 +13,22 @@ import {
 export default SvelteMarkdown
 export { default as Html, UnsupportedHTML } from '$lib/renderers/html/index.js'
 export { Unsupported } from '$lib/renderers/index.js'
+export {
+    allowHtmlOnly,
+    buildUnsupportedHTML,
+    excludeHtmlOnly
+} from '$lib/utils/unsupportedHtmlRenderers.js'
+export {
+    allowRenderersOnly,
+    buildUnsupportedRenderers,
+    excludeRenderersOnly
+} from '$lib/utils/unsupportedRenderers.js'
 export { defaultRenderers }
-export const rendererKeys = Object.keys(defaultRenderers).filter((k) => k !== 'html') as Exclude<
-    keyof Renderers,
-    'html'
->[]
-export const htmlRendererKeys = Object.keys(Html) as (keyof HtmlRenderers)[]
+// Canonical key lists (public API names)
+export {
+    htmlRendererKeysInternal as htmlRendererKeys,
+    rendererKeysInternal as rendererKeys
+} from '$lib/utils/rendererKeys.js'
 export type {
     HtmlRenderers,
     RendererComponent,

@@ -3,7 +3,14 @@ import SvelteMarkdown, {
     Html,
     Unsupported,
     UnsupportedHTML,
+    // new helpers
+    allowHtmlOnly,
+    allowRenderersOnly,
+    buildUnsupportedHTML,
+    buildUnsupportedRenderers,
     defaultRenderers,
+    excludeHtmlOnly,
+    excludeRenderersOnly,
     htmlRendererKeys,
     rendererKeys,
     type SvelteMarkdownOptions,
@@ -90,5 +97,21 @@ describe('index.ts exports', () => {
         expect(typeof Unsupported).toBe('function')
         expect(UnsupportedHTML).toBeTruthy()
         expect(typeof UnsupportedHTML).toBe('function')
+    })
+
+    it('should export helper functions for overrides', () => {
+        expect(typeof allowHtmlOnly).toBe('function')
+        expect(typeof buildUnsupportedHTML).toBe('function')
+        expect(typeof excludeHtmlOnly).toBe('function')
+        expect(typeof allowRenderersOnly).toBe('function')
+        expect(typeof buildUnsupportedRenderers).toBe('function')
+        expect(typeof excludeRenderersOnly).toBe('function')
+    })
+
+    it('should re-export key lists (public names)', () => {
+        expect(Array.isArray(htmlRendererKeys)).toBe(true)
+        expect(Array.isArray(rendererKeys)).toBe(true)
+        expect(htmlRendererKeys.length).toBeGreaterThan(0)
+        expect(rendererKeys.length).toBeGreaterThan(0)
     })
 })
