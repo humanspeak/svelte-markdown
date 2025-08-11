@@ -127,7 +127,8 @@
     {:else if type === 'list' && renderers.list}
         {#if ordered}
             <renderers.list {ordered} {...rest}>
-                {@const { items, ...parserRest }: {items: Props[]} = rest}
+                {@const { items: _items, ...parserRest } = rest}
+                {@const items = (_items as Props[] | undefined) ?? []}
                 {#each items as item, index (index)}
                     {@const OrderedListComponent = renderers.orderedlistitem || renderers.listitem}
                     {#if OrderedListComponent}
@@ -139,7 +140,8 @@
             </renderers.list>
         {:else}
             <renderers.list {ordered} {...rest}>
-                {@const { items, ...parserRest }: {items: Props[]} = rest}
+                {@const { items: _items, ...parserRest } = rest}
+                {@const items = (_items as Props[] | undefined) ?? []}
                 {#each items as item, index (index)}
                     {@const UnorderedListComponent =
                         renderers.unorderedlistitem || renderers.listitem}

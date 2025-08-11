@@ -1,6 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown, { type Renderers, type Token, type TokensList } from '$lib/index.js'
-    import CustomRenderer from '$lib/test/issue-192/CustomRenderer.svelte'
+    import CustomRenderer from '$lib/test/issues/issue-192/CustomRenderer.svelte'
 
     let source = `
 # This is a header

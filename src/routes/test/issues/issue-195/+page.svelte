@@ -1,7 +1,7 @@
 <script lang="ts">
     import SvelteMarkdown, { type Renderers, type Token, type TokensList } from '$lib/index.js'
-    import CustomList from '$lib/test/issue-195/CustomList.svelte'
-    import CustomListItem from '$lib/test/issue-195/CustomListItem.svelte'
+    import CustomList from '$lib/test/issues/issue-195/CustomList.svelte'
+    import CustomListItem from '$lib/test/issues/issue-195/CustomListItem.svelte'
 
     let source = `
 * List item with \`inline code\`

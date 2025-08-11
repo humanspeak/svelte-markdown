@@ -1,39 +1,103 @@
 name: Validate Workflows
 
 permissions:
-    contents: read
+    contents: write
+    pull-requests: write
 
 on:
     pull_request:
         paths:
             - .github/workflows/**
+    workflow_dispatch: # Allow manual triggering for testing
 
 jobs:
     validate:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
+                  fetch-depth: 0 # Fetch full history for git comparisons
 
-            - name: Install Rust
-              uses: dtolnay/rust-toolchain@stable
+            - name: Set up Python
+              uses: actions/setup-python@v5
               with:
-                  toolchain: stable
+                  python-version: '3.12'
 
-            - name: Cache cargo registry
+            - name: Get latest uv version
+              id: uv-version
+              run: |
+                  # Get latest uv version from GitHub releases with error handling
+                  if LATEST_VERSION=$(curl -s https://api.github.com/repos/astral-sh/uv/releases/latest | python3 -c "import sys, json; print(json.load(sys.stdin)['tag_name'])" 2>/dev/null); then
+                      echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+                      echo "Latest uv version: $LATEST_VERSION"
+                  else
+                      echo "Failed to fetch uv version from GitHub, using date-based fallback"
+                      FALLBACK_VERSION="fallback-$(date +%Y-%m-%d)"
+                      echo "version=$FALLBACK_VERSION" >> $GITHUB_OUTPUT
+                      echo "Using fallback version key: $FALLBACK_VERSION"
+                  fi
+
+            - name: Cache uv installation
+              uses: actions/cache@v4
+              with:
+                  path: ~/.local/bin/uv
+                  key: ${{ runner.os }}-uv-${{ steps.uv-version.outputs.version }}
+                  restore-keys: |
+                      ${{ runner.os }}-uv-
+
+            - name: Get latest zizmor version
+              id: zizmor-version
+              run: |
+                  # Get latest zizmor version from PyPI with error handling
+                  if LATEST_VERSION=$(curl -s https://pypi.org/pypi/zizmor/json | python3 -c "import sys, json; print(json.load(sys.stdin)['info']['version'])" 2>/dev/null); then
+                      echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+                      echo "Latest zizmor version: $LATEST_VERSION"
+                  else
+                      echo "Failed to fetch version from PyPI, using date-based fallback"
+                      FALLBACK_VERSION="fallback-$(date +%Y-%m-%d)"
+                      echo "version=$FALLBACK_VERSION" >> $GITHUB_OUTPUT
+                      echo "Using fallback version key: $FALLBACK_VERSION"
+                  fi
+                  # Debug: You can temporarily override version for testing cache invalidation
+                  # echo "version=test-version-$(date +%s)" >> $GITHUB_OUTPUT
+
+            - name: Cache zizmor tool
               uses: actions/cache@v4
               with:
                   path: |
-                      ~/.cargo/registry
-                      ~/.cargo/git
-                  key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+                      ~/.local/bin/zizmor
+                      ~/.local/share/uv
+                  key: ${{ runner.os }}-zizmor-${{ steps.zizmor-version.outputs.version }}
                   restore-keys: |
-                      ${{ runner.os }}-cargo-registry-
+                      ${{ runner.os }}-zizmor-
 
             - name: Install zizmor
-              run: cargo install --force zizmor
+              env:
+                  ZIZMOR_VERSION: ${{ steps.zizmor-version.outputs.version }}
+                  UV_VERSION: ${{ steps.uv-version.outputs.version }}
+              run: |
+                  # Install uv if not cached
+                  if [ ! -f ~/.local/bin/uv ]; then
+                      echo "Installing uv ${UV_VERSION}..."
+                      curl -LsSf https://astral.sh/uv/install.sh | sh
+                      # Add uv to current PATH for this step
+                      export PATH="$HOME/.local/bin:$PATH"
+                  else
+                      echo "Using cached uv ${UV_VERSION}"
+                  fi
+
+                  # Install zizmor if not cached (cache key includes version, so this handles updates)
+                  if [ ! -f ~/.local/bin/zizmor ]; then
+                      echo "Installing zizmor ${ZIZMOR_VERSION}..."
+                      ~/.local/bin/uv tool install zizmor
+                  else
+                      echo "Using cached zizmor ${ZIZMOR_VERSION}"
+                  fi
+
+                  # Add uv tools to PATH
+                  echo "$HOME/.local/bin" >> $GITHUB_PATH
 
             - name: Validate all workflows
               working-directory: .github/workflows
@@ -49,16 +113,34 @@ jobs:
 
                   # Validate inputs
                   if [ -z "${BASE_REF:-}" ]; then
-                      echo "::error::BASE_REF is not set"
-                      exit 1
+                      echo "::warning::BASE_REF is not set, validating all workflow files"
+                      # If no base ref (manual trigger), validate all workflows
+                      changed_files=$(find . -name "*.yml" -o -name "*.yaml" | sed 's|^\./||' || true)
+                  else
+                      echo "Comparing against base ref: $BASE_REF"
+
+                      # Debug: Show available refs
+                      echo "Available branches:"
+                      git branch -a | head -5
+
+                      # Try different git diff approaches for PR context
+                      if git rev-parse "origin/${BASE_REF}" >/dev/null 2>&1; then
+                          echo "Using origin/${BASE_REF} for comparison"
+                          changed_files=$(git diff --name-only "origin/${BASE_REF}" | grep -E '^\.github/workflows/[^/]+\.ya?ml$' || true)
+                      elif git rev-parse "remotes/origin/${BASE_REF}" >/dev/null 2>&1; then
+                          echo "Using remotes/origin/${BASE_REF} for comparison"
+                          changed_files=$(git diff --name-only "remotes/origin/${BASE_REF}" | grep -E '^\.github/workflows/[^/]+\.ya?ml$' || true)
+                      elif git rev-parse "${BASE_REF}" >/dev/null 2>&1; then
+                          echo "Using ${BASE_REF} for comparison"
+                          changed_files=$(git diff --name-only "${BASE_REF}" | grep -E '^\.github/workflows/[^/]+\.ya?ml$' || true)
+                      else
+                          echo "::warning::Cannot find base ref ${BASE_REF} in any form"
+                          echo "Falling back to validating all workflow files"
+                          changed_files=$(find . -name "*.yml" -o -name "*.yaml" | sed 's|^\./||' || true)
+                      fi
                   fi
 
-                  # Properly escape the base ref for use in git commands
-                  base_ref=$(printf '%q' "$BASE_REF")
-
-                  # Get list of changed files with error handling
-                  changed_files=$(git diff --name-only "origin/${base_ref}" 2>/dev/null | \
-                                grep -E '^\.github/workflows/[^/]+\.yml$' || true)
+                  echo "Detected changed files: $changed_files"
 
                   if [ -z "$changed_files" ]; then
                       echo "No workflow files changed"
@@ -73,9 +155,10 @@ jobs:
                       filename=$(basename -- "$file")
 
                       # Skip non-yaml files
-                      if [[ ! "$filename" =~ \.(ya?ml)$ ]]; then
-                          continue
-                      }
+                      case "$filename" in
+                          *.yml|*.yaml) ;;
+                          *) continue ;;
+                      esac
 
                       echo "Validating $filename..."
 

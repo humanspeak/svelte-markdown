@@ -1,3 +1,4 @@
+export { default as Unsupported } from './_Unsupported.svelte'
 export { default as Blockquote } from './Blockquote.svelte'
 export { default as Br } from './Br.svelte'
 export { default as Code } from './Code.svelte'

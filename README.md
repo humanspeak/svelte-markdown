@@ -122,6 +122,166 @@ import type {
 } from '@humanspeak/svelte-markdown'
 ```
 
+## Exports for programmatic overrides
+
+You can import renderer maps and helper keys to selectively override behavior.
+
+```ts
+import SvelteMarkdown, {
+    // Maps
+    defaultRenderers, // markdown renderer map
+    Html, // HTML renderer map
+
+    // Keys
+    rendererKeys, // markdown renderer keys (excludes 'html')
+    htmlRendererKeys, // HTML renderer tag names
+
+    // Utility components
+    Unsupported, // markdown-level unsupported fallback
+    UnsupportedHTML // HTML-level unsupported fallback
+} from '@humanspeak/svelte-markdown'
+
+// Example: override a subset
+const customRenderers = {
+    ...defaultRenderers,
+    link: CustomLink,
+    html: {
+        ...Html,
+        span: CustomSpan
+    }
+}
+
+// Optional: iterate keys when building overrides dynamically
+for (const key of rendererKeys) {
+    // if (key === 'paragraph') customRenderers.paragraph = MyParagraph
+}
+for (const tag of htmlRendererKeys) {
+    // if (tag === 'div') customRenderers.html.div = MyDiv
+}
+```
+
+Notes
+
+- `rendererKeys` intentionally excludes `html`. Use `htmlRendererKeys` for HTML tag overrides.
+- `Unsupported` and `UnsupportedHTML` are available if you want a pass-through fallback strategy.
+
+## Helper utilities for allow/deny strategies
+
+These helpers make it easy to either allow only a subset or exclude only a subset of renderers without writing huge maps by hand.
+
+- **HTML helpers**
+    - `buildUnsupportedHTML()`: returns a map where every HTML tag uses `UnsupportedHTML`.
+    - `allowHtmlOnly(allowed)`: enable only the provided tags; others use `UnsupportedHTML`.
+        - Accepts tag names like `'strong'` or tuples like `['div', MyDiv]` to plug in custom components.
+    - `excludeHtmlOnly(excluded, overrides?)`: disable only the listed tags (mapped to `UnsupportedHTML`), with optional overrides for non-excluded tags using tuples.
+- **Markdown helpers (non-HTML)**
+    - `buildUnsupportedRenderers()`: returns a map where all markdown renderers (except `html`) use `Unsupported`.
+    - `allowRenderersOnly(allowed)`: enable only the provided markdown renderer keys; others use `Unsupported`.
+        - Accepts keys like `'paragraph'` or tuples like `['paragraph', MyParagraph]` to plug in custom components.
+    - `excludeRenderersOnly(excluded, overrides?)`: disable only the listed markdown renderer keys, with optional overrides for non-excluded keys using tuples.
+
+### HTML helpers in context
+
+The HTML helpers return an `HtmlRenderers` map to be used inside the `html` key of the overall `renderers` map. They do not replace the entire `renderers` object by themselves.
+
+Basic: keep markdown defaults, allow only a few HTML tags (others become `UnsupportedHTML`):
+
+```ts
+import SvelteMarkdown, { defaultRenderers, allowHtmlOnly } from '@humanspeak/svelte-markdown'
+
+const renderers = {
+    ...defaultRenderers, // keep markdown defaults
+    html: allowHtmlOnly(['strong', 'em', 'a']) // restrict HTML
+}
+```
+
+Allow a custom component for one tag while allowing others with defaults:
+
+```ts
+import SvelteMarkdown, { defaultRenderers, allowHtmlOnly } from '@humanspeak/svelte-markdown'
+
+const renderers = {
+    ...defaultRenderers,
+    html: allowHtmlOnly([['div', MyDiv], 'a'])
+}
+```
+
+Exclude just a few HTML tags; keep all other HTML tags as defaults:
+
+```ts
+import SvelteMarkdown, { defaultRenderers, excludeHtmlOnly } from '@humanspeak/svelte-markdown'
+
+const renderers = {
+    ...defaultRenderers,
+    html: excludeHtmlOnly(['span', 'iframe'])
+}
+
+// Or exclude 'span', but override 'a' to CustomA
+const renderersWithOverride = {
+    ...defaultRenderers,
+    html: excludeHtmlOnly(['span'], [['a', CustomA]])
+}
+```
+
+Disable all HTML quickly (markdown defaults unchanged):
+
+```ts
+import SvelteMarkdown, { defaultRenderers, buildUnsupportedHTML } from '@humanspeak/svelte-markdown'
+
+const renderers = {
+    ...defaultRenderers,
+    html: buildUnsupportedHTML()
+}
+```
+
+### Markdown-only (non-HTML) scenarios
+
+Allow only paragraph and link with defaults, disable others:
+
+```ts
+import { allowRenderersOnly } from '@humanspeak/svelte-markdown'
+
+const md = allowRenderersOnly(['paragraph', 'link'])
+```
+
+Exclude just link; keep others as defaults:
+
+```ts
+import { excludeRenderersOnly } from '@humanspeak/svelte-markdown'
+
+const md = excludeRenderersOnly(['link'])
+```
+
+Disable all markdown renderers (except `html`) quickly:
+
+```ts
+import { buildUnsupportedRenderers } from '@humanspeak/svelte-markdown'
+
+const md = buildUnsupportedRenderers()
+```
+
+### Combine HTML and Markdown helpers
+
+You can combine both maps in `renderers` for `SvelteMarkdown`.
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown, { allowRenderersOnly, allowHtmlOnly } from '@humanspeak/svelte-markdown'
+
+    const renderers = {
+        // Only allow a minimal markdown set
+        ...allowRenderersOnly(['paragraph', 'link']),
+
+        // Configure HTML separately (only strong/em/a)
+        html: allowHtmlOnly(['strong', 'em', 'a'])
+    }
+
+    const source = `# Title\n\nThis has <strong>HTML</strong> and [a link](https://example.com).`
+</script>
+
+<SvelteMarkdown {source} {renderers} />
+```
+
 ## Custom Renderer Example
 
 Here's a complete example of a custom renderer with TypeScript support:

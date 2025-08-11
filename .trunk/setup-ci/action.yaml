@@ -11,7 +11,16 @@ runs:
         - name: Install Root NodeJS dependencies
           shell: bash
           run: |
-              npm ci --prefer-offline --no-audit
+              npm ci --prefer-offline --no-audit --ignore-scripts
+              if [ $? -ne 0 ]; then
+                echo "Failed to install dependencies"
+                exit 1
+              fi
+        - name: Install Docs NodeJS dependencies
+          shell: bash
+          working-directory: docs
+          run: |
+              npm ci --prefer-offline --no-audit --ignore-scripts
               if [ $? -ne 0 ]; then
                 echo "Failed to install dependencies"
                 exit 1

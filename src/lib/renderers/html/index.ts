@@ -82,6 +82,7 @@ import Track from './Track.svelte'
 import U from './U.svelte'
 import Ul from './Ul.svelte'
 import Var from './Var.svelte'
+import UnsupportedHTML from './_UnsupportedHTML.svelte'
 
 export interface HtmlRenderers {
     [key: string]: Component<any, any, any> | null // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -174,3 +175,4 @@ export const Html: HtmlRenderers = {
 }
 
 export default Html
+export { UnsupportedHTML }
