@@ -122,6 +122,49 @@ import type {
 } from '@humanspeak/svelte-markdown'
 ```
 
+## Exports for programmatic overrides
+
+You can import renderer maps and helper keys to selectively override behavior.
+
+```ts
+import SvelteMarkdown, {
+    // Maps
+    defaultRenderers, // markdown renderer map
+    Html, // HTML renderer map
+
+    // Keys
+    rendererKeys, // markdown renderer keys (excludes 'html')
+    htmlRendererKeys, // HTML renderer tag names
+
+    // Utility components
+    Unsupported, // markdown-level unsupported fallback
+    UnsupportedHTML // HTML-level unsupported fallback
+} from '@humanspeak/svelte-markdown'
+
+// Example: override a subset
+const customRenderers = {
+    ...defaultRenderers,
+    link: CustomLink,
+    html: {
+        ...Html,
+        span: CustomSpan
+    }
+}
+
+// Optional: iterate keys when building overrides dynamically
+for (const key of rendererKeys) {
+    // if (key === 'paragraph') customRenderers.paragraph = MyParagraph
+}
+for (const tag of htmlRendererKeys) {
+    // if (tag === 'div') customRenderers.html.div = MyDiv
+}
+```
+
+Notes
+
+- `rendererKeys` intentionally excludes `html`. Use `htmlRendererKeys` for HTML tag overrides.
+- `Unsupported` and `UnsupportedHTML` are available if you want a pass-through fallback strategy.
+
 ## Custom Renderer Example
 
 Here's a complete example of a custom renderer with TypeScript support:
