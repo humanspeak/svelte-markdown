@@ -1,7 +1,7 @@
 <script lang="ts">
     import SvelteMarkdown, { allowRenderersOnly, buildUnsupportedHTML } from '$lib/index.js'
 
-    const { source } = $props()
+    const { source }: { source: string } = $props()
 </script>
 
 <SvelteMarkdown

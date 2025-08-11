@@ -42,7 +42,9 @@ describe('index.ts exports', () => {
         expect(dummyToken).toBeDefined()
 
         // Create dummy tokens list to verify type exports
-        const dummyTokensList: TokensList = Object.assign([dummyToken], { links: {} as any })
+        const dummyTokensList: TokensList = Object.assign([dummyToken], {
+            links: {} as TokensList['links']
+        })
         expect(dummyTokensList).toBeDefined()
         expect(Array.isArray(dummyTokensList)).toBe(true)
     })

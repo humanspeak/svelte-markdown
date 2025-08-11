@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import Markdown from '$lib/test/issues/issue-214/Markdown.svelte'
 </script>
 
@@ -37,6 +37,3 @@ text \`Inline code\` more text\n`}
         html&lt;/strong&gt; and &lt;span&gt;asdf&lt;/span&gt;
     </p>
 </main>
-
-<style>
-</style>
