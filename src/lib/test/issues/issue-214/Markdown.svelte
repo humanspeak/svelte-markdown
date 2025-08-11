@@ -7,8 +7,9 @@
 <SvelteMarkdown
     {source}
     renderers={{
-        // Allow only strong, em, link, code (markdown renderers)
-        ...allowRenderersOnly(['strong', 'em', 'link', 'code', 'list', 'listitem']),
+        // Allow only the minimal markdown set needed for inline formatting
+        // paragraph/text wrappers are required for inline tokens to render
+        ...allowRenderersOnly(['paragraph', 'text', 'strong', 'em', 'link', 'codespan']),
         // Allow only strong, em, link(a), code (HTML tags)
         html: buildUnsupportedHTML()
     }}

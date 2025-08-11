@@ -182,7 +182,7 @@ These helpers make it easy to either allow only a subset or exclude only a subse
 
 ### HTML helpers in context
 
-The HTML helpers return a Partial<HtmlRenderers> to be used inside the `html` key of the overall `renderers` map. They do not replace the entire `renderers` object by themselves.
+The HTML helpers return an `HtmlRenderers` map to be used inside the `html` key of the overall `renderers` map. They do not replace the entire `renderers` object by themselves.
 
 Basic: keep markdown defaults, allow only a few HTML tags (others become `UnsupportedHTML`):
 
