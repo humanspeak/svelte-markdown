@@ -2,10 +2,12 @@ import { expect, test } from '@playwright/test'
 
 test.describe('Issue 192: Image inside link rendering', () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto('/test/issue-192', { waitUntil: 'networkidle' })
+        await page.goto('/test/issues/issue-192', { waitUntil: 'networkidle' })
     })
 
-    test('image inside link renders correct src and alt on /test/issue-192', async ({ page }) => {
+    test('image inside link renders correct src and alt on /test/issues/issue-192', async ({
+        page
+    }) => {
         // Find the link that wraps the image (by accessible name)
         const link = await page.getByRole('link', { name: 'image' })
         const linkHref = await link.getAttribute('href')

@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test.describe('Issue 210: BR / SUP rendering in table cells with mixed content', () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto('/test/issue-210', { waitUntil: 'networkidle' })
+        await page.goto('/test/issues/issue-210', { waitUntil: 'networkidle' })
     })
 
     test('should render BR tags properly in table cells with mixed code spans', async ({
