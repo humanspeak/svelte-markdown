@@ -2,31 +2,41 @@
 
 set -eu
 
-# Resolve trunk binary and skip if missing (avoid platform-specific PATH assumptions)
+# Resolve trunk binary and allow continuing without it (avoid PATH assumptions)
 TRUNK_BIN=$(command -v trunk 2>/dev/null || true)
 if [ -z "${TRUNK_BIN}" ]; then
 	echo "⚠️  'trunk' CLI not found; skipping formatting and lint checks."
 	echo "   Install with 'brew install trunk-io' or see https://docs.trunk.io for setup."
-	exit 0
-fi
+else
+	# Capture initially staged files to preserve user's intent
+	INITIAL_STAGED=$(git diff --cached --name-only || true)
 
-# Format files and re-stage any formatted changes
-echo "✨ Formatting code..."
-if ! "${TRUNK_BIN}" fmt >/dev/null 2>&1; then
-	echo "❌ Code formatting failed. Run 'trunk fmt' to see details."
-	exit 1
-fi
-# Restage modified tracked files after formatting
-git add -u
+	# Format files without force‑adding unrelated changes
+	echo "✨ Formatting code..."
+	if ! "${TRUNK_BIN}" fmt >/dev/null 2>&1; then
+		echo "❌ Code formatting failed. Run 'trunk fmt' to see details."
+		exit 1
+	fi
+	if [ -n "${INITIAL_STAGED}" ]; then
+		echo "Restaging originally staged files after formatting..."
+		for f in ${INITIAL_STAGED}; do
+			git add --update -- "${f}" 2>/dev/null || true
+		done
+	fi
 
-# Run linter with auto-fix and re-stage any fixes
-echo "🔍 Running linter checks..."
-if ! "${TRUNK_BIN}" check --fix >/dev/null 2>&1; then
-	echo "❌ Linting failed. Run 'trunk check' to see errors and fix them."
-	exit 1
+	# Lint with auto-fix and re-stage only originally staged files
+	echo "🔍 Running linter checks..."
+	if ! "${TRUNK_BIN}" check --fix >/dev/null 2>&1; then
+		echo "❌ Linting failed. Run 'trunk check' to see errors and fix them."
+		exit 1
+	fi
+	if [ -n "${INITIAL_STAGED}" ]; then
+		echo "Restaging originally staged files after lint fixes..."
+		for f in ${INITIAL_STAGED}; do
+			git add --update -- "${f}" 2>/dev/null || true
+		done
+	fi
 fi
-# Restage modified tracked files after auto-fixes
-git add -u
 
 # Run type and Svelte checks to catch TS/Svelte typing regressions
 echo "🧪 Running svelte-check..."

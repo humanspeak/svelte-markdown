@@ -23,6 +23,13 @@ test.describe('Issue 214: Restrict to strong, em, link, code only', () => {
         await expect(unsupportedMain.getByText('<span>asdf</span>', { exact: true })).toBeVisible()
         await expect(page.locator('span').filter({ hasText: 'asdf' })).toHaveCount(0)
 
+        // Strong HTML with attributes should appear escaped as text, not as a real <strong>
+        await expect(unsupportedMain).toContainText(
+            '<strong class="test-class" id="test-id">any html</strong>'
+        )
+        await expect(page.locator('strong#test-id')).toHaveCount(0)
+        await expect(page.locator('strong.test-class')).toHaveCount(0)
+
         // Headers should be disabled; no h1 from the unsupported blockquote/headers
         await expect(page.locator('h1')).toHaveCount(0)
         // Blockquote disabled

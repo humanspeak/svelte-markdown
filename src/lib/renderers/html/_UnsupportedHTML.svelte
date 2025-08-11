@@ -1,7 +1,16 @@
 <script lang="ts">
     import type { Snippet } from 'svelte'
 
-    const { children, tag }: { children?: Snippet; tag: string } = $props()
+    const {
+        children,
+        tag,
+        attributes
+    }: { children?: Snippet; tag: string; attributes?: Record<string, string> } = $props()
+
+    const attributesString =
+        Object.entries(attributes || {})
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(' ') || ''
 </script>
 
-&lt;{tag}&gt;{@render children?.()}&lt;/{tag}&gt;
+&lt;{tag}{attributesString ? ` ${attributesString}` : ''}&gt;{@render children?.()}&lt;/{tag}&gt;

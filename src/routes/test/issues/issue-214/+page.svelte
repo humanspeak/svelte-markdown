@@ -26,7 +26,7 @@ text \`Inline code\` more text\n`}
 
 ![image](https://picsum.photos/150/150 "title")\n
 
-<strong>any html</strong>
+<strong class="test-class" id="test-id">any html</strong>
 
 <span>asdf</span>`}
     />
