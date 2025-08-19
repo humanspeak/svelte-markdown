@@ -4,7 +4,7 @@ import Table from './Table.svelte'
 
 describe('Table (markdown)', () => {
     it('renders table wrapper', () => {
-        const { container } = render(Table, { props: { children: () => 'x' } })
+        const { container } = render(Table)
         expect(container.querySelector('table')).toBeTruthy()
     })
 })

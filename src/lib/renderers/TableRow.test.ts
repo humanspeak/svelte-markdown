@@ -4,7 +4,7 @@ import TableRow from './TableRow.svelte'
 
 describe('TableRow (markdown)', () => {
     it('renders tr wrapper', () => {
-        const { container } = render(TableRow, { props: { children: () => 'x' } })
+        const { container } = render(TableRow)
         expect(container.querySelector('tr')).toBeTruthy()
     })
 })

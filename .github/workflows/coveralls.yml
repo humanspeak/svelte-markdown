@@ -18,24 +18,28 @@ jobs:
                 node-version: [20, 22]
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
                   token: ${{ secrets.ACTIONS_KEY }}
 
+            - uses: pnpm/action-setup@v4 # zizmor: ignore[unpinned-uses]
+              with:
+                  version: 10
+
             - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v4 # zizmor: ignore[unpinned-uses]
               with:
                   node-version: ${{ matrix.node-version }}
 
             - name: Install
-              run: npm ci
+              run: pnpm install --no-frozen-lockfile
 
             - name: Test
-              run: npm test --coverage
+              run: pnpm test --coverage
 
             - name: Upload coverage to Coveralls
-              uses: coverallsapp/github-action@v2
+              uses: coverallsapp/github-action@v2 # zizmor: ignore[unpinned-uses]
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   flag-name: node-${{ matrix.node-version }}
@@ -43,7 +47,7 @@ jobs:
               if: matrix.node-version == '22'
 
             - name: Cache dependencies
-              uses: actions/cache@v4
+              uses: actions/cache@v4 # zizmor: ignore[unpinned-uses]
               with:
                   path: ~/.npm
                   key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
@@ -57,7 +61,7 @@ jobs:
         if: ${{ always() }}
         steps:
             - name: Coveralls Finished
-              uses: coverallsapp/github-action@v2
+              uses: coverallsapp/github-action@v2 # zizmor: ignore[unpinned-uses]
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   parallel-finished: true
