@@ -225,7 +225,7 @@ jobs:
                   pnpm install --prefer-offline --no-frozen-lockfile --ignore-scripts
 
             - name: Test
-              run: pnpm test --coverage
+              run: pnpm test
 
             - name: Upload Vitest Results
               if: always()
