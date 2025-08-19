@@ -157,6 +157,7 @@ MIT License with dual copyright:
 - Tests required for new features
 - Automated CI/CD pipeline
 - Code formatting enforced via Prettier
+    - Pre-commit hook respects the current staging area (only re-stages originally staged files after Trunk format/lint)
 
 ## Future Roadmap
 
@@ -262,6 +263,17 @@ Available through Humanspeak, Inc. for enterprise customers
     - Nested component testing
     - Malformed content handling
 
+- [x] Renderer override utilities (Issue #214)
+    - Introduced `_Unsupported.svelte` and `html/_UnsupportedHTML.svelte` fallback components
+    - Exported `Unsupported`, `UnsupportedHTML`, `defaultRenderers`, `Html`, `rendererKeys`, `htmlRendererKeys` from `src/lib/index.ts`
+    - Centralized key types/lists in `src/lib/utils/rendererKeys.ts` with strict `HtmlKey = keyof typeof Html` typing
+    - Added helper utilities for allow/block strategies:
+        - `buildUnsupportedHTML`, `allowHtmlOnly`, `excludeHtmlOnly`
+        - `buildUnsupportedRenderers`, `allowRenderersOnly`, `excludeRenderersOnly`
+    - Helpers return complete maps (not partial) to align with `SvelteMarkdown.svelte` html merging semantics
+    - Comprehensive unit tests for helpers and core renderer components; E2E tests for Issue #214
+    - README updated with copy-pastable examples and API docs
+
 ### In Progress Features
 
 - Deep nested lists (>10 levels)
@@ -293,3 +305,19 @@ Available through Humanspeak, Inc. for enterprise customers
 - Accessibility support ✓
 - Plugin system (pending)
 - Math/diagram support (pending)
+
+### Next Steps (Renderer overrides and DX)
+
+1. Developer ergonomics
+    - Add presets built on helpers (e.g., `allowInlineOnly`, `safeHtmlOnly`)
+    - Emit development-time warnings for invalid override keys when used from JS (non-TS consumers)
+2. Security and correctness
+    - Optional HTML sanitizer hook for allowed HTML tags (document safe defaults and trade-offs)
+    - Additional E2E coverage for attribute escaping and nested unsupported HTML
+3. Documentation
+    - Dedicated section in the docs site for override patterns and presets
+    - Migration notes for users replacing custom large maps with helpers
+4. Performance
+    - Micro-benchmarks for large documents comparing default vs allow/block strategies
+5. API polish
+    - Ensure exports are tree-shakeable and types remain stable; consider deprecation notes if future renames occur

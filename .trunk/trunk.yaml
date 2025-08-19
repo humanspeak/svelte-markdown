@@ -2,7 +2,7 @@
 # To learn more about the format of this file, see https://docs.trunk.io/reference/trunk-yaml
 version: 0.1
 cli:
-    version: 1.24.0
+    version: 1.25.0
 # Trunk provides extensibility via plugins. (https://docs.trunk.io/plugins)
 plugins:
     sources:
@@ -17,6 +17,10 @@ runtimes:
         - node@22.16.0
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
+    ignore:
+        - linters: [osv-scanner]
+          paths:
+              - '**/pnpm-lock.yaml'
     definitions:
         - name: prettier
           files:
@@ -40,8 +44,8 @@ lint:
     enabled:
         - sort-package-json@3.4.0
         - actionlint@1.7.7
-        - checkov@3.2.454
-        - eslint@9.31.0:
+        - checkov@3.2.461
+        - eslint@9.33.0:
               packages:
                   - '@typescript-eslint/eslint-plugin'
                   - '@typescript-eslint/parser'
@@ -64,7 +68,7 @@ lint:
         - shfmt@3.6.0
         - svgo@4.0.0
         - taplo@0.9.3
-        - trufflehog@3.90.2
+        - trufflehog@3.90.5
         - yamllint@1.37.1
 actions:
     enabled:

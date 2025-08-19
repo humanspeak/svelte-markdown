@@ -26,11 +26,15 @@ jobs:
               with:
                   persist-credentials: false
 
+            - uses: pnpm/action-setup@v4 # zizmor: ignore[unpinned-uses]
+              with:
+                  version: 10
+
             - name: Use Node.js - 22
               uses: actions/setup-node@v4 # zizmor: ignore[unpinned-uses]
               with:
                   node-version: 22
-                  cache: npm
+                  cache: pnpm
 
             - name: Cache build artifacts
               uses: actions/cache@v4 # zizmor: ignore[unpinned-uses]
@@ -53,13 +57,13 @@ jobs:
                       ${{ runner.os }}-vitest-
 
             - name: Install dependencies
-              run: npm ci
+              run: pnpm install --no-frozen-lockfile
 
             - name: Run unit tests
-              run: npm test
+              run: pnpm test
 
             - name: Install Playwright browsers
-              run: npx playwright install --with-deps
+              run: pnpm exec playwright install --with-deps
 
             - name: Run e2e tests
-              run: npm run test:e2e
+              run: pnpm run test:e2e

@@ -155,10 +155,9 @@ jobs:
                       filename=$(basename -- "$file")
 
                       # Skip non-yaml files
-                      case "$filename" in
-                          *.yml|*.yaml) ;;
-                          *) continue ;;
-                      esac
+                      if [[ ! "$filename" =~ \.(ya?ml)$ ]]; then
+                          continue
+                      fi
 
                       echo "Validating $filename..."
 
