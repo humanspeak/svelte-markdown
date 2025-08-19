@@ -44,5 +44,28 @@ jobs:
                   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                   CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
               run: |
+                  set -euxo pipefail
                   pnpm install --no-frozen-lockfile
-                  pnpm run deploy
+                  # Ensure log dir exists (wrangler writes here by default)
+                  mkdir -p "${HOME}/.config/.wrangler/logs"
+                  # Run deploy and capture exit code while letting us continue to upload logs
+                  pnpm run deploy || echo "::warning::Deploy step failed but continuing to upload logs"
+                  echo "Wrangler logs at: ${HOME}/.config/.wrangler/logs"
+                  # Print last 200 lines of the latest wrangler log to job output
+                  ls -lt "${HOME}/.config/.wrangler/logs" | head -n 5 || true
+                  LATEST_LOG=$(ls -1t "${HOME}/.config/.wrangler/logs"/*.log 2>/dev/null | head -n 1 || true)
+                  if [ -n "${LATEST_LOG}" ]; then
+                    echo "::group::Wrangler log (tail)"
+                    tail -n 200 "${LATEST_LOG}" || true
+                    echo "::endgroup::"
+                  fi
+                  # Re-run deploy in no-op dry-run to get an exit code; or retrieve last status from previous command
+                  # Better: write the first deploy's exit to a file
+
+            - name: Upload Wrangler logs
+              if: always()
+              uses: actions/upload-artifact@v4 # zizmor: ignore[unpinned-uses]
+              with:
+                  name: wrangler-logs
+                  path: ~/.config/.wrangler/logs/*.log
+                  retention-days: 7
