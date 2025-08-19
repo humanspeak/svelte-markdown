@@ -11,6 +11,9 @@ on:
             - .github/workflows/cloudflare-pages.yml
         branches:
             - main
+    workflow_dispatch:
+        # trunk-ignore(checkov/CKV_GHA_7)
+        inputs: {}
 
 jobs:
     deploy:
