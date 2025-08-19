@@ -54,7 +54,10 @@ jobs:
                   # Ensure log dir exists (wrangler writes here by default)
                   mkdir -p "${HOME}/.config/.wrangler/logs"
                   # Run deploy and capture exit code while letting us continue to upload logs
-                  pnpm run deploy || echo "::warning::Deploy step failed but continuing to upload logs"
+                  set +e
+                  pnpm run deploy
+                  DEPLOY_EXIT=$?
+                  set -e
                   echo "Wrangler logs at: ${HOME}/.config/.wrangler/logs"
                   # Print last 200 lines of the latest wrangler log to job output
                   ls -lt "${HOME}/.config/.wrangler/logs" | head -n 5 || true
@@ -64,8 +67,8 @@ jobs:
                     tail -n 200 "${LATEST_LOG}" || true
                     echo "::endgroup::"
                   fi
-                  # Re-run deploy in no-op dry-run to get an exit code; or retrieve last status from previous command
-                  # Better: write the first deploy's exit to a file
+                  # Exit with original deploy status so the job fails if deploy failed
+                  exit ${DEPLOY_EXIT}
 
             - name: Upload Wrangler logs
               if: always()
