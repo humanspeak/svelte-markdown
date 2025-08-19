@@ -43,6 +43,8 @@ jobs:
                   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
                   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                   CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+                  WRANGLER_LOG_SANITIZE: 'false'
+                  WRANGLER_LOG_LEVEL: debug
               run: |
                   set -euxo pipefail
                   pnpm install --no-frozen-lockfile
