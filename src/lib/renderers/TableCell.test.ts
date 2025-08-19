@@ -4,15 +4,11 @@ import TableCell from './TableCell.svelte'
 
 describe('TableCell (markdown)', () => {
     it('renders td by default', () => {
-        const { container } = render(TableCell, {
-            props: { header: false, align: null, children: () => 'x' }
-        })
+        const { container } = render(TableCell, { props: { header: false, align: null } })
         expect(container.querySelector('td')).toBeTruthy()
     })
     it('renders th when header is true', () => {
-        const { container } = render(TableCell, {
-            props: { header: true, align: 'left', children: () => 'x' }
-        })
+        const { container } = render(TableCell, { props: { header: true, align: 'left' } })
         expect(container.querySelector('th')).toBeTruthy()
     })
 })

@@ -4,7 +4,7 @@ import TableHead from './TableHead.svelte'
 
 describe('TableHead (markdown)', () => {
     it('renders thead wrapper', () => {
-        const { container } = render(TableHead, { props: { children: () => 'x' } })
+        const { container } = render(TableHead)
         expect(container.querySelector('thead')).toBeTruthy()
     })
 })

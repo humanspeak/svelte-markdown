@@ -4,7 +4,7 @@ import TableBody from './TableBody.svelte'
 
 describe('TableBody (markdown)', () => {
     it('renders tbody wrapper', () => {
-        const { container } = render(TableBody, { props: { children: () => 'x' } })
+        const { container } = render(TableBody)
         expect(container.querySelector('tbody')).toBeTruthy()
     })
 })
