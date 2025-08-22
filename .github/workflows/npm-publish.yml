@@ -477,7 +477,7 @@ jobs:
                   ESCAPED_URL=$(echo "$PR_URL" | sed 's/[`$"\]/\\&/g')
 
                   # Commit the version changes
-                  git add -A
+                  git add package.json
                   git commit -m "Bump version to ${NEW_VERSION} [skip ci]"
 
                   # Create an annotated tag with release notes
@@ -517,7 +517,7 @@ jobs:
                   # Ensure we're publishing to the correct scope
                   rm -f ./.npmrc
                   pnpm config set @humanspeak:registry https://registry.npmjs.org/
-                  pnpm publish --provenance --access public
+                  pnpm publish --provenance --access public --no-git-checks
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}
 
