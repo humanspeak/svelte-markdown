@@ -1,9 +1,8 @@
 export { default as Slugger } from 'github-slugger'
 export { Lexer, type MarkedOptions, type Token, type Tokens, type TokensList } from 'marked'
+import { type HtmlRenderers } from '$lib/renderers/html/index.js'
 import type { Component } from 'svelte'
-import { type HtmlRenderers } from '../renderers/html/index.js'
 
-import type { SvelteMarkdownOptions } from '$lib/types.js'
 import {
     Blockquote,
     Br,
@@ -11,6 +10,7 @@ import {
     Codespan,
     Del,
     Em,
+    Escape,
     Heading,
     Hr,
     Html,
@@ -27,7 +27,8 @@ import {
     TableHead,
     TableRow,
     Text
-} from '../renderers/index.js'
+} from '$lib/renderers/index.js'
+import type { SvelteMarkdownOptions } from '$lib/types.js'
 
 /**
  * Represents a Svelte component that can be used as a renderer.
@@ -56,6 +57,7 @@ export type Renderers = {
 
     // Raw text renderer
     rawtext: RendererComponent
+    escape: RendererComponent
 
     // Block elements
     heading: RendererComponent
@@ -106,6 +108,7 @@ export const defaultRenderers: Renderers = {
     image: Image,
     link: Link,
     em: Em,
+    escape: Escape,
     strong: Strong,
     codespan: Codespan,
     del: Del,
