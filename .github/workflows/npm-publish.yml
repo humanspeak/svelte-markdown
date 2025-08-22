@@ -477,7 +477,7 @@ jobs:
                   ESCAPED_URL=$(echo "$PR_URL" | sed 's/[`$"\]/\\&/g')
 
                   # Commit the version changes
-                  git add package.json
+                  git add -A
                   git commit -m "Bump version to ${NEW_VERSION} [skip ci]"
 
                   # Create an annotated tag with release notes
