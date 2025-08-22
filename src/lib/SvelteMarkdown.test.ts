@@ -4,10 +4,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
 import type { SvelteMarkdownProps } from './types.js'
 
-beforeEach(() => {
-    vi.useFakeTimers()
-})
-
 describe('testing initialization', () => {
     test('accepts pre-processed tokens as source', async () => {
         const { container } = render(SvelteMarkdown, {
