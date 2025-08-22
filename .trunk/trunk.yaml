@@ -7,7 +7,7 @@ cli:
 plugins:
     sources:
         - id: trunk
-          ref: v1.7.1
+          ref: v1.7.2
           uri: https://github.com/trunk-io/plugins
 # Many linters and tools depend on runtimes - configure them here. (https://docs.trunk.io/runtimes)
 runtimes:
@@ -21,6 +21,9 @@ lint:
         - linters: [osv-scanner]
           paths:
               - '**/pnpm-lock.yaml'
+        - linters: [markdownlint]
+          paths:
+              - .changeset/**
     definitions:
         - name: prettier
           files:
@@ -44,7 +47,7 @@ lint:
     enabled:
         - sort-package-json@3.4.0
         - actionlint@1.7.7
-        - checkov@3.2.461
+        - checkov@3.2.464
         - eslint@9.33.0:
               packages:
                   - '@typescript-eslint/eslint-plugin'
@@ -57,17 +60,17 @@ lint:
                   - eslint-plugin-import
         - git-diff-check
         - markdownlint@0.45.0
-        - osv-scanner@2.0.3
+        - osv-scanner@2.2.1
         - oxipng@9.1.5
         - prettier@3.6.2:
               packages:
                   - prettier-plugin-svelte
                   - prettier-plugin-organize-imports
                   - prettier-plugin-tailwindcss
-        - shellcheck@0.10.0
+        - shellcheck@0.11.0
         - shfmt@3.6.0
         - svgo@4.0.0
-        - taplo@0.9.3
+        - taplo@0.10.0
         - trufflehog@3.90.5
         - yamllint@1.37.1
 actions:
