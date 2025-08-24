@@ -33,7 +33,7 @@ jobs:
                   node-version: ${{ matrix.node-version }}
 
             - name: Install
-              run: pnpm install --no-frozen-lockfile
+              run: pnpm install --frozen-lockfile
 
             - name: Test
               run: pnpm test
@@ -50,7 +50,7 @@ jobs:
               uses: actions/cache@v4 # zizmor: ignore[unpinned-uses]
               with:
                   path: ~/.npm
-                  key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+                  key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/pnpm-lock.yaml') }}
                   restore-keys: |
                       ${{ runner.os }}-node-${{ matrix.node-version }}-
                       ${{ runner.os }}-node-

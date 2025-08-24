@@ -35,7 +35,7 @@ jobs:
                   node-version: 22
 
             - name: Install Root Dependencies
-              run: pnpm install --no-frozen-lockfile
+              run: pnpm install --frozen-lockfile
 
             - name: Build Package
               run: pnpm run build
@@ -50,7 +50,7 @@ jobs:
                   # WRANGLER_LOG_LEVEL: debug
               run: |
                   set -euxo pipefail
-                  pnpm install --no-frozen-lockfile
+                  pnpm install --frozen-lockfile
                   # Ensure log dir exists (wrangler writes here by default)
                   mkdir -p "${HOME}/.config/.wrangler/logs"
                   # Run deploy and capture exit code while letting us continue to upload logs
