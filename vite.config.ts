@@ -16,7 +16,14 @@ export default defineConfig({
         setupFiles: ['vitest.setup.ts'],
         coverage: {
             reporter: 'lcov',
-            exclude: ['docs/**', '.trunk/**', '.svelte-kit/**', 'tests/**', 'src/routes/**']
+            exclude: [
+                'docs/**',
+                '.trunk/**',
+                '.svelte-kit/**',
+                'tests/**',
+                'src/routes/**',
+                'src/lib/test/**'
+            ]
         },
         exclude: [
             ...configDefaults.exclude,
@@ -26,6 +33,7 @@ export default defineConfig({
             'src/routes/**',
             'coverage/**',
             'tests/**',
+            'src/lib/test/**',
             'playwright.config.ts',
             'tests-results/**',
             '**/docs/**/*'
