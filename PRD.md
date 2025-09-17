@@ -4,6 +4,12 @@
 
 @humanspeak/svelte-markdown is a powerful, customizable markdown renderer for Svelte with TypeScript support. It's built as a successor to the original svelte-markdown package by Pablo Berganza, now maintained and enhanced by Humanspeak, Inc.
 
+## Non-Goals
+
+- Built-in HTML sanitization (provide hooks for integrators instead)
+- Remote fetching of markdown documents
+- WYSIWYG editor functionality
+
 ## Lineage
 
 1. Original Creator: Pablo Berganza (2020-2024)
@@ -15,7 +21,7 @@
 
 - Full markdown syntax support through Marked
 - Custom component overrides
-- HTML parsing capabilities via HTMLParser2
+- HTML parsing capabilities via htmlparser2
 - GitHub-style slug generation for headers
 
 ### 2. TypeScript Support
@@ -24,23 +30,17 @@
 - Type-safe component props
 - Svelte 5 compatibility
 
-### 3. Testing Infrastructure
+### 3. Developer Experience
 
-- Comprehensive unit testing with Vitest
-- Coverage reporting via Coveralls
-- Browser environment testing with JSDOM
-- End-to-end testing with Playwright
-    - Cross-browser compatibility validation
-    - Version migration testing
-    - Visual regression testing
-    - Accessibility compliance checks
+- Strong TypeScript types across public APIs
+- Clear renderer override ergonomics with helper utilities
 
 ## Technical Specifications
 
 ### Dependencies
 
 - Core Dependencies:
-    - marked: ^15.0.5
+    - marked: ^16.2.0
     - github-slugger: ^2.0.0
     - htmlparser2: ^10.0.0
 
@@ -56,17 +56,16 @@
 
 ### Package Structure
 
-- Distribution via NPM
+- Distribution via npm
 - ESM module format
 - Side effects declared for CSS files
-- Source maps included
 
 ### Testing Setup
 
 - Vitest configuration with extensive edge case coverage
 - JSDOM environment for DOM manipulation testing
 - Testing Library integration for component testing
-- Coverage reporting with minimum 90% threshold
+- Coverage reporting with minimum 90% threshold (enforced in CI)
 - Playwright E2E test suites for:
     - Cross-version compatibility
     - Browser compatibility matrix
@@ -102,23 +101,16 @@
     - Resource cleanup on unmount
     - Debounced updates for live editing
 
-## Quality Assurance
+## Testing & QA
 
-### Automated Testing
-
-- Unit tests for core functionality
-- Browser environment testing
-- End-to-end testing with Playwright
-    - Automated visual regression
-    - Cross-browser testing pipeline
-    - Accessibility validation
+- Unit tests with Vitest + JSDOM and Testing Library
+- E2E tests with Playwright (cross-browser, visual regression, accessibility checks)
+- Coverage reporting via Coveralls (target ≥ 90%)
 - Continuous Integration via GitHub Actions
-
-### Code Quality
-
-- ESLint for code quality
-- Prettier for code formatting
-- TypeScript for type safety
+    - Package manager: pnpm
+    - Node versions: 20, 22
+    - Uploads JUnit results and coverage; publishes on release
+    - Issue reproduction tests maintained under `src/lib/test/issues/` (e.g., [Issue #219](https://github.com/humanspeak/svelte-markdown/issues/219))
 
 ## Distribution
 
@@ -129,11 +121,17 @@
 - ESM format
 - Svelte component exports
 
-### NPM Publishing
+### npm publishing
 
 - Public package under @humanspeak scope
 - Automated versioning and releases
 - Source maps included for debugging
+
+### Versioning & Stability
+
+- Semantic Versioning (SemVer)
+- Backward-compatibility for renderer keys and helper exports where feasible
+- Deprecations announced in release notes before removal in the next major
 
 ## License
 
@@ -146,9 +144,9 @@ MIT License with dual copyright:
 
 ### Build Process
 
-1. Development: npm run dev
-2. Testing: npm run test
-3. Building: npm run build
+1. Development: pnpm dev
+2. Testing: pnpm test
+3. Building: pnpm build
 4. Publishing: Automated via GitHub Actions
 
 ### Contribution Guidelines
@@ -179,9 +177,9 @@ MIT License with dual copyright:
 
 ### Official Channels
 
-- GitHub Issues
-- NPM Package Page
-- Documentation Website
+- GitHub Issues: [humanspeak/svelte-markdown](https://github.com/humanspeak/svelte-markdown)
+- npm Package Page: [`@humanspeak/svelte-markdown`](https://www.npmjs.com/package/@humanspeak/svelte-markdown)
+- Documentation Website: [markdown.svelte.page](https://markdown.svelte.page)
 
 ### Commercial Support
 
@@ -225,7 +223,7 @@ Available through Humanspeak, Inc. for enterprise customers
 - Automated migration testing between versions
 - Visual regression monitoring
 
-### Phase 5: Ecosystem
+### Phase 3: Ecosystem
 
 - Extended plugin library(?)
 - Developer tool
@@ -238,6 +236,12 @@ Available through Humanspeak, Inc. for enterprise customers
 - Runtime performance tracking
 - Memory usage analysis
 - Rendering performance metrics
+
+## Security & HTML Policy
+
+- Default: no built-in HTML sanitization; all HTML tokens are parsed as-is
+- Recommended: integrate an HTML sanitizer at provided hooks or downstream
+- Provide presets that make it easy to allow/block specific HTML tags and renderer keys
 
 ## Implementation Status Updates
 

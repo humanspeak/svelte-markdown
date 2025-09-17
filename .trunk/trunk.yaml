@@ -47,8 +47,8 @@ lint:
     enabled:
         - sort-package-json@3.4.0
         - actionlint@1.7.7
-        - checkov@3.2.464
-        - eslint@9.33.0:
+        - checkov@3.2.471
+        - eslint@9.35.0:
               packages:
                   - '@typescript-eslint/eslint-plugin'
                   - '@typescript-eslint/parser'
@@ -60,7 +60,7 @@ lint:
                   - eslint-plugin-import
         - git-diff-check
         - markdownlint@0.45.0
-        - osv-scanner@2.2.1
+        - osv-scanner@2.2.2
         - oxipng@9.1.5
         - prettier@3.6.2:
               packages:
@@ -71,7 +71,7 @@ lint:
         - shfmt@3.6.0
         - svgo@4.0.0
         - taplo@0.10.0
-        - trufflehog@3.90.5
+        - trufflehog@3.90.6
         - yamllint@1.37.1
 actions:
     enabled:

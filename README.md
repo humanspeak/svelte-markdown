@@ -445,4 +445,4 @@ MIT © [Humanspeak, Inc.](LICENSE)
 
 ## Credits
 
-Made with ♥ by [Humanspeak](https://humanspeak.com)
+Made with ❤️ by [Humanspeak](https://humanspeak.com)
