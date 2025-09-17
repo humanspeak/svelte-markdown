@@ -329,5 +329,13 @@ describe('Token Cleanup Utilities', () => {
                 text: 'key>=2024-01-01'
             })
         })
+
+        it('should leave already self-closing tags unchanged', () => {
+            const tokens: Token[] = [{ type: 'html', raw: '<br/>', text: '<br/>' }]
+
+            const result = shrinkHtmlTokens(tokens)
+            expect(result).toHaveLength(1)
+            expect(result[0]).toMatchObject({ type: 'html', raw: '<br/>' })
+        })
     })
 })
