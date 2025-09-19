@@ -29,7 +29,6 @@ describe('unsupported renderers helpers', () => {
         const Custom = defaultRenderers.paragraph
         const allowed = allowRenderersOnly([
             ['paragraph', Custom],
-            // @ts-expect-error invalid key should be ignored safely
             ['not-a-key', Custom]
         ] as any)
         expect(allowed.paragraph).toBe(Custom)

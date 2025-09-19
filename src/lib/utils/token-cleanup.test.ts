@@ -281,7 +281,6 @@ describe('Token Cleanup Utilities', () => {
                 {
                     type: 'list',
                     raw: '- a',
-                    // @ts-expect-error testing missing tokens
                     items: [{ type: 'list_item', raw: '- a', text: 'a' }]
                 }
             ]
@@ -297,9 +296,7 @@ describe('Token Cleanup Utilities', () => {
                 {
                     type: 'table',
                     raw: '| H |\n| - |\n| C |',
-                    // @ts-expect-error testing missing tokens in header cell
                     header: [{ text: 'H' }],
-                    // @ts-expect-error testing missing tokens in row cell
                     rows: [[{ text: 'C' }]]
                 }
             ]

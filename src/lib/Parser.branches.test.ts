@@ -8,24 +8,35 @@ const baseRenderers = {
     paragraph: (await import('./renderers/Paragraph.svelte')).default,
     text: (await import('./renderers/Text.svelte')).default,
     rawtext: (await import('./renderers/RawText.svelte')).default,
+    escape: (await import('./renderers/Text.svelte')).default,
+    heading: (await import('./renderers/Heading.svelte')).default,
+    blockquote: (await import('./renderers/Blockquote.svelte')).default,
+    code: (await import('./renderers/Code.svelte')).default,
+    hr: (await import('./renderers/Hr.svelte')).default,
     list: (await import('./renderers/List.svelte')).default,
     listitem: (await import('./renderers/ListItem.svelte')).default,
     orderedlistitem: (await import('./renderers/ListItem.svelte')).default,
+    unorderedlistitem: (await import('./renderers/ListItem.svelte')).default,
     table: (await import('./renderers/Table.svelte')).default,
     tablehead: (await import('./renderers/TableHead.svelte')).default,
     tablebody: (await import('./renderers/TableBody.svelte')).default,
     tablerow: (await import('./renderers/TableRow.svelte')).default,
     tablecell: (await import('./renderers/TableCell.svelte')).default,
-    html: (await import('./renderers/html/index.ts')).default
+    link: (await import('./renderers/Link.svelte')).default,
+    image: (await import('./renderers/Image.svelte')).default,
+    em: (await import('./renderers/Em.svelte')).default,
+    strong: (await import('./renderers/Strong.svelte')).default,
+    codespan: (await import('./renderers/Codespan.svelte')).default,
+    br: (await import('./renderers/Br.svelte')).default,
+    del: (await import('./renderers/Del.svelte')).default,
+    html: (await import('./renderers/html/index.js')).default
 } as const
 
 describe('Parser branch coverage', () => {
     test('table renders without head/body when components are missing', async () => {
         const renderers = { ...baseRenderers }
         // Remove head/body to hit falsy branches
-        // @ts-expect-error intentionally removing keys for branch coverage
         delete (renderers as any).tablehead
-        // @ts-expect-error intentionally removing keys for branch coverage
         delete (renderers as any).tablebody
 
         const header = [{ tokens: [{ type: 'text', raw: 'H', text: 'H' }] }] as any
