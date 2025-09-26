@@ -276,6 +276,45 @@ describe('Token Cleanup Utilities', () => {
             expect((result[0] as any).rows[0][0].tokens[0].tag).toBe('strong')
         })
 
+        it('should handle list items missing tokens by injecting empty arrays', () => {
+            const tokens: Token[] = [
+                {
+                    type: 'list',
+                    raw: '- a',
+                    items: [{ type: 'list_item', raw: '- a', text: 'a' }]
+                }
+            ]
+            const result = shrinkHtmlTokens(tokens)
+            expect(result).toHaveLength(1)
+            const list = result[0] as Token & { items: any[] }
+            expect(Array.isArray(list.items)).toBe(true)
+            expect(list.items[0].tokens).toEqual([])
+        })
+
+        it('should handle table cells missing tokens in header and rows', () => {
+            const tokens: Token[] = [
+                {
+                    type: 'table',
+                    raw: '| H |\n| - |\n| C |',
+                    header: [{ text: 'H' }],
+                    rows: [[{ text: 'C' }]]
+                }
+            ]
+            const result = shrinkHtmlTokens(tokens)
+            expect(result).toHaveLength(1)
+            const table = result[0] as any
+            expect(Array.isArray(table.header)).toBe(true)
+            expect(table.header[0].tokens).toEqual([])
+            expect(Array.isArray(table.rows)).toBe(true)
+            expect(table.rows[0][0].tokens).toEqual([])
+        })
+
+        it('should keep html token unchanged when it does not contain a tag', () => {
+            const tokens: Token[] = [{ type: 'html', raw: 'not-a-tag', text: 'not-a-tag' }]
+            const result = shrinkHtmlTokens(tokens)
+            expect(result).toHaveLength(1)
+            expect(result[0]).toMatchObject({ type: 'html', raw: 'not-a-tag' })
+        })
         it('should add listItemIndex to each list item', () => {
             const tokens: Token[] = [
                 {
@@ -328,6 +367,14 @@ describe('Token Cleanup Utilities', () => {
                 raw: '`key>=2024-01-01`',
                 text: 'key>=2024-01-01'
             })
+        })
+
+        it('should leave already self-closing tags unchanged', () => {
+            const tokens: Token[] = [{ type: 'html', raw: '<br/>', text: '<br/>' }]
+
+            const result = shrinkHtmlTokens(tokens)
+            expect(result).toHaveLength(1)
+            expect(result[0]).toMatchObject({ type: 'html', raw: '<br/>' })
         })
     })
 })

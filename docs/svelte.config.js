@@ -40,6 +40,14 @@ const config = {
                 'base-uri': ['self'],
                 'upgrade-insecure-requests': true
             }
+        },
+        experimental: {
+            instrumentation: {
+                server: true
+            },
+            tracing: {
+                server: true
+            }
         }
     },
     extensions: ['.svelte', '.svx']

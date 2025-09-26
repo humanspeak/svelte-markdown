@@ -4,6 +4,12 @@
 
 @humanspeak/svelte-markdown is a powerful, customizable markdown renderer for Svelte with TypeScript support. It's built as a successor to the original svelte-markdown package by Pablo Berganza, now maintained and enhanced by Humanspeak, Inc.
 
+## Non-Goals
+
+- Built-in HTML sanitization (provide hooks for integrators instead)
+- Remote fetching of markdown documents
+- WYSIWYG editor functionality
+
 ## Lineage
 
 1. Original Creator: Pablo Berganza (2020-2024)
@@ -15,7 +21,7 @@
 
 - Full markdown syntax support through Marked
 - Custom component overrides
-- HTML parsing capabilities via HTMLParser2
+- HTML parsing capabilities via htmlparser2
 - GitHub-style slug generation for headers
 
 ### 2. TypeScript Support
@@ -24,23 +30,17 @@
 - Type-safe component props
 - Svelte 5 compatibility
 
-### 3. Testing Infrastructure
+### 3. Developer Experience
 
-- Comprehensive unit testing with Vitest
-- Coverage reporting via Coveralls
-- Browser environment testing with JSDOM
-- End-to-end testing with Playwright
-    - Cross-browser compatibility validation
-    - Version migration testing
-    - Visual regression testing
-    - Accessibility compliance checks
+- Strong TypeScript types across public APIs
+- Clear renderer override ergonomics with helper utilities
 
 ## Technical Specifications
 
 ### Dependencies
 
 - Core Dependencies:
-    - marked: ^15.0.5
+    - marked: ^16.2.0
     - github-slugger: ^2.0.0
     - htmlparser2: ^10.0.0
 
@@ -56,17 +56,16 @@
 
 ### Package Structure
 
-- Distribution via NPM
+- Distribution via npm
 - ESM module format
 - Side effects declared for CSS files
-- Source maps included
 
 ### Testing Setup
 
 - Vitest configuration with extensive edge case coverage
 - JSDOM environment for DOM manipulation testing
 - Testing Library integration for component testing
-- Coverage reporting with minimum 90% threshold
+- Coverage reporting with minimum 90% threshold (enforced in CI)
 - Playwright E2E test suites for:
     - Cross-version compatibility
     - Browser compatibility matrix
@@ -102,23 +101,16 @@
     - Resource cleanup on unmount
     - Debounced updates for live editing
 
-## Quality Assurance
+## Testing & QA
 
-### Automated Testing
-
-- Unit tests for core functionality
-- Browser environment testing
-- End-to-end testing with Playwright
-    - Automated visual regression
-    - Cross-browser testing pipeline
-    - Accessibility validation
+- Unit tests with Vitest + JSDOM and Testing Library
+- E2E tests with Playwright (cross-browser, visual regression, accessibility checks)
+- Coverage reporting via Coveralls (target ≥ 90%)
 - Continuous Integration via GitHub Actions
-
-### Code Quality
-
-- ESLint for code quality
-- Prettier for code formatting
-- TypeScript for type safety
+    - Package manager: pnpm
+    - Node versions: 20, 22
+    - Uploads JUnit results and coverage; publishes on release
+    - Issue reproduction tests maintained under `src/lib/test/issues/` (e.g., [Issue #219](https://github.com/humanspeak/svelte-markdown/issues/219))
 
 ## Distribution
 
@@ -129,11 +121,17 @@
 - ESM format
 - Svelte component exports
 
-### NPM Publishing
+### npm publishing
 
 - Public package under @humanspeak scope
 - Automated versioning and releases
 - Source maps included for debugging
+
+### Versioning & Stability
+
+- Semantic Versioning (SemVer)
+- Backward-compatibility for renderer keys and helper exports where feasible
+- Deprecations announced in release notes before removal in the next major
 
 ## License
 
@@ -146,9 +144,9 @@ MIT License with dual copyright:
 
 ### Build Process
 
-1. Development: npm run dev
-2. Testing: npm run test
-3. Building: npm run build
+1. Development: pnpm dev
+2. Testing: pnpm test
+3. Building: pnpm build
 4. Publishing: Automated via GitHub Actions
 
 ### Contribution Guidelines
@@ -179,9 +177,9 @@ MIT License with dual copyright:
 
 ### Official Channels
 
-- GitHub Issues
-- NPM Package Page
-- Documentation Website
+- GitHub Issues: [humanspeak/svelte-markdown](https://github.com/humanspeak/svelte-markdown)
+- npm Package Page: [`@humanspeak/svelte-markdown`](https://www.npmjs.com/package/@humanspeak/svelte-markdown)
+- Documentation Website: [markdown.svelte.page](https://markdown.svelte.page)
 
 ### Commercial Support
 
@@ -225,11 +223,11 @@ Available through Humanspeak, Inc. for enterprise customers
 - Automated migration testing between versions
 - Visual regression monitoring
 
-### Phase 5: Ecosystem
+### Phase 3: Ecosystem
 
-- Extended plugin library(?)
-- Developer tool
-- Performance monitoring
+- Extended plugin library with core plugins (see Plugin System section)
+- Developer tooling and debugging utilities
+- Performance monitoring and analytics
 
 ### Performance Monitoring
 
@@ -238,6 +236,116 @@ Available through Humanspeak, Inc. for enterprise customers
 - Runtime performance tracking
 - Memory usage analysis
 - Rendering performance metrics
+
+## Plugin System
+
+### Architecture
+
+The plugin system is built on marked.js's extension capabilities combined with Svelte's component system:
+
+- **Marked Extensions**: Custom tokenizers for new markdown syntax
+- **Svelte Renderers**: Components that handle the custom tokens
+- **Helper Utilities**: Functions to enable/disable plugins easily
+- **Preset Configurations**: Pre-built plugin combinations for common use cases
+
+### Core Plugin Categories
+
+#### 1. Math & Science (High Priority)
+
+- **KaTeX Math Plugin**: Render mathematical expressions using KaTeX
+    - Syntax: `$...$` (inline) and `$$...$$` (block)
+    - Component: `Math.svelte` with KaTeX integration
+    - Use case: Technical documentation, scientific papers, educational content
+
+- **Mermaid Diagrams Plugin**: Render flowcharts, sequence diagrams, etc.
+    - Syntax: ```mermaid code blocks
+    - Component: `Mermaid.svelte` with dynamic Mermaid.js loading
+    - Use case: System architecture, process documentation
+
+#### 2. Enhanced Code Features (High Priority)
+
+- **Advanced Syntax Highlighting**: Enhanced code highlighting beyond basic HTML
+    - Integration: Extend existing `Code.svelte` with Prism.js or Shiki
+    - Features: Line numbers, copy button, language labels, diff highlighting
+    - Use case: Technical blogs, API documentation
+
+- **Code Tabs Plugin**: Tabbed code blocks for multi-language examples
+    - Syntax: Custom container with `:::tabs` notation
+    - Component: `CodeTabs.svelte`
+    - Use case: API documentation showing multiple language examples
+
+#### 3. Content Enhancement (Medium Priority)
+
+- **Enhanced Callouts/Admonitions**: Expanded alerts beyond current Alert example
+    - Syntax: `:::note`, `:::warning`, `:::tip`, `:::danger`, `:::info`
+    - Component: Enhanced `Alert.svelte` (foundation already exists)
+    - Use case: Documentation with structured callouts
+
+- **Footnotes Plugin**: Support for footnote references and definitions
+    - Syntax: `[^1]` references with `[^1]: Definition` at bottom
+    - Components: `FootnoteRef.svelte`, `FootnoteList.svelte`
+    - Use case: Academic writing, detailed documentation
+
+#### 4. Interactive Elements (Medium Priority)
+
+- **Task Lists Plugin**: Interactive checkboxes in lists
+    - Syntax: `- [ ]` and `- [x]` in lists
+    - Component: `TaskList.svelte` with interactive checkboxes
+    - Use case: Project documentation, TODO lists, checklists
+
+- **Collapsible Sections**: Expandable/collapsible content blocks
+    - Syntax: `<details>` HTML or custom `:::details` syntax
+    - Component: `Details.svelte` with smooth animations
+    - Use case: FAQ sections, detailed documentation
+
+#### 5. Specialized Content (Lower Priority)
+
+- **Definition Lists**: Support for HTML-style definition lists
+    - Syntax: Custom markdown syntax for `<dl>`, `<dt>`, `<dd>`
+    - Components: `DefinitionList.svelte`, `DefinitionTerm.svelte`
+    - Use case: Glossaries, API documentation
+
+- **Emoji Plugin**: Convert `:emoji:` syntax to actual emojis
+    - Implementation: Text replacement during parsing
+    - Use case: Casual documentation, social content
+
+### Plugin Presets
+
+Pre-configured plugin combinations for common scenarios:
+
+- **Documentation**: Math, Mermaid, syntax highlighting, callouts
+- **Blog**: Syntax highlighting, callouts, emoji, footnotes
+- **Technical**: Math, Mermaid, advanced code features, task lists
+- **Minimal**: Basic callouts, task lists only
+
+### Implementation Strategy
+
+```typescript
+interface PluginConfig {
+    name: string
+    tokenizer?: TokenizerExtension
+    renderer: RendererComponent
+    dependencies?: string[]
+    options?: Record<string, any>
+}
+
+// Usage example
+const plugins = usePlugins(['math', 'mermaid', 'callouts'])
+```
+
+### Development Priorities
+
+1. **KaTeX Math Plugin** - Aligns with Phase 2 math support goals
+2. **Mermaid Diagrams Plugin** - Complements math for technical documentation
+3. **Enhanced Syntax Highlighting** - Builds on existing code renderer
+4. **Expanded Callouts** - Foundation already exists with Alert.svelte
+
+## Security & HTML Policy
+
+- Default: no built-in HTML sanitization; all HTML tokens are parsed as-is
+- Recommended: integrate an HTML sanitizer at provided hooks or downstream
+- Provide presets that make it easy to allow/block specific HTML tags and renderer keys
+- Plugin security: All plugins must follow the same HTML policy guidelines
 
 ## Implementation Status Updates
 
@@ -287,6 +395,9 @@ Available through Humanspeak, Inc. for enterprise customers
     - Token cleanup utilities
     - Efficient HTML parsing
 - [ ] Plugin system foundation
+    - Architecture design completed
+    - Core plugin categories defined
+    - Implementation strategy documented
 - [x] Extended edge case coverage
     - Table cell alignment
     - Complex nested structures
@@ -303,21 +414,34 @@ Available through Humanspeak, Inc. for enterprise customers
 - Edge case handling ✓
 - Performance optimizations ✓
 - Accessibility support ✓
-- Plugin system (pending)
-- Math/diagram support (pending)
+- Plugin system (architecture complete, implementation pending)
+- Math/diagram support (pending - KaTeX and Mermaid plugins prioritized)
 
-### Next Steps (Renderer overrides and DX)
+### Next Steps (Plugin System Implementation)
 
-1. Developer ergonomics
+1. **Phase 1: Core Plugin Infrastructure**
+    - Implement plugin registration and management system
+    - Create base plugin interface and helper utilities
+    - Develop plugin preset system for common use cases
+
+2. **Phase 2: Priority Plugins**
+    - KaTeX Math Plugin (aligns with existing math support goals)
+    - Mermaid Diagrams Plugin (complements technical documentation)
+    - Enhanced Syntax Highlighting (builds on existing Code.svelte)
+    - Expanded Callouts (extend existing Alert.svelte foundation)
+
+3. **Phase 3: Developer Experience**
     - Add presets built on helpers (e.g., `allowInlineOnly`, `safeHtmlOnly`)
     - Emit development-time warnings for invalid override keys when used from JS (non-TS consumers)
-2. Security and correctness
+    - Plugin development documentation and examples
+
+4. **Phase 4: Security and Performance**
     - Optional HTML sanitizer hook for allowed HTML tags (document safe defaults and trade-offs)
-    - Additional E2E coverage for attribute escaping and nested unsupported HTML
-3. Documentation
-    - Dedicated section in the docs site for override patterns and presets
-    - Migration notes for users replacing custom large maps with helpers
-4. Performance
-    - Micro-benchmarks for large documents comparing default vs allow/block strategies
-5. API polish
-    - Ensure exports are tree-shakeable and types remain stable; consider deprecation notes if future renames occur
+    - Plugin security validation and sandboxing
+    - Micro-benchmarks for plugin performance impact
+    - Bundle size optimization for optional plugins
+
+5. **Phase 5: Documentation and Polish**
+    - Dedicated section in the docs site for plugin system and presets
+    - Migration notes for users adopting plugins
+    - Ensure exports are tree-shakeable and types remain stable

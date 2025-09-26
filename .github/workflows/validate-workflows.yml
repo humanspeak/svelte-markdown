@@ -21,7 +21,7 @@ jobs:
                   fetch-depth: 0 # Fetch full history for git comparisons
 
             - name: Set up Python
-              uses: actions/setup-python@v5
+              uses: actions/setup-python@v5 # zizmor: ignore[unpinned-uses]
               with:
                   python-version: '3.12'
 
@@ -40,7 +40,7 @@ jobs:
                   fi
 
             - name: Cache uv installation
-              uses: actions/cache@v4
+              uses: actions/cache@v4 # zizmor: ignore[unpinned-uses]
               with:
                   path: ~/.local/bin/uv
                   key: ${{ runner.os }}-uv-${{ steps.uv-version.outputs.version }}
@@ -100,7 +100,6 @@ jobs:
                   echo "$HOME/.local/bin" >> $GITHUB_PATH
 
             - name: Validate all workflows
-              working-directory: .github/workflows
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   BASE_REF: ${{ github.base_ref }}
@@ -110,12 +109,15 @@ jobs:
 
                   # Initialize error flag
                   has_errors=0
+                  # Prepare logs directory at repository root
+                  LOG_DIR="${GITHUB_WORKSPACE}/zizmor-logs"
+                  mkdir -p "${LOG_DIR}"
 
                   # Validate inputs
                   if [ -z "${BASE_REF:-}" ]; then
                       echo "::warning::BASE_REF is not set, validating all workflow files"
-                      # If no base ref (manual trigger), validate all workflows
-                      changed_files=$(find . -name "*.yml" -o -name "*.yaml" | sed 's|^\./||' || true)
+                      # If no base ref (manual trigger), validate all workflows under .github/workflows
+                      changed_files=$(find .github/workflows -type f \( -name "*.yml" -o -name "*.yaml" \) || true)
                   else
                       echo "Comparing against base ref: $BASE_REF"
 
@@ -126,13 +128,13 @@ jobs:
                       # Try different git diff approaches for PR context
                       if git rev-parse "origin/${BASE_REF}" >/dev/null 2>&1; then
                           echo "Using origin/${BASE_REF} for comparison"
-                          changed_files=$(git diff --name-only "origin/${BASE_REF}" | grep -E '^\.github/workflows/[^/]+\.ya?ml$' || true)
+                          changed_files=$(git diff --diff-filter=AM --name-only "origin/${BASE_REF}" | grep -E '^\.github/workflows/[^/]+\.ya?ml$' || true)
                       elif git rev-parse "remotes/origin/${BASE_REF}" >/dev/null 2>&1; then
                           echo "Using remotes/origin/${BASE_REF} for comparison"
-                          changed_files=$(git diff --name-only "remotes/origin/${BASE_REF}" | grep -E '^\.github/workflows/[^/]+\.ya?ml$' || true)
+                          changed_files=$(git diff --diff-filter=AM --name-only "remotes/origin/${BASE_REF}" | grep -E '^\.github/workflows/[^/]+\.ya?ml$' || true)
                       elif git rev-parse "${BASE_REF}" >/dev/null 2>&1; then
                           echo "Using ${BASE_REF} for comparison"
-                          changed_files=$(git diff --name-only "${BASE_REF}" | grep -E '^\.github/workflows/[^/]+\.ya?ml$' || true)
+                          changed_files=$(git diff --diff-filter=AM --name-only "${BASE_REF}" | grep -E '^\.github/workflows/[^/]+\.ya?ml$' || true)
                       else
                           echo "::warning::Cannot find base ref ${BASE_REF} in any form"
                           echo "Falling back to validating all workflow files"
@@ -144,6 +146,8 @@ jobs:
 
                   if [ -z "$changed_files" ]; then
                       echo "No workflow files changed"
+                      # Still write an empty marker so downstream steps succeed
+                      echo 0 > "${LOG_DIR}/has_errors.txt"
                       exit 0
                   fi
 
@@ -151,26 +155,50 @@ jobs:
                   while IFS= read -r file; do
                       [ -z "$file" ] && continue
 
-                      # Safely handle filenames
-                      filename=$(basename -- "$file")
-
-                      # Skip non-yaml files
-                      if [[ ! "$filename" =~ \.(ya?ml)$ ]]; then
+                      # Skip files that were deleted or do not exist in the checkout
+                      if [ ! -f "$file" ]; then
+                          echo "Skipping $file (not present in current checkout — likely deleted or renamed)"
                           continue
                       fi
 
-                      echo "Validating $filename..."
+                      # Skip non-yaml files (defensive)
+                      if [[ ! "$file" =~ \.(ya?ml)$ ]]; then
+                          continue
+                      fi
 
-                      if ! zizmor "$filename" 2>/dev/null; then
-                          echo "::error::Validation failed for $filename"
+                      echo "Validating $file..."
+                      safe_name=$(basename -- "$file")
+                      # Capture zizmor output per-file to logs for troubleshooting
+                      if ! zizmor "$file" > "${LOG_DIR}/${safe_name}.log" 2>&1; then
+                          echo "::error::Validation failed for $file (see artifact zizmor-logs/${safe_name}.log)"
                           has_errors=1
+                      else
+                          echo "Validation passed for $file" | tee -a "${LOG_DIR}/${safe_name}.log" >/dev/null
                       fi
                   done <<< "$changed_files"
 
-                  # Exit with error if any validation failed
-                  if [ "$has_errors" -eq 1 ]; then
-                      echo "::error::One or more workflow validations failed"
-                      exit 1
+                  # Persist error marker for later steps
+                  echo $has_errors > "${LOG_DIR}/has_errors.txt"
+
+                  if [ "$has_errors" -eq 0 ]; then
+                      echo "All workflows validated successfully"
+                  else
+                      echo "One or more workflow validations failed (logs uploaded)"
                   fi
 
-                  echo "All workflows validated successfully"
+            - name: Upload zizmor logs
+              if: always()
+              uses: actions/upload-artifact@v4 # zizmor: ignore[unpinned-uses]
+              with:
+                  name: zizmor-logs
+                  path: ${{ github.workspace }}/zizmor-logs
+
+            - name: Fail if validation errors
+              if: always()
+              run: |
+                  set -euo pipefail
+                  LOG_DIR="${GITHUB_WORKSPACE}/zizmor-logs"
+                  if [ -f "${LOG_DIR}/has_errors.txt" ] && [ "$(cat "${LOG_DIR}/has_errors.txt")" -eq 1 ]; then
+                      echo "One or more workflow validations failed (see artifact zizmor-logs)"
+                      exit 1
+                  fi

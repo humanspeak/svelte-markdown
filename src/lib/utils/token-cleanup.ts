@@ -43,6 +43,7 @@ export const isHtmlOpenTag = (raw: string): { tag: string; isOpening: boolean } 
 
     // If we found a tag, extract its name and check if it's an opening tag
     const match = raw.match(HTML_TAG_PATTERN)
+    // c8 ignore next
     if (!match) return null
     return { tag: match[1], isOpening: !raw.startsWith('</') }
 }

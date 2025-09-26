@@ -47,6 +47,32 @@ describe('testing default renderers', () => {
         expect(element.nodeName).toBe('P')
     })
 
+    test('parses inline when isInline is true (no paragraph wrapper)', async () => {
+        const { container } = render(SvelteMarkdown, {
+            props: { source: '**bold** text', isInline: true }
+        })
+
+        await vi.runAllTimersAsync()
+
+        // Should render a <strong> directly, not wrapped in <p>
+        const strong = container.querySelector('strong')
+        expect(strong).toBeInTheDocument()
+        expect(strong?.textContent).toBe('bold')
+        expect(container.querySelector('p')).toBeNull()
+    })
+
+    test('empty string source yields empty tokens and empty DOM', async () => {
+        const parsed = vi.fn()
+        const { container } = render(SvelteMarkdown, {
+            props: { source: '', parsed }
+        })
+
+        await vi.runAllTimersAsync()
+
+        expect(parsed).toHaveBeenCalledWith([])
+        expect(container.textContent?.trim()).toBe('')
+    })
+
     test('renders emphasized paragraph', () => {
         render(SvelteMarkdown, { source: '*Plain text*' })
 

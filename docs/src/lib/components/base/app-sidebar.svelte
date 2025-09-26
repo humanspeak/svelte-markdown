@@ -67,6 +67,16 @@
                                             <span>/diff</span>
                                         </a>
                                     </Sidebar.MenuButton>
+                                    <Sidebar.MenuButton>
+                                        <a href="https://purify.svelte.page">
+                                            <span>/purify</span>
+                                        </a>
+                                    </Sidebar.MenuButton>
+                                    <Sidebar.MenuButton>
+                                        <a href="https://motion.svelte.page">
+                                            <span>/motion</span>
+                                        </a>
+                                    </Sidebar.MenuButton>
                                 </Sidebar.MenuSubItem>
                             </Sidebar.MenuSub>
                         </Collapsible.Content>

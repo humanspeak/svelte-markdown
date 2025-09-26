@@ -128,6 +128,12 @@ describe('parseHtmlBlock', () => {
         })
     })
 
+    it('should emit trailing text after closing tags', () => {
+        const tokens = parseHtmlBlock('<div>content</div> tail')
+        expect(tokens).toHaveLength(4)
+        expect(tokens[3]).toMatchObject({ type: 'text', raw: ' tail', text: ' tail' })
+    })
+
     it('should handle HTML entities in text', () => {
         const html = '<div>&lt;escaped&gt; &amp; &quot;quoted&quot;</div>'
         const tokens = parseHtmlBlock(html)
