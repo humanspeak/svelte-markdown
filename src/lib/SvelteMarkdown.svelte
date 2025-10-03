@@ -54,13 +54,11 @@
     import {
         defaultOptions,
         defaultRenderers,
-        Lexer,
         Slugger,
         type Token,
         type TokensList
     } from '$lib/utils/markdown-parser.js'
-    import { shrinkHtmlTokens } from '$lib/utils/token-cleanup.js'
-    import { tokenCache } from '$lib/utils/token-cache.js'
+    import { parseAndCacheTokens } from '$lib/utils/parse-and-cache.js'
 
     const {
         source = [],
@@ -82,29 +80,13 @@
             return source as Token[]
         }
 
-        // Empty source
-        if (!source) {
+        // Empty string - return empty array (avoid cache overhead)
+        if (source === '') {
             return []
         }
 
-        // Check cache first - avoids expensive parsing
-        const cached = tokenCache.getTokens(source as string, combinedOptions)
-        if (cached) {
-            return cached
-        }
-
-        // Cache miss - parse and store
-        const lexer = new Lexer(combinedOptions)
-        const parsedTokens = isInline
-            ? lexer.inlineTokens(source as string)
-            : lexer.lex(source as string)
-
-        const cleanedTokens = shrinkHtmlTokens(parsedTokens) as Token[]
-
-        // Cache the cleaned tokens for next time
-        tokenCache.setTokens(source as string, combinedOptions, cleanedTokens)
-
-        return cleanedTokens
+        // Parse with caching (handles cache lookup, parsing, and storage)
+        return parseAndCacheTokens(source as string, combinedOptions, isInline)
     }) satisfies Token[] | TokensList | undefined
 
     $effect(() => {

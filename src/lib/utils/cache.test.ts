@@ -74,7 +74,6 @@ describe('MemoryCache', () => {
         })
 
         it('should handle null and undefined values', () => {
-            /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
             const anyCache = new MemoryCache<any>()
             anyCache.set('null', null)
             anyCache.set('undefined', undefined)
@@ -84,7 +83,6 @@ describe('MemoryCache', () => {
         })
 
         it('should cache null and undefined values correctly', () => {
-            /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
             const anyCache = new MemoryCache<any>()
 
             // Test that undefined is cached
@@ -111,14 +109,12 @@ describe('MemoryCache', () => {
         })
 
         it('should return true for cached undefined values', () => {
-            /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
             const anyCache = new MemoryCache<any>()
             anyCache.set('undefined', undefined)
             expect(anyCache.has('undefined')).toBe(true)
         })
 
         it('should return true for cached null values', () => {
-            /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
             const anyCache = new MemoryCache<any>()
             anyCache.set('null', null)
             expect(anyCache.has('null')).toBe(true)
@@ -195,6 +191,35 @@ describe('MemoryCache', () => {
 
             // Getting key2 should not return key1 even though it's expired
             expect(ttlCache.get('key2')).toBeUndefined()
+        })
+
+        it('should refresh TTL when updating existing key', () => {
+            vi.useFakeTimers()
+            const ttlCache = new MemoryCache<string>({ ttl: 1000 })
+
+            // Set initial value
+            ttlCache.set('key1', 'value1')
+
+            // Advance time by 500ms (halfway to expiration)
+            vi.advanceTimersByTime(500)
+
+            // Update the key with new value (should refresh TTL)
+            ttlCache.set('key1', 'value1-updated')
+
+            // Advance another 600ms (total: 1100ms from original set)
+            // This exceeds the original TTL but not the refreshed one
+            vi.advanceTimersByTime(600)
+
+            // Should still be cached with updated value (TTL was refreshed)
+            expect(ttlCache.get('key1')).toBe('value1-updated')
+
+            // Advance past the refreshed TTL
+            vi.advanceTimersByTime(500) // Total: 1600ms, exceeds refreshed TTL
+
+            // Now it should be expired
+            expect(ttlCache.get('key1')).toBeUndefined()
+
+            vi.useRealTimers()
         })
     })
 
@@ -787,7 +812,6 @@ describe('cached decorator', () => {
                 callCount = 0
 
                 @cached<string>()
-                /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
                 getValue(obj: any): string {
                     this.callCount++
                     return `value-${obj.id}`
@@ -795,7 +819,6 @@ describe('cached decorator', () => {
             }
 
             const instance = new TestClass()
-            /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
             const circularObj: any = { id: '123' }
             circularObj.self = circularObj
 
