@@ -11,6 +11,7 @@
         "strict": true,
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
+        "experimentalDecorators": true,
         "types": ["vitest/globals"]
     }
 }
