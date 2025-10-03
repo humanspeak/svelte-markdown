@@ -1,4 +1,4 @@
-import type { MarkedOptions } from 'marked'
+import type { SvelteMarkdownOptions } from '$lib/types.js'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { parseAndCacheTokens } from './parse-and-cache'
 import { tokenCache } from './token-cache'
@@ -12,7 +12,7 @@ describe('parseAndCacheTokens', () => {
     describe('Basic Parsing', () => {
         it('should parse simple markdown', () => {
             const source = '# Hello World'
-            const options: MarkedOptions = { gfm: true }
+            const options: SvelteMarkdownOptions = { gfm: true }
             const tokens = parseAndCacheTokens(source, options, false)
 
             expect(tokens).toBeDefined()
@@ -23,7 +23,7 @@ describe('parseAndCacheTokens', () => {
 
         it('should parse inline markdown', () => {
             const source = 'Hello **world**'
-            const options: MarkedOptions = { gfm: true }
+            const options: SvelteMarkdownOptions = { gfm: true }
             const tokens = parseAndCacheTokens(source, options, true)
 
             expect(tokens).toBeDefined()
@@ -33,7 +33,7 @@ describe('parseAndCacheTokens', () => {
 
         it('should parse empty string', () => {
             const source = ''
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
             const tokens = parseAndCacheTokens(source, options, false)
 
             expect(tokens).toBeDefined()
@@ -54,7 +54,7 @@ This is a paragraph with **bold** and *italic*.
 console.log('code');
 \`\`\`
             `
-            const options: MarkedOptions = { gfm: true }
+            const options: SvelteMarkdownOptions = { gfm: true }
             const tokens = parseAndCacheTokens(source, options, false)
 
             expect(tokens.length).toBeGreaterThan(3)
@@ -64,7 +64,7 @@ console.log('code');
     describe('Caching Behavior', () => {
         it('should cache parsed tokens', () => {
             const source = '# Test'
-            const options: MarkedOptions = { gfm: true }
+            const options: SvelteMarkdownOptions = { gfm: true }
 
             // First call - cache miss
             expect(tokenCache.hasTokens(source, options)).toBe(false)
@@ -81,7 +81,7 @@ console.log('code');
         it('should return different tokens for different sources', () => {
             const source1 = '# Heading 1'
             const source2 = '# Heading 2'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const tokens1 = parseAndCacheTokens(source1, options, false)
             const tokens2 = parseAndCacheTokens(source2, options, false)
@@ -92,8 +92,8 @@ console.log('code');
 
         it('should return different tokens for different options', () => {
             const source = '# Test'
-            const options1: MarkedOptions = { gfm: true }
-            const options2: MarkedOptions = { gfm: false }
+            const options1: SvelteMarkdownOptions = { gfm: true }
+            const options2: SvelteMarkdownOptions = { gfm: false }
 
             const tokens1 = parseAndCacheTokens(source, options1, false)
             const tokens2 = parseAndCacheTokens(source, options2, false)
@@ -105,7 +105,7 @@ console.log('code');
 
         it('should return different tokens for inline vs block parsing', () => {
             const source = 'Hello **world**'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const blockTokens = parseAndCacheTokens(source, options, false)
             const inlineTokens = parseAndCacheTokens(source, options, true)
@@ -121,7 +121,7 @@ console.log('code');
     describe('Performance', () => {
         it('should be faster on cache hit', () => {
             const source = '# '.repeat(100) + '\n\nParagraph\n\n'.repeat(100)
-            const options: MarkedOptions = { gfm: true }
+            const options: SvelteMarkdownOptions = { gfm: true }
 
             // First call - parse (measure multiple times for accuracy)
             const iterations = 10
@@ -151,7 +151,7 @@ console.log('code');
 
         it('should handle large documents efficiently', () => {
             const source = '# Heading\n\nParagraph text.\n\n'.repeat(1000)
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const start = performance.now()
             const tokens = parseAndCacheTokens(source, options, false)
@@ -164,7 +164,7 @@ console.log('code');
 
         it('should cache and retrieve large documents quickly', () => {
             const source = '# Heading\n\nParagraph text.\n\n'.repeat(1000)
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             // Parse once
             parseAndCacheTokens(source, options, false)
@@ -182,7 +182,7 @@ console.log('code');
     describe('Token Cleanup', () => {
         it('should apply shrinkHtmlTokens to parsed tokens', () => {
             const source = '<div>Hello</div><div>World</div>'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const tokens = parseAndCacheTokens(source, options, false)
 
@@ -193,7 +193,7 @@ console.log('code');
 
         it('should handle mixed HTML and markdown', () => {
             const source = '# Heading\n\n<div>HTML content</div>\n\nParagraph'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const tokens = parseAndCacheTokens(source, options, false)
 
@@ -205,7 +205,7 @@ console.log('code');
     describe('Edge Cases', () => {
         it('should handle whitespace-only content', () => {
             const source = '   \n\n   \n   '
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const tokens = parseAndCacheTokens(source, options, false)
 
@@ -215,7 +215,7 @@ console.log('code');
 
         it('should handle unicode content', () => {
             const source = '# 测试 🔥\n\nContent with émojis 🎉'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const tokens = parseAndCacheTokens(source, options, false)
 
@@ -225,7 +225,7 @@ console.log('code');
 
         it('should handle special characters', () => {
             const source = '# Title with `code` and [link](url)'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const tokens = parseAndCacheTokens(source, options, false)
 
@@ -235,7 +235,7 @@ console.log('code');
 
         it('should handle malformed markdown gracefully', () => {
             const source = '# Heading\n\n**Unclosed bold\n\n[Incomplete link'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const tokens = parseAndCacheTokens(source, options, false)
 
@@ -247,8 +247,8 @@ console.log('code');
     describe('Options Handling', () => {
         it('should respect GFM option', () => {
             const source = '~~strikethrough~~'
-            const optionsGfm: MarkedOptions = { gfm: true }
-            const optionsNoGfm: MarkedOptions = { gfm: false }
+            const optionsGfm: SvelteMarkdownOptions = { gfm: true }
+            const optionsNoGfm: SvelteMarkdownOptions = { gfm: false }
 
             const tokensGfm = parseAndCacheTokens(source, optionsGfm, false)
             const tokensNoGfm = parseAndCacheTokens(source, optionsNoGfm, false)
@@ -260,8 +260,8 @@ console.log('code');
 
         it('should respect breaks option', () => {
             const source = 'Line 1\nLine 2'
-            const optionsBreaks: MarkedOptions = { breaks: true }
-            const optionsNoBreaks: MarkedOptions = { breaks: false }
+            const optionsBreaks: SvelteMarkdownOptions = { breaks: true }
+            const optionsNoBreaks: SvelteMarkdownOptions = { breaks: false }
 
             const tokensBreaks = parseAndCacheTokens(source, optionsBreaks, false)
             const tokensNoBreaks = parseAndCacheTokens(source, optionsNoBreaks, false)
@@ -272,7 +272,7 @@ console.log('code');
 
         it('should handle empty options object', () => {
             const source = '# Test'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const tokens = parseAndCacheTokens(source, options, false)
 
@@ -284,7 +284,7 @@ console.log('code');
     describe('Integration with Cache', () => {
         it('should reuse cached tokens on subsequent calls', () => {
             const source = '# Test'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const tokens1 = parseAndCacheTokens(source, options, false)
             const tokens2 = parseAndCacheTokens(source, options, false)
@@ -297,7 +297,7 @@ console.log('code');
 
         it('should work correctly after cache clear', () => {
             const source = '# Test'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const tokens1 = parseAndCacheTokens(source, options, false)
             tokenCache.clearAllTokens()
@@ -310,7 +310,7 @@ console.log('code');
         })
 
         it('should handle concurrent parsing requests', () => {
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const results = []
             for (let i = 0; i < 10; i++) {
@@ -328,7 +328,7 @@ console.log('code');
     describe('Return Type', () => {
         it('should return Token[] for block parsing', () => {
             const source = '# Test\n\nParagraph'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const tokens = parseAndCacheTokens(source, options, false)
 
@@ -338,7 +338,7 @@ console.log('code');
 
         it('should return tokens for inline parsing', () => {
             const source = 'Inline **bold** text'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const tokens = parseAndCacheTokens(source, options, true)
 
@@ -348,7 +348,7 @@ console.log('code');
 
         it('should return cleaned tokens (after shrinkHtmlTokens)', () => {
             const source = '<div>Test</div>'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const tokens = parseAndCacheTokens(source, options, false)
 

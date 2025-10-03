@@ -1,4 +1,4 @@
-import type { MarkedOptions } from 'marked'
+import type { SvelteMarkdownOptions } from 'marked'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Token } from './markdown-parser'
 import { TokenCache, hashString } from './token-cache'
@@ -64,7 +64,7 @@ describe('TokenCache', () => {
     describe('getTokens() and setTokens()', () => {
         it('should cache and retrieve tokens', () => {
             const source = '# Hello World'
-            const options: MarkedOptions = { gfm: true }
+            const options: SvelteMarkdownOptions = { gfm: true }
             const tokens: Token[] = [
                 { type: 'heading', raw: '# Hello World', depth: 1, text: 'Hello World' }
             ]
@@ -83,7 +83,7 @@ describe('TokenCache', () => {
         it('should cache different tokens for different sources', () => {
             const source1 = '# Heading 1'
             const source2 = '# Heading 2'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
             const tokens1: Token[] = [
                 { type: 'heading', raw: source1, depth: 1, text: 'Heading 1' }
             ]
@@ -100,8 +100,8 @@ describe('TokenCache', () => {
 
         it('should cache different tokens for different options', () => {
             const source = '# Test'
-            const options1: MarkedOptions = { gfm: true }
-            const options2: MarkedOptions = { gfm: false }
+            const options1: SvelteMarkdownOptions = { gfm: true }
+            const options2: SvelteMarkdownOptions = { gfm: false }
             const tokens1: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test' }]
             const tokens2: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test 2' }]
 
@@ -114,7 +114,7 @@ describe('TokenCache', () => {
 
         it('should handle empty markdown source', () => {
             const source = ''
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
             const tokens: Token[] = []
 
             cache.setTokens(source, options, tokens)
@@ -123,7 +123,7 @@ describe('TokenCache', () => {
 
         it('should handle large markdown documents', () => {
             const source = '# Heading\n\nParagraph text.\n\n'.repeat(1000)
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
             const tokens: Token[] = [
                 { type: 'heading', raw: '# Large Doc', depth: 1, text: 'Large Doc' }
             ]
@@ -139,7 +139,7 @@ describe('TokenCache', () => {
 
         it('should handle unicode in markdown', () => {
             const source = '# 测试 🔥'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
             const tokens: Token[] = [{ type: 'heading', raw: source, depth: 1, text: '测试 🔥' }]
 
             cache.setTokens(source, options, tokens)
@@ -150,7 +150,7 @@ describe('TokenCache', () => {
     describe('hasTokens()', () => {
         it('should return true for cached tokens', () => {
             const source = '# Test'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
             const tokens: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test' }]
 
             cache.setTokens(source, options, tokens)
@@ -165,7 +165,7 @@ describe('TokenCache', () => {
             vi.useFakeTimers()
             const ttlCache = new TokenCache({ ttl: 1000 })
             const source = '# Test'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
             const tokens: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test' }]
 
             ttlCache.setTokens(source, options, tokens)
@@ -181,7 +181,7 @@ describe('TokenCache', () => {
     describe('deleteTokens()', () => {
         it('should delete cached tokens', () => {
             const source = '# Test'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
             const tokens: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test' }]
 
             cache.setTokens(source, options, tokens)
@@ -198,8 +198,8 @@ describe('TokenCache', () => {
 
         it('should only delete specific source/options combination', () => {
             const source = '# Test'
-            const options1: MarkedOptions = { gfm: true }
-            const options2: MarkedOptions = { gfm: false }
+            const options1: SvelteMarkdownOptions = { gfm: true }
+            const options2: SvelteMarkdownOptions = { gfm: false }
             const tokens1: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test 1' }]
             const tokens2: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test 2' }]
 
@@ -217,7 +217,7 @@ describe('TokenCache', () => {
         it('should clear all cached tokens', () => {
             const source1 = '# Test 1'
             const source2 = '# Test 2'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
             const tokens1: Token[] = [{ type: 'heading', raw: source1, depth: 1, text: 'Test 1' }]
             const tokens2: Token[] = [{ type: 'heading', raw: source2, depth: 1, text: 'Test 2' }]
 
@@ -232,7 +232,7 @@ describe('TokenCache', () => {
 
         it('should allow caching after clear', () => {
             const source = '# Test'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
             const tokens: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test' }]
 
             cache.setTokens(source, options, tokens)
@@ -255,7 +255,7 @@ describe('TokenCache', () => {
         it('should expire tokens after TTL', () => {
             const ttlCache = new TokenCache({ ttl: 1000 })
             const source = '# Test'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
             const tokens: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test' }]
 
             ttlCache.setTokens(source, options, tokens)
@@ -268,7 +268,7 @@ describe('TokenCache', () => {
         it('should not expire tokens before TTL', () => {
             const ttlCache = new TokenCache({ ttl: 1000 })
             const source = '# Test'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
             const tokens: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test' }]
 
             ttlCache.setTokens(source, options, tokens)
@@ -281,7 +281,7 @@ describe('TokenCache', () => {
     describe('Max Size Eviction', () => {
         it('should evict oldest entry when max size is reached', () => {
             const sizeCache = new TokenCache({ maxSize: 2 })
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const source1 = '# Test 1'
             const source2 = '# Test 2'
@@ -301,7 +301,7 @@ describe('TokenCache', () => {
 
         it('should handle max size of 1', () => {
             const sizeCache = new TokenCache({ maxSize: 1 })
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             const source1 = '# Test 1'
             const source2 = '# Test 2'
@@ -319,7 +319,7 @@ describe('TokenCache', () => {
     describe('Performance Tests', () => {
         it('should handle many cache operations efficiently', () => {
             const source = '# Test'
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
             const tokens: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test' }]
 
             cache.setTokens(source, options, tokens)
@@ -334,7 +334,7 @@ describe('TokenCache', () => {
         })
 
         it('should handle many unique documents', () => {
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
 
             for (let i = 0; i < 100; i++) {
                 const source = `# Heading ${i}`
@@ -353,7 +353,7 @@ describe('TokenCache', () => {
     describe('Edge Cases', () => {
         it('should handle very long markdown', () => {
             const source = '# Heading\n\n'.repeat(100000) // ~1.2MB
-            const options: MarkedOptions = {}
+            const options: SvelteMarkdownOptions = {}
             const tokens: Token[] = [{ type: 'heading', raw: '# Test', depth: 1, text: 'Test' }]
 
             const start = performance.now()
@@ -367,7 +367,7 @@ describe('TokenCache', () => {
 
         it('should handle complex options objects', () => {
             const source = '# Test'
-            const options: MarkedOptions = {
+            const options: SvelteMarkdownOptions = {
                 gfm: true,
                 breaks: true,
                 pedantic: false,
@@ -383,8 +383,8 @@ describe('TokenCache', () => {
 
         it('should treat similar options as different', () => {
             const source = '# Test'
-            const options1: MarkedOptions = { gfm: true }
-            const options2: MarkedOptions = { gfm: true, breaks: false }
+            const options1: SvelteMarkdownOptions = { gfm: true }
+            const options2: SvelteMarkdownOptions = { gfm: true, breaks: false }
             const tokens1: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test 1' }]
             const tokens2: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test 2' }]
 

@@ -14,9 +14,9 @@
  * @module token-cache
  */
 
-import type { MarkedOptions } from 'marked'
-import { MemoryCache } from './cache.js'
-import type { Token, TokensList } from './markdown-parser.js'
+import type { SvelteMarkdownOptions } from '$lib/types.js'
+import { MemoryCache } from '$lib/utils/cache.js'
+import type { Token, TokensList } from '$lib/utils/markdown-parser.js'
 
 /**
  * Fast non-cryptographic hash function using FNV-1a algorithm.
@@ -59,7 +59,7 @@ function hashString(str: string): string {
  * errors from internal marked.js objects.
  *
  * @param source - Raw markdown string
- * @param options - Marked parser options
+ * @param options - Svelte markdown parser options
  * @returns Composite cache key
  *
  * @example
@@ -69,7 +69,7 @@ function hashString(str: string): string {
  * console.log(key1 !== key2) // true - different options = different key
  * ```
  */
-function getCacheKey(source: string, options: MarkedOptions): string {
+function getCacheKey(source: string, options: SvelteMarkdownOptions): string {
     const sourceHash = hashString(source)
 
     // Only serialize relevant option properties (avoid circular references from tokenizer, etc.)
@@ -145,7 +145,7 @@ export class TokenCache extends MemoryCache<Token[] | TokensList> {
      * Returns undefined if not cached or expired.
      *
      * @param source - Raw markdown string
-     * @param options - Marked parser options
+     * @param options - Svelte markdown parser options
      * @returns Cached tokens or undefined
      *
      * @example
@@ -156,7 +156,7 @@ export class TokenCache extends MemoryCache<Token[] | TokensList> {
      * }
      * ```
      */
-    getTokens(source: string, options: MarkedOptions): Token[] | TokensList | undefined {
+    getTokens(source: string, options: SvelteMarkdownOptions): Token[] | TokensList | undefined {
         const key = getCacheKey(source, options)
         return this.get(key)
     }
@@ -166,7 +166,7 @@ export class TokenCache extends MemoryCache<Token[] | TokensList> {
      * If cache is full, oldest entry is evicted (LRU).
      *
      * @param source - Raw markdown string
-     * @param options - Marked parser options
+     * @param options - Svelte markdown parser options
      * @param tokens - Parsed token array or token list
      *
      * @example
@@ -175,7 +175,7 @@ export class TokenCache extends MemoryCache<Token[] | TokensList> {
      * cache.setTokens(markdown, options, tokens)
      * ```
      */
-    setTokens(source: string, options: MarkedOptions, tokens: Token[] | TokensList): void {
+    setTokens(source: string, options: SvelteMarkdownOptions, tokens: Token[] | TokensList): void {
         const key = getCacheKey(source, options)
         this.set(key, tokens)
     }
@@ -185,7 +185,7 @@ export class TokenCache extends MemoryCache<Token[] | TokensList> {
      * Useful for cache statistics or conditional logic.
      *
      * @param source - Raw markdown string
-     * @param options - Marked parser options
+     * @param options - Svelte markdown parser options
      * @returns True if cached and not expired
      *
      * @example
@@ -195,7 +195,7 @@ export class TokenCache extends MemoryCache<Token[] | TokensList> {
      * }
      * ```
      */
-    hasTokens(source: string, options: MarkedOptions): boolean {
+    hasTokens(source: string, options: SvelteMarkdownOptions): boolean {
         const key = getCacheKey(source, options)
         return this.has(key)
     }
@@ -204,7 +204,7 @@ export class TokenCache extends MemoryCache<Token[] | TokensList> {
      * Removes cached tokens for specific source and options.
      *
      * @param source - Raw markdown string
-     * @param options - Marked parser options
+     * @param options - Svelte markdown parser options
      * @returns True if entry was removed, false if not found
      *
      * @example
@@ -212,7 +212,7 @@ export class TokenCache extends MemoryCache<Token[] | TokensList> {
      * cache.deleteTokens(markdown, options) // Remove specific cached entry
      * ```
      */
-    deleteTokens(source: string, options: MarkedOptions): boolean {
+    deleteTokens(source: string, options: SvelteMarkdownOptions): boolean {
         const key = getCacheKey(source, options)
         return this.delete(key)
     }

@@ -7,17 +7,18 @@
  * @module parse-and-cache
  */
 
+import type { SvelteMarkdownOptions } from '$lib/types.js'
 import type { Token, TokensList } from '$lib/utils/markdown-parser.js'
 import { tokenCache } from '$lib/utils/token-cache.js'
 import { shrinkHtmlTokens } from '$lib/utils/token-cleanup.js'
-import { Lexer, type MarkedOptions } from 'marked'
+import { Lexer } from 'marked'
 
 /**
  * Parses markdown source with caching.
  * Checks cache first, parses on miss, stores result, and returns tokens.
  *
  * @param source - Raw markdown string to parse
- * @param options - Marked parser options
+ * @param options - Svelte markdown parser options
  * @param isInline - Whether to parse as inline markdown (no block elements)
  * @returns Cleaned and cached token array
  *
@@ -34,7 +35,7 @@ import { Lexer, type MarkedOptions } from 'marked'
  */
 export function parseAndCacheTokens(
     source: string,
-    options: MarkedOptions,
+    options: SvelteMarkdownOptions,
     isInline: boolean
 ): Token[] | TokensList {
     // Check cache first - avoids expensive parsing
