@@ -29,6 +29,9 @@ export {
     htmlRendererKeysInternal as htmlRendererKeys,
     rendererKeysInternal as rendererKeys
 } from '$lib/utils/rendererKeys.js'
+// Cache utilities
+export { MemoryCache } from '$lib/utils/cache.js'
+export { TokenCache, tokenCache } from '$lib/utils/token-cache.js'
 export type {
     HtmlRenderers,
     RendererComponent,

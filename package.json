@@ -1,21 +1,29 @@
 {
     "name": "@humanspeak/svelte-markdown",
     "version": "0.8.10",
-    "description": "A powerful, customizable markdown renderer for Svelte with TypeScript support",
+    "description": "Fast, customizable markdown renderer for Svelte with built-in caching, TypeScript support, and Svelte 5 runes",
     "keywords": [
         "svelte",
+        "svelte5",
+        "sveltekit",
         "markdown",
         "renderer",
         "parser",
+        "fast",
+        "performance",
+        "cache",
+        "caching",
         "marked",
         "component",
-        "sveltekit",
-        "svelte5",
+        "typescript",
+        "runes",
         "md",
         "documentation",
         "html",
         "converter",
-        "formatting"
+        "formatting",
+        "customizable",
+        "extensible"
     ],
     "homepage": "https://markdown.svelte.page",
     "bugs": {
