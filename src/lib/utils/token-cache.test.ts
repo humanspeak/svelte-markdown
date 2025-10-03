@@ -350,6 +350,70 @@ describe('TokenCache', () => {
         })
     })
 
+    describe('Custom Extensions and Tokenizers', () => {
+        it('should differentiate between different custom tokenizers', () => {
+            const source = '# Test'
+
+            // Use named functions with different implementations
+            function customTokenizer1() {
+                return { type: 'heading', raw: '', depth: 1, text: 'Custom1' }
+            }
+            function customTokenizer2() {
+                return { type: 'heading', raw: '', depth: 2, text: 'Custom2' } // Different depth
+            }
+
+            const options1: SvelteMarkdownOptions = {
+                tokenizer: { heading: customTokenizer1 }
+            }
+            const options2: SvelteMarkdownOptions = {
+                tokenizer: { heading: customTokenizer2 }
+            }
+
+            const tokens1: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test 1' }]
+            const tokens2: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test 2' }]
+
+            cache.setTokens(source, options1, tokens1)
+            cache.setTokens(source, options2, tokens2)
+
+            // Should have separate cache entries (different function names/bodies)
+            expect(cache.getTokens(source, options1)).toEqual(tokens1)
+            expect(cache.getTokens(source, options2)).toEqual(tokens2)
+        })
+
+        it('should differentiate between options with and without extensions', () => {
+            const source = '# Test'
+            const optionsNoExt: SvelteMarkdownOptions = { gfm: true }
+            const optionsWithExt: SvelteMarkdownOptions = {
+                gfm: true,
+                extensions: [{ name: 'custom', level: 'block' }]
+            }
+
+            const tokens1: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'No Ext' }]
+            const tokens2: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'With Ext' }]
+
+            cache.setTokens(source, optionsNoExt, tokens1)
+            cache.setTokens(source, optionsWithExt, tokens2)
+
+            // Should have separate cache entries
+            expect(cache.getTokens(source, optionsNoExt)).toEqual(tokens1)
+            expect(cache.getTokens(source, optionsWithExt)).toEqual(tokens2)
+        })
+
+        it('should handle circular references in options', () => {
+            const source = '# Test'
+            /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
+            const circularOptions: any = { gfm: true }
+            circularOptions.self = circularOptions // Create circular reference
+
+            // Should not throw error
+            expect(() => {
+                const tokens: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test' }]
+                cache.setTokens(source, circularOptions, tokens)
+                cache.getTokens(source, circularOptions)
+            }).not.toThrow()
+        })
+    })
+
     describe('Edge Cases', () => {
         it('should handle very long markdown', () => {
             const source = '# Heading\n\n'.repeat(100000) // ~1.2MB

@@ -55,8 +55,10 @@ function hashString(str: string): string {
  * Combines hashes of both source content and options to ensure
  * different parsing configurations are cached separately.
  *
- * Only serializes the relevant option properties to avoid circular reference
- * errors from internal marked.js objects.
+ * Handles non-serializable options (extensions, tokenizer, hooks, etc.) by:
+ * - Serializing functions by name/toString for stable keys
+ * - Detecting and handling circular references
+ * - Including ALL options that affect parsing
  *
  * @param source - Raw markdown string
  * @param options - Svelte markdown parser options
@@ -72,23 +74,23 @@ function hashString(str: string): string {
 function getCacheKey(source: string, options: SvelteMarkdownOptions): string {
     const sourceHash = hashString(source)
 
-    // Only serialize relevant option properties (avoid circular references from tokenizer, etc.)
-    const relevantOptions = {
-        async: options.async,
-        breaks: options.breaks,
-        gfm: options.gfm,
-        headerIds: options.headerIds,
-        headerPrefix: options.headerPrefix,
-        mangle: options.mangle,
-        pedantic: options.pedantic,
-        sanitize: options.sanitize,
-        silent: options.silent,
-        smartLists: options.smartLists,
-        smartypants: options.smartypants,
-        xhtml: options.xhtml
-    }
+    // Safely serialize all options including functions and objects
+    const seen = new WeakSet<object>()
+    const optionsHash = hashString(
+        JSON.stringify(options, (_, value) => {
+            // Serialize functions by their name or source code
+            if (typeof value === 'function') {
+                return value.name || value.toString()
+            }
+            // Handle circular references
+            if (value && typeof value === 'object') {
+                if (seen.has(value)) return '[Circular]'
+                seen.add(value)
+            }
+            return value
+        })
+    )
 
-    const optionsHash = hashString(JSON.stringify(relevantOptions))
     return `${sourceHash}:${optionsHash}`
 }
 
