@@ -78,7 +78,7 @@
 {#if !type}
     {#if tokens}
         {#each tokens as token, index (index)}
-            {@const { text: _text, raw: _raw, ...parserRest } = rest}
+            {@const { text: _text, raw: _raw, tokens: _tokens, ...parserRest } = rest}
             <Parser {...parserRest} {...token} {renderers} />
         {/each}
     {/if}
@@ -159,24 +159,27 @@
         {#if renderers.html && htmlTag in renderers.html}
             {@const HtmlComponent = renderers.html[htmlTag as keyof typeof renderers.html]}
             {#if HtmlComponent}
-                {@const tokens = (rest.tokens as Token[]) ?? ([] as Token[])}
                 <HtmlComponent {...rest}>
-                    {#if tokens.length}
+                    {#if tokens && (tokens as Token[]).length}
                         <Parser
-                            {tokens}
+                            tokens={tokens as Token[]}
                             {renderers}
                             {...Object.fromEntries(
                                 Object.entries(localRest).filter(([key]) => key !== 'attributes')
                             )}
                         />
+                    {:else}
+                        <renderers.rawtext text={rest.raw} {...rest} />
                     {/if}
                 </HtmlComponent>
             {/if}
         {:else}
             <Parser
-                tokens={(rest.tokens as Token[]) ?? ([] as Token[])}
+                tokens={(tokens as Token[]) ?? ([] as Token[])}
                 {renderers}
-                {...localRest}
+                {...Object.fromEntries(
+                    Object.entries(localRest).filter(([key]) => key !== 'tokens')
+                )}
             />
         {/if}
     {:else}

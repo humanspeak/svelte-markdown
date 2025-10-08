@@ -41,26 +41,34 @@ export default [
         },
 
         rules: {
-            semi: ['warn', 'never'],
             'dot-location': ['warn', 'property'],
             'guard-for-in': ['warn'],
-            'no-multi-spaces': ['warn'],
-            yoda: ['warn', 'never'],
             camelcase: ['error'],
-            'comma-style': ['warn'],
-            'comma-dangle': ['off', 'always-multiline'],
-            'block-spacing': ['warn'],
-            'keyword-spacing': ['warn'],
-            'no-trailing-spaces': ['warn'],
             'no-unneeded-ternary': ['warn'],
             'no-whitespace-before-property': ['warn'],
-            'object-curly-spacing': ['warn', 'always'],
-            'space-before-blocks': ['warn'],
-            'space-in-parens': ['warn'],
-            'arrow-spacing': ['warn'],
             'no-duplicate-imports': ['error'],
             'no-var': ['error'],
             'prefer-const': ['error'],
+            semi: 'off',
+            'object-curly-spacing': 'off',
+            'space-in-parens': 'off',
+            'arrow-spacing': 'off',
+            'keyword-spacing': 'off',
+            'block-spacing': 'off',
+            'comma-style': 'off',
+            'no-trailing-spaces': 'off',
+            'no-multi-spaces': 'off',
+            'space-before-blocks': 'off',
+            yoda: 'off',
+            'comma-dangle': 'off',
+            '@typescript-eslint/no-unused-expressions': [
+                'error',
+                {
+                    allowShortCircuit: true,
+                    allowTernary: true,
+                    allowTaggedTemplates: true
+                }
+            ],
 
             'no-unused-vars': [
                 'warn',
@@ -69,12 +77,12 @@ export default [
                     ignoreRestSiblings: true
                 }
             ],
-            '@typescript-eslint/no-unused-expressions': [
-                'error',
+
+            '@typescript-eslint/no-unused-vars': [
+                'warn',
                 {
-                    allowShortCircuit: true,
-                    allowTernary: true,
-                    allowTaggedTemplates: true
+                    argsIgnorePattern: '^_',
+                    ignoreRestSiblings: true
                 }
             ]
         }
@@ -85,6 +93,10 @@ export default [
             parserOptions: {
                 parser: ts.parser
             }
+        },
+        rules: {
+            'prefer-const': ['off'],
+            'svelte/no-navigation-without-resolve': ['off'] // Allow external links
         }
     },
     {

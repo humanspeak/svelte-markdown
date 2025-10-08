@@ -138,8 +138,8 @@ export class TokenCache extends MemoryCache<Token[] | TokensList> {
      * @param options.maxSize - Maximum number of documents to cache (default: 50)
      * @param options.ttl - Time-to-live in milliseconds (default: 5 minutes)
      */
-    constructor(options = { maxSize: 50, ttl: 5 * 60 * 1000 }) {
-        super(options)
+    constructor(options?: { maxSize?: number; ttl?: number }) {
+        super({ maxSize: 50, ttl: 5 * 60 * 1000, ...options })
     }
 
     /**

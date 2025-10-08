@@ -1,7 +1,7 @@
-import type { SvelteMarkdownOptions } from 'marked'
+import type { SvelteMarkdownOptions } from '$lib/types.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Token } from './markdown-parser'
-import { TokenCache, hashString } from './token-cache'
+import type { Token } from './markdown-parser.js'
+import { TokenCache, hashString } from './token-cache.js'
 
 describe('hashString', () => {
     it('should generate consistent hashes for same input', () => {
@@ -362,12 +362,12 @@ describe('TokenCache', () => {
                 return { type: 'heading', raw: '', depth: 2, text: 'Custom2' } // Different depth
             }
 
-            const options1: SvelteMarkdownOptions = {
+            const options1 = {
                 tokenizer: { heading: customTokenizer1 }
-            }
-            const options2: SvelteMarkdownOptions = {
+            } as unknown as SvelteMarkdownOptions
+            const options2 = {
                 tokenizer: { heading: customTokenizer2 }
-            }
+            } as unknown as SvelteMarkdownOptions
 
             const tokens1: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test 1' }]
             const tokens2: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test 2' }]
@@ -383,10 +383,10 @@ describe('TokenCache', () => {
         it('should differentiate between options with and without extensions', () => {
             const source = '# Test'
             const optionsNoExt: SvelteMarkdownOptions = { gfm: true }
-            const optionsWithExt: SvelteMarkdownOptions = {
+            const optionsWithExt = {
                 gfm: true,
                 extensions: [{ name: 'custom', level: 'block' }]
-            }
+            } as unknown as SvelteMarkdownOptions
 
             const tokens1: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'No Ext' }]
             const tokens2: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'With Ext' }]
@@ -401,8 +401,7 @@ describe('TokenCache', () => {
 
         it('should handle circular references in options', () => {
             const source = '# Test'
-            /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
-            const circularOptions: any = { gfm: true }
+            const circularOptions = { gfm: true } as Record<string, unknown>
             circularOptions.self = circularOptions // Create circular reference
 
             // Should not throw error
@@ -434,10 +433,8 @@ describe('TokenCache', () => {
             const options: SvelteMarkdownOptions = {
                 gfm: true,
                 breaks: true,
-                pedantic: false,
-                sanitize: false,
-                smartLists: true,
-                smartypants: true
+                headerIds: true,
+                headerPrefix: 'heading-'
             }
             const tokens: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test' }]
 

@@ -3,6 +3,12 @@ import { render, screen } from '@testing-library/svelte'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
 import type { SvelteMarkdownProps } from './types.js'
+import { tokenCache } from './utils/token-cache.js'
+
+// Clear token cache before each test to avoid cross-test pollution
+beforeEach(() => {
+    tokenCache.clearAllTokens()
+})
 
 describe('testing initialization', () => {
     test('accepts pre-processed tokens as source', async () => {
@@ -289,7 +295,7 @@ describe('testing default renderers', () => {
             expect(headingElement?.textContent).toBe('test')
 
             // Verify the order of elements
-            const elements = Array.from(container.children)
+            const elements: HTMLElement[] = Array.from(container.children)
             expect(elements).toHaveLength(2)
             expect(elements[0].tagName).toBe('P')
             expect(elements[1].tagName).toBe('H1')

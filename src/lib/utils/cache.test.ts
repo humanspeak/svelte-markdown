@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { MemoryCache, cached } from './cache'
+import { MemoryCache, cached } from './cache.js'
 
 describe('MemoryCache', () => {
     let cache: MemoryCache<string>
@@ -580,7 +580,7 @@ describe('MemoryCache', () => {
             }
 
             return Promise.all(promises).then((results) => {
-                results.forEach((result, i) => {
+                results.forEach((result: string | undefined, i: number) => {
                     expect(result).toBe(`value${i}`)
                 })
             })
