@@ -362,14 +362,12 @@ describe('TokenCache', () => {
                 return { type: 'heading', raw: '', depth: 2, text: 'Custom2' } // Different depth
             }
 
-            /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
-            const options1: any = {
+            const options1 = {
                 tokenizer: { heading: customTokenizer1 }
-            }
-            /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
-            const options2: any = {
+            } as unknown as SvelteMarkdownOptions
+            const options2 = {
                 tokenizer: { heading: customTokenizer2 }
-            }
+            } as unknown as SvelteMarkdownOptions
 
             const tokens1: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test 1' }]
             const tokens2: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test 2' }]
@@ -385,11 +383,10 @@ describe('TokenCache', () => {
         it('should differentiate between options with and without extensions', () => {
             const source = '# Test'
             const optionsNoExt: SvelteMarkdownOptions = { gfm: true }
-            /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
-            const optionsWithExt: any = {
+            const optionsWithExt = {
                 gfm: true,
                 extensions: [{ name: 'custom', level: 'block' }]
-            }
+            } as unknown as SvelteMarkdownOptions
 
             const tokens1: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'No Ext' }]
             const tokens2: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'With Ext' }]
@@ -404,7 +401,7 @@ describe('TokenCache', () => {
 
         it('should handle circular references in options', () => {
             const source = '# Test'
-            const circularOptions: any = { gfm: true }
+            const circularOptions = { gfm: true } as Record<string, unknown>
             circularOptions.self = circularOptions // Create circular reference
 
             // Should not throw error

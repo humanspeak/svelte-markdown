@@ -296,7 +296,11 @@ export const containsMultipleTags = (html: string): boolean => {
 export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
     const result: Token[] = []
     for (const token of tokens) {
-        if (token.type === 'list') {
+        if ('tokens' in token && Array.isArray((token as Token & { tokens: Token[] }).tokens)) {
+            const t = token as Token & { tokens: Token[] }
+            t.tokens = shrinkHtmlTokens(t.tokens)
+            result.push(token)
+        } else if (token.type === 'list') {
             token.items = token.items.map((item: Tokens.ListItem, index: number) => ({
                 ...item,
                 listItemIndex: index,
