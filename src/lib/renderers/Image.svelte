@@ -60,6 +60,7 @@
     alt={text}
     loading={lazy ? 'lazy' : 'eager'}
     class:fade-in={fadeIn && loaded && !error}
+    class:visible={!fadeIn && loaded && !error}
     class:error
     onload={handleLoad}
     onerror={handleError}
@@ -69,15 +70,17 @@
     img {
         max-width: 100%;
         height: auto;
-    }
-
-    img:not(.fade-in):not(.error) {
         opacity: 0;
     }
 
     img.fade-in {
         opacity: 1;
         transition: opacity 0.3s ease-in-out;
+    }
+
+    img.visible {
+        opacity: 1;
+        transition: none;
     }
 
     img.error {
