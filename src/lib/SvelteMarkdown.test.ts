@@ -295,7 +295,7 @@ describe('testing default renderers', () => {
             expect(headingElement?.textContent).toBe('test')
 
             // Verify the order of elements
-            const elements = Array.from(container.children)
+            const elements: HTMLElement[] = Array.from(container.children)
             expect(elements).toHaveLength(2)
             expect(elements[0].tagName).toBe('P')
             expect(elements[1].tagName).toBe('H1')
