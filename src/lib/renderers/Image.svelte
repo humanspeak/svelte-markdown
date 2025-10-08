@@ -22,10 +22,16 @@
             return
         }
 
+        // Environments without IntersectionObserver: show immediately
+        if (typeof IntersectionObserver === 'undefined') {
+            visible = true
+            return
+        }
+
         // Use IntersectionObserver for lazy loading
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting) {
+                if (entries[0]?.isIntersecting) {
                     visible = true
                     observer.disconnect()
                 }
@@ -39,7 +45,9 @@
             observer.observe(img)
         }
 
-        return () => observer.disconnect()
+        return () => {
+            observer?.disconnect()
+        }
     })
 
     const handleLoad = () => {

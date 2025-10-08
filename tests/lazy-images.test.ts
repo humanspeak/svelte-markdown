@@ -23,16 +23,17 @@ test.describe('Lazy Image Loading', () => {
         // Should have title
         await expect(img).toHaveAttribute('title', 'Test image title')
 
-        // Wait for image to load and fade in
-        await page.waitForTimeout(500) // Allow time for load event and fade-in
+        // Wait for image to load and fade-in to complete (robust across engines)
+        const handle = await img.elementHandle()
+        await page.waitForFunction(
+            (el) => !!el && parseFloat(window.getComputedStyle(el).opacity) >= 0.99,
+            handle,
+            { timeout: 2000 }
+        )
 
         // Should have fade-in class after loading
         const hasFadeIn = await img.evaluate((el) => el.classList.contains('fade-in'))
         expect(hasFadeIn).toBe(true)
-
-        // Should be fully opaque after fade-in
-        const opacity = await img.evaluate((el) => window.getComputedStyle(el).opacity)
-        expect(opacity).toBe('1')
     })
 
     test('should handle broken images gracefully (negative test)', async ({ page }) => {
