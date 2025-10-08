@@ -3,6 +3,12 @@ import { render, screen } from '@testing-library/svelte'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
 import type { SvelteMarkdownProps } from './types.js'
+import { tokenCache } from './utils/token-cache.js'
+
+// Clear token cache before each test to avoid cross-test pollution
+beforeEach(() => {
+    tokenCache.clearAllTokens()
+})
 
 describe('testing initialization', () => {
     test('accepts pre-processed tokens as source', async () => {

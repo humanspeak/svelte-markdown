@@ -10,6 +10,7 @@ global.cancelAnimationFrame = vi.fn((id) => clearTimeout(id))
 
 // Mock IntersectionObserver for lazy loading tests
 global.IntersectionObserver = class IntersectionObserver {
+    /* trunk-ignore(eslint/no-unused-vars) */
     constructor(public callback: IntersectionObserverCallback) {}
     observe(target: Element) {
         // Immediately trigger callback as if element is intersecting

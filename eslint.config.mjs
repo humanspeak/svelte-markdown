@@ -95,7 +95,8 @@ export default [
             }
         },
         rules: {
-            'prefer-const': ['off']
+            'prefer-const': ['off'],
+            'svelte/no-navigation-without-resolve': ['off'] // Allow external links
         }
     },
     {

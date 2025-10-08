@@ -1,7 +1,7 @@
-import type { SvelteMarkdownOptions } from 'marked'
+import type { SvelteMarkdownOptions } from '$lib/types.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Token } from './markdown-parser'
-import { TokenCache, hashString } from './token-cache'
+import type { Token } from './markdown-parser.js'
+import { TokenCache, hashString } from './token-cache.js'
 
 describe('hashString', () => {
     it('should generate consistent hashes for same input', () => {
@@ -362,10 +362,12 @@ describe('TokenCache', () => {
                 return { type: 'heading', raw: '', depth: 2, text: 'Custom2' } // Different depth
             }
 
-            const options1: SvelteMarkdownOptions = {
+            /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
+            const options1: any = {
                 tokenizer: { heading: customTokenizer1 }
             }
-            const options2: SvelteMarkdownOptions = {
+            /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
+            const options2: any = {
                 tokenizer: { heading: customTokenizer2 }
             }
 
@@ -383,7 +385,8 @@ describe('TokenCache', () => {
         it('should differentiate between options with and without extensions', () => {
             const source = '# Test'
             const optionsNoExt: SvelteMarkdownOptions = { gfm: true }
-            const optionsWithExt: SvelteMarkdownOptions = {
+            /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
+            const optionsWithExt: any = {
                 gfm: true,
                 extensions: [{ name: 'custom', level: 'block' }]
             }
@@ -401,7 +404,6 @@ describe('TokenCache', () => {
 
         it('should handle circular references in options', () => {
             const source = '# Test'
-            /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
             const circularOptions: any = { gfm: true }
             circularOptions.self = circularOptions // Create circular reference
 
@@ -434,10 +436,8 @@ describe('TokenCache', () => {
             const options: SvelteMarkdownOptions = {
                 gfm: true,
                 breaks: true,
-                pedantic: false,
-                sanitize: false,
-                smartLists: true,
-                smartypants: true
+                headerIds: true,
+                headerPrefix: 'heading-'
             }
             const tokens: Token[] = [{ type: 'heading', raw: source, depth: 1, text: 'Test' }]
 
