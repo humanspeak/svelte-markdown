@@ -43,6 +43,8 @@
     })
 
     const handleLoad = () => {
+        // Don't override error state if error already occurred
+        if (error) return
         loaded = true
     }
 
