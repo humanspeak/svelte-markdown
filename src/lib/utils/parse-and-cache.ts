@@ -50,6 +50,10 @@ export function parseAndCacheTokens(
 
     const cleanedTokens = shrinkHtmlTokens(parsedTokens) as Token[]
 
+    if (typeof options.walkTokens === 'function') {
+        cleanedTokens.forEach(options.walkTokens)
+    }
+
     // Cache the cleaned tokens for next time
     tokenCache.setTokens(source, options, cleanedTokens)
 
