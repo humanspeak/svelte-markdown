@@ -1,5 +1,5 @@
 import type { SvelteMarkdownOptions } from '$lib/types.js'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { parseAndCacheTokens } from './parse-and-cache.js'
 import { tokenCache } from './token-cache.js'
 
@@ -278,6 +278,16 @@ console.log('code');
 
             expect(tokens).toBeDefined()
             expect(tokens.length).toBeGreaterThan(0)
+        })
+
+        it('should invoke options.walkTokens if defined', () => {
+            const source = '# Test'
+            const walkTokens = vi.fn(() => {})
+            const options: SvelteMarkdownOptions = { walkTokens }
+
+            parseAndCacheTokens(source, options, false)
+
+            expect(walkTokens).toHaveBeenCalled()
         })
     })
 
