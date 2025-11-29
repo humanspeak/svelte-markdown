@@ -15,6 +15,7 @@ import {
     Hr,
     Html,
     Image,
+    Ins,
     Link,
     List,
     ListItem,
@@ -84,6 +85,7 @@ export type Renderers = {
     codespan: RendererComponent
     br: RendererComponent
     del: RendererComponent
+    ins: RendererComponent
 
     // List variations
     orderedlistitem: RendererComponent
@@ -112,6 +114,7 @@ export const defaultRenderers: Renderers = {
     strong: Strong,
     codespan: Codespan,
     del: Del,
+    ins: Ins,
     table: Table,
     tablehead: TableHead,
     tablebody: TableBody,

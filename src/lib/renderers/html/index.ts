@@ -41,6 +41,7 @@ import I from './I.svelte'
 import Iframe from './Iframe.svelte'
 import Img from './Img.svelte'
 import Input from './Input.svelte'
+import Ins from './Ins.svelte'
 import Kbd from './Kbd.svelte'
 import Label from './Label.svelte'
 import Legend from './Legend.svelte'
@@ -130,6 +131,7 @@ export const Html: HtmlRenderers = {
     i: I,
     iframe: Iframe,
     img: Img,
+    ins: Ins,
     input: Input,
     kbd: Kbd,
     label: Label,
