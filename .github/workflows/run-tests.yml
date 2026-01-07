@@ -27,11 +27,11 @@ concurrency:
 
 jobs:
     unit-tests:
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         timeout-minutes: 10
         steps:
             - name: Checkout
-              uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
+              uses: actions/checkout@v6 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
                   fetch-depth: 1
@@ -40,13 +40,13 @@ jobs:
               with:
                   version: 10
 
-            - name: Use Node.js - 22
-              uses: actions/setup-node@v4 # zizmor: ignore[unpinned-uses]
+            - name: Use Node.js - 24
+              uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
               with:
-                  node-version: 22
+                  node-version: 24
 
             - name: Cache build artifacts
-              uses: actions/cache@v4 # zizmor: ignore[unpinned-uses]
+              uses: actions/cache@v5 # zizmor: ignore[unpinned-uses]
               with:
                   path: |
                       .svelte-kit
@@ -56,7 +56,7 @@ jobs:
                       ${{ runner.os }}-build-
 
             - name: Cache vitest artifacts
-              uses: actions/cache@v4 # zizmor: ignore[unpinned-uses]
+              uses: actions/cache@v5 # zizmor: ignore[unpinned-uses]
               with:
                   path: |
                       node_modules/.vitest
@@ -86,7 +86,7 @@ jobs:
 
     e2e-tests:
         needs: unit-tests
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         timeout-minutes: 25
         strategy:
             fail-fast: false
@@ -98,7 +98,7 @@ jobs:
                       shard_name: 2-2
         steps:
             - name: Checkout
-              uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
+              uses: actions/checkout@v6 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
                   fetch-depth: 1
@@ -107,16 +107,16 @@ jobs:
               with:
                   version: 10
 
-            - name: Use Node.js - 22
-              uses: actions/setup-node@v4 # zizmor: ignore[unpinned-uses]
+            - name: Use Node.js - 24
+              uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
               with:
-                  node-version: 22
+                  node-version: 24
 
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
             - name: Cache Playwright browsers
-              uses: actions/cache@v4 # zizmor: ignore[unpinned-uses]
+              uses: actions/cache@v5 # zizmor: ignore[unpinned-uses]
               with:
                   path: ~/.cache/ms-playwright
                   key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}

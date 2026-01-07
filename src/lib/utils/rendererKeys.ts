@@ -6,5 +6,5 @@ export const rendererKeysInternal = Object.keys(defaultRenderers).filter(
     (k) => k !== 'html'
 ) as RendererKey[]
 
-export type HtmlKey = keyof typeof Html
+export type HtmlKey = keyof typeof Html & string
 export const htmlRendererKeysInternal = Object.keys(Html) as HtmlKey[]
