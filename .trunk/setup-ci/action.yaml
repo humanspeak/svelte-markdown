@@ -11,7 +11,7 @@ runs:
         - name: Setup Node.js
           uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
           with:
-              node-version: '22'
+              node-version: 24
 
         - name: Install Root NodeJS dependencies
           shell: bash
