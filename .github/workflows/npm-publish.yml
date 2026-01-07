@@ -61,7 +61,7 @@ jobs:
         runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         steps:
             - name: Checkout
-              uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
+              uses: actions/checkout@v6 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
                   token: ${{ secrets.ACTIONS_KEY }}
@@ -205,7 +205,7 @@ jobs:
             packages: write
         steps:
             - name: Checkout
-              uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
+              uses: actions/checkout@v6 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
                   token: ${{ secrets.ACTIONS_KEY }}
@@ -215,7 +215,7 @@ jobs:
                   version: 10
 
             - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v4 # zizmor: ignore[unpinned-uses]
+              uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
               with:
                   node-version: ${{ matrix.node-version }}
                   cache: pnpm
@@ -244,7 +244,7 @@ jobs:
               if: matrix.node-version == '22'
 
             - name: Cache dependencies
-              uses: actions/cache@v4 # zizmor: ignore[unpinned-uses]
+              uses: actions/cache@v5 # zizmor: ignore[unpinned-uses]
               with:
                   path: ~/.pnpm-store
                   key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -258,7 +258,7 @@ jobs:
         timeout-minutes: 60
         runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         steps:
-            - uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
+            - uses: actions/checkout@v6 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
                   token: ${{ secrets.ACTIONS_KEY }}
@@ -267,9 +267,9 @@ jobs:
               with:
                   version: 10
 
-            - uses: actions/setup-node@v4 # zizmor: ignore[unpinned-uses]
+            - uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
               with:
-                  node-version: 22
+                  node-version: 24
                   cache: pnpm
 
             - name: Install dependencies
@@ -322,7 +322,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
+              uses: actions/checkout@v6 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
                   token: ${{ secrets.GITHUB_TOKEN }}
@@ -333,9 +333,9 @@ jobs:
                   version: 10
 
             - name: Use Node.js - 22
-              uses: actions/setup-node@v4 # zizmor: ignore[unpinned-uses]
+              uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
               with:
-                  node-version: 22
+                  node-version: 24
                   registry-url: https://registry.npmjs.org
                   scope: '@humanspeak'
 

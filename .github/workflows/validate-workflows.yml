@@ -15,7 +15,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
-              uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
+              uses: actions/checkout@v6 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
                   fetch-depth: 0 # Fetch full history for git comparisons
@@ -40,7 +40,7 @@ jobs:
                   fi
 
             - name: Cache uv installation
-              uses: actions/cache@v4 # zizmor: ignore[unpinned-uses]
+              uses: actions/cache@v5 # zizmor: ignore[unpinned-uses]
               with:
                   path: ~/.local/bin/uv
                   key: ${{ runner.os }}-uv-${{ steps.uv-version.outputs.version }}
