@@ -199,7 +199,7 @@ jobs:
         runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         strategy:
             matrix:
-                node-version: [20, 22]
+                node-version: [20, 22, 24]
         permissions:
             contents: read
             packages: write

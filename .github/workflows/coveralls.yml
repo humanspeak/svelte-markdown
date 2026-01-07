@@ -12,10 +12,10 @@ on:
 
 jobs:
     build:
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         strategy:
             matrix:
-                node-version: [20, 22]
+                node-version: [20, 22, 24]
         steps:
             - name: Checkout
               uses: actions/checkout@v6 # zizmor: ignore[unpinned-uses]
@@ -57,7 +57,7 @@ jobs:
 
     finish-coverage:
         needs: build
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         if: ${{ always() }}
         steps:
             - name: Coveralls Finished

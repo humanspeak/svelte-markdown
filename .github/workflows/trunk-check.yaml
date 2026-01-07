@@ -9,7 +9,7 @@ permissions: read-all
 jobs:
     trunk_check:
         name: Trunk Code Quality Runner
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         permissions:
             checks: write # For trunk to post annotations
             contents: read # For repo checkout
