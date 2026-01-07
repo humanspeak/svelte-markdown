@@ -20,8 +20,33 @@ type FilterComponent = Component<any, any, any> | undefined | null // eslint-dis
  * @param defaultsMap - Map of keys to their default component implementations
  *
  * @returns Object containing buildUnsupported, allowOnly, and excludeOnly functions
+ *
+ * @example
+ * ```typescript
+ * import { createFilterUtilities } from './createFilterUtilities'
+ *
+ * type MyKey = 'foo' | 'bar' | 'baz'
+ * const keys: readonly MyKey[] = ['foo', 'bar', 'baz'] as const
+ * const UnsupportedComponent = () => null
+ * const defaults = { foo: FooComponent, bar: BarComponent, baz: BazComponent }
+ *
+ * const { buildUnsupported, allowOnly, excludeOnly } = createFilterUtilities<MyKey, Record<MyKey, Component>>(
+ *     keys,
+ *     UnsupportedComponent,
+ *     defaults
+ * )
+ *
+ * // Block all renderers
+ * const allUnsupported = buildUnsupported()
+ *
+ * // Allow only 'foo' and 'bar', block 'baz'
+ * const allowList = allowOnly(['foo', 'bar'])
+ *
+ * // Block only 'baz', allow others with defaults
+ * const denyList = excludeOnly(['baz'])
+ * ```
  */
-export function createFilterUtilities<
+export const createFilterUtilities = <
     TKey extends string,
     TResult extends Record<string, FilterComponent>
 >(
@@ -32,7 +57,7 @@ export function createFilterUtilities<
     buildUnsupported: () => TResult
     allowOnly: (_allowed: Array<TKey | [TKey, FilterComponent]>) => TResult
     excludeOnly: (_excluded: TKey[], _overrides?: Array<[TKey, FilterComponent]>) => TResult
-} {
+} => {
     /**
      * Checks if a key is valid for this renderer type.
      */
