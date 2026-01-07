@@ -40,7 +40,7 @@ on:
 
 jobs:
     check-if-merged:
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         outputs:
             should_run: ${{ steps.check.outputs.should_run }}
         steps:
@@ -58,7 +58,7 @@ jobs:
     debug-check:
         needs: check-if-merged
         if: needs.check-if-merged.outputs.should_run == 'true'
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         steps:
             - name: Checkout
               uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
@@ -196,7 +196,7 @@ jobs:
     build:
         needs: [check-if-merged, debug-check]
         if: needs.check-if-merged.outputs.should_run == 'true'
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         strategy:
             matrix:
                 node-version: [20, 22]
@@ -222,7 +222,7 @@ jobs:
 
             - name: Install
               run: |
-                  pnpm install --prefer-offline --no-frozen-lockfile --ignore-scripts
+                  pnpm install --prefer-offline --frozen-lockfile --ignore-scripts
 
             - name: Test
               run: pnpm test
@@ -256,7 +256,7 @@ jobs:
         needs: [check-if-merged, debug-check]
         if: needs.check-if-merged.outputs.should_run == 'true'
         timeout-minutes: 60
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         steps:
             - uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
               with:
@@ -273,7 +273,7 @@ jobs:
                   cache: pnpm
 
             - name: Install dependencies
-              run: pnpm install --prefer-offline --no-frozen-lockfile --ignore-scripts
+              run: pnpm install --prefer-offline --frozen-lockfile --ignore-scripts
 
             - name: Install Playwright Browsers
               run: pnpm exec playwright install --with-deps
@@ -300,7 +300,7 @@ jobs:
     coverage-report:
         needs: [check-if-merged, build, playwright-tests]
         if: needs.check-if-merged.outputs.should_run == 'true'
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         steps:
             - name: Coveralls Finished
               uses: coverallsapp/github-action@v2 # zizmor: ignore[unpinned-uses]
@@ -312,7 +312,7 @@ jobs:
     publish-github-packages:
         needs: [check-if-merged, build, playwright-tests, coverage-report]
         if: needs.check-if-merged.outputs.should_run == 'true'
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         permissions:
             contents: write
             packages: write
@@ -340,7 +340,7 @@ jobs:
                   scope: '@humanspeak'
 
             - name: Install
-              run: pnpm install --prefer-offline --no-frozen-lockfile --ignore-scripts
+              run: pnpm install --prefer-offline --frozen-lockfile --ignore-scripts
 
             - name: Check Publishing Status
               id: publish-check

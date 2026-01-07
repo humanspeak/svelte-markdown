@@ -1,5 +1,5 @@
 language: en-US
-tone_instructions: ''
+tone_instructions: Be concise and technical. Focus on performance, type safety, animation correctness, and accessibility. Prioritize security issues, ReDoS vulnerabilities, and proper error handling.
 early_access: false
 enable_free_tier: true
 reviews:
@@ -9,7 +9,7 @@ reviews:
     high_level_summary_placeholder: '@coderabbitai summary'
     high_level_summary_in_walkthrough: false
     auto_title_placeholder: '@coderabbitai'
-    auto_title_instructions: ''
+    auto_title_instructions: Generate clear, descriptive PR titles that include the component/area affected and the type of change (fix, feat, refactor, docs, test, perf)
     review_status: true
     commit_status: true
     fail_commit_status: false
@@ -24,9 +24,39 @@ reviews:
     suggested_reviewers: true
     auto_assign_reviewers: false
     poem: true
-    labeling_instructions: []
+    labeling_instructions:
+        - label: bug
+          instructions: Apply to any code that fixes incorrect behavior or errors
+        - label: enhancement
+          instructions: Apply to new features or improvements to existing features
+        - label: docs
+          instructions: Apply to documentation updates or improvements
+        - label: test
+          instructions: Apply to test additions or improvements
+        - label: refactor
+          instructions: Apply to code restructuring without behavior changes
+        - label: performance
+          instructions: Apply to performance improvements or optimizations
+        - label: security
+          instructions: Apply to security fixes or improvements
+        - label: animation
+          instructions: Apply to changes to animation logic or Motion integration
+        - label: accessibility
+          instructions: Apply to accessibility improvements (a11y, keyboard, screen readers)
+        - label: breaking-change
+          instructions: Apply to changes that break backward compatibility
     path_filters: []
-    path_instructions: []
+    path_instructions:
+        - path: src/lib/utils/**/*.ts
+          instructions: Ensure all exported functions use arrow function syntax (const fn = () => {}). All functions must have comprehensive JSDoc comments with @param, @returns, and @example tags. Verify type safety and check for potential ReDoS vulnerabilities in regex patterns.
+        - path: src/lib/components/**/*.svelte
+          instructions: Review Svelte 5 runes usage ($state, $derived, $effect). Ensure proper cleanup in $effect blocks. Check for memory leaks and performance issues. Verify SSR compatibility.
+        - path: '**/*.spec.ts'
+          instructions: Ensure tests are comprehensive with good coverage of edge cases, error paths, and accessibility. Tests should be well-named and describe the expected behavior clearly.
+        - path: docs/**/*
+          instructions: Verify examples are correct, runnable, and match current API. Check for broken links and ensure code examples follow project conventions.
+        - path: e2e/**/*.ts
+          instructions: Ensure e2e tests are reliable, avoid flakiness, and test real user scenarios. Verify proper waits and assertions.
     abort_on_close: true
     disable_cache: false
     auto_review:
@@ -48,9 +78,9 @@ reviews:
             essential_rules: true
             packages: []
         shellcheck:
-            enabled: true
+            enabled: false # Not needed for TS/Svelte project
         ruff:
-            enabled: true
+            enabled: false # Python linter - not needed
         markdownlint:
             enabled: true
         github-checks:
@@ -65,50 +95,50 @@ reviews:
             enabled_only: false
             level: default
         biome:
-            enabled: true
+            enabled: true # Good for TypeScript/JavaScript
         hadolint:
-            enabled: true
+            enabled: false # Docker linter - not needed
         swiftlint:
-            enabled: true
+            enabled: false # Swift linter - not needed
         phpstan:
-            enabled: true
+            enabled: false # PHP linter - not needed
             level: default
         golangci-lint:
-            enabled: true
+            enabled: false # Go linter - not needed
         yamllint:
             enabled: true
         gitleaks:
-            enabled: true
+            enabled: true # Security - keep enabled
         checkov:
-            enabled: true
+            enabled: false # Infrastructure security - not needed
         detekt:
-            enabled: true
+            enabled: false # Kotlin linter - not needed
         eslint:
-            enabled: true
+            enabled: true # Essential for TypeScript/JavaScript
         rubocop:
-            enabled: true
+            enabled: false # Ruby linter - not needed
         buf:
-            enabled: true
+            enabled: false # Protobuf linter - not needed
         regal:
-            enabled: true
+            enabled: false # Rego linter - not needed
         actionlint:
-            enabled: true
+            enabled: true # Useful for GitHub Actions
         pmd:
-            enabled: true
+            enabled: false # Java linter - not needed
         cppcheck:
-            enabled: true
+            enabled: false # C/C++ linter - not needed
         semgrep:
-            enabled: true
+            enabled: true # Security patterns - useful
         circleci:
-            enabled: true
+            enabled: false # Not using CircleCI
         sqlfluff:
-            enabled: true
+            enabled: false # SQL linter - not needed
         prismaLint:
-            enabled: true
+            enabled: false # Prisma ORM - not needed
         oxc:
-            enabled: true
+            enabled: true # Fast JavaScript/TypeScript linter
         shopifyThemeCheck:
-            enabled: true
+            enabled: false # Shopify themes - not needed
 chat:
     auto_reply: true
     integrations:
@@ -135,6 +165,14 @@ knowledge_base:
 code_generation:
     docstrings:
         language: en-US
-        path_instructions: []
+        path_instructions:
+            - path: src/lib/utils/**/*.ts
+              instructions: Generate JSDoc-style docstrings with clear descriptions, @param tags with types and descriptions, @returns tag with type and description, and practical @example blocks showing real usage. Focus on explaining the "why" and edge cases, not just restating the code.
+            - path: src/lib/components/**/*.svelte
+              instructions: Document props, events, and slots using TSDoc format. Include usage examples that demonstrate common patterns with Svelte 5 runes. Explain component behavior and any accessibility considerations.
     unit_tests:
-        path_instructions: []
+        path_instructions:
+            - path: src/lib/utils/**/*.ts
+              instructions: Generate comprehensive Vitest tests covering happy path, edge cases, error handling, and boundary conditions. Use descriptive test names. Mock external dependencies. Aim for >90% branch coverage. Test async behavior with proper awaits.
+            - path: src/lib/components/**/*.svelte
+              instructions: Generate component tests using Vitest and @testing-library/svelte. Test user interactions, prop changes, state updates, and accessibility. Verify cleanup of effects and event listeners.

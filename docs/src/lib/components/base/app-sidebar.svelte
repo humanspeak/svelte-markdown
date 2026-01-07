@@ -105,10 +105,11 @@
                                                         title={component.shortDescription}
                                                         {...props}
                                                     >
-                                                        <span
-                                                            >{component.slug ||
-                                                                getSlugFromUrl(component.url)}</span
-                                                        >
+                                                        <span>
+                                                            {component.slug
+                                                                ? `/${component.slug}`
+                                                                : getSlugFromUrl(component.url)}
+                                                        </span>
                                                     </a>
                                                 {/snippet}
                                             </Sidebar.MenuButton>
@@ -168,7 +169,7 @@
                                             props: Record<string, unknown>
                                         })}
                                             <a href="https://beye.ai" target="_blank" {...props}>
-                                                <span>B/eye</span>
+                                                <span>Beye.ai</span>
                                             </a>
                                         {/snippet}
                                     </Sidebar.MenuButton>
