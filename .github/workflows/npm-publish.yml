@@ -327,7 +327,7 @@ jobs:
               with:
                   version: 10
 
-            - name: Use Node.js - 22
+            - name: Use Node.js - 24
               uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses,cache-poisoning]
               with:
                   node-version: 24
