@@ -128,12 +128,12 @@ jobs:
                         fi
                       done < <(find src/lib -type f -name "*.svelte" ! -path "*/test/*")
 
-                      # Check TypeScript files
+                      # Check TypeScript files (excluding log.ts which intentionally uses console.log)
                       while IFS= read -r file; do
                         if ! check_file "$file"; then
                           has_errors=1
                         fi
-                      done < <(find src/lib -type f -name "*.ts" ! -name "*.test.ts" ! -path "*/test/*")
+                      done < <(find src/lib -type f -name "*.ts" ! -name "*.test.ts" ! -path "*/test/*" ! -path "src/lib/utils/log.ts")
 
                       exit $has_errors
                     } | tee >(cat >&5)
@@ -218,14 +218,15 @@ jobs:
               uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
               with:
                   node-version: ${{ matrix.node-version }}
-                  cache: pnpm
 
             - name: Install
               run: |
                   pnpm install --prefer-offline --frozen-lockfile --ignore-scripts
 
             - name: Test
-              run: pnpm test
+              run: |
+                  pnpm build
+                  pnpm test
 
             - name: Upload Vitest Results
               if: always()
@@ -243,14 +244,7 @@ jobs:
                   parallel: true
               if: matrix.node-version == '22'
 
-            - name: Cache dependencies
-              uses: actions/cache@v5 # zizmor: ignore[unpinned-uses]
-              with:
-                  path: ~/.pnpm-store
-                  key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-                  restore-keys: |
-                      ${{ runner.os }}-node-${{ matrix.node-version }}-
-                      ${{ runner.os }}-node-
+            # Removed dependency caching to reduce cache-poisoning risk
 
     playwright-tests:
         needs: [check-if-merged, debug-check]
@@ -270,7 +264,6 @@ jobs:
             - uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
               with:
                   node-version: 24
-                  cache: pnpm
 
             - name: Install dependencies
               run: pnpm install --prefer-offline --frozen-lockfile --ignore-scripts
@@ -312,7 +305,9 @@ jobs:
     publish-github-packages:
         needs: [check-if-merged, build, playwright-tests, coverage-report]
         if: needs.check-if-merged.outputs.should_run == 'true'
-        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
+        runs-on: ubuntu-latest
+        environment:
+            name: npm-publish
         permissions:
             contents: write
             packages: write
@@ -333,11 +328,9 @@ jobs:
                   version: 10
 
             - name: Use Node.js - 22
-              uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
+              uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses,cache-poisoning]
               with:
                   node-version: 24
-                  registry-url: https://registry.npmjs.org
-                  scope: '@humanspeak'
 
             - name: Install
               run: pnpm install --prefer-offline --frozen-lockfile --ignore-scripts
@@ -514,12 +507,12 @@ jobs:
             - name: Publish
               if: steps.publish-check.outputs.should_publish == 'true'
               run: |
-                  # Ensure we're publishing to the correct scope
-                  rm -f ./.npmrc
+                  # Clean up any existing npmrc files that might interfere with OIDC
+                  rm -f ./.npmrc ~/.npmrc
+                  # Configure registry for scoped package
                   pnpm config set @humanspeak:registry https://registry.npmjs.org/
+                  # Publish using pnpm with OIDC (trusted publishing)
                   pnpm publish --provenance --access public --no-git-checks
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}
 
             - name: Cleanup on failure
               if: failure() && steps.create_release.outcome == 'success'

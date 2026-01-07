@@ -36,10 +36,10 @@
         }
     },
     "dependencies": {
-        "@humanspeak/svelte-motion": "^0.1.12",
+        "@humanspeak/svelte-motion": "^0.1.14",
         "@sentry/cloudflare": "^10.32.1",
         "@sentry/sveltekit": "^10.32.1",
-        "posthog-js": "^1.314.0"
+        "posthog-js": "^1.315.0"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20260103.0",
@@ -82,7 +82,7 @@
         "prettier-plugin-svelte": "^3.4.1",
         "prettier-plugin-tailwindcss": "^0.7.2",
         "puppeteer": "^24.34.0",
-        "shiki": "^3.20.0",
+        "shiki": "^3.21.0",
         "svelte": "^5.46.1",
         "svelte-check": "^4.3.5",
         "svelte-sonner": "^1.0.7",
@@ -95,7 +95,7 @@
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.52.0",
         "vaul-svelte": "^1.0.0-next.7",
-        "vite": "^7.3.0",
+        "vite": "^7.3.1",
         "vitest": "^4.0.16",
         "wrangler": "^4.54.0",
         "zod": "^4.3.5"
