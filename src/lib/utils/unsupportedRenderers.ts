@@ -5,8 +5,14 @@ import {
     type Renderers
 } from '$lib/utils/markdown-parser.js'
 import { rendererKeysInternal, type RendererKey } from '$lib/utils/rendererKeys.js'
+import { createFilterUtilities } from './createFilterUtilities.js'
 
-const allRendererKeys = rendererKeysInternal
+// Create filter utilities using the generic factory
+const filterUtils = createFilterUtilities<RendererKey, Partial<Renderers>>(
+    rendererKeysInternal,
+    Unsupported,
+    defaultRenderers as Record<RendererKey, RendererComponent>
+)
 
 /**
  * Builds a map where every markdown renderer (excluding the special `html` map)
@@ -21,18 +27,12 @@ const allRendererKeys = rendererKeysInternal
  *   html: {} // customize HTML separately
  * }
  */
-export const buildUnsupportedRenderers = (): Partial<Renderers> => {
-    const result: Partial<Renderers> = {}
-    for (const key of allRendererKeys) {
-        result[key] = Unsupported
-    }
-    return result
-}
+export const buildUnsupportedRenderers = filterUtils.buildUnsupported
 
 /**
  * Produces a renderer map that allows only the specified markdown renderers (excluding `html`).
  * All non‑listed renderer keys are set to `Unsupported`.
- * Each entry can be either a renderer key (to use the library’s default component),
+ * Each entry can be either a renderer key (to use the library's default component),
  * or a tuple `[key, component]` to specify a custom component for that key.
  *
  * @function allowRenderersOnly
@@ -47,27 +47,13 @@ export const buildUnsupportedRenderers = (): Partial<Renderers> => {
  * // Allow paragraph with a custom component
  * const renderers = allowRenderersOnly([['paragraph', MyParagraph]])
  */
-export const allowRenderersOnly = (
-    allowed: Array<RendererKey | [RendererKey, RendererComponent]>
-): Partial<Renderers> => {
-    const result = buildUnsupportedRenderers()
-
-    for (const entry of allowed) {
-        if (Array.isArray(entry)) {
-            const [key, component] = entry
-            if (allRendererKeys.includes(key)) result[key] = component
-        } else {
-            const key = entry
-            if (allRendererKeys.includes(key)) result[key] = defaultRenderers[key]
-        }
-    }
-
-    return result
-}
+export const allowRenderersOnly = filterUtils.allowOnly as (
+    _allowed: Array<RendererKey | [RendererKey, RendererComponent]>
+) => Partial<Renderers>
 
 /**
  * Produces a renderer map that excludes only the specified markdown renderer keys (excluding `html`).
- * Excluded keys are mapped to `Unsupported`, while all other keys use the library’s default components.
+ * Excluded keys are mapped to `Unsupported`, while all other keys use the library's default components.
  * Optionally override specific non‑excluded keys with custom components via `[key, component]` tuples.
  *
  * Exclusions take precedence over overrides.
@@ -86,25 +72,7 @@ export const allowRenderersOnly = (
  * // Disable link; override paragraph to a custom component
  * const renderers = excludeRenderersOnly(['link'], [['paragraph', MyParagraph]])
  */
-export const excludeRenderersOnly = (
-    excluded: RendererKey[],
-    overrides?: Array<[RendererKey, RendererComponent]>
-): Partial<Renderers> => {
-    const result: Partial<Renderers> = {}
-    for (const key of allRendererKeys) {
-        result[key] = defaultRenderers[key]
-    }
-
-    for (const key of excluded) {
-        if (allRendererKeys.includes(key)) result[key] = Unsupported
-    }
-
-    if (overrides) {
-        for (const [key, component] of overrides) {
-            if (excluded.includes(key)) continue
-            if (allRendererKeys.includes(key)) result[key] = component
-        }
-    }
-
-    return result
-}
+export const excludeRenderersOnly = filterUtils.excludeOnly as (
+    _excluded: RendererKey[],
+    _overrides?: Array<[RendererKey, RendererComponent]>
+) => Partial<Renderers>

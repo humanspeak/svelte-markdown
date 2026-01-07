@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@humanspeak/memory-cache':
+        specifier: ^1.0.2
+        version: 1.0.2
       github-slugger:
         specifier: ^2.0.0
         version: 2.0.0
@@ -906,6 +909,10 @@ packages:
   '@humanfs/node@0.16.7':
     resolution: {integrity: sha512-/zUx+yOsIrG4Y43Eh2peDeKCxlRt/gET6aHfaKpuq267qXdYDFViVHfMaLyygZOnl0kGWxFIgsBy8QFuTLUXEQ==}
     engines: {node: '>=18.18.0'}
+
+  '@humanspeak/memory-cache@1.0.2':
+    resolution: {integrity: sha512-UgyiEqv10ioIXcz10Le7ZRdnr5AAxnSJC8rtxulAozDfoiiIPsxa3e8v58OWqxUlev+5BbwfCtulQsrtJIRjgg==}
+    engines: {node: '>=18.0.0'}
 
   '@humanspeak/svelte-motion@0.1.12':
     resolution: {integrity: sha512-vznyq9se7K+mnreNsaS2c6TpyFr0eiWhLgy1fFtxrQgfJfMSjwf6/o8/7uqfhvX87aPvXQXXrxnsVTl51p2O6w==}
@@ -5320,6 +5327,8 @@ snapshots:
     dependencies:
       '@humanfs/core': 0.19.1
       '@humanwhocodes/retry': 0.4.3
+
+  '@humanspeak/memory-cache@1.0.2': {}
 
   '@humanspeak/svelte-motion@0.1.12(svelte@5.46.1)':
     dependencies:
