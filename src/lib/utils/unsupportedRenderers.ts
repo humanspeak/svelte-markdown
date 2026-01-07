@@ -8,7 +8,7 @@ import { rendererKeysInternal, type RendererKey } from '$lib/utils/rendererKeys.
 import { createFilterUtilities } from './createFilterUtilities.js'
 
 // Create filter utilities using the generic factory
-const filterUtils = createFilterUtilities<RendererKey, Partial<Renderers>>(
+const filterUtils = createFilterUtilities<RendererKey, Omit<Renderers, 'html'>>(
     rendererKeysInternal,
     Unsupported,
     defaultRenderers as Record<RendererKey, RendererComponent>
@@ -19,7 +19,7 @@ const filterUtils = createFilterUtilities<RendererKey, Partial<Renderers>>(
  * is set to the `Unsupported` component.
  *
  * @function buildUnsupportedRenderers
- * @returns {Partial<Renderers>} A map with all non‑HTML renderers set to `Unsupported`.
+ * @returns {Omit<Renderers, 'html'>} A map with all non‑HTML renderers set to `Unsupported`.
  * @example
  * import { buildUnsupportedRenderers } from '@humanspeak/svelte-markdown'
  * const renderers = {
@@ -38,7 +38,7 @@ export const buildUnsupportedRenderers = filterUtils.buildUnsupported
  * @function allowRenderersOnly
  * @param {Array<RendererKey | [RendererKey, RendererComponent]>} allowed
  *        Renderer keys to allow, or tuples for custom component overrides.
- * @returns {Partial<Renderers>} A renderer map with only the provided keys enabled.
+ * @returns {Omit<Renderers, 'html'>} A renderer map with only the provided keys enabled.
  * @example
  * // Allow only paragraph and link with defaults
  * const renderers = allowRenderersOnly(['paragraph', 'link'])
@@ -49,7 +49,7 @@ export const buildUnsupportedRenderers = filterUtils.buildUnsupported
  */
 export const allowRenderersOnly = filterUtils.allowOnly as (
     _allowed: Array<RendererKey | [RendererKey, RendererComponent]>
-) => Partial<Renderers>
+) => Omit<Renderers, 'html'>
 
 /**
  * Produces a renderer map that excludes only the specified markdown renderer keys (excluding `html`).
@@ -63,7 +63,7 @@ export const allowRenderersOnly = filterUtils.allowOnly as (
  *        Renderer keys to exclude (set to `Unsupported`).
  * @param {Array<[RendererKey, RendererComponent]>} [overrides]
  *        Optional tuples mapping non‑excluded keys to custom components.
- * @returns {Partial<Renderers>} A renderer map with only the provided keys excluded.
+ * @returns {Omit<Renderers, 'html'>} A renderer map with only the provided keys excluded.
  * @example
  * // Disable just paragraph and link, keep others as defaults
  * const renderers = excludeRenderersOnly(['paragraph', 'link'])
@@ -75,4 +75,4 @@ export const allowRenderersOnly = filterUtils.allowOnly as (
 export const excludeRenderersOnly = filterUtils.excludeOnly as (
     _excluded: RendererKey[],
     _overrides?: Array<[RendererKey, RendererComponent]>
-) => Partial<Renderers>
+) => Omit<Renderers, 'html'>
