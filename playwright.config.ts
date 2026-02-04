@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
     testDir: './tests',
-    reporter: [['junit', { outputFile: 'junit-playwright.xml' }]],
+    reporter: [['junit', { outputFile: 'test-results/junit-playwright.xml' }]],
     webServer: {
         command: 'npm run build && npm run preview',
         port: 4173,
