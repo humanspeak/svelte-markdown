@@ -5,7 +5,7 @@
 {
     "$schema": "node_modules/wrangler/config-schema.json",
     "name": "svelte-page-markdown",
-    "compatibility_date": "2025-09-18",
+    "compatibility_date": "2026-01-20",
     "compatibility_flags": ["nodejs_als", "nodejs_compat"],
     "pages_build_output_dir": ".svelte-kit/cloudflare",
     "observability": {
