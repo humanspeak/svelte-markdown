@@ -150,7 +150,7 @@ Per PRD.md, the following are explicitly out of scope:
 - Tests required for new features
 - Coverage must remain at 90%+
 - Pre-commit hooks will format code automatically
-- CI runs on Node 20 and 22
+- CI runs on Node 20, 22, and 24
 - Package published automatically on release via GitHub Actions
 
 ## Security Considerations

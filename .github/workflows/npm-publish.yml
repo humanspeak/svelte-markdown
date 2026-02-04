@@ -15,11 +15,12 @@ on:
             - '!dependabot/**'
         paths:
             - src/**
+            - '!docs/**'
             - '!tests/**'
             - '!src/lib/test/**'
             - '!src/routes/**'
             - package.json
-            - package-lock.json
+            - pnpm-lock.yaml
             - .github/workflows/npm-publish.yml
     workflow_dispatch:
         inputs:
@@ -250,7 +251,7 @@ jobs:
         needs: [check-if-merged, debug-check]
         if: needs.check-if-merged.outputs.should_run == 'true'
         timeout-minutes: 60
-        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
+        runs-on: blacksmith-4vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         steps:
             - uses: actions/checkout@v6 # zizmor: ignore[unpinned-uses]
               with:
@@ -278,15 +279,15 @@ jobs:
               if: always()
               uses: trunk-io/analytics-uploader@main # zizmor: ignore[unpinned-uses]
               with:
-                  junit-paths: junit-playwright.xml
+                  junit-paths: test-results/junit-playwright.xml
                   org-slug: ${{ secrets.TRUNK_ORG_SLUG }}
                   token: ${{ secrets.TRUNK_TOKEN }}
 
             - uses: actions/upload-artifact@v4 # zizmor: ignore[unpinned-uses]
               if: always()
               with:
-                  name: junit-playwright.xml
-                  path: junit-playwright.xml
+                  name: playwright-results
+                  path: test-results/
                   retention-days: 10
 
     # 4. Coverage reporting (depends on tests)
@@ -306,8 +307,6 @@ jobs:
         needs: [check-if-merged, build, playwright-tests, coverage-report]
         if: needs.check-if-merged.outputs.should_run == 'true'
         runs-on: ubuntu-latest
-        environment:
-            name: npm-publish
         permissions:
             contents: write
             packages: write
