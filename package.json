@@ -1,6 +1,6 @@
 {
     "name": "@humanspeak/svelte-markdown",
-    "version": "0.8.12",
+    "version": "0.8.14",
     "description": "Fast, customizable markdown renderer for Svelte with built-in caching, TypeScript support, and Svelte 5 runes",
     "keywords": [
         "svelte",
@@ -101,12 +101,14 @@
         "@sveltejs/vite-plugin-svelte": "^6.2.4",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/svelte": "^5.3.1",
+        "@testing-library/svelte": "^5.3.1",
         "@testing-library/user-event": "^14.6.1",
         "@types/node": "^25.2.0",
         "@typescript-eslint/eslint-plugin": "^8.54.0",
         "@typescript-eslint/parser": "^8.54.0",
         "@vitest/coverage-v8": "^4.0.18",
         "concurrently": "^9.2.1",
+        "eslint": "^9.39.2",
         "eslint": "^9.39.2",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-import": "^2.32.0",
@@ -131,6 +133,7 @@
         "svelte": "^5.0.0"
     },
     "volta": {
+        "node": "24.12.0"
         "node": "24.12.0"
     },
     "publishConfig": {
