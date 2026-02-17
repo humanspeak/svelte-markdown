@@ -1,0 +1,103 @@
+---
+title: Async Fetching
+description: Cache expensive async operations with getOrSet
+---
+
+# Async Fetching
+
+Use `getOrSet` to automatically cache the results of expensive async operations.
+
+## Basic Usage
+
+```typescript
+import { MemoryCache } from '@humanspeak/memory-cache'
+
+const cache = new MemoryCache<User>({ ttl: 60000 })
+
+async function getUser(id: string): Promise<User> {
+    return cache.getOrSet(`user:${id}`, async () => {
+        // Only called on cache miss
+        return await database.findUser(id)
+    })
+}
+```
+
+## Thundering Herd Prevention
+
+When multiple requests arrive for the same uncached key simultaneously, only one fetch is executed:
+
+```typescript
+// All 100 requests share the same fetch
+const promises = Array.from({ length: 100 }, () =>
+    cache.getOrSet('popular-key', fetchExpensiveData)
+)
+await Promise.all(promises) // fetchExpensiveData called only once
+```
+
+## API Response Caching
+
+```typescript
+const apiCache = new MemoryCache<ApiResponse>({ ttl: 30000 })
+
+async function fetchWeather(city: string): Promise<Weather> {
+    return apiCache.getOrSet(`weather:${city}`, async () => {
+        const response = await fetch(`https://api.weather.com/${city}`)
+        return response.json()
+    })
+}
+```
+
+## With Error Handling
+
+Errors from the fetcher are not cached - they propagate to the caller:
+
+```typescript
+try {
+    const data = await cache.getOrSet(key, async () => {
+        const response = await fetch(url)
+        if (!response.ok) throw new Error('Fetch failed')
+        return response.json()
+    })
+} catch (error) {
+    // Handle error - next call will retry the fetch
+}
+```
+
+## With Hooks for Monitoring
+
+```typescript
+import { MemoryCache } from '@humanspeak/memory-cache'
+
+const cache = new MemoryCache<User>({
+    ttl: 60000,
+    hooks: {
+        onHit: ({ key }) => console.log(`Cache hit: ${key}`),
+        onMiss: ({ key }) => console.log(`Cache miss: ${key}`),
+        onSet: ({ key }) => console.log(`Cached: ${key}`)
+    }
+})
+
+// Logs show cache behavior
+const user1 = await cache.getOrSet('user:123', fetchUser) // "Cache miss" then "Cached"
+const user2 = await cache.getOrSet('user:123', fetchUser) // "Cache hit"
+```
+
+## Sync Fetchers
+
+The fetcher can return a value directly (not a Promise):
+
+```typescript
+const config = await cache.getOrSet('config', () => {
+    // Sync operation
+    return loadConfigFromEnv()
+})
+```
+
+## Key Considerations
+
+- **Fetcher errors are not cached** - Failed fetches can be retried
+- **Single-flight** - Concurrent requests for the same key share one fetch
+- **Uses instance TTL** - Cached values expire based on cache configuration
+- **Supports sync fetchers** - Function can return `T` or `Promise<T>`
+
+

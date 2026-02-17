@@ -1,0 +1,84 @@
+---
+title: Computed Value Caching
+description: Cache expensive computations
+---
+
+# Computed Value Caching
+
+Cache expensive computations where results are deterministic.
+
+## Basic Pattern
+
+```typescript
+import { MemoryCache } from '@humanspeak/memory-cache'
+
+interface ComputeResult {
+    value: number
+    computedAt: number
+    iterations: number
+}
+
+const computeCache = new MemoryCache<ComputeResult>({
+    maxSize: 1000,
+    ttl: 0  // No expiration - results are deterministic
+})
+
+function expensiveComputation(input: number): ComputeResult {
+    const cacheKey = `compute:${input}`
+
+    const cached = computeCache.get(cacheKey)
+    if (cached) {
+        return cached
+    }
+
+    // Expensive computation
+    let result = 0
+    let iterations = 0
+    for (let i = 0; i < input * 1000000; i++) {
+        result += Math.sqrt(i)
+        iterations++
+    }
+
+    const computed: ComputeResult = {
+        value: result,
+        computedAt: Date.now(),
+        iterations
+    }
+
+    computeCache.set(cacheKey, computed)
+    return computed
+}
+```
+
+## With Performance Tracking
+
+```typescript
+import { MemoryCache } from '@humanspeak/memory-cache'
+
+const computeCache = new MemoryCache<ComputeResult>({
+    maxSize: 1000,
+    ttl: 0,
+    hooks: {
+        onHit: ({ key }) => {
+            metrics.increment('compute.cache.hit')
+            console.log(`Computation cache hit: ${key}`)
+        },
+        onMiss: () => {
+            metrics.increment('compute.cache.miss')
+        },
+        onEvict: ({ key }) => {
+            // LRU eviction occurred - consider increasing maxSize
+            metrics.increment('compute.cache.eviction')
+            console.warn(`Computation evicted: ${key}`)
+        }
+    }
+})
+```
+
+## Key Considerations
+
+- **TTL**: Use `0` for deterministic computations
+- **Max Size**: Limit by memory, not time
+- **Key Design**: Include all inputs that affect the result
+
+

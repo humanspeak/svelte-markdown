@@ -1,106 +1,63 @@
 {
     "name": "docs",
     "version": "0.0.1",
+    "private": true,
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "cf-typegen": "wrangler types && mv worker-configuration.d.ts src/",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
         "deploy": "npm run build && wrangler pages deploy",
         "dev": "vite dev",
         "format": "prettier --write .",
-        "generate-social": "tsx scripts/generate-social-images.ts",
         "lint": "prettier --check . && eslint .",
         "lint:fix": "npm run format && eslint . --fix",
         "preview": "vite preview",
-        "test": "npm run test:unit -- --run && npm run test:e2e",
-        "test:e2e": "playwright test",
-        "test:unit": "vitest"
-    },
-    "overrides": {
-        "@sveltejs/adapter-cloudflare": {
-            "esbuild": "^0.25.0"
-        },
-        "@sveltejs/kit": {
-            "cookie": "^0.7.0"
-        },
-        "mdsvex": {
-            "prismjs": "^1.29.0"
-        },
-        "wrangler": {
-            "esbuild": "^0.25.0"
-        },
-        "youch": {
-            "cookie": "^0.7.0"
-        }
+        "sitemap:manifest": "node ./scripts/generate-sitemap-manifest.mjs",
+        "sitemap:watch": "chokidar 'src/routes/**/*.svelte' 'src/routes/**/*.svx' 'src/routes/**/*.md' --ignore 'src/routes/examples/+page.ts' -c 'node ./scripts/generate-sitemap-manifest.mjs' --initial --silent"
     },
     "dependencies": {
-        "@humanspeak/svelte-motion": "^0.1.21",
-        "@sentry/cloudflare": "^10.39.0",
-        "@sentry/sveltekit": "^10.39.0",
-        "posthog-js": "^1.347.2"
+        "@humanspeak/svelte-markdown": "workspace:*",
+        "github-slugger": "^2.0.0"
     },
     "devDependencies": {
-        "@cloudflare/workers-types": "^4.20260214.0",
+        "@cloudflare/workers-types": "^4.20260217.0",
         "@eslint/compat": "^2.0.2",
-        "@humanspeak/svelte-markdown": "workspace:*",
-        "@internationalized/date": "^3.11.0",
-        "@lucide/svelte": "^0.564.0",
-        "@playwright/test": "^1.58.2",
-        "@sveltejs/adapter-auto": "^7.0.1",
+        "@eslint/js": "^9.39.2",
+        "@humanspeak/svelte-motion": "^0.1.21",
         "@sveltejs/adapter-cloudflare": "^7.2.7",
         "@sveltejs/kit": "^2.52.0",
         "@sveltejs/vite-plugin-svelte": "^6.2.4",
-        "@tailwindcss/aspect-ratio": "^0.4.2",
-        "@tailwindcss/container-queries": "^0.1.1",
-        "@tailwindcss/forms": "^0.5.11",
+        "@tailwindcss/postcss": "^4.1.18",
         "@tailwindcss/typography": "^0.5.19",
         "@tailwindcss/vite": "^4.1.18",
-        "@types/eslint": "^9.6.1",
         "@typescript-eslint/eslint-plugin": "^8.56.0",
         "@typescript-eslint/parser": "^8.56.0",
         "autoprefixer": "^10.4.24",
-        "bits-ui": "^2.15.5",
-        "clsx": "^2.1.1",
-        "embla-carousel-svelte": "^8.6.0",
-        "eslint": "^10.0.0",
-        "eslint-config-prettier": "^10.1.8",
-        "eslint-plugin-import": "^2.32.0",
-        "eslint-plugin-svelte": "^3.15.0",
-        "eslint-plugin-unused-imports": "^4.4.1",
-        "formsnap": "^2.0.1",
+        "chokidar-cli": "^3.0.0",
+        "eslint": "^9.39.2",
+        "eslint-config-prettier": "10.1.8",
+        "eslint-plugin-svelte": "3.15.0",
         "globals": "^17.3.0",
-        "highlight.js": "^11.11.1",
-        "layerchart": "^2.0.0-next.10",
         "lucide-svelte": "^0.564.0",
         "mdsvex": "^0.12.6",
         "mode-watcher": "^1.1.0",
-        "paneforge": "^1.0.2",
         "prettier": "^3.8.1",
         "prettier-plugin-organize-imports": "^4.3.0",
+        "prettier-plugin-sort-json": "^4.2.0",
         "prettier-plugin-svelte": "^3.4.1",
         "prettier-plugin-tailwindcss": "^0.7.2",
-        "puppeteer": "^24.37.3",
         "shiki": "^3.22.0",
         "svelte": "^5.51.2",
         "svelte-check": "^4.4.0",
-        "svelte-sonner": "^1.0.7",
-        "sveltekit-superforms": "^2.29.1",
         "tailwind-merge": "^3.4.1",
-        "tailwind-variants": "^3.2.2",
         "tailwindcss": "^4.1.18",
-        "tsx": "^4.21.0",
-        "tw-animate-css": "^1.4.0",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.56.0",
-        "vaul-svelte": "^1.0.0-next.7",
         "vite": "^7.3.1",
-        "vitest": "^4.0.18",
-        "wrangler": "^4.65.0",
-        "zod": "^4.3.6"
+        "wrangler": "^4.65.0"
     },
     "volta": {
-        "node": "24.12.0"
+        "node": "24.13.0"
     }
 }

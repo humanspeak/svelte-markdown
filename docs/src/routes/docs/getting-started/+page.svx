@@ -1,0 +1,104 @@
+---
+title: Getting Started
+description: Get started with @humanspeak/memory-cache
+---
+
+# Getting Started
+
+@humanspeak/memory-cache is a lightweight, zero-dependency in-memory cache for TypeScript and JavaScript. It provides TTL expiration, true LRU (Least Recently Used) eviction, wildcard pattern deletion, and a powerful `@cached` decorator for method-level memoization.
+
+## Installation
+
+Install the package using your preferred package manager:
+
+```bash
+npm install @humanspeak/memory-cache
+```
+
+```bash
+pnpm add @humanspeak/memory-cache
+```
+
+```bash
+yarn add @humanspeak/memory-cache
+```
+
+## Quick Start
+
+### Basic Cache Usage
+
+```typescript
+import { MemoryCache } from '@humanspeak/memory-cache'
+
+// Create a cache with default options (100 entries, 5 minute TTL)
+const cache = new MemoryCache<string>()
+
+// Or customize the options
+const customCache = new MemoryCache<string>({
+    maxSize: 1000,        // Maximum entries before eviction
+    ttl: 10 * 60 * 1000   // 10 minutes TTL
+})
+
+// Store and retrieve values
+cache.set('user:123', 'John Doe')
+const name = cache.get('user:123') // 'John Doe'
+
+// Check if key exists
+if (cache.has('user:123')) {
+    console.log('User is cached')
+}
+
+// Delete entries
+cache.delete('user:123')
+cache.clear() // Remove all entries
+```
+
+### Using the @cached Decorator
+
+The `@cached` decorator provides automatic method-level memoization:
+
+```typescript
+import { cached } from '@humanspeak/memory-cache'
+
+class UserService {
+    @cached<User>({ ttl: 60000, maxSize: 100 })
+    async getUser(id: string): Promise<User> {
+        // This expensive operation will be cached
+        return await database.findUser(id)
+    }
+}
+
+const service = new UserService()
+
+// First call - executes the method
+await service.getUser('123')
+
+// Second call - returns cached result instantly
+await service.getUser('123')
+```
+
+## Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `maxSize` | `number` | `100` | Maximum number of entries before eviction. Set to `0` for unlimited. |
+| `ttl` | `number` | `300000` | Time-to-live in milliseconds. Set to `0` for no expiration. |
+
+## Features
+
+- **Zero Dependencies** - No external dependencies, keeping your bundle small
+- **TTL Expiration** - Entries automatically expire after a configurable time
+- **LRU Eviction** - Least recently used entries are evicted when the cache is full
+- **Wildcard Deletion** - Delete entries by prefix or wildcard patterns
+- **Full TypeScript Support** - Complete type definitions included
+- **Method Decorator** - `@cached` decorator for automatic memoization
+- **Null/Undefined Support** - Properly distinguishes between cached falsy values and cache misses
+
+## Next Steps
+
+- Learn about the [MemoryCache API](/docs/api/memory-cache)
+- Explore the [@cached decorator](/docs/api/cached-decorator)
+- See [usage examples](/docs/examples)
+
+
+

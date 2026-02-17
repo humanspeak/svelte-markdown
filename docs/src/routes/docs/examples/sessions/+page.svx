@@ -1,0 +1,87 @@
+---
+title: Session Storage
+description: Store user sessions with automatic expiration
+---
+
+# Session Storage
+
+Store user sessions with automatic expiration using TTL.
+
+## Basic Pattern
+
+```typescript
+import { MemoryCache } from '@humanspeak/memory-cache'
+
+interface Session {
+    userId: string
+    permissions: string[]
+    createdAt: number
+}
+
+const sessionCache = new MemoryCache<Session>({
+    maxSize: 10000,
+    ttl: 30 * 60 * 1000  // 30 minutes
+})
+
+function createSession(userId: string, permissions: string[]): string {
+    const sessionId = crypto.randomUUID()
+
+    sessionCache.set(sessionId, {
+        userId,
+        permissions,
+        createdAt: Date.now()
+    })
+
+    return sessionId
+}
+
+function getSession(sessionId: string): Session | undefined {
+    return sessionCache.get(sessionId)
+}
+
+function destroySession(sessionId: string): void {
+    sessionCache.delete(sessionId)
+}
+```
+
+## With Audit Logging
+
+```typescript
+import { MemoryCache } from '@humanspeak/memory-cache'
+
+const sessionCache = new MemoryCache<Session>({
+    maxSize: 10000,
+    ttl: 30 * 60 * 1000,
+    hooks: {
+        onSet: ({ key, value, isUpdate }) => {
+            if (!isUpdate) {
+                auditLog.info('Session created', {
+                    sessionId: key,
+                    userId: value.userId
+                })
+            }
+        },
+        onExpire: ({ key, value }) => {
+            auditLog.info('Session expired', {
+                sessionId: key,
+                userId: value?.userId
+            })
+        },
+        onDelete: ({ key, value, source }) => {
+            auditLog.info('Session destroyed', {
+                sessionId: key,
+                userId: value?.userId,
+                reason: source
+            })
+        }
+    }
+})
+```
+
+## Key Considerations
+
+- **TTL**: 30-60 minutes is typical for web sessions
+- **Security**: Don't store sensitive data; use session ID as reference
+- **Max Size**: Plan for concurrent users plus some buffer
+
+

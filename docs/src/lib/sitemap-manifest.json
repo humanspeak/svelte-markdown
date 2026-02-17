@@ -1,0 +1,22 @@
+{
+    "/": "2026-02-04",
+    "/docs/api/cached-decorator": "2026-02-13",
+    "/docs/api/memory-cache": "2026-02-13",
+    "/docs/examples": "2026-02-14",
+    "/docs/examples/api-caching": "2026-01-29",
+    "/docs/examples/async-fetching": "2026-01-29",
+    "/docs/examples/computed-values": "2026-01-29",
+    "/docs/examples/configuration": "2026-01-29",
+    "/docs/examples/database-caching": "2026-01-29",
+    "/docs/examples/monitoring": "2026-01-29",
+    "/docs/examples/multi-tenant": "2026-01-29",
+    "/docs/examples/rate-limiting": "2026-01-29",
+    "/docs/examples/service-class": "2026-01-29",
+    "/docs/examples/sessions": "2026-01-29",
+    "/docs/getting-started": "2026-02-13",
+    "/examples": "2026-02-14",
+    "/examples/basic-cache": "2026-02-14",
+    "/examples/cache-statistics": "2026-02-14",
+    "/examples/lru-eviction": "2026-02-14",
+    "/examples/ttl-expiration": "2026-02-14"
+}

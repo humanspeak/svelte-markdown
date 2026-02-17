@@ -1,0 +1,559 @@
+---
+title: MemoryCache API
+description: Complete API reference for the MemoryCache class
+---
+
+# MemoryCache API
+
+The `MemoryCache` class is a generic in-memory cache with TTL expiration and LRU (Least Recently Used) eviction.
+
+## Constructor
+
+```typescript
+new MemoryCache<T>(options?: CacheOptions)
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `maxSize` | `number` | `100` | Maximum entries before eviction (0 = unlimited) |
+| `ttl` | `number` | `300000` | Time-to-live in milliseconds (0 = no expiration) |
+| `hooks` | `CacheHooks<T>` | `{}` | Lifecycle hooks for observing cache events |
+
+### Example
+
+```typescript
+import { MemoryCache } from '@humanspeak/memory-cache'
+
+// Default options
+const cache = new MemoryCache<string>()
+
+// Custom options
+const customCache = new MemoryCache<User>({
+    maxSize: 1000,
+    ttl: 5 * 60 * 1000  // 5 minutes
+})
+
+// Unlimited cache (use with caution)
+const unlimitedCache = new MemoryCache<Data>({
+    maxSize: 0,  // No size limit
+    ttl: 0       // No expiration
+})
+```
+
+### Validation
+
+The constructor throws `CacheConfigError` if invalid options are provided:
+
+```typescript
+import { MemoryCache, CacheConfigError } from '@humanspeak/memory-cache'
+
+try {
+    const cache = new MemoryCache<string>({ maxSize: -1 })
+} catch (error) {
+    if (error instanceof CacheConfigError) {
+        console.error('Invalid config:', error.message)
+    }
+}
+```
+
+## Methods
+
+### get(key)
+
+Retrieves a value from the cache if it exists and hasn't expired. Accessing an entry moves it to the most-recently-used position, protecting it from eviction.
+
+```typescript
+get(key: string): T | undefined
+```
+
+**Parameters:**
+- `key` - The key to look up
+
+**Returns:** The cached value if found and valid, `undefined` otherwise
+
+**Example:**
+
+```typescript
+cache.set('user:123', 'John Doe')
+const name = cache.get('user:123')  // 'John Doe'
+const missing = cache.get('unknown') // undefined
+```
+
+### getOrSet(key, fetcher)
+
+Gets a value from cache, or fetches and caches it if not present. Implements single-flight pattern to prevent multiple concurrent fetches for the same key (thundering herd prevention).
+
+```typescript
+getOrSet(key: string, fetcher: () => T | Promise<T>): Promise<T>
+```
+
+**Parameters:**
+- `key` - The cache key
+- `fetcher` - Function that returns the value to cache (can be sync or async)
+
+**Returns:** `Promise<T>` - The cached or fetched value
+
+**Example:**
+
+```typescript
+// Basic usage with async fetcher
+const user = await cache.getOrSet('user:123', async () => {
+    return await database.findUser(123)
+})
+
+// Works with sync fetchers too
+const config = await cache.getOrSet('config', () => loadConfig())
+
+// Concurrent requests share the same fetch
+const promises = Array.from({ length: 100 }, () =>
+    cache.getOrSet('popular-key', fetchExpensiveData)
+)
+await Promise.all(promises) // fetchExpensiveData called only once
+```
+
+**Key behaviors:**
+- **Single-flight**: Concurrent requests for the same uncached key share one fetch
+- **Error handling**: Errors from the fetcher are not cached and propagate to callers
+- **Null/undefined**: Values including `null` and `undefined` are properly cached
+- **Uses instance TTL**: Cached values expire based on cache configuration
+
+### set(key, value)
+
+Stores a value in the cache. If the cache is full and this is a new key, the least recently used entry is evicted. Setting a value (new or update) moves the entry to the most-recently-used position.
+
+```typescript
+set(key: string, value: T): void
+```
+
+**Parameters:**
+- `key` - The key under which to store the value
+- `value` - The value to cache
+
+**Example:**
+
+```typescript
+cache.set('greeting', 'Hello, World!')
+cache.set('count', 42)
+cache.set('user', { name: 'John', age: 30 })
+```
+
+### has(key)
+
+Checks if a key exists in the cache and hasn't expired. This is useful for distinguishing between cache misses and cached `undefined` values.
+
+```typescript
+has(key: string): boolean
+```
+
+**Parameters:**
+- `key` - The key to check
+
+**Returns:** `true` if the key exists and hasn't expired, `false` otherwise
+
+**Example:**
+
+```typescript
+cache.set('value', undefined)
+
+// get() returns undefined for both cases
+cache.get('value')     // undefined
+cache.get('missing')   // undefined
+
+// has() distinguishes them
+cache.has('value')     // true
+cache.has('missing')   // false
+```
+
+### delete(key)
+
+Removes a specific entry from the cache.
+
+```typescript
+delete(key: string): boolean
+```
+
+**Parameters:**
+- `key` - The key of the entry to remove
+
+**Returns:** `true` if an entry was removed, `false` if the key wasn't found
+
+**Example:**
+
+```typescript
+cache.set('key', 'value')
+cache.delete('key')        // true
+cache.delete('nonexistent') // false
+```
+
+### deleteAsync(key)
+
+Async version of `delete()`. Useful for consistent async/await patterns.
+
+```typescript
+deleteAsync(key: string): Promise<boolean>
+```
+
+**Example:**
+
+```typescript
+await cache.deleteAsync('key')
+```
+
+### clear()
+
+Removes all entries from the cache.
+
+```typescript
+clear(): void
+```
+
+**Example:**
+
+```typescript
+cache.set('key1', 'value1')
+cache.set('key2', 'value2')
+cache.clear()
+cache.get('key1')  // undefined
+```
+
+### deleteByPrefix(prefix)
+
+Removes all entries whose keys start with the given prefix.
+
+```typescript
+deleteByPrefix(prefix: string): number
+```
+
+**Parameters:**
+- `prefix` - The prefix to match against cache keys
+
+**Returns:** The number of entries removed
+
+**Example:**
+
+```typescript
+cache.set('user:123:name', 'John')
+cache.set('user:123:email', 'john@example.com')
+cache.set('user:456:name', 'Jane')
+cache.set('post:789', 'Hello World')
+
+const removed = cache.deleteByPrefix('user:123:')
+// removed = 2 (user:123:name and user:123:email)
+
+cache.get('user:123:name')  // undefined
+cache.get('user:456:name')  // 'Jane'
+```
+
+### deleteByMagicString(pattern)
+
+Removes all entries whose keys match the given wildcard pattern. Use `*` as a wildcard that matches any sequence of characters.
+
+```typescript
+deleteByMagicString(pattern: string): number
+```
+
+**Parameters:**
+- `pattern` - The wildcard pattern to match (use `*` for wildcards)
+
+**Returns:** The number of entries removed
+
+**Example:**
+
+```typescript
+cache.set('user:123:name', 'John')
+cache.set('user:456:name', 'Jane')
+cache.set('user:123:email', 'john@example.com')
+cache.set('post:789', 'Hello World')
+
+// Delete all entries matching user:*:name
+cache.deleteByMagicString('user:*:name')
+// Removes user:123:name and user:456:name
+
+// Delete all user:123 entries
+cache.deleteByMagicString('user:123:*')
+
+// Delete all entries containing :123:
+cache.deleteByMagicString('*:123:*')
+```
+
+## Introspection Methods
+
+### size()
+
+Returns the current number of entries in the cache. Internally calls [`prune()`](#prune) to remove expired entries before counting.
+
+```typescript
+size(): number
+```
+
+**Returns:** The number of cached entries
+
+**Example:**
+
+```typescript
+const cache = new MemoryCache<string>()
+cache.set('key1', 'value1')
+cache.set('key2', 'value2')
+console.log(cache.size())  // 2
+```
+
+### keys()
+
+Returns an array of all keys currently in the cache. Internally calls [`prune()`](#prune) to remove expired entries before returning results.
+
+```typescript
+keys(): string[]
+```
+
+**Returns:** Array of cache keys
+
+**Example:**
+
+```typescript
+const cache = new MemoryCache<string>()
+cache.set('user:1', 'Alice')
+cache.set('user:2', 'Bob')
+console.log(cache.keys())  // ['user:1', 'user:2']
+```
+
+### values()
+
+Returns an array of all values currently in the cache. Internally calls [`prune()`](#prune) to remove expired entries before returning results.
+
+```typescript
+values(): (T | undefined)[]
+```
+
+**Returns:** Array of cached values
+
+**Example:**
+
+```typescript
+const cache = new MemoryCache<string>()
+cache.set('key1', 'value1')
+cache.set('key2', 'value2')
+console.log(cache.values())  // ['value1', 'value2']
+```
+
+### entries()
+
+Returns an array of all key-value pairs currently in the cache. Internally calls [`prune()`](#prune) to remove expired entries before returning results.
+
+```typescript
+entries(): [string, T | undefined][]
+```
+
+**Returns:** Array of [key, value] tuples
+
+**Example:**
+
+```typescript
+const cache = new MemoryCache<string>()
+cache.set('key1', 'value1')
+cache.set('key2', 'value2')
+console.log(cache.entries())  // [['key1', 'value1'], ['key2', 'value2']]
+```
+
+## Statistics
+
+### getStats()
+
+Returns statistics about cache usage and performance.
+
+```typescript
+getStats(): CacheStats
+```
+
+**Returns:** Object containing cache statistics (see [CacheStats](#cachestats) type)
+
+**Example:**
+
+```typescript
+const cache = new MemoryCache<string>()
+cache.set('key', 'value')
+cache.get('key')       // hit
+cache.get('missing')   // miss
+
+const stats = cache.getStats()
+console.log(stats)
+// { hits: 1, misses: 1, evictions: 0, expirations: 0, size: 1 }
+```
+
+### resetStats()
+
+Resets all statistics counters to zero. Does not affect cached data.
+
+```typescript
+resetStats(): void
+```
+
+**Example:**
+
+```typescript
+const cache = new MemoryCache<string>()
+cache.get('missing')  // increments misses
+cache.resetStats()
+console.log(cache.getStats().misses)  // 0
+```
+
+### prune()
+
+Proactively removes all expired entries from the cache. This is useful for reclaiming memory when you don't want to wait for lazy cleanup (which occurs when expired entries are accessed).
+
+```typescript
+prune(): number
+```
+
+**Returns:** The number of expired entries that were removed
+
+**Example:**
+
+```typescript
+const cache = new MemoryCache<string>({ ttl: 1000 })
+cache.set('key1', 'value1')
+cache.set('key2', 'value2')
+
+// ... time passes ...
+
+const pruned = cache.prune()
+console.log(`Removed ${pruned} expired entries`)
+```
+
+## Types
+
+### CacheStats
+
+Statistics about cache usage and performance.
+
+```typescript
+type CacheStats = {
+    hits: number
+    misses: number
+    evictions: number
+    expirations: number
+    size: number
+}
+```
+
+### CacheConfigError
+
+Error thrown when cache configuration is invalid.
+
+```typescript
+import { CacheConfigError } from '@humanspeak/memory-cache'
+
+class CacheConfigError extends Error {
+    readonly name = 'CacheConfigError'
+}
+```
+
+Thrown when:
+- `maxSize` is negative
+- `ttl` is negative
+
+## Type Safety
+
+The cache is fully generic and type-safe:
+
+```typescript
+// Typed cache for User objects
+const userCache = new MemoryCache<User>()
+userCache.set('user:1', { id: 1, name: 'John' })
+const user = userCache.get('user:1')  // User | undefined
+
+// Typed cache for API responses
+interface ApiResponse {
+    data: unknown
+    timestamp: number
+}
+const apiCache = new MemoryCache<ApiResponse>()
+```
+
+## Caching Null and Undefined
+
+The cache properly handles `null` and `undefined` values:
+
+```typescript
+const cache = new MemoryCache<string | null | undefined>()
+
+cache.set('null', null)
+cache.set('undefined', undefined)
+
+// Values are properly retrieved
+cache.get('null')       // null
+cache.get('undefined')  // undefined
+
+// Use has() to distinguish from cache misses
+cache.has('null')       // true
+cache.has('undefined')  // true
+cache.has('missing')    // false
+```
+
+## Hooks
+
+Hooks allow you to observe cache lifecycle events for monitoring, debugging, and integration with external systems.
+
+### CacheHooks
+
+```typescript
+type CacheHooks<T> = {
+    onHit?: (context: OnHitContext<T>) => void
+    onMiss?: (context: OnMissContext) => void
+    onSet?: (context: OnSetContext<T>) => void
+    onEvict?: (context: OnEvictContext<T>) => void
+    onExpire?: (context: OnExpireContext<T>) => void
+    onDelete?: (context: OnDeleteContext<T>) => void
+}
+```
+
+### Hook Events
+
+| Hook | When Called | Context Type |
+|------|-------------|--------------|
+| `onHit` | Successful `get()` retrieval | `{ key: string, value: T \| undefined }` |
+| `onMiss` | `get()` returns undefined | `{ key: string, reason: 'not_found' \| 'expired' }` |
+| `onSet` | Value stored via `set()` | `{ key: string, value: T, isUpdate: boolean }` |
+| `onEvict` | Entry evicted due to `maxSize` | `{ key: string, value: T \| undefined }` |
+| `onExpire` | Entry expired due to TTL | `{ key: string, value: T \| undefined, source: 'get' \| 'has' \| 'prune' }` |
+| `onDelete` | Entry explicitly deleted | `{ key: string, value: T \| undefined, source: 'delete' \| 'deleteAsync' \| 'deleteByPrefix' \| 'deleteByMagicString' \| 'clear' }` |
+
+### Example: Metrics Integration
+
+```typescript
+import { MemoryCache } from '@humanspeak/memory-cache'
+
+const cache = new MemoryCache<string>({
+    maxSize: 1000,
+    ttl: 5 * 60 * 1000,
+    hooks: {
+        onHit: ({ key }) => {
+            metrics.increment('cache.hit')
+            console.log(`Cache hit: ${key}`)
+        },
+        onMiss: ({ key, reason }) => {
+            metrics.increment('cache.miss')
+            console.log(`Cache miss: ${key} (${reason})`)
+        },
+        onEvict: ({ key }) => {
+            metrics.increment('cache.eviction')
+            console.log(`Evicted: ${key}`)
+        },
+        onExpire: ({ key, source }) => {
+            metrics.increment('cache.expiration')
+            console.log(`Expired: ${key} via ${source}`)
+        }
+    }
+})
+```
+
+### Important Notes
+
+- **Synchronous only**: Hooks must be synchronous functions. Async hooks are not supported.
+- **Error handling**: Errors thrown in hooks are silently caught to prevent cache corruption.
+- **Performance**: Keep hooks lightweight to avoid impacting cache performance.
+- **Batch operations**: `clear()`, `deleteByPrefix()`, and `deleteByMagicString()` call `onDelete` once per deleted entry.
+
+
+
