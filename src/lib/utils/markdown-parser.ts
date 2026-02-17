@@ -49,7 +49,7 @@ import type { SvelteMarkdownOptions } from '$lib/types.js'
  *
  * @typedef {Component<any, any, any> | undefined | null} RendererComponent
  */
-export type RendererComponent = Component<any, any, any> | undefined | null // eslint-disable-line @typescript-eslint/no-explicit-any
+export type RendererComponent = Component<any, any, any> | undefined | null // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
 
 /**
  * Comprehensive mapping of markdown elements to their renderer components.

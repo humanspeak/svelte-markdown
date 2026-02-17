@@ -7,7 +7,7 @@ Renders an HTML `<ol>` element. Accepts optional attributes and child content.
 
     interface Props {
         children?: Snippet
-        attributes?: Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
+        attributes?: Record<string, any> // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
     }
 
     const { children, attributes }: Props = $props()

@@ -61,7 +61,7 @@ export type SvelteMarkdownProps<T extends Renderers = Renderers> = {
      *
      * @param tokens - The parsed token array or `TokensList`.
      */
-    parsed?: (tokens: Token[] | TokensList) => void // eslint-disable-line no-unused-vars
+    parsed?: (tokens: Token[] | TokensList) => void // trunk-ignore(eslint/no-unused-vars)
 }
 
 export interface SvelteMarkdownOptions extends MarkedOptions {

@@ -4,7 +4,7 @@ import type { Component } from 'svelte'
  * Generic component type for filter utilities.
  * Allows Component, undefined, or null values.
  */
-type FilterComponent = Component<any, any, any> | undefined | null // eslint-disable-line @typescript-eslint/no-explicit-any
+type FilterComponent = Component<any, any, any> | undefined | null // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
 
 /**
  * Creates a set of filter utility functions for renderer maps.

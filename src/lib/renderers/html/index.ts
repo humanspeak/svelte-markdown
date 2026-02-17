@@ -104,7 +104,7 @@ import UnsupportedHTML from './_UnsupportedHTML.svelte'
  * rendered.  This interface is used by the allow/deny filter utilities.
  */
 export interface HtmlRenderers {
-    [key: string]: Component<any, any, any> | null // eslint-disable-line @typescript-eslint/no-explicit-any
+    [key: string]: Component<any, any, any> | null // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
 }
 
 /**

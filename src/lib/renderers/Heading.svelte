@@ -21,7 +21,7 @@ heading text via `github-slugger`, optionally prefixed by `options.headerPrefix`
         raw: string
         text: string
         options: SvelteMarkdownOptions
-        slug: (val: string) => string // eslint-disable-line no-unused-vars
+        slug: (val: string) => string // trunk-ignore(eslint/no-unused-vars)
         children?: Snippet
     }
 
