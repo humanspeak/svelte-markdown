@@ -6,7 +6,7 @@
     import { useSidebar } from './context.svelte.js'
 
     let {
-        ref = $bindable(null),
+        ref = $bindable(null), // trunk-ignore(eslint/no-useless-assignment)
         class: className,
         onclick,
         ...restProps
