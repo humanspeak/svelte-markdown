@@ -1,0 +1,310 @@
+---
+title: Basic Rendering
+description: Common markdown rendering examples with @humanspeak/svelte-markdown
+---
+
+# Basic Rendering
+
+These examples demonstrate common usage patterns for rendering markdown with `@humanspeak/svelte-markdown`.
+
+## Simple Markdown String
+
+The most basic usage -- pass a markdown string to the `source` prop:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+# Welcome
+
+This is a paragraph with **bold**, *italic*, and ~~strikethrough~~ text.
+
+- Item one
+- Item two
+- Item three
+    `
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+## Reactive Source
+
+Bind the `source` prop to a reactive variable so the rendered output updates automatically:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    let source = $state('# Hello\n\nStart typing...')
+</script>
+
+<textarea bind:value={source} rows="6" cols="60"></textarea>
+<SvelteMarkdown {source} />
+```
+
+## Headings with IDs
+
+By default, headings receive auto-generated `id` attributes (via [github-slugger](https://github.com/Flet/github-slugger)):
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+# Introduction
+## Getting Started
+### Installation
+## Usage
+### Basic Example
+    `
+</script>
+
+<!-- Headings get ids: "introduction", "getting-started", "installation", etc. -->
+<SvelteMarkdown {source} />
+```
+
+Add a prefix to all heading IDs:
+
+```html
+<SvelteMarkdown
+    {source}
+    options={{ headerIds: true, headerPrefix: 'doc-' }}
+/>
+<!-- IDs: "doc-introduction", "doc-getting-started", etc. -->
+```
+
+Disable heading IDs entirely:
+
+```html
+<SvelteMarkdown {source} options={{ headerIds: false }} />
+```
+
+## Links
+
+Markdown links render as `<a>` elements:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+Visit [Svelte](https://svelte.dev) and [GitHub](https://github.com "GitHub Homepage").
+    `
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+## Images
+
+Images are rendered with lazy loading and fade-in effects by default:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+![Alt text](https://picsum.photos/400/200 "Photo caption")
+    `
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+## Code Blocks
+
+Fenced code blocks include the language as a CSS class for syntax highlighting integration:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = "```javascript\nconst x = 42;\nconsole.log(x);\n```"
+</script>
+
+<SvelteMarkdown {source} />
+<!-- Renders: <pre class="javascript"><code>...</code></pre> -->
+```
+
+## Inline Code
+
+Inline code renders within `<code>` elements:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = 'Use the `console.log()` function to debug.'
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+## Tables (GFM)
+
+GitHub Flavored Markdown tables are supported when `gfm` is enabled (the default):
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+| Name    | Type     | Default |
+|---------|----------|---------|
+| source  | string   | ""      |
+| isInline | boolean | false   |
+| gfm     | boolean  | true    |
+    `
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+Tables support column alignment:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+| Left | Center | Right |
+|:-----|:------:|------:|
+| A    |   B    |     C |
+| D    |   E    |     F |
+    `
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+## Blockquotes
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+> This is a blockquote.
+>
+> It can span multiple paragraphs.
+    `
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+## Ordered and Unordered Lists
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+Unordered list:
+
+- First item
+- Second item
+  - Nested item
+- Third item
+
+Ordered list:
+
+1. Step one
+2. Step two
+3. Step three
+    `
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+## Line Breaks
+
+Enable `breaks` to convert single newlines to `<br>` elements:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `Line one
+Line two
+Line three`
+</script>
+
+<!-- Without breaks: all on one line -->
+<SvelteMarkdown {source} />
+
+<!-- With breaks: each line separated by <br> -->
+<SvelteMarkdown {source} options={{ breaks: true }} />
+```
+
+## Horizontal Rules
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+Section one
+
+---
+
+Section two
+    `
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+## Mixed Content
+
+A complete example combining multiple markdown features:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+# Project Documentation
+
+## Overview
+
+This project uses **Svelte 5** with *TypeScript* support.
+
+## Installation
+
+\`\`\`bash
+npm install @humanspeak/svelte-markdown
+\`\`\`
+
+## Features
+
+| Feature | Status |
+|---------|--------|
+| Markdown | Supported |
+| HTML | Supported |
+| GFM | Supported |
+
+> **Note:** All features are enabled by default.
+
+## Links
+
+- [Documentation](/docs)
+- [GitHub](https://github.com/humanspeak/svelte-markdown)
+
+---
+
+*Built with @humanspeak/svelte-markdown*
+    `
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+## Related
+
+- [Getting Started](/docs/getting-started) -- installation and setup
+- [SvelteMarkdown API](/docs/api/svelte-markdown) -- full component reference
+- [Inline Rendering Examples](/docs/examples/inline-rendering) -- using `isInline`

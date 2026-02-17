@@ -1,0 +1,240 @@
+---
+title: SvelteMarkdown Component
+description: Complete API reference for the SvelteMarkdown component
+---
+
+# SvelteMarkdown Component
+
+The `SvelteMarkdown` component is the main entry point for rendering markdown content. It accepts a markdown string (or pre-parsed tokens), parses it, and renders the result through a composable system of Svelte renderer components.
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+</script>
+
+<SvelteMarkdown source="# Hello World" />
+```
+
+## Props
+
+### `source`
+
+- **Type:** `string | Token[]`
+- **Default:** `[]`
+
+The markdown content to render. Can be either a raw markdown string or an array of pre-parsed [Marked tokens](https://marked.js.org/using_pro#lexer).
+
+When a string is provided, it is parsed using Marked's lexer (with built-in token caching for performance). When pre-parsed tokens are provided, parsing is skipped entirely.
+
+```html
+<!-- String source -->
+<SvelteMarkdown source="**Bold** and *italic*" />
+
+<!-- Pre-parsed tokens -->
+<SvelteMarkdown source={myTokens} />
+```
+
+### `renderers`
+
+- **Type:** `Partial<Renderers>`
+- **Default:** `{}`
+
+An object mapping renderer keys to custom Svelte components. Any keys you provide will override the corresponding default renderer. Keys you omit will use the built-in defaults.
+
+The `renderers` object supports two categories of keys:
+
+1. **Markdown renderer keys** (e.g., `heading`, `paragraph`, `link`, `code`) -- see [Markdown Renderers](/docs/renderers/markdown-renderers)
+2. **`html`** -- an object mapping HTML tag names to components -- see [HTML Renderers](/docs/renderers/html-renderers)
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import CustomHeading from './CustomHeading.svelte'
+    import CustomLink from './CustomLink.svelte'
+
+    const source = '# Title\n\n[Click here](https://example.com)'
+</script>
+
+<SvelteMarkdown
+    {source}
+    renderers={{
+        heading: CustomHeading,
+        link: CustomLink
+    }}
+/>
+```
+
+To override HTML tag renderers within markdown, use the nested `html` key:
+
+```html
+<SvelteMarkdown
+    {source}
+    renderers={{
+        html: {
+            div: CustomDiv,
+            span: CustomSpan
+        }
+    }}
+/>
+```
+
+When you provide a partial `html` object, it is merged with the defaults -- your overrides replace only the tags you specify, and all other HTML tags continue using their built-in renderers.
+
+### `options`
+
+- **Type:** `Partial<SvelteMarkdownOptions>`
+- **Default:** `{}`
+
+Configuration options for the markdown parser. These are merged with the default options.
+
+```html
+<SvelteMarkdown
+    source={markdown}
+    options={{
+        headerIds: true,
+        headerPrefix: 'section-',
+        gfm: true,
+        breaks: true
+    }}
+/>
+```
+
+#### Available Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `headerIds` | `boolean` | `true` | Generate `id` attributes on heading elements using [github-slugger](https://github.com/Flet/github-slugger) |
+| `headerPrefix` | `string` | `''` | String to prepend to generated heading IDs |
+| `gfm` | `boolean` | `true` | Enable [GitHub Flavored Markdown](https://github.github.com/gfm/) (tables, strikethrough, task lists, etc.) |
+| `breaks` | `boolean` | `false` | Convert single newlines in paragraphs to `<br>` elements |
+
+The options object also passes through Marked's own configuration properties such as `async`, `pedantic`, `silent`, `tokenizer`, and `walkTokens`.
+
+### `isInline`
+
+- **Type:** `boolean`
+- **Default:** `false`
+
+When set to `true`, the markdown is parsed as inline content. This means block-level elements like headings, paragraphs, lists, and blockquotes are not produced. Only inline elements such as bold, italic, links, code spans, and images are rendered.
+
+This is useful when you want to embed markdown within a `<span>` or other inline HTML context.
+
+```html
+<p>
+    Status: <SvelteMarkdown source="**Active** since *2024*" isInline={true} />
+</p>
+```
+
+### `parsed`
+
+- **Type:** `(tokens: Token[] | TokensList) => void`
+- **Default:** `() => {}`
+
+A callback function that is invoked with the parsed token array whenever the source is parsed. This is useful for inspecting the token tree, building a table of contents, or performing other analysis on the parsed output.
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    let headings = $state([])
+
+    function handleParsed(tokens) {
+        headings = tokens
+            .filter(t => t.type === 'heading')
+            .map(t => ({ depth: t.depth, text: t.text }))
+    }
+</script>
+
+<SvelteMarkdown source={markdown} parsed={handleParsed} />
+
+<nav>
+    {#each headings as h}
+        <a href="#{h.text}">{h.text} (h{h.depth})</a>
+    {/each}
+</nav>
+```
+
+The callback fires reactively via a Svelte `$effect` -- it will be called again whenever the tokens change (e.g., when `source` changes).
+
+## Default Options
+
+The full set of default options applied when no `options` prop is provided:
+
+```typescript
+const defaultOptions: SvelteMarkdownOptions = {
+    async: false,
+    breaks: false,
+    gfm: true,
+    pedantic: false,
+    renderer: null,
+    silent: false,
+    tokenizer: null,
+    walkTokens: null,
+    headerIds: true,
+    headerPrefix: ''
+}
+```
+
+## Token Caching
+
+When you pass a string to `source`, the component automatically caches parsed tokens using an internal LRU cache. On subsequent renders with the same source and options, the cached tokens are returned in under 1ms instead of re-parsing (which can take 50-200ms for large documents).
+
+The cache is a global singleton (`tokenCache`) shared across all `SvelteMarkdown` instances. It defaults to 50 entries with a 5-minute TTL. See [Token Caching](/docs/advanced/token-caching) for advanced configuration.
+
+When you pass pre-parsed tokens to `source`, caching is bypassed entirely.
+
+## Renderer Merging
+
+The component merges your custom renderers with the defaults:
+
+```typescript
+// Internal behavior
+const combinedRenderers = {
+    ...defaultRenderers,
+    ...renderers,
+    html: renderers.html
+        ? { ...defaultRenderers.html, ...renderers.html }
+        : defaultRenderers.html
+}
+```
+
+This means:
+- Top-level renderer keys you provide replace the defaults
+- Top-level renderer keys you omit use the built-in components
+- For `html`, your overrides are merged with the default HTML renderer map
+
+## Complete Example
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import CustomHeading from './CustomHeading.svelte'
+    import CustomCode from './CustomCode.svelte'
+
+    let source = $state('# Hello\n\n```js\nconsole.log("hi")\n```')
+    let tokens = $state([])
+</script>
+
+<SvelteMarkdown
+    {source}
+    renderers={{
+        heading: CustomHeading,
+        code: CustomCode
+    }}
+    options={{
+        headerIds: true,
+        headerPrefix: 'doc-',
+        gfm: true
+    }}
+    parsed={(t) => tokens = t}
+/>
+
+<p>Parsed {tokens.length} tokens</p>
+```
+
+## Related
+
+- [Types & Exports](/docs/api/types) -- all exported types, functions, and constants
+- [Markdown Renderers](/docs/renderers/markdown-renderers) -- list of all 24 renderer keys
+- [Custom Renderers](/docs/renderers/custom-renderers) -- guide to building custom components
+- [Token Caching](/docs/advanced/token-caching) -- cache configuration and performance

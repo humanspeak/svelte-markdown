@@ -32,3 +32,5 @@ vite.config.ts.timestamp-*
 /playwright/.cache/**
 junit-vitest.xml
 junit-playwright.xml
+.svelte-kit
+docs-old/

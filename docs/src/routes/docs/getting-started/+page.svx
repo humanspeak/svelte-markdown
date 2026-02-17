@@ -1,0 +1,109 @@
+---
+title: Getting Started
+description: Get started with @humanspeak/svelte-markdown, a powerful markdown renderer for Svelte 5
+---
+
+# Getting Started
+
+**@humanspeak/svelte-markdown** is a powerful, customizable markdown renderer for Svelte 5 with full TypeScript support. It parses markdown using [Marked](https://marked.js.org/) and renders it through a composable system of Svelte components that you can override and extend.
+
+## Installation
+
+Install the package using your preferred package manager:
+
+```bash
+npm install @humanspeak/svelte-markdown
+```
+
+```bash
+pnpm add @humanspeak/svelte-markdown
+```
+
+```bash
+yarn add @humanspeak/svelte-markdown
+```
+
+## Quick Start
+
+Import the `SvelteMarkdown` component and pass your markdown string to the `source` prop:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = '# Hello World\n\nThis is **bold** and *italic* text.'
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+This renders the markdown as HTML using the built-in default renderers.
+
+## Basic Props
+
+The `SvelteMarkdown` component accepts the following props:
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `source` | `string \| Token[]` | `[]` | Markdown string or pre-parsed tokens to render |
+| `renderers` | `Partial<Renderers>` | `{}` | Custom renderer components to override defaults |
+| `options` | `Partial<SvelteMarkdownOptions>` | `{}` | Parser configuration options |
+| `isInline` | `boolean` | `false` | Parse as inline markdown (no block-level elements) |
+| `parsed` | `(tokens: Token[] \| TokensList) => void` | `() => {}` | Callback invoked with parsed tokens |
+
+## Configuration Options
+
+You can configure the markdown parser through the `options` prop:
+
+```html
+<SvelteMarkdown
+    source="# Hello"
+    options={{
+        headerIds: true,
+        headerPrefix: 'doc-',
+        gfm: true,
+        breaks: false
+    }}
+/>
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `headerIds` | `boolean` | `true` | Generate `id` attributes on headings |
+| `headerPrefix` | `string` | `''` | Prefix for generated heading IDs |
+| `gfm` | `boolean` | `true` | Enable GitHub Flavored Markdown |
+| `breaks` | `boolean` | `false` | Convert single newlines to `<br>` |
+
+## Overriding Renderers
+
+You can replace any built-in renderer with your own Svelte component:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import CustomLink from './CustomLink.svelte'
+
+    const source = 'Visit [example](https://example.com)'
+</script>
+
+<SvelteMarkdown {source} renderers={{ link: CustomLink }} />
+```
+
+## Features
+
+- **Svelte 5** runes compatibility with `$props()` and `$derived()`
+- **TypeScript** with complete type definitions for all exports
+- **24 markdown renderers** covering all standard markdown elements
+- **69+ HTML tag renderers** for raw HTML within markdown
+- **Token caching** with LRU eviction for high-performance re-renders
+- **Allow/deny filtering** to control which elements are rendered
+- **Custom renderers** for full control over output
+
+## Next Steps
+
+- [SvelteMarkdown API Reference](/docs/api/svelte-markdown) -- full component documentation
+- [Types & Exports](/docs/api/types) -- all exported types, functions, and constants
+- [Markdown Renderers](/docs/renderers/markdown-renderers) -- the 24 built-in markdown renderers
+- [Custom Renderers Guide](/docs/renderers/custom-renderers) -- how to build your own renderers
+- [Token Caching](/docs/advanced/token-caching) -- performance optimization with caching
+- [Basic Rendering Examples](/docs/examples/basic-rendering) -- common usage patterns

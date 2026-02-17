@@ -1,0 +1,220 @@
+---
+title: HTML Renderers
+description: Documentation for all 69+ built-in HTML tag renderer components
+---
+
+# HTML Renderers
+
+When your markdown source contains raw HTML (which Marked parses as `html` tokens), `@humanspeak/svelte-markdown` renders each HTML tag through a dedicated Svelte component. The package ships with renderers for 69+ standard HTML tags.
+
+These HTML renderers are separate from the markdown renderers. They handle HTML elements that appear within markdown content, parsed by [HTMLParser2](https://github.com/fb55/htmlparser2).
+
+## Accessing HTML Renderers
+
+The full HTML renderer map is available as a named export:
+
+```typescript
+import { Html, htmlRendererKeys } from '@humanspeak/svelte-markdown'
+
+// Html is an object mapping tag names to Svelte components
+console.log(Html.div)    // Div component
+console.log(Html.strong) // Strong component
+
+// htmlRendererKeys is an array of all tag names
+console.log(htmlRendererKeys) // ['a', 'abbr', 'address', ...]
+```
+
+## Overriding HTML Renderers
+
+Override specific HTML tag renderers via the `renderers.html` prop:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import CustomDiv from './CustomDiv.svelte'
+
+    const source = 'Some markdown with <div>raw HTML</div> inside'
+</script>
+
+<SvelteMarkdown
+    {source}
+    renderers={{
+        html: {
+            div: CustomDiv
+        }
+    }}
+/>
+```
+
+Your `html` overrides are merged with the defaults -- only the tags you specify are replaced.
+
+## Complete Tag List
+
+Below is the full list of supported HTML tags, organized by category.
+
+### Text Content
+
+| Tag | Element | Description |
+|-----|---------|-------------|
+| `p` | `<p>` | Paragraph |
+| `blockquote` | `<blockquote>` | Block quotation |
+| `pre` | `<pre>` | Preformatted text |
+| `hr` | `<hr>` | Thematic break |
+| `br` | `<br>` | Line break |
+
+### Headings
+
+| Tag | Element | Description |
+|-----|---------|-------------|
+| `h1` | `<h1>` | Heading level 1 |
+| `h2` | `<h2>` | Heading level 2 |
+| `h3` | `<h3>` | Heading level 3 |
+| `h4` | `<h4>` | Heading level 4 |
+| `h5` | `<h5>` | Heading level 5 |
+| `h6` | `<h6>` | Heading level 6 |
+
+### Inline Text Semantics
+
+| Tag | Element | Description |
+|-----|---------|-------------|
+| `a` | `<a>` | Anchor / hyperlink |
+| `abbr` | `<abbr>` | Abbreviation |
+| `b` | `<b>` | Bring attention to |
+| `bdi` | `<bdi>` | Bidirectional isolate |
+| `bdo` | `<bdo>` | Bidirectional override |
+| `cite` | `<cite>` | Citation |
+| `code` | `<code>` | Inline code |
+| `del` | `<del>` | Deleted text |
+| `dfn` | `<dfn>` | Definition term |
+| `em` | `<em>` | Emphasis |
+| `i` | `<i>` | Idiomatic text |
+| `kbd` | `<kbd>` | Keyboard input |
+| `mark` | `<mark>` | Highlighted text |
+| `s` | `<s>` | Strikethrough |
+| `samp` | `<samp>` | Sample output |
+| `small` | `<small>` | Side comment |
+| `span` | `<span>` | Generic inline container |
+| `strong` | `<strong>` | Strong importance |
+| `sub` | `<sub>` | Subscript |
+| `sup` | `<sup>` | Superscript |
+| `u` | `<u>` | Unarticulated annotation |
+| `var` | `<var>` | Variable |
+
+### Lists
+
+| Tag | Element | Description |
+|-----|---------|-------------|
+| `ol` | `<ol>` | Ordered list |
+| `ul` | `<ul>` | Unordered list |
+| `li` | `<li>` | List item |
+| `dl` | `<dl>` | Description list |
+| `dt` | `<dt>` | Description term |
+| `dd` | `<dd>` | Description details |
+| `menu` | `<menu>` | Menu list |
+
+### Table Elements
+
+| Tag | Element | Description |
+|-----|---------|-------------|
+| `table` | `<table>` | Table |
+| `thead` | `<thead>` | Table head |
+| `tbody` | `<tbody>` | Table body |
+| `tfoot` | `<tfoot>` | Table footer |
+| `tr` | `<tr>` | Table row |
+| `th` | `<th>` | Table header cell |
+| `td` | `<td>` | Table data cell |
+
+### Sectioning
+
+| Tag | Element | Description |
+|-----|---------|-------------|
+| `article` | `<article>` | Self-contained composition |
+| `aside` | `<aside>` | Sidebar content |
+| `div` | `<div>` | Generic block container |
+| `footer` | `<footer>` | Footer |
+| `header` | `<header>` | Header |
+| `hgroup` | `<hgroup>` | Heading group |
+| `main` | `<main>` | Main content |
+| `nav` | `<nav>` | Navigation |
+| `section` | `<section>` | Standalone section |
+| `address` | `<address>` | Contact information |
+
+### Media & Embedded Content
+
+| Tag | Element | Description |
+|-----|---------|-------------|
+| `audio` | `<audio>` | Audio content |
+| `canvas` | `<canvas>` | Drawing surface |
+| `embed` | `<embed>` | Embedded content |
+| `iframe` | `<iframe>` | Inline frame |
+| `img` | `<img>` | Image |
+| `param` | `<param>` | Object parameter |
+| `picture` | `<picture>` | Responsive image container |
+| `source` | `<source>` | Media source |
+| `track` | `<track>` | Text track for media |
+
+### Forms & Interactive
+
+| Tag | Element | Description |
+|-----|---------|-------------|
+| `button` | `<button>` | Clickable button |
+| `datalist` | `<datalist>` | Predefined options |
+| `details` | `<details>` | Disclosure widget |
+| `dialog` | `<dialog>` | Dialog box |
+| `fieldset` | `<fieldset>` | Form field group |
+| `form` | `<form>` | Form |
+| `input` | `<input>` | Form input |
+| `label` | `<label>` | Form label |
+| `legend` | `<legend>` | Fieldset caption |
+| `meter` | `<meter>` | Scalar measurement |
+| `optgroup` | `<optgroup>` | Option group |
+| `option` | `<option>` | Select option |
+| `output` | `<output>` | Calculation result |
+| `progress` | `<progress>` | Progress indicator |
+| `select` | `<select>` | Dropdown selection |
+| `summary` | `<summary>` | Disclosure summary |
+| `textarea` | `<textarea>` | Multiline text input |
+
+## UnsupportedHTML Component
+
+The `UnsupportedHTML` component renders nothing. It is used by the allow/deny filtering system to suppress specific HTML tags:
+
+```typescript
+import { UnsupportedHTML } from '@humanspeak/svelte-markdown'
+```
+
+When a tag is mapped to `UnsupportedHTML`, any instances of that tag in the markdown source will produce no output.
+
+## Filtering HTML Tags
+
+Use the provided utility functions to control which HTML tags are rendered:
+
+```html
+<script>
+    import SvelteMarkdown, {
+        allowHtmlOnly,
+        excludeHtmlOnly,
+        buildUnsupportedHTML
+    } from '@humanspeak/svelte-markdown'
+
+    // Only allow safe inline tags
+    const safeHtml = allowHtmlOnly(['strong', 'em', 'a', 'code'])
+
+    // Block potentially dangerous tags
+    const filteredHtml = excludeHtmlOnly(['iframe', 'form', 'input'])
+
+    // Block all HTML
+    const noHtml = buildUnsupportedHTML()
+</script>
+
+<SvelteMarkdown source={markdown} renderers={{ html: safeHtml }} />
+```
+
+See [Allow/Deny](/docs/advanced/allow-deny) for detailed documentation on these filtering functions.
+
+## Related
+
+- [Markdown Renderers](/docs/renderers/markdown-renderers) -- the 24 built-in markdown renderers
+- [Custom Renderers](/docs/renderers/custom-renderers) -- guide to building custom components
+- [Allow/Deny](/docs/advanced/allow-deny) -- HTML and renderer filtering
+- [Security](/docs/advanced/security) -- security considerations for HTML rendering
