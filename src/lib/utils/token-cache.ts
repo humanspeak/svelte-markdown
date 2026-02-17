@@ -71,25 +71,28 @@ function hashString(str: string): string {
  * console.log(key1 !== key2) // true - different options = different key
  * ```
  */
+const optionsHashCache = new WeakMap<object, string>()
+
 function getCacheKey(source: string, options: SvelteMarkdownOptions): string {
     const sourceHash = hashString(source)
 
-    // Safely serialize all options including functions and objects
-    const seen = new WeakSet<object>()
-    const optionsHash = hashString(
-        JSON.stringify(options, (_, value) => {
-            // Serialize functions by their name or source code
-            if (typeof value === 'function') {
-                return value.name || value.toString()
-            }
-            // Handle circular references
-            if (value && typeof value === 'object') {
-                if (seen.has(value)) return '[Circular]'
-                seen.add(value)
-            }
-            return value
-        })
-    )
+    let optionsHash = optionsHashCache.get(options)
+    if (!optionsHash) {
+        const seen = new WeakSet<object>()
+        optionsHash = hashString(
+            JSON.stringify(options, (_, value) => {
+                if (typeof value === 'function') {
+                    return value.name || value.toString()
+                }
+                if (value && typeof value === 'object') {
+                    if (seen.has(value)) return '[Circular]'
+                    seen.add(value)
+                }
+                return value
+            })
+        )
+        optionsHashCache.set(options, optionsHash)
+    }
 
     return `${sourceHash}:${optionsHash}`
 }
