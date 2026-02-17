@@ -16,61 +16,17 @@ A powerful, customizable markdown renderer for Svelte with TypeScript support. B
 
 ## Features
 
-- ⚡ **Intelligent Token Caching** - 50-200x faster re-renders with automatic LRU cache (< 1ms for cached content)
-- 🖼️ **Smart Image Lazy Loading** - Automatic lazy loading with fade-in animation and error handling
+- 🔒 **Secure HTML parsing** via HTMLParser2 with XSS protection
 - 🚀 Full markdown syntax support through Marked
 - 💪 Complete TypeScript support with strict typing
-- 🎨 Customizable component rendering system
-- 🔒 Secure HTML parsing via HTMLParser2
-- 🎯 GitHub-style slug generation for headers
-- ♿ WCAG 2.1 accessibility compliance
-- 🧪 Comprehensive test coverage (vitest and playwright)
 - 🔄 Svelte 5 runes compatibility
-- 🛡️ XSS protection and sanitization
+- 🎨 Customizable component rendering system
+- ♿ WCAG 2.1 accessibility compliance
+- 🎯 GitHub-style slug generation for headers
+- 🧪 Comprehensive test coverage (vitest and playwright)
 - 🎨 Custom Marked extensions support (e.g., GitHub-style alerts)
-- 🔍 Improved attribute handling and component isolation
-- 📦 Enhanced token cleanup and nested content support
-
-## Recent Updates
-
-### Performance Improvements
-
-- **🚀 NEW: Intelligent Token Caching** - Built-in caching layer provides 50-200x speedup for repeated content
-    - Automatic cache hits in <1ms (vs 50-200ms parsing)
-    - LRU eviction with configurable size (default: 50 documents)
-    - TTL support for fresh content (default: 5 minutes)
-    - Zero configuration needed - works automatically
-    - Handles ~95% of re-renders from cache in typical usage
-
-- **🖼️ NEW: Smart Image Lazy Loading** - Images automatically lazy load with smooth animations
-    - 70% bandwidth reduction for image-heavy documents
-    - IntersectionObserver for early prefetch
-    - Fade-in animation on load
-    - Error state handling for broken images
-    - Opt-out available via custom renderer
-
-### New Features
-
-- Improved HTML attribute isolation for nested components
-- Enhanced token cleanup for better nested content handling
-- Added proper attribute inheritance control
-- Implemented strict debugging checks in CI/CD pipeline
-
-### Testing Improvements
-
-- Enhanced Playwright E2E test coverage
-- Added comprehensive tests for custom extensions
-- Improved test reliability with proper component mounting checks
-- Added specific test cases for nested component scenarios
-- **Note:** Performance tests use a higher threshold for Firefox due to slower execution in CI environments. See `tests/performance.test.ts` for details.
-
-### CI/CD Enhancements
-
-- Added automated debugging statement detection
-- Improved release workflow with GPG signing
-- Enhanced PR validation and automated version bumping
-- Added manual workflow triggers for better release control
-- Implemented monthly cache cleanup
+- ⚡ Intelligent token caching (50-200x faster re-renders)
+- 🖼️ Smart image lazy loading with fade-in animation
 
 ## Installation
 
@@ -84,27 +40,6 @@ Or with your preferred package manager:
 pnpm add @humanspeak/svelte-markdown
 yarn add @humanspeak/svelte-markdown
 ```
-
-## External Dependencies
-
-This package carefully selects its dependencies to provide a robust and maintainable solution:
-
-### Core Dependencies
-
-- **marked**
-    - Industry-standard markdown parser
-    - Battle-tested in production
-    - Extensive security features
-
-- **github-slugger**
-    - GitHub-style heading ID generation
-    - Unicode support
-    - Collision handling
-
-- **htmlparser2**
-    - High-performance HTML parsing
-    - Streaming capabilities
-    - Security-focused design
 
 ## Basic Usage
 
@@ -125,123 +60,6 @@ This is a paragraph with **bold** and <em>mixed HTML</em>.
 </script>
 
 <SvelteMarkdown {source} />
-```
-
-## ⚡ Performance
-
-### Built-in Intelligent Caching
-
-The package includes an automatic token caching system that dramatically improves performance for repeated content:
-
-**Performance Gains:**
-
-- **First render:** ~150ms (for 100KB markdown)
-- **Cached re-render:** <1ms (50-200x faster!)
-- **Memory efficient:** LRU eviction keeps cache bounded
-- **Smart invalidation:** TTL ensures fresh content
-
-```svelte
-<script lang="ts">
-    import SvelteMarkdown from '@humanspeak/svelte-markdown'
-
-    let content = $state('# Hello World')
-
-    // Change content back and forth
-    const toggle = () => {
-        content = content === '# Hello World' ? '# Goodbye World' : '# Hello World'
-    }
-</script>
-
-<!-- First time parsing each: ~50ms -->
-<!-- Subsequent renders: <1ms from cache! -->
-<button onclick={toggle}>Toggle Content</button>
-<SvelteMarkdown source={content} />
-```
-
-**How it works:**
-
-- Automatically caches parsed tokens using fast FNV-1a hashing
-- Cache key combines markdown source + parser options
-- LRU eviction (default: 50 documents, configurable)
-- TTL expiration (default: 5 minutes, configurable)
-- Zero configuration required - works automatically!
-
-**Advanced cache control:**
-
-```typescript
-import { tokenCache, TokenCache } from '@humanspeak/svelte-markdown'
-
-// Use global cache (shared across app)
-const cached = tokenCache.getTokens(markdown, options)
-
-// Create custom cache instance
-const myCache = new TokenCache({
-    maxSize: 100, // Cache up to 100 documents
-    ttl: 10 * 60 * 1000 // 10 minute TTL
-})
-
-// Manual cache management
-tokenCache.clearAllTokens() // Clear all
-tokenCache.deleteTokens(markdown, options) // Clear specific
-```
-
-**Best for:**
-
-- ✅ Static documentation sites
-- ✅ Real-time markdown editors
-- ✅ Component re-renders with same content
-- ✅ Navigation between pages
-- ✅ User-generated content viewed multiple times
-
-### Smart Image Lazy Loading
-
-Images are automatically lazy loaded with smooth fade-in animations and error handling:
-
-**Benefits:**
-
-- **70% bandwidth reduction** - Only loads visible images
-- **Faster page loads** - Images don't block initial render
-- **Better LCP** - Improves Largest Contentful Paint score
-- **Error handling** - Broken images shown with visual feedback
-
-**How it works:**
-
-```markdown
-![Alt text](/image.png 'Optional title')
-```
-
-**Features:**
-
-- ✅ Native browser lazy loading (`loading="lazy"`)
-- ✅ IntersectionObserver for early prefetch (50px before visible)
-- ✅ Smooth fade-in animation (0.3s transition)
-- ✅ Error state styling (grayscale + semi-transparent)
-- ✅ Responsive images (max-width: 100%)
-
-**Disable lazy loading (use old behavior):**
-
-If you need eager image loading, create a custom Image renderer:
-
-```svelte
-<!-- EagerImage.svelte -->
-<script lang="ts">
-    let { href = '', title = undefined, text = '' } = $props()
-</script>
-
-<img src={href} {title} alt={text} loading="eager" />
-```
-
-Then use it:
-
-```svelte
-<script lang="ts">
-    import SvelteMarkdown from '@humanspeak/svelte-markdown'
-    import EagerImage from './EagerImage.svelte'
-
-    const renderers = { image: EagerImage }
-</script>
-
-<SvelteMarkdown source={markdown} {renderers} />
 ```
 
 ## TypeScript Support
@@ -475,6 +293,47 @@ Seamlessly mix HTML and Markdown:
 </details>
 ```
 
+## Performance
+
+### Intelligent Token Caching
+
+Parsed tokens are automatically cached using an LRU strategy, providing 50-200x faster re-renders for previously seen content (< 1ms vs 50-200ms). The cache uses FNV-1a hashing keyed on source + options, with LRU eviction (default 50 documents) and TTL expiration (default 5 minutes). No configuration required.
+
+```typescript
+import { tokenCache, TokenCache } from '@humanspeak/svelte-markdown'
+
+// Manual cache management
+tokenCache.clearAllTokens()
+tokenCache.deleteTokens(markdown, options)
+
+// Custom cache instance
+const myCache = new TokenCache({ maxSize: 100, ttl: 10 * 60 * 1000 })
+```
+
+### Smart Image Lazy Loading
+
+Images automatically lazy load using native `loading="lazy"` and IntersectionObserver prefetching, with a smooth fade-in animation and error state handling. To disable lazy loading, provide a custom Image renderer:
+
+```svelte
+<!-- EagerImage.svelte -->
+<script lang="ts">
+    let { href = '', title = undefined, text = '' } = $props()
+</script>
+
+<img src={href} {title} alt={text} loading="eager" />
+```
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import EagerImage from './EagerImage.svelte'
+
+    const renderers = { image: EagerImage }
+</script>
+
+<SvelteMarkdown source={markdown} {renderers} />
+```
+
 ## Available Renderers
 
 - `text` - Text within other elements
@@ -567,12 +426,14 @@ The component emits a `parsed` event when tokens are calculated:
 
 ## Security
 
-The package includes several security features:
+This package takes a defense-in-depth approach to security:
 
-- XSS protection through HTML sanitization
-- Secure HTML parsing with HTMLParser2
-- Safe handling of HTML entities
-- Protection against malicious markdown injection
+- **Secure HTML parsing** - All HTML is parsed through HTMLParser2's streaming parser rather than `innerHTML`, preventing script injection
+- **XSS protection** - HTML entities are safely handled; malicious markdown injection is neutralized during parsing
+- **Granular HTML control** - Use `allowHtmlOnly()` / `excludeHtmlOnly()` to restrict which HTML tags are rendered (see [Helper utilities](#helper-utilities-for-allowdeny-strategies))
+- **Full HTML lockdown** - Call `buildUnsupportedHTML()` to block all raw HTML rendering
+- **Markdown renderer control** - Use `allowRenderersOnly()` / `excludeRenderersOnly()` to limit which markdown token types are rendered
+- **No built-in sanitizer** - By design, the package does not bundle a sanitizer. Integrate your own (e.g., DOMPurify) if you accept untrusted input
 
 ## License
 
