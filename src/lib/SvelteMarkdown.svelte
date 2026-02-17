@@ -71,7 +71,7 @@
         [key: string]: unknown
     } = $props()
 
-    const combinedOptions = { ...defaultOptions, ...options }
+    const combinedOptions = $derived({ ...defaultOptions, ...options })
     const slugger = new Slugger()
 
     const tokens = $derived.by(() => {
@@ -94,7 +94,7 @@
         parsed(tokens)
     })
 
-    const combinedRenderers = {
+    const combinedRenderers = $derived({
         ...defaultRenderers,
         ...renderers,
         html: renderers.html
@@ -103,7 +103,7 @@
                   ...renderers.html
               }
             : defaultRenderers.html
-    }
+    })
 </script>
 
 <Parser
