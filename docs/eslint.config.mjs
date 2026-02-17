@@ -3,9 +3,11 @@ import js from '@eslint/js'
 import prettier from 'eslint-config-prettier'
 import svelte from 'eslint-plugin-svelte'
 import globals from 'globals'
+import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ts from 'typescript-eslint'
 const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url))
+const tsconfigRootDir = dirname(fileURLToPath(import.meta.url))
 
 export default [
     includeIgnoreFile(gitignorePath),
@@ -37,6 +39,9 @@ export default [
             globals: {
                 ...globals.browser,
                 ...globals.node
+            },
+            parserOptions: {
+                tsconfigRootDir
             }
         },
 
