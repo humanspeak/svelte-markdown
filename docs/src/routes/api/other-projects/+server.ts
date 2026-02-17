@@ -28,8 +28,8 @@ export const GET: RequestHandler = async () => {
             throw new Error('Invalid response: expected array')
         }
 
-        // Filter out this project (memory-cache)
-        const otherProjects = projects.filter((project) => project.slug !== 'memory')
+        // Filter out this project (svelte-markdown)
+        const otherProjects = projects.filter((project) => project.slug !== 'markdown')
 
         return json(otherProjects)
     } catch (error) {

@@ -1,0 +1,172 @@
+---
+title: Security
+description: Security considerations, XSS protection, and sanitization guidance for @humanspeak/svelte-markdown
+---
+
+# Security
+
+`@humanspeak/svelte-markdown` renders markdown content into HTML. When processing user-generated markdown, it is important to understand the security implications and how to protect against cross-site scripting (XSS) and other injection attacks.
+
+## Key Principle
+
+**The package does not include built-in HTML sanitization.** This is a deliberate design decision -- different applications have different security requirements, and the package provides the hooks and tools for you to implement the appropriate level of protection for your use case.
+
+## How Parsing Works
+
+1. **Markdown parsing** is handled by [Marked](https://marked.js.org/), which tokenizes the markdown into a structured token tree.
+2. **HTML within markdown** is parsed by [HTMLParser2](https://github.com/fb55/htmlparser2), which produces structured data rather than directly injecting raw HTML into the DOM.
+3. Each HTML element is rendered through its own **Svelte component**, giving you control over what gets rendered and how.
+
+Because HTML is rendered through dedicated Svelte components rather than via `{@html}` injection, you have a layer of structural safety. Each HTML tag passes through a known component that you can inspect, override, or block.
+
+## Blocking HTML in Markdown
+
+The most effective defense is to block HTML tags you do not need. Use the [allow/deny filtering](/docs/advanced/allow-deny) utilities:
+
+### Block All HTML
+
+```html
+<script>
+    import SvelteMarkdown, { buildUnsupportedHTML } from '@humanspeak/svelte-markdown'
+
+    const renderers = {
+        html: buildUnsupportedHTML()
+    }
+</script>
+
+<SvelteMarkdown source={userInput} {renderers} />
+```
+
+This replaces every HTML tag renderer with `UnsupportedHTML`, which renders nothing. Markdown syntax (headings, lists, emphasis, etc.) still works normally.
+
+### Allow Only Safe Tags
+
+```html
+<script>
+    import SvelteMarkdown, { allowHtmlOnly } from '@humanspeak/svelte-markdown'
+
+    const safeHtml = allowHtmlOnly([
+        'strong', 'em', 'a', 'code', 'pre',
+        'ul', 'ol', 'li', 'p', 'br', 'hr',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'blockquote', 'table', 'thead', 'tbody',
+        'tr', 'th', 'td'
+    ])
+</script>
+
+<SvelteMarkdown source={userInput} renderers={{ html: safeHtml }} />
+```
+
+### Block Specific Dangerous Tags
+
+```html
+<script>
+    import SvelteMarkdown, { excludeHtmlOnly } from '@humanspeak/svelte-markdown'
+
+    const filteredHtml = excludeHtmlOnly([
+        'iframe', 'embed', 'form', 'input',
+        'textarea', 'select', 'button',
+        'canvas', 'dialog'
+    ])
+</script>
+
+<SvelteMarkdown source={userInput} renderers={{ html: filteredHtml }} />
+```
+
+## Restricting Markdown Elements
+
+You can also restrict which markdown elements are rendered:
+
+```html
+<script>
+    import SvelteMarkdown, {
+        allowRenderersOnly,
+        buildUnsupportedHTML
+    } from '@humanspeak/svelte-markdown'
+
+    // Only allow basic text formatting
+    const renderers = {
+        ...allowRenderersOnly([
+            'paragraph', 'text', 'strong', 'em',
+            'link', 'list', 'listitem', 'br'
+        ]),
+        html: buildUnsupportedHTML()
+    }
+</script>
+
+<SvelteMarkdown source={userInput} {renderers} />
+```
+
+## External Sanitization
+
+For applications that require additional protection, you can sanitize the markdown source before passing it to `SvelteMarkdown`:
+
+### Using DOMPurify
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import DOMPurify from 'dompurify'
+
+    let rawInput = $state('')
+
+    // Sanitize at the source level
+    const sanitized = $derived(
+        DOMPurify.sanitize(rawInput, { ALLOWED_TAGS: [] })
+    )
+</script>
+
+<SvelteMarkdown source={sanitized} />
+```
+
+### Using the `parsed` Callback
+
+You can inspect and filter tokens after parsing:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    function handleParsed(tokens) {
+        // Inspect tokens for suspicious content
+        const htmlTokens = tokens.filter(t => t.type === 'html')
+        if (htmlTokens.length > 0) {
+            console.warn('HTML detected in markdown input:', htmlTokens)
+        }
+    }
+</script>
+
+<SvelteMarkdown source={userInput} parsed={handleParsed} />
+```
+
+## Security Recommendations
+
+### For user-generated content:
+
+1. **Block all HTML** using `buildUnsupportedHTML()`. This is the safest approach for untrusted input.
+2. If you need some HTML, use `allowHtmlOnly()` with a strict allowlist of safe tags.
+3. Consider sanitizing the raw input before passing it to `SvelteMarkdown`.
+
+### For trusted content (CMS, documentation, etc.):
+
+1. The default renderers are generally safe for trusted sources.
+2. Use `excludeHtmlOnly()` to block specific tags you do not want (e.g., `iframe`, `form`).
+
+### General best practices:
+
+1. **Validate input on the server.** Client-side filtering adds defense-in-depth but should not be your only protection.
+2. **Use Content Security Policy (CSP) headers.** Restrict inline scripts and other dangerous behaviors at the browser level.
+3. **Keep dependencies updated.** Regularly update `@humanspeak/svelte-markdown`, Marked, and HTMLParser2 to get security fixes.
+4. **Audit your custom renderers.** If you create custom renderers, make sure they do not use `{@html}` with untrusted content.
+
+## What About `<script>` Tags?
+
+Marked does not produce `<script>` tokens by default, and HTMLParser2 processes HTML structurally rather than executing it. Additionally, the HTML renderer map does not include a `script` component, so `<script>` tags in markdown are not rendered.
+
+However, for defense-in-depth, you should still block or sanitize HTML when processing untrusted input.
+
+## Related
+
+- [Allow/Deny Filtering](/docs/advanced/allow-deny) -- detailed filtering function documentation
+- [HTML Renderers](/docs/renderers/html-renderers) -- all HTML tag renderers
+- [HTML Filtering Examples](/docs/examples/html-filtering) -- practical filtering examples

@@ -50,7 +50,9 @@ export default [
                     argsIgnorePattern: '^_',
                     ignoreRestSiblings: true
                 }
-            ]
+            ],
+            'svelte/no-navigation-without-resolve': ['off'],
+            'svelte/require-each-key': ['off']
         }
     },
     {

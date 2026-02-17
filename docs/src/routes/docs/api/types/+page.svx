@@ -1,0 +1,413 @@
+---
+title: Types & Exports
+description: All exported types, functions, constants, and utilities from @humanspeak/svelte-markdown
+---
+
+# Types & Exports
+
+This page documents every named export from `@humanspeak/svelte-markdown`. The package provides a default export (the component) plus types, utility functions, constants, and cache classes.
+
+## Default Export
+
+### `SvelteMarkdown`
+
+The main component. See [SvelteMarkdown Component](/docs/api/svelte-markdown) for full documentation.
+
+```typescript
+import SvelteMarkdown from '@humanspeak/svelte-markdown'
+```
+
+## Types
+
+### `SvelteMarkdownProps<T>`
+
+The props interface for the `SvelteMarkdown` component.
+
+```typescript
+type SvelteMarkdownProps<T extends Renderers = Renderers> = {
+    source: Token[] | string
+    renderers?: Partial<T>
+    options?: Partial<SvelteMarkdownOptions>
+    isInline?: boolean
+    parsed?: (tokens: Token[] | TokensList) => void
+}
+```
+
+### `SvelteMarkdownOptions`
+
+Configuration options for the markdown parser. Extends Marked's `MarkedOptions` with additional properties.
+
+```typescript
+interface SvelteMarkdownOptions extends MarkedOptions {
+    headerIds?: boolean
+    headerPrefix?: string
+}
+```
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `headerIds` | `boolean` | `true` | Generate `id` attributes on heading elements |
+| `headerPrefix` | `string` | `''` | Prefix prepended to generated heading IDs |
+| `gfm` | `boolean` | `true` | Enable GitHub Flavored Markdown |
+| `breaks` | `boolean` | `false` | Convert newlines to `<br>` |
+
+Plus all properties from Marked's `MarkedOptions` (e.g., `async`, `pedantic`, `silent`, `tokenizer`, `walkTokens`).
+
+### `Renderers`
+
+A type mapping every markdown renderer key to a `RendererComponent`. Includes the special `html` key that maps to `HtmlRenderers`.
+
+```typescript
+type Renderers = {
+    html: HtmlRenderers
+
+    // Raw text
+    rawtext: RendererComponent
+    escape: RendererComponent
+
+    // Block elements
+    heading: RendererComponent
+    paragraph: RendererComponent
+    blockquote: RendererComponent
+    code: RendererComponent
+    list: RendererComponent
+    listitem: RendererComponent
+    hr: RendererComponent
+
+    // Table elements
+    table: RendererComponent
+    tablehead: RendererComponent
+    tablebody: RendererComponent
+    tablerow: RendererComponent
+    tablecell: RendererComponent
+
+    // Inline elements
+    text: RendererComponent
+    link: RendererComponent
+    image: RendererComponent
+    em: RendererComponent
+    strong: RendererComponent
+    codespan: RendererComponent
+    br: RendererComponent
+    del: RendererComponent
+
+    // List variations
+    orderedlistitem: RendererComponent
+    unorderedlistitem: RendererComponent
+}
+```
+
+### `HtmlRenderers`
+
+A string-keyed record mapping HTML tag names to Svelte components (or `null`).
+
+```typescript
+interface HtmlRenderers {
+    [key: string]: Component<any, any, any> | null
+}
+```
+
+### `RendererComponent`
+
+The type for any individual renderer -- a Svelte component, `undefined`, or `null`.
+
+```typescript
+type RendererComponent = Component<any, any, any> | undefined | null
+```
+
+### `Token`
+
+Re-exported from [Marked](https://marked.js.org/). Represents a single parsed markdown token.
+
+```typescript
+import type { Token } from '@humanspeak/svelte-markdown'
+```
+
+### `TokensList`
+
+Re-exported from Marked. An array of tokens with additional metadata (e.g., `links`).
+
+```typescript
+import type { TokensList } from '@humanspeak/svelte-markdown'
+```
+
+## Constants
+
+### `defaultRenderers`
+
+The default renderer map used by `SvelteMarkdown` when no `renderers` prop is provided. This is the complete `Renderers` object with all 24 markdown renderers and the `html` map.
+
+```typescript
+import { defaultRenderers } from '@humanspeak/svelte-markdown'
+
+// Inspect the default heading renderer
+console.log(defaultRenderers.heading)
+
+// Use as a base for partial overrides
+const myRenderers = {
+    ...defaultRenderers,
+    heading: MyCustomHeading
+}
+```
+
+### `rendererKeys`
+
+An array of all valid markdown renderer key names (excluding `html`). Useful for iteration or validation.
+
+```typescript
+import { rendererKeys } from '@humanspeak/svelte-markdown'
+
+console.log(rendererKeys)
+// ['heading', 'paragraph', 'text', 'image', 'link', 'em', 'escape',
+//  'strong', 'codespan', 'del', 'table', 'tablehead', 'tablebody',
+//  'tablerow', 'tablecell', 'list', 'orderedlistitem',
+//  'unorderedlistitem', 'listitem', 'hr', 'blockquote', 'code',
+//  'br', 'rawtext']
+```
+
+### `htmlRendererKeys`
+
+An array of all valid HTML renderer tag names.
+
+```typescript
+import { htmlRendererKeys } from '@humanspeak/svelte-markdown'
+
+console.log(htmlRendererKeys)
+// ['a', 'abbr', 'address', 'article', 'aside', 'audio', 'b', ...]
+```
+
+## Components
+
+### `Html`
+
+The default HTML renderer map object. Maps HTML tag names to their corresponding Svelte components.
+
+```typescript
+import { Html } from '@humanspeak/svelte-markdown'
+
+// Access the default <div> renderer
+const DivRenderer = Html.div
+```
+
+### `UnsupportedHTML`
+
+A component that renders nothing. Used as a placeholder when an HTML tag is blocked via allow/deny filtering.
+
+```typescript
+import { UnsupportedHTML } from '@humanspeak/svelte-markdown'
+```
+
+### `Unsupported`
+
+A component that renders nothing. Used as a placeholder when a markdown renderer is blocked via allow/deny filtering.
+
+```typescript
+import { Unsupported } from '@humanspeak/svelte-markdown'
+```
+
+## HTML Filtering Functions
+
+These functions produce `HtmlRenderers` objects for controlling which HTML tags are rendered. See [Allow/Deny](/docs/advanced/allow-deny) for detailed usage.
+
+### `allowHtmlOnly(allowed)`
+
+Returns an `HtmlRenderers` map where only the specified tags use their default (or custom) components. All other tags are set to `UnsupportedHTML`.
+
+```typescript
+import { allowHtmlOnly } from '@humanspeak/svelte-markdown'
+
+// Only allow <strong>, <em>, and <a>
+const html = allowHtmlOnly(['strong', 'em', 'a'])
+
+// Allow <div> with a custom component
+const html = allowHtmlOnly([['div', MyDiv], 'a'])
+```
+
+**Signature:**
+
+```typescript
+function allowHtmlOnly(
+    allowed: Array<HtmlKey | [HtmlKey, Component | null]>
+): HtmlRenderers
+```
+
+### `excludeHtmlOnly(excluded, overrides?)`
+
+Returns an `HtmlRenderers` map where the specified tags are set to `UnsupportedHTML`. All other tags use their defaults (or optional custom overrides).
+
+```typescript
+import { excludeHtmlOnly } from '@humanspeak/svelte-markdown'
+
+// Block <iframe> and <script>
+const html = excludeHtmlOnly(['iframe'])
+
+// Block <iframe>, override <a> with custom component
+const html = excludeHtmlOnly(['iframe'], [['a', CustomA]])
+```
+
+**Signature:**
+
+```typescript
+function excludeHtmlOnly(
+    excluded: HtmlKey[],
+    overrides?: Array<[HtmlKey, Component | null]>
+): HtmlRenderers
+```
+
+### `buildUnsupportedHTML()`
+
+Returns an `HtmlRenderers` map where every HTML tag is set to `UnsupportedHTML`. Useful as a starting point when you want to disable all HTML rendering.
+
+```typescript
+import { buildUnsupportedHTML } from '@humanspeak/svelte-markdown'
+
+const html = buildUnsupportedHTML()
+```
+
+## Renderer Filtering Functions
+
+These functions produce partial `Renderers` objects (excluding `html`) for controlling which markdown elements are rendered. See [Allow/Deny](/docs/advanced/allow-deny) for detailed usage.
+
+### `allowRenderersOnly(allowed)`
+
+Returns a renderer map where only the specified keys use their default (or custom) components. All other keys are set to `Unsupported`.
+
+```typescript
+import { allowRenderersOnly } from '@humanspeak/svelte-markdown'
+
+// Only allow paragraphs and links
+const renderers = allowRenderersOnly(['paragraph', 'link'])
+
+// Allow paragraph with a custom component
+const renderers = allowRenderersOnly([['paragraph', MyParagraph]])
+```
+
+**Signature:**
+
+```typescript
+function allowRenderersOnly(
+    allowed: Array<RendererKey | [RendererKey, RendererComponent]>
+): Omit<Renderers, 'html'>
+```
+
+### `excludeRenderersOnly(excluded, overrides?)`
+
+Returns a renderer map where the specified keys are set to `Unsupported`. All other keys use their defaults (or optional overrides).
+
+```typescript
+import { excludeRenderersOnly } from '@humanspeak/svelte-markdown'
+
+// Disable images and code blocks
+const renderers = excludeRenderersOnly(['image', 'code'])
+```
+
+**Signature:**
+
+```typescript
+function excludeRenderersOnly(
+    excluded: RendererKey[],
+    overrides?: Array<[RendererKey, RendererComponent]>
+): Omit<Renderers, 'html'>
+```
+
+### `buildUnsupportedRenderers()`
+
+Returns a renderer map where every markdown renderer key is set to `Unsupported`.
+
+```typescript
+import { buildUnsupportedRenderers } from '@humanspeak/svelte-markdown'
+
+const renderers = buildUnsupportedRenderers()
+```
+
+## Cache Utilities
+
+### `MemoryCache`
+
+A generic in-memory cache class with TTL expiration and LRU eviction. Used internally by `TokenCache`.
+
+```typescript
+import { MemoryCache } from '@humanspeak/svelte-markdown'
+
+const cache = new MemoryCache<string>({
+    maxSize: 100,
+    ttl: 5 * 60 * 1000
+})
+
+cache.set('key', 'value')
+const value = cache.get('key') // 'value'
+```
+
+### `TokenCache`
+
+A specialized cache class for markdown tokens, built on `MemoryCache`. Provides convenience methods for storing and retrieving parsed tokens keyed by source content and parser options.
+
+```typescript
+import { TokenCache } from '@humanspeak/svelte-markdown'
+
+const cache = new TokenCache({
+    maxSize: 100,       // Cache up to 100 documents
+    ttl: 10 * 60 * 1000 // 10-minute TTL
+})
+```
+
+See [Token Caching](/docs/advanced/token-caching) for full documentation.
+
+### `tokenCache`
+
+The global singleton `TokenCache` instance used internally by all `SvelteMarkdown` components. Defaults to 50 entries with a 5-minute TTL.
+
+```typescript
+import { tokenCache } from '@humanspeak/svelte-markdown'
+
+// Check cache statistics
+console.log(tokenCache.size)
+
+// Clear all cached tokens
+tokenCache.clearAllTokens()
+```
+
+## Import Summary
+
+```typescript
+// Default export
+import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+// Named exports -- components & constants
+import {
+    Html,
+    UnsupportedHTML,
+    Unsupported,
+    defaultRenderers,
+    rendererKeys,
+    htmlRendererKeys
+} from '@humanspeak/svelte-markdown'
+
+// Named exports -- filtering functions
+import {
+    allowHtmlOnly,
+    excludeHtmlOnly,
+    buildUnsupportedHTML,
+    allowRenderersOnly,
+    excludeRenderersOnly,
+    buildUnsupportedRenderers
+} from '@humanspeak/svelte-markdown'
+
+// Named exports -- cache utilities
+import {
+    MemoryCache,
+    TokenCache,
+    tokenCache
+} from '@humanspeak/svelte-markdown'
+
+// Type exports
+import type {
+    HtmlRenderers,
+    RendererComponent,
+    Renderers,
+    SvelteMarkdownOptions,
+    SvelteMarkdownProps,
+    Token,
+    TokensList
+} from '@humanspeak/svelte-markdown'
+```

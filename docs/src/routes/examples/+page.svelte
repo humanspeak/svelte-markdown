@@ -11,36 +11,39 @@
 
     const seo = getSeoContext()
     if (seo) {
-        seo.title = 'Interactive Examples | Memory Cache'
+        seo.title = 'Interactive Examples | Svelte Markdown'
         seo.description =
-            'Explore interactive examples of @humanspeak/memory-cache featuring live demos of cache operations, TTL expiration, LRU eviction, and performance stats.'
+            'Explore interactive examples of @humanspeak/svelte-markdown featuring a live playground, custom renderers, HTML filtering, and caching performance demos.'
     }
 
     const examples = [
         {
-            slug: 'basic-cache',
-            title: 'Basic Cache',
+            slug: 'playground',
+            title: 'Live Playground',
             description:
-                'Interactive demo of get, set, and delete operations with visual cache state.',
-            icon: 'fa-solid fa-box'
+                'Edit markdown in real-time and see it rendered instantly. Mix markdown with HTML tags.',
+            icon: 'fa-solid fa-pen-to-square'
         },
         {
-            slug: 'ttl-expiration',
-            title: 'TTL Expiration',
-            description: 'Watch cache entries expire in real-time with countdown timers.',
-            icon: 'fa-solid fa-clock'
+            slug: 'custom-renderers',
+            title: 'Custom Renderers',
+            description:
+                'See how to override default renderers and control which markdown elements are rendered.',
+            icon: 'fa-solid fa-paintbrush'
         },
         {
-            slug: 'lru-eviction',
-            title: 'LRU Eviction',
-            description: 'See how least recently used items are evicted when the cache is full.',
-            icon: 'fa-solid fa-layer-group'
+            slug: 'html-filtering',
+            title: 'HTML Filtering',
+            description:
+                'Interactive demo of allow/deny controls for HTML tags within markdown content.',
+            icon: 'fa-solid fa-filter'
         },
         {
-            slug: 'cache-statistics',
-            title: 'Cache Statistics',
-            description: 'Monitor hit rate, miss rate, and cache performance in real-time.',
-            icon: 'fa-solid fa-chart-line'
+            slug: 'caching-performance',
+            title: 'Caching Performance',
+            description:
+                'Explore token caching and see the performance improvement on repeated renders.',
+            icon: 'fa-solid fa-gauge-high'
         }
     ]
 </script>
@@ -54,8 +57,8 @@
             Interactive Examples
         </h1>
         <p class="text-muted-foreground mx-auto max-w-2xl text-lg">
-            Explore how memory-cache works with live, interactive demos. See cache operations, TTL
-            expiration, and LRU eviction in action.
+            Explore how svelte-markdown works with live, interactive demos. Edit markdown, customize
+            renderers, filter HTML, and measure caching performance.
         </p>
     </div>
 
@@ -113,7 +116,9 @@
         <div
             class="border-brand-500/20 from-brand-500/10 to-brand-600/10 mx-auto max-w-xl rounded-2xl border bg-gradient-to-r p-8"
         >
-            <h2 class="text-foreground mb-3 text-xl font-semibold">Ready to use Memory Cache?</h2>
+            <h2 class="text-foreground mb-3 text-xl font-semibold">
+                Ready to use Svelte Markdown?
+            </h2>
             <p class="text-muted-foreground mb-6">
                 Check out the documentation for installation and API reference.
             </p>

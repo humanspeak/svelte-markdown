@@ -3,6 +3,7 @@
   Hierarchical structure with FontAwesome icons and proper styling
 -->
 <script lang="ts">
+    import { motion } from '@humanspeak/svelte-motion'
     import { onMount } from 'svelte'
 
     const { currentPath } = $props()
@@ -11,6 +12,7 @@
         title: string
         href: string
         icon: string
+        external?: boolean
     }
 
     type NavSection = {
@@ -26,8 +28,7 @@
 
     let otherProjects: NavItem[] = $state([])
 
-    // Navigation aligned with memory-cache documentation structure
-    let navigation = $derived<NavSection[]>([
+    const navigation = $derived<NavSection[]>([
         {
             title: 'Get Started',
             items: [
@@ -39,47 +40,57 @@
             ]
         },
         {
-            title: 'Interactive Demos',
+            title: 'API Reference',
             items: [
                 {
-                    title: 'All Examples',
-                    href: '/examples',
-                    icon: 'fa-solid fa-play'
+                    title: 'SvelteMarkdown',
+                    href: '/docs/api/svelte-markdown',
+                    icon: 'fa-solid fa-cube'
                 },
                 {
-                    title: 'Basic Cache',
-                    href: '/examples/basic-cache',
-                    icon: 'fa-solid fa-box'
-                },
-                {
-                    title: 'TTL Expiration',
-                    href: '/examples/ttl-expiration',
-                    icon: 'fa-solid fa-clock'
-                },
-                {
-                    title: 'LRU Eviction',
-                    href: '/examples/lru-eviction',
-                    icon: 'fa-solid fa-layer-group'
-                },
-                {
-                    title: 'Cache Statistics',
-                    href: '/examples/cache-statistics',
-                    icon: 'fa-solid fa-chart-line'
+                    title: 'Types & Exports',
+                    href: '/docs/api/types',
+                    icon: 'fa-solid fa-code'
                 }
             ]
         },
         {
-            title: 'API Reference',
+            title: 'Renderers',
             items: [
                 {
-                    title: 'MemoryCache',
-                    href: '/docs/api/memory-cache',
-                    icon: 'fa-solid fa-database'
+                    title: 'Markdown Renderers',
+                    href: '/docs/renderers/markdown-renderers',
+                    icon: 'fa-solid fa-list'
                 },
                 {
-                    title: '@cached Decorator',
-                    href: '/docs/api/cached-decorator',
-                    icon: 'fa-solid fa-at'
+                    title: 'HTML Renderers',
+                    href: '/docs/renderers/html-renderers',
+                    icon: 'fa-brands fa-html5'
+                },
+                {
+                    title: 'Custom Renderers',
+                    href: '/docs/renderers/custom-renderers',
+                    icon: 'fa-solid fa-paintbrush'
+                }
+            ]
+        },
+        {
+            title: 'Advanced',
+            items: [
+                {
+                    title: 'Token Caching',
+                    href: '/docs/advanced/token-caching',
+                    icon: 'fa-solid fa-bolt'
+                },
+                {
+                    title: 'Allow/Deny',
+                    href: '/docs/advanced/allow-deny',
+                    icon: 'fa-solid fa-shield'
+                },
+                {
+                    title: 'Security',
+                    href: '/docs/advanced/security',
+                    icon: 'fa-solid fa-lock'
                 }
             ]
         },
@@ -92,60 +103,72 @@
                     icon: 'fa-solid fa-code'
                 },
                 {
-                    title: 'Configuration',
-                    href: '/docs/examples/configuration',
-                    icon: 'fa-solid fa-sliders'
+                    title: 'Basic Rendering',
+                    href: '/docs/examples/basic-rendering',
+                    icon: 'fa-solid fa-file-lines'
                 },
                 {
-                    title: 'API Caching',
-                    href: '/docs/examples/api-caching',
-                    icon: 'fa-solid fa-cloud'
+                    title: 'Custom Renderers',
+                    href: '/docs/examples/custom-renderers',
+                    icon: 'fa-solid fa-paintbrush'
                 },
                 {
-                    title: 'Async Fetching',
-                    href: '/docs/examples/async-fetching',
-                    icon: 'fa-solid fa-rotate'
+                    title: 'HTML Filtering',
+                    href: '/docs/examples/html-filtering',
+                    icon: 'fa-solid fa-filter'
                 },
                 {
-                    title: 'Computed Values',
-                    href: '/docs/examples/computed-values',
-                    icon: 'fa-solid fa-calculator'
+                    title: 'Inline Rendering',
+                    href: '/docs/examples/inline-rendering',
+                    icon: 'fa-solid fa-i-cursor'
                 },
                 {
-                    title: 'Database Caching',
-                    href: '/docs/examples/database-caching',
-                    icon: 'fa-solid fa-database'
+                    title: 'Parsed Callback',
+                    href: '/docs/examples/parsed-callback',
+                    icon: 'fa-solid fa-diagram-project'
+                }
+            ]
+        },
+        {
+            title: 'Interactive Demos',
+            items: [
+                {
+                    title: 'All Examples',
+                    href: '/examples',
+                    icon: 'fa-solid fa-play'
                 },
                 {
-                    title: 'Monitoring',
-                    href: '/docs/examples/monitoring',
-                    icon: 'fa-solid fa-chart-line'
+                    title: 'Live Playground',
+                    href: '/examples/playground',
+                    icon: 'fa-solid fa-pen-to-square'
                 },
                 {
-                    title: 'Multi-Tenant',
-                    href: '/docs/examples/multi-tenant',
-                    icon: 'fa-solid fa-building'
+                    title: 'Custom Renderers',
+                    href: '/examples/custom-renderers',
+                    icon: 'fa-solid fa-paintbrush'
                 },
                 {
-                    title: 'Rate Limiting',
-                    href: '/docs/examples/rate-limiting',
+                    title: 'HTML Filtering',
+                    href: '/examples/html-filtering',
+                    icon: 'fa-solid fa-filter'
+                },
+                {
+                    title: 'Caching Performance',
+                    href: '/examples/caching-performance',
                     icon: 'fa-solid fa-gauge-high'
-                },
-                {
-                    title: 'Service Class',
-                    href: '/docs/examples/service-class',
-                    icon: 'fa-solid fa-cube'
-                },
-                {
-                    title: 'Sessions',
-                    href: '/docs/examples/sessions',
-                    icon: 'fa-solid fa-user-clock'
                 }
             ]
         },
         {
             title: 'Love and Respect',
-            items: [{ title: 'Beye.ai', href: 'https://beye.ai', icon: 'fa-solid fa-heart' }]
+            items: [
+                {
+                    title: 'Beye.ai',
+                    href: 'https://beye.ai',
+                    icon: 'fa-solid fa-heart',
+                    external: true
+                }
+            ]
         },
         ...(otherProjects.length > 0
             ? [
@@ -169,7 +192,8 @@
             otherProjects = projects.map((project) => ({
                 title: formatTitle(project.slug),
                 href: project.url,
-                icon: 'fa-solid fa-heart'
+                icon: 'fa-solid fa-heart',
+                external: true
             }))
         } catch (error) {
             console.error('Failed to load other projects:', error)
@@ -213,27 +237,44 @@
                 </h3>
                 <ul class="space-y-1">
                     {#each section.items as item (item.href)}
-                        <li>
+                        <motion.li
+                            whileHover={{ x: 2 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                        >
                             <a
                                 href={item.href}
+                                target={item?.external ? '_blank' : undefined}
+                                rel={item?.external ? 'noopener' : undefined}
                                 class="group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150
 						     	{isActive(item.href)
                                     ? 'bg-sidebar-active text-sidebar-active-foreground'
                                     : 'text-sidebar-foreground hover:bg-muted hover:text-text-primary'}"
                             >
                                 {#if item.icon}
-                                    <i
-                                        class="{item.icon} mr-3 text-sm {isActive(item.href)
-                                            ? 'text-sidebar-active-foreground'
-                                            : 'text-text-muted group-hover:text-text-secondary'}"
-                                    ></i>
+                                    <motion.span
+                                        class="mr-3 inline-flex"
+                                        whileHover={{ scale: 1.25 }}
+                                        transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+                                    >
+                                        <i
+                                            class="{item.icon} fa-fw text-sm {isActive(item.href)
+                                                ? 'text-sidebar-active-foreground'
+                                                : 'text-text-muted group-hover:text-text-secondary'}"
+                                        ></i>
+                                    </motion.span>
                                 {:else}
-                                    <i class="fa-solid fa-arrow-right text-text-muted mr-3 text-xs"
+                                    <i
+                                        class="fa-solid fa-arrow-right fa-fw text-text-muted mr-3 text-xs"
                                     ></i>
                                 {/if}
                                 {item.title}
+                                {#if item?.external}
+                                    <i
+                                        class="fa-solid fa-arrow-up-right-from-square ml-2 text-xs opacity-50"
+                                    ></i>
+                                {/if}
                             </a>
-                        </li>
+                        </motion.li>
                     {/each}
                 </ul>
             </div>

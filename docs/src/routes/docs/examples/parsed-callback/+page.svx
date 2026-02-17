@@ -1,0 +1,227 @@
+---
+title: Parsed Callback
+description: Examples of using the parsed callback prop to inspect and use token data
+---
+
+# Parsed Callback
+
+The `parsed` prop accepts a callback function that is invoked with the parsed token array whenever the markdown source is parsed. This is useful for building features on top of the token tree, such as tables of contents, word counts, or content analysis.
+
+## Basic Usage
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    let tokenCount = $state(0)
+
+    function handleParsed(tokens) {
+        tokenCount = tokens.length
+    }
+</script>
+
+<SvelteMarkdown source="# Hello **world**" parsed={handleParsed} />
+<p>Token count: {tokenCount}</p>
+```
+
+## Building a Table of Contents
+
+Extract headings from the parsed tokens to build a navigation sidebar:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+# Introduction
+## Overview
+## Getting Started
+### Prerequisites
+### Installation
+## Usage
+### Basic Example
+### Advanced Example
+## API Reference
+    `
+
+    let headings = $state([])
+
+    function handleParsed(tokens) {
+        headings = tokens
+            .filter(token => token.type === 'heading')
+            .map(token => ({
+                depth: token.depth,
+                text: token.text
+            }))
+    }
+</script>
+
+<div style="display: flex; gap: 2rem;">
+    <nav>
+        <h3>Contents</h3>
+        <ul>
+            {#each headings as heading}
+                <li style="margin-left: {(heading.depth - 1) * 16}px">
+                    <a href="#{heading.text.toLowerCase().replace(/\s+/g, '-')}">
+                        {heading.text}
+                    </a>
+                </li>
+            {/each}
+        </ul>
+    </nav>
+
+    <article>
+        <SvelteMarkdown {source} parsed={handleParsed} />
+    </article>
+</div>
+```
+
+## Word Count
+
+Count the total words in the markdown content:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    let source = $state('# Hello World\n\nThis is a paragraph with several words.')
+    let wordCount = $state(0)
+
+    function countWords(tokens) {
+        let text = ''
+        function extractText(tokenList) {
+            for (const token of tokenList) {
+                if (token.text) {
+                    text += ' ' + token.text
+                }
+                if (token.tokens) {
+                    extractText(token.tokens)
+                }
+            }
+        }
+        extractText(tokens)
+        wordCount = text.trim().split(/\s+/).filter(Boolean).length
+    }
+</script>
+
+<textarea bind:value={source} rows="4" cols="60"></textarea>
+<p>Words: {wordCount}</p>
+
+<SvelteMarkdown {source} parsed={countWords} />
+```
+
+## Content Analysis
+
+Analyze the structure of the parsed markdown:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+# Title
+
+A paragraph with a [link](https://example.com) and **bold text**.
+
+- List item 1
+- List item 2
+
+\`\`\`javascript
+const x = 1
+\`\`\`
+
+> A blockquote
+    `
+
+    let analysis = $state({})
+
+    function analyzeTokens(tokens) {
+        const counts = {}
+        for (const token of tokens) {
+            counts[token.type] = (counts[token.type] || 0) + 1
+        }
+        analysis = counts
+    }
+</script>
+
+<SvelteMarkdown {source} parsed={analyzeTokens} />
+
+<h3>Token Analysis</h3>
+<table>
+    <thead>
+        <tr><th>Token Type</th><th>Count</th></tr>
+    </thead>
+    <tbody>
+        {#each Object.entries(analysis) as [type, count]}
+            <tr>
+                <td><code>{type}</code></td>
+                <td>{count}</td>
+            </tr>
+        {/each}
+    </tbody>
+</table>
+```
+
+## Detecting HTML in User Input
+
+Use the parsed callback to warn about HTML in user-generated content:
+
+```html
+<script>
+    import SvelteMarkdown, { buildUnsupportedHTML } from '@humanspeak/svelte-markdown'
+
+    let source = $state('')
+    let hasHtml = $state(false)
+
+    function checkForHtml(tokens) {
+        hasHtml = tokens.some(token => token.type === 'html')
+    }
+
+    const renderers = {
+        html: buildUnsupportedHTML()
+    }
+</script>
+
+<textarea bind:value={source} rows="4" cols="60" placeholder="Enter markdown..."></textarea>
+
+{#if hasHtml}
+    <p style="color: orange;">
+        Warning: HTML detected in input. HTML tags will not be rendered.
+    </p>
+{/if}
+
+<SvelteMarkdown {source} parsed={checkForHtml} {renderers} />
+```
+
+## Reactive Updates
+
+The `parsed` callback fires reactively via Svelte's `$effect`. It is called again whenever the parsed tokens change, which happens when:
+
+- The `source` prop changes
+- The `options` prop changes
+- The `isInline` prop changes
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    let source = $state('# Hello')
+    let lastParsed = $state(null)
+
+    function handleParsed(tokens) {
+        lastParsed = new Date().toLocaleTimeString()
+        console.log('Parsed at:', lastParsed, 'Tokens:', tokens.length)
+    }
+</script>
+
+<input bind:value={source} style="width: 100%;" />
+<p>Last parsed: {lastParsed}</p>
+
+<SvelteMarkdown {source} parsed={handleParsed} />
+```
+
+## Related
+
+- [SvelteMarkdown API](/docs/api/svelte-markdown) -- full `parsed` prop documentation
+- [Token Caching](/docs/advanced/token-caching) -- how tokens are cached
+- [Types & Exports](/docs/api/types) -- `Token` and `TokensList` types

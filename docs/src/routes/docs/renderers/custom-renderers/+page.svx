@@ -1,0 +1,440 @@
+---
+title: Custom Renderers
+description: Guide to creating custom renderer components for @humanspeak/svelte-markdown
+---
+
+# Custom Renderers
+
+One of the most powerful features of `@humanspeak/svelte-markdown` is the ability to replace any built-in renderer with your own Svelte component. This gives you full control over how each markdown element is rendered.
+
+## How It Works
+
+When `SvelteMarkdown` parses markdown, it produces a tree of tokens. Each token has a `type` (e.g., `heading`, `paragraph`, `link`) that maps to a renderer key. The component looks up the renderer for each token and passes the token's data as props.
+
+Your custom renderers replace the defaults for whichever keys you specify:
+
+```html
+<SvelteMarkdown
+    source={markdown}
+    renderers={{
+        heading: MyHeading,
+        link: MyLink,
+        code: MyCode
+    }}
+/>
+```
+
+## Creating a Custom Renderer
+
+A custom renderer is a standard Svelte 5 component. It receives props that correspond to the token's data, plus a `children` snippet for tokens that contain nested content.
+
+### Step 1: Check the Props
+
+Look up the renderer you want to override in the [Markdown Renderers](/docs/renderers/markdown-renderers) reference to see what props it receives.
+
+### Step 2: Create the Component
+
+Create a Svelte component that accepts those props:
+
+```html
+<!-- CustomLink.svelte -->
+<script lang="ts">
+    import type { Snippet } from 'svelte'
+
+    interface Props {
+        href?: string
+        title?: string
+        children?: Snippet
+    }
+
+    const { href = '', title = undefined, children }: Props = $props()
+</script>
+
+<a
+    {href}
+    {title}
+    target="_blank"
+    rel="noopener noreferrer"
+    class="custom-link"
+>
+    {@render children?.()}
+</a>
+
+<style>
+    .custom-link {
+        color: #0066cc;
+        text-decoration: underline;
+    }
+</style>
+```
+
+### Step 3: Pass It to SvelteMarkdown
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import CustomLink from './CustomLink.svelte'
+</script>
+
+<SvelteMarkdown
+    source="Visit [our site](https://example.com) for more info."
+    renderers={{ link: CustomLink }}
+/>
+```
+
+## Common Custom Renderer Examples
+
+### Custom Heading with Anchor Links
+
+```html
+<!-- AnchorHeading.svelte -->
+<script lang="ts">
+    import type { Snippet } from 'svelte'
+    import type { SvelteMarkdownOptions } from '@humanspeak/svelte-markdown'
+
+    interface Props {
+        depth: number
+        raw: string
+        text: string
+        options: SvelteMarkdownOptions
+        slug: (val: string) => string
+        children?: Snippet
+    }
+
+    const { depth, text, options, slug, children }: Props = $props()
+
+    const id = $derived(
+        options.headerIds ? options.headerPrefix + slug(text) : undefined
+    )
+</script>
+
+<svelte:element this="h{depth}" {id} class="heading">
+    {#if id}
+        <a href="#{id}" class="anchor-link">#</a>
+    {/if}
+    {@render children?.()}
+</svelte:element>
+
+<style>
+    .heading {
+        position: relative;
+    }
+    .anchor-link {
+        position: absolute;
+        left: -1.5em;
+        opacity: 0;
+        text-decoration: none;
+    }
+    .heading:hover .anchor-link {
+        opacity: 0.5;
+    }
+</style>
+```
+
+### Custom Code Block with Syntax Highlighting
+
+```html
+<!-- HighlightedCode.svelte -->
+<script lang="ts">
+    interface Props {
+        lang: string
+        text: string
+    }
+
+    const { lang, text }: Props = $props()
+</script>
+
+<div class="code-block">
+    {#if lang}
+        <div class="code-lang">{lang}</div>
+    {/if}
+    <pre><code class="language-{lang}">{text}</code></pre>
+</div>
+
+<style>
+    .code-block {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .code-lang {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 2px 8px;
+        font-size: 0.75rem;
+        background: rgba(0, 0, 0, 0.1);
+        border-bottom-left-radius: 4px;
+    }
+</style>
+```
+
+### Custom Image with Caption
+
+```html
+<!-- CaptionedImage.svelte -->
+<script lang="ts">
+    interface Props {
+        href?: string
+        title?: string
+        text?: string
+    }
+
+    const { href = '', title = undefined, text = '' }: Props = $props()
+</script>
+
+<figure>
+    <img src={href} alt={text} {title} loading="lazy" />
+    {#if text}
+        <figcaption>{text}</figcaption>
+    {/if}
+</figure>
+
+<style>
+    figure {
+        margin: 1.5em 0;
+        text-align: center;
+    }
+    img {
+        max-width: 100%;
+        border-radius: 4px;
+    }
+    figcaption {
+        margin-top: 0.5em;
+        font-size: 0.875rem;
+        color: #666;
+    }
+</style>
+```
+
+### Custom Blockquote with Callout Styling
+
+```html
+<!-- CalloutBlockquote.svelte -->
+<script lang="ts">
+    import type { Snippet } from 'svelte'
+
+    interface Props {
+        children?: Snippet
+    }
+
+    const { children }: Props = $props()
+</script>
+
+<div class="callout">
+    <div class="callout-icon">i</div>
+    <div class="callout-content">
+        {@render children?.()}
+    </div>
+</div>
+
+<style>
+    .callout {
+        display: flex;
+        gap: 12px;
+        padding: 16px;
+        background: #f0f4ff;
+        border-left: 4px solid #3b82f6;
+        border-radius: 4px;
+        margin: 1em 0;
+    }
+    .callout-icon {
+        font-weight: bold;
+        color: #3b82f6;
+    }
+</style>
+```
+
+## Overriding HTML Tag Renderers
+
+You can also override the renderers for specific HTML tags that appear in raw HTML within markdown:
+
+```html
+<!-- CustomDiv.svelte -->
+<script lang="ts">
+    import type { Snippet } from 'svelte'
+
+    const { class: className, children, ...rest }: any = $props()
+</script>
+
+<div class="custom-wrapper {className || ''}" {...rest}>
+    {@render children?.()}
+</div>
+```
+
+```html
+<SvelteMarkdown
+    source={markdown}
+    renderers={{
+        html: {
+            div: CustomDiv
+        }
+    }}
+/>
+```
+
+## Setting a Renderer to `null`
+
+You can set any renderer to `null` to suppress that element type entirely:
+
+```html
+<SvelteMarkdown
+    source={markdown}
+    renderers={{
+        image: null,
+        hr: null
+    }}
+/>
+```
+
+## Using `defaultRenderers` as a Base
+
+You can import the default renderer map and extend it:
+
+```typescript
+import { defaultRenderers } from '@humanspeak/svelte-markdown'
+
+const myRenderers = {
+    ...defaultRenderers,
+    heading: MyHeading,
+    link: MyLink
+}
+```
+
+## Passing Custom Data to Renderers
+
+Any extra props you pass to `<SvelteMarkdown>` beyond the standard props (`source`, `renderers`, `options`, `isInline`, `parsed`) are automatically forwarded to every renderer component. This lets you pass application-specific context that your custom renderers can use.
+
+### How It Works
+
+`SvelteMarkdown` collects unknown props via `...rest` and spreads them through the `Parser` to each renderer. Your custom renderer simply declares the extra prop in its interface:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import CustomText from './CustomText.svelte'
+
+    let userData = $state({
+        theme: 'dark',
+        locale: 'en-US',
+        permissions: ['read', 'write']
+    })
+</script>
+
+<SvelteMarkdown
+    source={markdown}
+    {userData}
+    renderers={{ rawtext: CustomText }}
+/>
+```
+
+Inside your custom renderer, access the forwarded prop directly:
+
+```html
+<!-- CustomText.svelte -->
+<script lang="ts">
+    interface Props {
+        text?: string
+        userData?: { theme: string; locale: string; permissions: string[] }
+    }
+
+    const { text, userData }: Props = $props()
+</script>
+
+<span class="text-{userData?.theme}">
+    {text}
+</span>
+```
+
+### Production Example: Dynamic Value Interpolation
+
+A powerful real-world use case is passing structured data alongside markdown and using a custom renderer to interpolate live values into the rendered output. For example, you can pass a data object containing placeholder values, and the renderer replaces template markers with rich interactive elements:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import RawText from './RawText.svelte'
+
+    let markdownBlock = $state({
+        message: 'The total revenue is {revenue} across {count} transactions.',
+        values: {
+            revenue: { type: 'currency', value: 125000, description: 'Total Q4 revenue' },
+            count: { type: 'number', value: 1847, description: 'Transaction count' }
+        }
+    })
+</script>
+
+<SvelteMarkdown
+    source={markdownBlock.message}
+    {markdownBlock}
+    renderers={{ rawtext: RawText }}
+/>
+```
+
+The custom `RawText` renderer receives both the `text` prop (from the token) and the `markdownBlock` prop (forwarded from `SvelteMarkdown`). It can then parse the text for `{placeholder}` patterns and replace them with rich UI elements -- tooltips, hover cards, formatted values, loading skeletons, etc.
+
+```html
+<!-- RawText.svelte -->
+<script lang="ts">
+    interface Props {
+        text?: string
+        markdownBlock?: {
+            message: string
+            values: Record<string, { type: string; value: unknown; description?: string }>
+        }
+    }
+
+    const { text, markdownBlock }: Props = $props()
+
+    // Parse text for {placeholder} patterns and replace with values from markdownBlock
+    const segments = $derived.by(() => {
+        if (!text || !markdownBlock?.values) return [{ type: 'text', content: text }]
+
+        const result = []
+        const regex = /\{([^}]+)\}/g
+        let lastIndex = 0
+        let match
+
+        while ((match = regex.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                result.push({ type: 'text', content: text.slice(lastIndex, match.index) })
+            }
+            const key = match[1]
+            const value = markdownBlock.values[key]
+            if (value) {
+                result.push({ type: 'value', data: value })
+            }
+            lastIndex = match.index + match[0].length
+        }
+
+        if (lastIndex < text.length) {
+            result.push({ type: 'text', content: text.slice(lastIndex) })
+        }
+        return result
+    })
+</script>
+
+{#each segments as segment}
+    {#if segment.type === 'text'}
+        <span>{segment.content}</span>
+    {:else if segment.type === 'value'}
+        <strong title={segment.data.description}>{segment.data.value}</strong>
+    {/if}
+{/each}
+```
+
+This pattern is especially useful for AI chat interfaces, data dashboards, and CMS applications where markdown content contains dynamic references that need to be resolved at render time.
+
+## Tips
+
+- Your custom component receives the same props as the built-in renderer it replaces. Check the [Markdown Renderers](/docs/renderers/markdown-renderers) reference for each renderer's prop signature.
+- Components that render child content must accept and render a `children` snippet: `{@render children?.()}`.
+- Use `$props()` (Svelte 5 runes) to destructure incoming props.
+- You can mix custom and default renderers freely -- only override the ones you need.
+- Any extra props passed to `SvelteMarkdown` are forwarded to all renderers, so you can pass application context without needing Svelte context stores.
+
+## Related
+
+- [Markdown Renderers](/docs/renderers/markdown-renderers) -- all 24 built-in renderers with their props
+- [HTML Renderers](/docs/renderers/html-renderers) -- all 69+ HTML tag renderers
+- [Custom Renderers Examples](/docs/examples/custom-renderers) -- runnable code examples

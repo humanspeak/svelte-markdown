@@ -1,0 +1,187 @@
+---
+title: Token Caching
+description: Performance optimization through built-in LRU token caching
+---
+
+# Token Caching
+
+`@humanspeak/svelte-markdown` includes a built-in LRU (Least Recently Used) token cache that dramatically improves performance for repeated renders of the same markdown content. When you pass a string to the `source` prop, the parsed tokens are automatically cached and reused on subsequent renders.
+
+Under the hood, the caching layer is powered by [`@humanspeak/memory-cache`](https://www.npmjs.com/package/@humanspeak/memory-cache) -- a generic in-memory cache with TTL expiration and LRU eviction. `TokenCache` extends the `MemoryCache` class from that package, adding markdown-specific convenience methods on top. You get all the battle-tested caching primitives (size limits, TTL, LRU eviction) for free.
+
+## Performance Characteristics
+
+| Operation | Time |
+|-----------|------|
+| Cache hit (cached content) | &lt; 1ms |
+| Cache miss (fresh parse) | 50-200ms (depends on document size) |
+| Hash computation (10KB doc) | ~0.05ms |
+| Hash computation (100KB doc) | ~0.5ms |
+| Memory usage (50 cached docs) | ~5MB |
+
+This means cached re-renders are **50-200x faster** than fresh parsing.
+
+## How It Works
+
+1. When `SvelteMarkdown` receives a string `source`, it generates a cache key from the source content and parser options using a fast FNV-1a hash.
+2. It checks the global `tokenCache` singleton for a cached entry.
+3. On a cache hit, the cached tokens are returned immediately without parsing.
+4. On a cache miss, the markdown is parsed via Marked's lexer, and the resulting tokens are stored in the cache.
+5. When the cache reaches its `maxSize`, the least recently used entry is evicted.
+6. Entries automatically expire after the configured TTL (time-to-live).
+
+Pre-parsed token arrays passed to `source` bypass the cache entirely.
+
+## Default Configuration
+
+The global `tokenCache` singleton is created with these defaults:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `maxSize` | `50` | Maximum number of cached documents |
+| `ttl` | `300000` (5 minutes) | Time-to-live in milliseconds |
+
+## Using the Global Cache
+
+The global singleton is shared across all `SvelteMarkdown` instances in your application:
+
+```typescript
+import { tokenCache } from '@humanspeak/svelte-markdown'
+
+// Check how many documents are cached
+console.log(tokenCache.size)
+
+// Clear all cached tokens
+tokenCache.clearAllTokens()
+
+// Check if specific content is cached
+const isCached = tokenCache.hasTokens(markdownString, { gfm: true })
+
+// Manually retrieve cached tokens
+const tokens = tokenCache.getTokens(markdownString, { gfm: true })
+
+// Manually cache tokens
+tokenCache.setTokens(markdownString, { gfm: true }, parsedTokens)
+
+// Remove a specific cached entry
+tokenCache.deleteTokens(markdownString, { gfm: true })
+```
+
+## Creating a Custom TokenCache
+
+If you need different cache settings (e.g., for a high-traffic application or memory-constrained environment), you can create your own `TokenCache` instance:
+
+```typescript
+import { TokenCache } from '@humanspeak/svelte-markdown'
+
+const customCache = new TokenCache({
+    maxSize: 200,          // Cache more documents
+    ttl: 15 * 60 * 1000   // 15-minute TTL
+})
+```
+
+## TokenCache API
+
+`TokenCache` extends `MemoryCache<Token[] | TokensList>` and adds markdown-specific convenience methods.
+
+### Constructor
+
+```typescript
+new TokenCache(options?: { maxSize?: number; ttl?: number })
+```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `maxSize` | `number` | `50` | Maximum number of cached documents |
+| `ttl` | `number` | `300000` | Time-to-live in milliseconds |
+
+### Methods
+
+#### `getTokens(source, options)`
+
+Retrieve cached tokens for the given source and options. Returns `undefined` if not cached or expired.
+
+```typescript
+const tokens = cache.getTokens(markdown, options)
+```
+
+#### `setTokens(source, options, tokens)`
+
+Store parsed tokens in the cache. If the cache is full, the least recently used entry is evicted.
+
+```typescript
+cache.setTokens(markdown, options, tokens)
+```
+
+#### `hasTokens(source, options)`
+
+Check whether tokens are cached without retrieving them.
+
+```typescript
+if (cache.hasTokens(markdown, options)) {
+    console.log('Cache hit')
+}
+```
+
+#### `deleteTokens(source, options)`
+
+Remove a specific cached entry. Returns `true` if the entry was removed, `false` if not found.
+
+```typescript
+cache.deleteTokens(markdown, options)
+```
+
+#### `clearAllTokens()`
+
+Remove all entries from the cache.
+
+```typescript
+cache.clearAllTokens()
+```
+
+### Inherited from MemoryCache
+
+`TokenCache` inherits all methods from [`MemoryCache`](https://www.npmjs.com/package/@humanspeak/memory-cache) (`@humanspeak/memory-cache`), including:
+
+- `get(key)` -- retrieve by raw key
+- `set(key, value)` -- store by raw key
+- `has(key)` -- check existence by raw key
+- `delete(key)` -- remove by raw key
+- `clear()` -- remove all entries
+- `size` -- number of cached entries
+
+## Cache Key Generation
+
+Cache keys are generated by hashing both the source content and the parser options:
+
+```
+key = hash(source) + ":" + hash(JSON.stringify(options))
+```
+
+This ensures that the same markdown parsed with different options (e.g., `gfm: true` vs `gfm: false`) produces separate cache entries.
+
+The hash function uses FNV-1a, a fast non-cryptographic hash algorithm optimized for speed and good distribution. It operates in a single pass through the string.
+
+## When Caching Is Bypassed
+
+Caching is automatically bypassed in these cases:
+
+- **Pre-parsed tokens**: When `source` is an array of `Token[]`, no parsing or caching occurs.
+- **Empty string**: When `source` is `''`, an empty array is returned directly.
+
+## Best Practices
+
+1. **Let the default cache work for you.** In most applications, the global singleton with its default settings is sufficient.
+
+2. **Increase `maxSize` for content-heavy apps.** If your application renders many unique markdown documents, increase the cache size to reduce re-parsing.
+
+3. **Reduce TTL for dynamic content.** If your markdown content changes frequently, use a shorter TTL to avoid serving stale cached tokens.
+
+4. **Use `clearAllTokens()` when content updates.** If you know the source content has changed (e.g., after a CMS update), clear the cache to force re-parsing.
+
+5. **Pre-parse tokens for static content.** For content that never changes, parse it once and pass the tokens directly to avoid cache overhead entirely.
+
+## Related
+
+- [SvelteMarkdown Component](/docs/api/svelte-markdown) -- main component documentation
+- [Types & Exports](/docs/api/types) -- `TokenCache`, `MemoryCache`, `tokenCache` exports

@@ -15,9 +15,9 @@
 
     // SEO state — owned here, passed to SeoContext for child access, read directly for meta tags
     const seo = $state<SeoContextType>({
-        title: 'Memory Cache - High-Performance In-Memory Caching for TypeScript',
+        title: 'Svelte Markdown - Customizable Markdown Renderer for Svelte 5',
         description:
-            'A lightweight, zero-dependency in-memory cache for TypeScript with TTL expiration, LRU eviction, and @cached decorator for method-level memoization.'
+            'A powerful, customizable markdown renderer for Svelte 5 with TypeScript support, 24 renderers, 69+ HTML tags, token caching, and allow/deny utilities.'
     })
 </script>
 
@@ -29,7 +29,7 @@
     <meta property="og:description" content={seo.description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:image" content="{imageLocation}memory-cache-opengraph.png" />
+    <meta property="og:image" content="{imageLocation}svelte-markdown-opengraph.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
 
@@ -37,12 +37,12 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={seo.title} />
     <meta name="twitter:description" content={seo.description} />
-    <meta name="twitter:image" content="{imageLocation}memory-cache-twitter.png" />
+    <meta name="twitter:image" content="{imageLocation}svelte-markdown-twitter.png" />
 
     <!-- Keywords -->
     <meta
         name="keywords"
-        content="cache, memory-cache, lru-cache, ttl-cache, typescript, memoization, decorator, in-memory, caching, performance, node.js, javascript"
+        content="svelte, markdown, renderer, svelte-5, typescript, html, parser, marked, custom-renderers, token-cache"
     />
 
     <!-- Additional Meta -->
@@ -61,11 +61,11 @@
                 "name": "Humanspeak, Inc.",
                 "url": "https://humanspeak.com"
             },
-            "description": "A high-performance, in-memory caching library for TypeScript with TTL expiration, LRU eviction, and a powerful @cached decorator for automatic method memoization.",
-            "downloadUrl": "https://www.npmjs.com/package/@humanspeak/memory-cache",
-            "keywords": "cache, memory-cache, typescript, memoization, lru, ttl",
+            "description": "A powerful, customizable markdown renderer for Svelte 5 with TypeScript support, 24 renderers, 69+ HTML tags, token caching, and allow/deny utilities.",
+            "downloadUrl": "https://www.npmjs.com/package/@humanspeak/svelte-markdown",
+            "keywords": "svelte, markdown, renderer, svelte-5, typescript, html, parser, marked",
             "license": "MIT",
-            "name": "Memory Cache",
+            "name": "Svelte Markdown",
             "offers": {
                 "@type": "Offer",
                 "price": "0",
@@ -73,9 +73,9 @@
             },
             "operatingSystem": "Any",
             "programmingLanguage": ["TypeScript", "JavaScript"],
-            "releaseNotes": "https://github.com/humanspeak/memory-cache/releases",
-            "requirements": "Node.js 18+ or modern browser",
-            "url": "https://memory.svelte.page"
+            "releaseNotes": "https://github.com/humanspeak/svelte-markdown/releases",
+            "requirements": "Svelte 5",
+            "url": "https://markdown.svelte.page"
         }
     </script>
 </svelte:head>

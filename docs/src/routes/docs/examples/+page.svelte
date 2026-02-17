@@ -11,92 +11,59 @@
 
     const seo = getSeoContext()
     if (seo) {
-        seo.title = 'Usage Examples | Memory Cache'
+        seo.title = 'Usage Examples | Svelte Markdown'
         seo.description =
-            'Real-world usage examples for @humanspeak/memory-cache covering API caching, session storage, database queries, rate limiting, and the @cached decorator.'
+            'Real-world usage examples for @humanspeak/svelte-markdown covering basic rendering, custom renderers, HTML filtering, inline rendering, and the parsed callback.'
     }
 
     const examples = [
         {
-            category: 'Basic Patterns',
+            category: 'Getting Started',
             items: [
                 {
-                    title: 'API Response Caching',
+                    title: 'Basic Rendering',
                     description:
-                        'Cache API responses to reduce network requests and improve response times.',
-                    href: '/docs/examples/api-caching',
-                    icon: 'fa-solid fa-cloud'
+                        'Render markdown content with the SvelteMarkdown component. Covers string input, GFM, and common patterns.',
+                    href: '/docs/examples/basic-rendering',
+                    icon: 'fa-solid fa-file-lines'
                 },
                 {
-                    title: 'Session Storage',
+                    title: 'Inline Rendering',
                     description:
-                        'Store user sessions with automatic expiration for secure session management.',
-                    href: '/docs/examples/sessions',
-                    icon: 'fa-solid fa-user-shield'
-                },
-                {
-                    title: 'Configuration Cache',
-                    description:
-                        'Cache configuration that rarely changes for faster application startup.',
-                    href: '/docs/examples/configuration',
-                    icon: 'fa-solid fa-sliders'
+                        'Use the isInline prop to render markdown without wrapping block elements.',
+                    href: '/docs/examples/inline-rendering',
+                    icon: 'fa-solid fa-i-cursor'
                 }
             ]
         },
         {
-            category: 'Advanced Patterns',
+            category: 'Customization',
             items: [
                 {
-                    title: 'Database Query Caching',
-                    description: 'Cache expensive database queries with the @cached decorator.',
-                    href: '/docs/examples/database-caching',
-                    icon: 'fa-solid fa-database'
+                    title: 'Custom Renderers',
+                    description:
+                        'Override default renderers with your own Svelte components for full control over output.',
+                    href: '/docs/examples/custom-renderers',
+                    icon: 'fa-solid fa-paintbrush'
                 },
                 {
-                    title: 'Computed Value Caching',
-                    description: 'Cache expensive computations to avoid redundant processing.',
-                    href: '/docs/examples/computed-values',
-                    icon: 'fa-solid fa-calculator'
-                },
-                {
-                    title: 'Multi-Tenant Invalidation',
-                    description: 'Use prefix and wildcard deletion for multi-tenant applications.',
-                    href: '/docs/examples/multi-tenant',
-                    icon: 'fa-solid fa-building'
-                },
-                {
-                    title: 'Async Fetching',
-                    description: 'Handle async data fetching with automatic caching.',
-                    href: '/docs/examples/async-fetching',
-                    icon: 'fa-solid fa-rotate'
+                    title: 'HTML Filtering',
+                    description:
+                        'Use allow/deny utilities to control which HTML tags are rendered from markdown.',
+                    href: '/docs/examples/html-filtering',
+                    icon: 'fa-solid fa-filter'
                 }
             ]
         },
         {
-            category: 'Monitoring & Operations',
+            category: 'Advanced',
             items: [
                 {
-                    title: 'Monitoring with Hooks',
-                    description: 'Integrate with metrics and logging systems for observability.',
-                    href: '/docs/examples/monitoring',
-                    icon: 'fa-solid fa-chart-line'
-                },
-                {
-                    title: 'Rate Limiting',
-                    description: 'Implement simple rate limiting using the cache.',
-                    href: '/docs/examples/rate-limiting',
-                    icon: 'fa-solid fa-gauge-high'
-                }
-            ]
-        },
-        {
-            category: 'Full Examples',
-            items: [
-                {
-                    title: 'Service Class Pattern',
-                    description: 'Complete service class example using the @cached decorator.',
-                    href: '/docs/examples/service-class',
-                    icon: 'fa-solid fa-code'
+                    title: 'Parsed Callback',
+                    description:
+                        'Access parsed token data via the parsed callback prop for debugging or processing.',
+                    href: '/docs/examples/parsed-callback',
+                    icon: 'fa-solid fa-diagram-project'
                 }
             ]
         }
@@ -104,40 +71,29 @@
 
     const quickReference = [
         {
-            useCase: 'API responses',
-            ttl: '1-5 minutes',
-            maxSize: '500-1000',
-            keyPattern: 'api:{endpoint}'
+            useCase: 'Blog posts',
+            component: '<SvelteMarkdown source={post.body} />',
+            notes: 'Full block rendering'
         },
         {
-            useCase: 'User sessions',
-            ttl: '30-60 minutes',
-            maxSize: '10000+',
-            keyPattern: 'session:{id}'
+            useCase: 'Inline labels',
+            component: '<SvelteMarkdown source={label} isInline />',
+            notes: 'No wrapping <p> tags'
         },
         {
-            useCase: 'Database queries',
-            ttl: '30s-5 minutes',
-            maxSize: '100-500',
-            keyPattern: 'query:{table}:{id}'
+            useCase: 'Sanitized content',
+            component: '<SvelteMarkdown {source} renderers={{ html: allowHtmlOnly([...]) }} />',
+            notes: 'Restrict HTML tags'
         },
         {
-            useCase: 'Computed values',
-            ttl: '0 (no expiration)',
-            maxSize: '1000+',
-            keyPattern: 'compute:{input}'
+            useCase: 'Custom styling',
+            component: '<SvelteMarkdown {source} renderers={{ heading: MyHeading }} />',
+            notes: 'Override specific renderers'
         },
         {
-            useCase: 'Rate limiting',
-            ttl: '1 minute',
-            maxSize: '100000+',
-            keyPattern: 'ratelimit:{clientId}'
-        },
-        {
-            useCase: 'Configuration',
-            ttl: '5-10 minutes',
-            maxSize: '100',
-            keyPattern: 'config:{env}'
+            useCase: 'Token inspection',
+            component: '<SvelteMarkdown {source} parsed={handleTokens} />',
+            notes: 'Access AST tokens'
         }
     ]
 </script>
@@ -146,7 +102,8 @@
 <div class="not-prose mb-10">
     <h1 class="text-foreground mb-3 text-4xl font-bold">Usage Examples</h1>
     <p class="text-muted-foreground max-w-2xl text-lg">
-        Explore practical examples of how to use @humanspeak/memory-cache in real-world scenarios.
+        Explore practical examples of how to use @humanspeak/svelte-markdown in real-world
+        scenarios.
     </p>
 </div>
 
@@ -214,22 +171,20 @@
             <thead class="bg-muted/50">
                 <tr>
                     <th class="text-foreground px-4 py-3 text-left font-medium">Use Case</th>
-                    <th class="text-foreground px-4 py-3 text-left font-medium">Recommended TTL</th>
-                    <th class="text-foreground px-4 py-3 text-left font-medium">Max Size</th>
-                    <th class="text-foreground px-4 py-3 text-left font-medium">Key Pattern</th>
+                    <th class="text-foreground px-4 py-3 text-left font-medium">Usage</th>
+                    <th class="text-foreground px-4 py-3 text-left font-medium">Notes</th>
                 </tr>
             </thead>
             <tbody class="divide-border divide-y">
                 {#each quickReference as row}
                     <tr class="hover:bg-muted/30 transition-colors">
                         <td class="text-foreground px-4 py-3">{row.useCase}</td>
-                        <td class="text-muted-foreground px-4 py-3">{row.ttl}</td>
-                        <td class="text-muted-foreground px-4 py-3">{row.maxSize}</td>
                         <td class="px-4 py-3">
                             <code class="bg-muted text-brand-600 rounded px-1.5 py-0.5 text-xs"
-                                >{row.keyPattern}</code
+                                >{row.component}</code
                             >
                         </td>
+                        <td class="text-muted-foreground px-4 py-3">{row.notes}</td>
                     </tr>
                 {/each}
             </tbody>
@@ -241,7 +196,7 @@
 <div class="not-prose">
     <h2 class="text-foreground mb-4 text-xl font-semibold">Best Practices</h2>
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {#each [{ icon: 'fa-solid fa-clock', title: 'Choose appropriate TTLs', description: 'Balance freshness vs performance' }, { icon: 'fa-solid fa-key', title: 'Use meaningful key patterns', description: 'Makes debugging and invalidation easier' }, { icon: 'fa-solid fa-memory', title: 'Consider cache size', description: 'Monitor memory usage in production' }, { icon: 'fa-solid fa-eye', title: 'Use hooks for observability', description: 'Track hit rates and performance' }, { icon: 'fa-solid fa-shield', title: 'Handle cache misses', description: 'Always have a fallback strategy' }] as practice}
+        {#each [{ icon: 'fa-solid fa-shield', title: 'Filter untrusted HTML', description: 'Use allowHtmlOnly/excludeHtmlOnly for user content' }, { icon: 'fa-solid fa-bolt', title: 'Leverage token caching', description: 'Repeated renders are 50-200x faster automatically' }, { icon: 'fa-solid fa-paintbrush', title: 'Use custom renderers', description: 'Override specific elements for custom styling' }, { icon: 'fa-solid fa-code', title: 'Use isInline for labels', description: 'Avoid block-level wrapping for inline content' }, { icon: 'fa-solid fa-diagram-project', title: 'Inspect tokens when debugging', description: 'Use the parsed callback to see the AST' }] as practice}
             <div class="border-border bg-card flex items-start gap-3 rounded-lg border p-4">
                 <div
                     class="bg-brand-500/10 text-brand-600 flex h-8 w-8 shrink-0 items-center justify-center rounded-md"

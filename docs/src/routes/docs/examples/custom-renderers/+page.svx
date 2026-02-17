@@ -1,0 +1,282 @@
+---
+title: Custom Renderers Examples
+description: Practical examples of creating and using custom renderer components
+---
+
+# Custom Renderers Examples
+
+These examples demonstrate how to create custom renderers to change the way specific markdown elements are rendered.
+
+## Open External Links in New Tab
+
+Create a link renderer that opens external links in a new tab:
+
+```html
+<!-- ExternalLink.svelte -->
+<script lang="ts">
+    import type { Snippet } from 'svelte'
+
+    interface Props {
+        href?: string
+        title?: string
+        children?: Snippet
+    }
+
+    const { href = '', title = undefined, children }: Props = $props()
+
+    const isExternal = $derived(
+        href.startsWith('http://') || href.startsWith('https://')
+    )
+</script>
+
+{#if isExternal}
+    <a {href} {title} target="_blank" rel="noopener noreferrer">
+        {@render children?.()}
+        <span class="external-icon"> &#x2197;</span>
+    </a>
+{:else}
+    <a {href} {title}>
+        {@render children?.()}
+    </a>
+{/if}
+```
+
+```html
+<!-- Usage -->
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import ExternalLink from './ExternalLink.svelte'
+
+    const source = `
+- [Internal link](/about)
+- [External link](https://svelte.dev)
+    `
+</script>
+
+<SvelteMarkdown {source} renderers={{ link: ExternalLink }} />
+```
+
+## Syntax-Highlighted Code Blocks
+
+Integrate a syntax highlighter (e.g., Prism or Highlight.js) into a custom code renderer:
+
+```html
+<!-- HighlightedCode.svelte -->
+<script lang="ts">
+    import { onMount } from 'svelte'
+
+    interface Props {
+        lang: string
+        text: string
+    }
+
+    const { lang, text }: Props = $props()
+
+    let codeElement: HTMLElement
+    let highlighted = $state(false)
+
+    onMount(async () => {
+        // Example using Prism.js (if loaded globally)
+        if (typeof Prism !== 'undefined' && lang) {
+            const grammar = Prism.languages[lang]
+            if (grammar && codeElement) {
+                codeElement.innerHTML = Prism.highlight(text, grammar, lang)
+                highlighted = true
+            }
+        }
+    })
+</script>
+
+<div class="code-wrapper">
+    {#if lang}
+        <span class="lang-badge">{lang}</span>
+    {/if}
+    <pre class={lang}><code
+        bind:this={codeElement}
+        class="language-{lang}"
+        class:highlighted
+    >{text}</code></pre>
+</div>
+```
+
+```html
+<!-- Usage -->
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import HighlightedCode from './HighlightedCode.svelte'
+</script>
+
+<SvelteMarkdown
+    source={"```typescript\nconst x: number = 42;\n```"}
+    renderers={{ code: HighlightedCode }}
+/>
+```
+
+## Headings with Anchor Links
+
+Add clickable anchor links to headings for easy sharing:
+
+```html
+<!-- AnchorHeading.svelte -->
+<script lang="ts">
+    import type { Snippet } from 'svelte'
+    import type { SvelteMarkdownOptions } from '@humanspeak/svelte-markdown'
+
+    interface Props {
+        depth: number
+        raw: string
+        text: string
+        options: SvelteMarkdownOptions
+        slug: (val: string) => string
+        children?: Snippet
+    }
+
+    const { depth, text, options, slug, children }: Props = $props()
+
+    const id = $derived(
+        options.headerIds ? options.headerPrefix + slug(text) : undefined
+    )
+</script>
+
+<svelte:element this="h{depth}" {id}>
+    {@render children?.()}
+    {#if id}
+        <a href="#{id}" aria-label="Link to {text}" class="anchor">
+            #
+        </a>
+    {/if}
+</svelte:element>
+```
+
+## Styled Blockquotes
+
+Transform blockquotes into styled callout boxes:
+
+```html
+<!-- Callout.svelte -->
+<script lang="ts">
+    import type { Snippet } from 'svelte'
+
+    interface Props {
+        children?: Snippet
+    }
+
+    const { children }: Props = $props()
+</script>
+
+<aside class="callout" role="note">
+    <div class="callout-bar"></div>
+    <div class="callout-content">
+        {@render children?.()}
+    </div>
+</aside>
+
+<style>
+    .callout {
+        display: flex;
+        margin: 1em 0;
+        border-radius: 6px;
+        background: #f8f9fa;
+        overflow: hidden;
+    }
+    .callout-bar {
+        width: 4px;
+        background: #3b82f6;
+        flex-shrink: 0;
+    }
+    .callout-content {
+        padding: 12px 16px;
+    }
+</style>
+```
+
+```html
+<SvelteMarkdown
+    source={"> Important information here"}
+    renderers={{ blockquote: Callout }}
+/>
+```
+
+## Custom Table with Styling
+
+Wrap tables in a scrollable container:
+
+```html
+<!-- ScrollableTable.svelte -->
+<script lang="ts">
+    import type { Snippet } from 'svelte'
+
+    interface Props {
+        children?: Snippet
+    }
+
+    const { children }: Props = $props()
+</script>
+
+<div class="table-container">
+    <table>
+        {@render children?.()}
+    </table>
+</div>
+
+<style>
+    .table-container {
+        overflow-x: auto;
+        margin: 1em 0;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+</style>
+```
+
+## Combining Multiple Custom Renderers
+
+Pass multiple custom renderers at once:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import ExternalLink from './ExternalLink.svelte'
+    import AnchorHeading from './AnchorHeading.svelte'
+    import HighlightedCode from './HighlightedCode.svelte'
+    import Callout from './Callout.svelte'
+    import ScrollableTable from './ScrollableTable.svelte'
+
+    const source = `
+# Welcome
+
+> This is a callout.
+
+Visit [Svelte](https://svelte.dev) for more info.
+
+| Column A | Column B |
+|----------|----------|
+| Data 1   | Data 2   |
+
+\`\`\`javascript
+console.log('Hello!')
+\`\`\`
+    `
+</script>
+
+<SvelteMarkdown
+    {source}
+    renderers={{
+        heading: AnchorHeading,
+        link: ExternalLink,
+        code: HighlightedCode,
+        blockquote: Callout,
+        table: ScrollableTable
+    }}
+/>
+```
+
+## Related
+
+- [Custom Renderers Guide](/docs/renderers/custom-renderers) -- detailed guide to building renderers
+- [Markdown Renderers](/docs/renderers/markdown-renderers) -- all renderer props
+- [HTML Filtering Examples](/docs/examples/html-filtering) -- filtering HTML tags

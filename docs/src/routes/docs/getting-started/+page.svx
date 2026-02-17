@@ -1,104 +1,109 @@
 ---
 title: Getting Started
-description: Get started with @humanspeak/memory-cache
+description: Get started with @humanspeak/svelte-markdown, a powerful markdown renderer for Svelte 5
 ---
 
 # Getting Started
 
-@humanspeak/memory-cache is a lightweight, zero-dependency in-memory cache for TypeScript and JavaScript. It provides TTL expiration, true LRU (Least Recently Used) eviction, wildcard pattern deletion, and a powerful `@cached` decorator for method-level memoization.
+**@humanspeak/svelte-markdown** is a powerful, customizable markdown renderer for Svelte 5 with full TypeScript support. It parses markdown using [Marked](https://marked.js.org/) and renders it through a composable system of Svelte components that you can override and extend.
 
 ## Installation
 
 Install the package using your preferred package manager:
 
 ```bash
-npm install @humanspeak/memory-cache
+npm install @humanspeak/svelte-markdown
 ```
 
 ```bash
-pnpm add @humanspeak/memory-cache
+pnpm add @humanspeak/svelte-markdown
 ```
 
 ```bash
-yarn add @humanspeak/memory-cache
+yarn add @humanspeak/svelte-markdown
 ```
 
 ## Quick Start
 
-### Basic Cache Usage
+Import the `SvelteMarkdown` component and pass your markdown string to the `source` prop:
 
-```typescript
-import { MemoryCache } from '@humanspeak/memory-cache'
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
-// Create a cache with default options (100 entries, 5 minute TTL)
-const cache = new MemoryCache<string>()
+    const source = '# Hello World\n\nThis is **bold** and *italic* text.'
+</script>
 
-// Or customize the options
-const customCache = new MemoryCache<string>({
-    maxSize: 1000,        // Maximum entries before eviction
-    ttl: 10 * 60 * 1000   // 10 minutes TTL
-})
-
-// Store and retrieve values
-cache.set('user:123', 'John Doe')
-const name = cache.get('user:123') // 'John Doe'
-
-// Check if key exists
-if (cache.has('user:123')) {
-    console.log('User is cached')
-}
-
-// Delete entries
-cache.delete('user:123')
-cache.clear() // Remove all entries
+<SvelteMarkdown {source} />
 ```
 
-### Using the @cached Decorator
+This renders the markdown as HTML using the built-in default renderers.
 
-The `@cached` decorator provides automatic method-level memoization:
+## Basic Props
 
-```typescript
-import { cached } from '@humanspeak/memory-cache'
+The `SvelteMarkdown` component accepts the following props:
 
-class UserService {
-    @cached<User>({ ttl: 60000, maxSize: 100 })
-    async getUser(id: string): Promise<User> {
-        // This expensive operation will be cached
-        return await database.findUser(id)
-    }
-}
-
-const service = new UserService()
-
-// First call - executes the method
-await service.getUser('123')
-
-// Second call - returns cached result instantly
-await service.getUser('123')
-```
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `source` | `string \| Token[]` | `[]` | Markdown string or pre-parsed tokens to render |
+| `renderers` | `Partial<Renderers>` | `{}` | Custom renderer components to override defaults |
+| `options` | `Partial<SvelteMarkdownOptions>` | `{}` | Parser configuration options |
+| `isInline` | `boolean` | `false` | Parse as inline markdown (no block-level elements) |
+| `parsed` | `(tokens: Token[] \| TokensList) => void` | `() => {}` | Callback invoked with parsed tokens |
 
 ## Configuration Options
 
+You can configure the markdown parser through the `options` prop:
+
+```html
+<SvelteMarkdown
+    source="# Hello"
+    options={{
+        headerIds: true,
+        headerPrefix: 'doc-',
+        gfm: true,
+        breaks: false
+    }}
+/>
+```
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `maxSize` | `number` | `100` | Maximum number of entries before eviction. Set to `0` for unlimited. |
-| `ttl` | `number` | `300000` | Time-to-live in milliseconds. Set to `0` for no expiration. |
+| `headerIds` | `boolean` | `true` | Generate `id` attributes on headings |
+| `headerPrefix` | `string` | `''` | Prefix for generated heading IDs |
+| `gfm` | `boolean` | `true` | Enable GitHub Flavored Markdown |
+| `breaks` | `boolean` | `false` | Convert single newlines to `<br>` |
+
+## Overriding Renderers
+
+You can replace any built-in renderer with your own Svelte component:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import CustomLink from './CustomLink.svelte'
+
+    const source = 'Visit [example](https://example.com)'
+</script>
+
+<SvelteMarkdown {source} renderers={{ link: CustomLink }} />
+```
 
 ## Features
 
-- **Zero Dependencies** - No external dependencies, keeping your bundle small
-- **TTL Expiration** - Entries automatically expire after a configurable time
-- **LRU Eviction** - Least recently used entries are evicted when the cache is full
-- **Wildcard Deletion** - Delete entries by prefix or wildcard patterns
-- **Full TypeScript Support** - Complete type definitions included
-- **Method Decorator** - `@cached` decorator for automatic memoization
-- **Null/Undefined Support** - Properly distinguishes between cached falsy values and cache misses
+- **Svelte 5** runes compatibility with `$props()` and `$derived()`
+- **TypeScript** with complete type definitions for all exports
+- **24 markdown renderers** covering all standard markdown elements
+- **69+ HTML tag renderers** for raw HTML within markdown
+- **Token caching** with LRU eviction for high-performance re-renders
+- **Allow/deny filtering** to control which elements are rendered
+- **Custom renderers** for full control over output
 
 ## Next Steps
 
-- Learn about the [MemoryCache API](/docs/api/memory-cache)
-- Explore the [@cached decorator](/docs/api/cached-decorator)
-- See [usage examples](/docs/examples)
-
-
-
+- [SvelteMarkdown API Reference](/docs/api/svelte-markdown) -- full component documentation
+- [Types & Exports](/docs/api/types) -- all exported types, functions, and constants
+- [Markdown Renderers](/docs/renderers/markdown-renderers) -- the 24 built-in markdown renderers
+- [Custom Renderers Guide](/docs/renderers/custom-renderers) -- how to build your own renderers
+- [Token Caching](/docs/advanced/token-caching) -- performance optimization with caching
+- [Basic Rendering Examples](/docs/examples/basic-rendering) -- common usage patterns

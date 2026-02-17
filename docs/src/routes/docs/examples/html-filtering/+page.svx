@@ -1,0 +1,235 @@
+---
+title: HTML Filtering Examples
+description: Practical examples of filtering HTML tags in markdown content
+---
+
+# HTML Filtering Examples
+
+These examples demonstrate how to use the allow/deny filtering utilities to control which HTML tags are rendered within markdown content.
+
+## Block All HTML
+
+The safest option for user-generated content -- block all raw HTML while preserving markdown syntax:
+
+```html
+<script>
+    import SvelteMarkdown, { buildUnsupportedHTML } from '@humanspeak/svelte-markdown'
+
+    const source = `
+# Heading
+
+This paragraph has **markdown** that works.
+
+<div>This HTML is blocked.</div>
+
+<script>alert('blocked')<\/script>
+
+More **markdown** continues here.
+    `
+
+    const renderers = {
+        html: buildUnsupportedHTML()
+    }
+</script>
+
+<SvelteMarkdown {source} {renderers} />
+<!-- The <div> and <script> tags produce no output -->
+<!-- Markdown headings, bold, etc. render normally -->
+```
+
+## Allow Only Specific Tags
+
+Allow only a curated set of safe HTML tags:
+
+```html
+<script>
+    import SvelteMarkdown, { allowHtmlOnly } from '@humanspeak/svelte-markdown'
+
+    const source = `
+Text with <strong>bold HTML</strong> and <em>italic HTML</em>.
+
+<div class="custom">This div is blocked.</div>
+
+<a href="https://example.com">This link works.</a>
+
+<iframe src="https://evil.com"></iframe>
+    `
+
+    const renderers = {
+        html: allowHtmlOnly(['strong', 'em', 'a', 'code', 'br'])
+    }
+</script>
+
+<SvelteMarkdown {source} {renderers} />
+<!-- strong, em, a, code, br render normally -->
+<!-- div, iframe, and all other tags are suppressed -->
+```
+
+## Block Specific Tags
+
+Block only the tags you consider dangerous, allowing everything else:
+
+```html
+<script>
+    import SvelteMarkdown, { excludeHtmlOnly } from '@humanspeak/svelte-markdown'
+
+    const source = `
+<div>This div renders normally.</div>
+
+<p>Paragraphs work too.</p>
+
+<iframe src="https://example.com">Blocked!</iframe>
+
+<form action="/submit"><input type="text" /></form>
+    `
+
+    const renderers = {
+        html: excludeHtmlOnly([
+            'iframe',
+            'embed',
+            'form',
+            'input',
+            'textarea',
+            'select',
+            'button',
+            'canvas'
+        ])
+    }
+</script>
+
+<SvelteMarkdown {source} {renderers} />
+<!-- div, p render normally -->
+<!-- iframe, form, input are suppressed -->
+```
+
+## Allow Tags with Custom Components
+
+Use the tuple syntax to allow specific tags and render them with custom Svelte components:
+
+```html
+<!-- SafeLink.svelte -->
+<script lang="ts">
+    import type { Snippet } from 'svelte'
+
+    const { href, children, ...rest }: any = $props()
+
+    // Force all links to open in new tab
+    const safeHref = $derived(
+        href?.startsWith('javascript:') ? '#' : href
+    )
+</script>
+
+<a href={safeHref} target="_blank" rel="noopener noreferrer" {...rest}>
+    {@render children?.()}
+</a>
+```
+
+```html
+<!-- Usage -->
+<script>
+    import SvelteMarkdown, { allowHtmlOnly } from '@humanspeak/svelte-markdown'
+    import SafeLink from './SafeLink.svelte'
+
+    const source = `
+<a href="https://example.com">Safe external link</a>
+
+<a href="javascript:alert('xss')">Blocked javascript: link</a>
+
+<strong>Bold is allowed</strong>
+
+<iframe src="https://evil.com">Blocked</iframe>
+    `
+
+    const renderers = {
+        html: allowHtmlOnly([
+            ['a', SafeLink],
+            'strong',
+            'em',
+            'code'
+        ])
+    }
+</script>
+
+<SvelteMarkdown {source} {renderers} />
+```
+
+## Combine HTML and Markdown Filtering
+
+Restrict both HTML tags and markdown renderers for maximum control:
+
+```html
+<script>
+    import SvelteMarkdown, {
+        allowHtmlOnly,
+        allowRenderersOnly
+    } from '@humanspeak/svelte-markdown'
+
+    const source = `
+# Heading (allowed)
+
+![Image](photo.jpg) (blocked)
+
+**Bold** and *italic* work.
+
+\`\`\`
+Code blocks are blocked.
+\`\`\`
+
+<div>HTML div is blocked.</div>
+
+<em>HTML emphasis is allowed.</em>
+    `
+
+    const renderers = {
+        // Only allow basic markdown renderers
+        ...allowRenderersOnly([
+            'paragraph', 'text', 'heading',
+            'strong', 'em', 'link', 'br',
+            'list', 'listitem'
+        ]),
+        // Only allow safe HTML tags
+        html: allowHtmlOnly(['strong', 'em', 'a', 'br'])
+    }
+</script>
+
+<SvelteMarkdown {source} {renderers} />
+<!-- Images, code blocks, HTML divs are all suppressed -->
+<!-- Headings, paragraphs, bold, italic, and safe HTML render -->
+```
+
+## Exclude with Overrides
+
+Block specific tags while providing custom components for others:
+
+```html
+<script>
+    import SvelteMarkdown, { excludeHtmlOnly } from '@humanspeak/svelte-markdown'
+    import SafeLink from './SafeLink.svelte'
+
+    const source = `
+<a href="https://example.com">Custom link component</a>
+
+<iframe src="bad.html">Blocked</iframe>
+
+<div>Default div renderer</div>
+    `
+
+    const renderers = {
+        html: excludeHtmlOnly(
+            ['iframe', 'embed', 'form'],       // Block these
+            [['a', SafeLink]]                   // Override <a> with custom component
+        )
+    }
+</script>
+
+<SvelteMarkdown {source} {renderers} />
+<!-- iframe is blocked -->
+<!-- <a> uses SafeLink component -->
+<!-- <div> uses the default div renderer -->
+```
+
+## Related
+
+- [Allow/Deny](/docs/advanced/allow-deny) -- API reference for all filtering functions
+- [Security](/docs/advanced/security) -- security best practices
+- [HTML Renderers](/docs/renderers/html-renderers) -- all 69+ HTML tag renderers

@@ -97,7 +97,7 @@
             </motion.button>
 
             <a
-                href="https://github.com/humanspeak/memory-cache"
+                href="https://github.com/humanspeak/svelte-markdown"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-text-muted hover:text-text-secondary inline-flex items-center justify-center"
@@ -112,7 +112,7 @@
                 </motion.div>
             </a>
             <a
-                href="https://www.npmjs.com/package/@humanspeak/memory-cache"
+                href="https://www.npmjs.com/package/@humanspeak/svelte-markdown"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-text-muted hover:text-text-secondary inline-flex items-center justify-center"

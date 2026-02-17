@@ -1,0 +1,128 @@
+---
+title: Inline Rendering
+description: Examples of using the isInline prop for inline markdown rendering
+---
+
+# Inline Rendering
+
+The `isInline` prop tells `SvelteMarkdown` to parse the source as inline markdown rather than block-level markdown. This is useful when you want to render markdown within a `<span>`, `<p>`, or other inline HTML context without producing block-level elements like `<p>`, `<h1>`, or `<ul>`.
+
+## Block vs Inline Parsing
+
+By default, markdown is parsed as block content, which wraps text in `<p>` tags:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+</script>
+
+<!-- Block parsing (default) -->
+<SvelteMarkdown source="**Bold** and *italic*" />
+<!-- Renders: <p><strong>Bold</strong> and <em>italic</em></p> -->
+
+<!-- Inline parsing -->
+<SvelteMarkdown source="**Bold** and *italic*" isInline={true} />
+<!-- Renders: <strong>Bold</strong> and <em>italic</em> -->
+```
+
+Notice that inline parsing does not wrap the output in a `<p>` tag.
+
+## Embedding Markdown in Text
+
+Use `isInline` when you need to embed formatted text inside a paragraph or other inline container:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const status = '**Active**'
+    const description = 'This feature is *experimental* and may change.'
+</script>
+
+<p>
+    Status: <SvelteMarkdown source={status} isInline={true} />
+</p>
+
+<span>
+    Note: <SvelteMarkdown source={description} isInline={true} />
+</span>
+```
+
+## Dynamic Labels
+
+Render user-provided markdown in places where block elements would break the layout:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const items = [
+        { label: '**Important:** Review needed', status: 'pending' },
+        { label: '*Optional:* Style updates', status: 'done' },
+        { label: '`v2.0` Release notes', status: 'in-progress' }
+    ]
+</script>
+
+<table>
+    <thead>
+        <tr><th>Item</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+        {#each items as item}
+            <tr>
+                <td>
+                    <SvelteMarkdown source={item.label} isInline={true} />
+                </td>
+                <td>{item.status}</td>
+            </tr>
+        {/each}
+    </tbody>
+</table>
+```
+
+## What Inline Parsing Supports
+
+When `isInline` is `true`, the following markdown elements are supported:
+
+- **Bold** (`**text**`)
+- **Italic** (`*text*`)
+- **Strikethrough** (`~~text~~`)
+- **Code spans** (`` `code` ``)
+- **Links** (`[text](url)`)
+- **Images** (`![alt](url)`)
+- **Line breaks** (two trailing spaces or `\`)
+
+The following block-level elements are **not** produced in inline mode:
+
+- Headings (`# ...`)
+- Paragraphs (no `<p>` wrapper)
+- Lists (`-`, `1.`)
+- Blockquotes (`> ...`)
+- Code blocks (` ``` `)
+- Tables
+- Horizontal rules (`---`)
+
+## Inline with Custom Renderers
+
+Custom renderers work normally in inline mode:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import CustomLink from './CustomLink.svelte'
+</script>
+
+<p>
+    Check out <SvelteMarkdown
+        source="[our docs](https://example.com)"
+        isInline={true}
+        renderers={{ link: CustomLink }}
+    />
+</p>
+```
+
+## Related
+
+- [SvelteMarkdown API](/docs/api/svelte-markdown) -- full prop documentation
+- [Basic Rendering Examples](/docs/examples/basic-rendering) -- standard block rendering
+- [Parsed Callback Examples](/docs/examples/parsed-callback) -- inspecting tokens
