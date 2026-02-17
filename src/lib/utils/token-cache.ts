@@ -71,6 +71,12 @@ function hashString(str: string): string {
  * console.log(key1 !== key2) // true - different options = different key
  * ```
  */
+// Memoizes the serialized hash of options objects by reference.
+// Assumes options objects are treated as immutable — if a caller mutates
+// an options object after it has been cached here, the stale hash will be
+// returned and the token cache may serve incorrect results. Svelte 5's
+// reactivity system creates new objects on prop changes ($derived), so
+// this is safe for all internal usage paths.
 const optionsHashCache = new WeakMap<object, string>()
 
 function getCacheKey(source: string, options: SvelteMarkdownOptions): string {
