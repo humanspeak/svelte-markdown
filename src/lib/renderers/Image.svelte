@@ -1,3 +1,18 @@
+<!--
+@component
+Renders a markdown image (`![alt](src "title")`) as an `<img>` element with
+optional lazy loading and fade-in animation.
+
+Uses `IntersectionObserver` to defer loading until the image scrolls near the
+viewport (configurable via `lazy`).  On load the image fades in; on error it
+is displayed with reduced opacity and a grayscale filter.
+
+@prop {string} [href=''] - Image source URL.
+@prop {string} [title] - Tooltip text for the image.
+@prop {string} [text=''] - Alt text for accessibility.
+@prop {boolean} [lazy=true] - Enable lazy loading via IntersectionObserver.
+@prop {boolean} [fadeIn=true] - Enable a CSS fade-in transition on load.
+-->
 <script lang="ts">
     import { onMount } from 'svelte'
 

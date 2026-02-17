@@ -1,3 +1,7 @@
+<!--
+@component
+Placeholder component rendered for blocked HTML tags. Displays the tag and content as escaped text.
+-->
 <script lang="ts">
     import type { Snippet } from 'svelte'
 

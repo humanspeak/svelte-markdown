@@ -1,3 +1,7 @@
+<!--
+@component
+Renders a markdown table header section as a `<thead>` element.
+-->
 <script lang="ts">
     import type { Snippet } from 'svelte'
 

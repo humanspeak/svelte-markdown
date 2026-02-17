@@ -1,3 +1,11 @@
+<!--
+@component
+Renders a markdown link (`[text](url "title")`) as an `<a>` element.
+
+@prop {string} [href=''] - Link destination URL.
+@prop {string} [title] - Tooltip text displayed on hover.
+@prop {Snippet} [children] - Rendered inline content of the link.
+-->
 <script lang="ts">
     import type { Snippet } from 'svelte'
 

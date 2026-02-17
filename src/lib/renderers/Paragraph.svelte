@@ -1,3 +1,7 @@
+<!--
+@component
+Renders a markdown paragraph as a `<p>` element.
+-->
 <script lang="ts">
     import type { Snippet } from 'svelte'
 

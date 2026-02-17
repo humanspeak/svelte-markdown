@@ -30,11 +30,11 @@ describe('processHtmlTokens', () => {
 
         const result = processHtmlTokens(tokens)
         expect(result).toHaveLength(1)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         expect((result[0] as any).tag).toBe('div')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         expect((result[0] as any).tokens?.[0].tag).toBe('span')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         expect((result[0] as any).tokens?.[0].tokens?.[0].text).toBe('nested')
     })
 
@@ -49,9 +49,9 @@ describe('processHtmlTokens', () => {
 
         const result = processHtmlTokens(tokens)
         expect(result).toHaveLength(1)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         expect((result[0] as any).attributes).toEqual({ class: 'wrapper' })
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         expect((result[0] as any).tokens?.[0].attributes).toEqual({ style: 'color: red' })
     })
 
@@ -77,9 +77,9 @@ describe('processHtmlTokens', () => {
 
         const result = processHtmlTokens(tokens)
         expect(result).toHaveLength(2)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         expect((result[0] as any).tag).toBe('div')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         expect((result[1] as any).tag).toBe('span')
     })
 
@@ -101,9 +101,9 @@ describe('processHtmlTokens', () => {
 
         const result = processHtmlTokens(tokens)
         expect(result).toHaveLength(1)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         expect((result[0] as any).tag).toBe('div')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         expect((result[0] as any).tokens?.[0].tokens?.[0].tag).toBe('em')
     })
 

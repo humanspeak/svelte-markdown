@@ -75,7 +75,7 @@ pnpm format           # Format code with prettier
 - **Prettier** with svelte, organize-imports, and tailwindcss plugins
 - **Husky** pre-commit hooks run `trunk fmt` before commits
 - Code style enforces camelCase, prefer-const, no-var
-- **Never use `eslint-disable` comments.** Use Trunk's inline ignore syntax instead: `// trunk-ignore(eslint/rule-name)`
+- **Never use `eslint-disable` comments** (e.g., `eslint-disable-line`, `eslint-disable-next-line`). Always use Trunk's inline ignore syntax instead: `// trunk-ignore(eslint/rule-name)`. This applies to all files including tests.
 
 ## Testing
 

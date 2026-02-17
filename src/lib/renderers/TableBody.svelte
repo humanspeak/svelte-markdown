@@ -1,3 +1,7 @@
+<!--
+@component
+Renders a markdown table body section as a `<tbody>` element.
+-->
 <script lang="ts">
     import type { Snippet } from 'svelte'
 

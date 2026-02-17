@@ -1,3 +1,7 @@
+<!--
+@component
+Renders a markdown table as a `<table>` element.
+-->
 <script lang="ts">
     import type { Snippet } from 'svelte'
 

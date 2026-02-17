@@ -12,8 +12,7 @@ import type { Token, Tokens } from 'marked'
  *
  * @const {RegExp}
  */
-const HTML_TAG_PATTERN = /<\/?([a-zA-Z][a-zA-Z0-9-]{0,})(?:\s+[^>]*)?>/
-const htmlTagRegex = new RegExp(HTML_TAG_PATTERN)
+const htmlTagRegex = /<\/?([a-zA-Z][a-zA-Z0-9-]{0,})(?:\s+[^>]*)?>/
 
 /**
  * Regex pattern for self-closing HTML tags.
@@ -38,12 +37,7 @@ const SELF_CLOSING_TAGS =
  * isHtmlOpenTag('plain text') // Returns null
  */
 export const isHtmlOpenTag = (raw: string): { tag: string; isOpening: boolean } | null => {
-    // First check if the string contains any HTML tags at all (faster than full regex match)
-    if (!htmlTagRegex.test(raw)) return null
-
-    // If we found a tag, extract its name and check if it's an opening tag
-    const match = raw.match(HTML_TAG_PATTERN)
-    // c8 ignore next
+    const match = htmlTagRegex.exec(raw)
     if (!match) return null
     return { tag: match[1], isOpening: !raw.startsWith('</') }
 }
@@ -253,19 +247,25 @@ export const parseHtmlBlock = (html: string): Token[] => {
  *
  * @internal
  */
+const TAG_REGEX = /<\/?[a-zA-Z][^>]*>/g
+
 export const containsMultipleTags = (html: string): boolean => {
-    // Count the number of opening and closing tags
-    const openingTags = html.match(/<[a-zA-Z][^>]*>/g) || []
-    const closingTags = html.match(/<\/[a-zA-Z][^>]*>/g) || []
-    // Return true if:
-    // 1. There are multiple opening tags OR
-    // 2. There are multiple closing tags OR
-    // 3. There is exactly one opening and one closing tag (matching pair)
-    return (
-        openingTags.length > 1 ||
-        closingTags.length > 1 ||
-        (openingTags.length === 1 && closingTags.length === 1)
-    )
+    let openCount = 0
+    let closeCount = 0
+    TAG_REGEX.lastIndex = 0
+    let match: RegExpExecArray | null
+
+    while ((match = TAG_REGEX.exec(html)) !== null) {
+        if (match[0][1] === '/') {
+            closeCount++
+        } else {
+            openCount++
+        }
+        if (openCount > 1 || closeCount > 1) return true
+        if (openCount >= 1 && closeCount >= 1) return true
+    }
+
+    return false
 }
 
 /**

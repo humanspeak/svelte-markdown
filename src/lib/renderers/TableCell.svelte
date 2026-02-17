@@ -1,3 +1,12 @@
+<!--
+@component
+Renders a table cell as either `<th>` (header) or `<td>` (data), with optional
+text alignment applied as an inline `text-align` style.
+
+@prop {boolean} header - When `true`, renders a `<th>`; otherwise renders a `<td>`.
+@prop {'left'|'center'|'right'|'justify'|'char'|null|undefined} align - Column alignment.
+@prop {Snippet} [children] - Cell content.
+-->
 <script lang="ts">
     import type { Snippet } from 'svelte'
 

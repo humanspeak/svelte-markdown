@@ -1,3 +1,7 @@
+<!--
+@component
+Renders markdown emphasis (`*text*` or `_text_`) as an `<em>` element.
+-->
 <script lang="ts">
     import type { Snippet } from 'svelte'
 

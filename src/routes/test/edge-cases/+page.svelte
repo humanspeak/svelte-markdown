@@ -8,7 +8,7 @@
         //     .fill(0)
         //     .map((_, i) => `${'*'.repeat(i + 1)} Level ${i}`)
         //     .join('\n'),
-        /* eslint-disable */
+        // trunk-ignore-begin(eslint)
         unicode: `# 你好，世界！
 ## مرحبا بالعالم
 ### Привет, мир!
@@ -22,7 +22,7 @@
 <img src="invalid" onerror="alert('xss')">
 `
     }
-    /* eslint-enable */
+    // trunk-ignore-end(eslint)
 
     let source = ''
     let selectedExample = 'empty'

@@ -70,7 +70,6 @@ describe('parseHtmlBlock', () => {
         const html = '<div style="color: red; margin: 10px" data-test="value">Content</div>'
         const tokens = parseHtmlBlock(html)
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         expect((tokens[0] as any).attributes).toEqual({
             style: 'color: red; margin: 10px',
             'data-test': 'value'

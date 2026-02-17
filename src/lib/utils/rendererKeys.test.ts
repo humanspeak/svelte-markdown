@@ -24,6 +24,70 @@ describe('rendererKeys internals', () => {
         expect(publicRendererKeys).toEqual(rendererKeysInternal)
         expect(publicHtmlKeys).toEqual(htmlRendererKeysInternal)
     })
+})
 
-    // index.js exports public names (without "Internal"). Public should equal internals
+describe('rendererKeysInternal boundary and validation', () => {
+    it('has no duplicate keys', () => {
+        const unique = new Set(rendererKeysInternal)
+        expect(unique.size).toBe(rendererKeysInternal.length)
+    })
+
+    it('all keys are non-empty strings', () => {
+        for (const key of rendererKeysInternal) {
+            expect(typeof key).toBe('string')
+            expect(key.length).toBeGreaterThan(0)
+        }
+    })
+
+    it('does not include the html key', () => {
+        expect(rendererKeysInternal).not.toContain('html')
+    })
+
+    it('has a reasonable minimum length (>= 20)', () => {
+        expect(rendererKeysInternal.length).toBeGreaterThanOrEqual(20)
+    })
+})
+
+describe('htmlRendererKeysInternal boundary and validation', () => {
+    it('has no duplicate keys', () => {
+        const unique = new Set(htmlRendererKeysInternal)
+        expect(unique.size).toBe(htmlRendererKeysInternal.length)
+    })
+
+    it('all keys are non-empty strings', () => {
+        for (const key of htmlRendererKeysInternal) {
+            expect(typeof key).toBe('string')
+            expect(key.length).toBeGreaterThan(0)
+        }
+    })
+
+    it('has a reasonable minimum length (>= 70)', () => {
+        expect(htmlRendererKeysInternal.length).toBeGreaterThanOrEqual(70)
+    })
+})
+
+describe('spot-check expected keys', () => {
+    it('rendererKeysInternal contains core markdown keys', () => {
+        const coreKeys = [
+            'heading',
+            'paragraph',
+            'text',
+            'link',
+            'code',
+            'list',
+            'table',
+            'hr',
+            'br'
+        ]
+        for (const key of coreKeys) {
+            expect(rendererKeysInternal).toContain(key)
+        }
+    })
+
+    it('htmlRendererKeysInternal contains core HTML tags', () => {
+        const coreTags = ['div', 'span', 'a', 'p', 'h1', 'input', 'table', 'ul']
+        for (const tag of coreTags) {
+            expect(htmlRendererKeysInternal).toContain(tag)
+        }
+    })
 })
