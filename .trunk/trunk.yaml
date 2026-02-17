@@ -46,32 +46,19 @@ lint:
               - javascript
     enabled:
         - sort-package-json@3.6.1
-        - actionlint@1.7.10
-        - checkov@3.2.500
-        - eslint@9.39.2:
-              packages:
-                  - '@typescript-eslint/eslint-plugin'
-                  - '@typescript-eslint/parser'
-                  - svelte-eslint-parser
-                  - '@eslint/js'
-                  - '@eslint/compat'
-                  - typescript-eslint
-                  - eslint-plugin-svelte
-                  - eslint-plugin-import
+        - actionlint@1.7.11
+        - checkov@3.2.502
+        - eslint@10.0.0
         - git-diff-check
         - markdownlint@0.47.0
-        - osv-scanner@2.3.2
+        - osv-scanner@2.3.3
         - oxipng@10.1.0
-        - prettier@3.8.1:
-              packages:
-                  - prettier-plugin-svelte
-                  - prettier-plugin-organize-imports
-                  - prettier-plugin-tailwindcss
+        - prettier@3.8.1
         - shellcheck@0.11.0
         - shfmt@3.6.0
         - svgo@4.0.0
         - taplo@0.10.0
-        - trufflehog@3.93.0
+        - trufflehog@3.93.3
         - yamllint@1.38.0
 actions:
     enabled:
