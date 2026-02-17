@@ -31,7 +31,7 @@ describe('unsupported renderers helpers', () => {
         const allowed = allowRenderersOnly([
             ['paragraph', Custom],
             ['not-a-key', Custom]
-        ] as any) // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
+        ] as any)
         expect(allowed.paragraph).toBe(Custom)
         // @ts-expect-error runtime index
         expect(allowed['not-a-key']).toBeUndefined()
@@ -50,7 +50,7 @@ describe('unsupported renderers helpers', () => {
             ['paragraph', Custom],
             // attempt to override excluded key should be ignored
             ['link', Custom]
-        ] as any) // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
+        ] as any)
         expect(map.paragraph).toBe(Custom)
         expect(map.link).toBe(Unsupported)
     })
@@ -65,14 +65,14 @@ describe('unsupported renderers negative tests', () => {
     })
 
     it('allowRenderersOnly with all invalid keys maps every key to Unsupported', () => {
-        const map = allowRenderersOnly(['fake-key-1', 'fake-key-2'] as any) // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
+        const map = allowRenderersOnly(['fake-key-1', 'fake-key-2'] as any)
         for (const key of rendererKeysInternal) {
             expect(map[key], `${key} should be Unsupported`).toBe(Unsupported)
         }
     })
 
     it('excludeRenderersOnly with invalid keys silently ignores them', () => {
-        const map = excludeRenderersOnly(['not-a-key'] as any) // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
+        const map = excludeRenderersOnly(['not-a-key'] as any)
         for (const key of rendererKeysInternal) {
             expect(map[key], `${key} should be default`).toBe(defaultRenderers[key])
         }

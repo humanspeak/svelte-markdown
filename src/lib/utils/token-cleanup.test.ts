@@ -61,9 +61,9 @@ describe('Token Cleanup Utilities', () => {
 
             const result = shrinkHtmlTokens(tokens)
             expect(result).toHaveLength(1)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             expect((result[0] as any).tokens).toHaveLength(1)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             expect((result[0] as any).tokens?.[0].tokens).toHaveLength(1)
         })
 
@@ -78,9 +78,9 @@ describe('Token Cleanup Utilities', () => {
 
             const result = shrinkHtmlTokens(tokens)
             expect(result).toHaveLength(1)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             expect((result[0] as any).tokens).toHaveLength(1)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             expect((result[0] as any).tokens?.[0].tokens).toHaveLength(1)
         })
 
@@ -97,7 +97,6 @@ describe('Token Cleanup Utilities', () => {
             const result = shrinkHtmlTokens(tokens)
             expect(result).toHaveLength(2)
             result.forEach((token) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 expect((token as any).tokens).toHaveLength(1)
             })
         })
@@ -120,9 +119,9 @@ describe('Token Cleanup Utilities', () => {
 
             const result = shrinkHtmlTokens(tokens)
             expect(result).toHaveLength(1)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             expect((result[0] as any).tag).toBe('div')
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             expect((result[0] as any).tokens).toHaveLength(2)
         })
 
@@ -178,11 +177,11 @@ describe('Token Cleanup Utilities', () => {
             const result = shrinkHtmlTokens(tokens)
 
             expect(result).toHaveLength(1)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             expect((result[0] as any).tokens).toHaveLength(2)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             expect((result[0] as any).tokens[1].attributes).toEqual({ style: 'color: hotpink' })
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             expect((result[0] as any).tokens[1].tag).toEqual('span')
         })
 
@@ -199,9 +198,9 @@ describe('Token Cleanup Utilities', () => {
 
             const result = shrinkHtmlTokens(tokens)
             expect(result).toHaveLength(1)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             expect((result[0] as any).tag).toEqual('details')
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             expect((result[0] as any).tokens).toHaveLength(2)
         })
 
@@ -270,9 +269,9 @@ describe('Token Cleanup Utilities', () => {
 
             const result = shrinkHtmlTokens(tokens)
             expect(result).toHaveLength(1)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             expect((result[0] as any).rows[0][0].tokens[0].type).toBe('html')
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             expect((result[0] as any).rows[0][0].tokens[0].tag).toBe('strong')
         })
 
