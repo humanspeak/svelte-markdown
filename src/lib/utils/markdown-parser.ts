@@ -1,4 +1,17 @@
+/**
+ * Markdown parsing utilities and default renderer configuration.
+ *
+ * Re-exports key symbols from `marked` and `github-slugger`, defines the
+ * {@link Renderers} type and {@link defaultRenderers} map, and provides
+ * the default parser options used by `SvelteMarkdown`.
+ *
+ * @module
+ */
+
+/** Slugger instance used to generate GitHub-style heading IDs. */
 export { default as Slugger } from 'github-slugger'
+
+/** Core `marked` exports used for lexing and type definitions. */
 export { Lexer, type MarkedOptions, type Token, type Tokens, type TokensList } from 'marked'
 import { type HtmlRenderers } from '$lib/renderers/html/index.js'
 import type { Component } from 'svelte'

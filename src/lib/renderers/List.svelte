@@ -1,3 +1,11 @@
+<!--
+@component
+Renders a markdown list as either an `<ol>` (ordered) or `<ul>` (unordered) element.
+
+@prop {boolean} [ordered=false] - When `true`, renders an ordered `<ol>` list.
+@prop {number} [start=1] - Starting number for ordered lists (the `start` attribute).
+@prop {Snippet} [children] - List item content.
+-->
 <script lang="ts">
     import type { Snippet } from 'svelte'
 

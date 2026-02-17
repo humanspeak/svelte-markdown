@@ -1,3 +1,7 @@
+<!--
+@component
+Renders a markdown text token by rendering its child content.
+-->
 <script lang="ts">
     import { type Snippet } from 'svelte'
 

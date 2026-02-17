@@ -1,3 +1,10 @@
+<!--
+@component
+Renders a single list item as an `<li>` element.
+
+@prop {Snippet} [children] - Content of the list item.
+@prop {number} [listItemIndex] - Zero-based index of this item within its parent list.
+-->
 <script lang="ts">
     import type { Snippet } from 'svelte'
 

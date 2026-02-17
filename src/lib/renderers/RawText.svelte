@@ -1,3 +1,7 @@
+<!--
+@component
+Renders raw text content without any wrapping HTML element.
+-->
 <script lang="ts">
     interface Props {
         text?: string

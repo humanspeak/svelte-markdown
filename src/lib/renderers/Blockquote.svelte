@@ -1,3 +1,7 @@
+<!--
+@component
+Renders a markdown blockquote (`>`) as a `<blockquote>` element.
+-->
 <script lang="ts">
     import type { Snippet } from 'svelte'
 

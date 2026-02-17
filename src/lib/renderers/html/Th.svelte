@@ -1,3 +1,7 @@
+<!--
+@component
+Renders an HTML `<th>` element. Accepts optional attributes and child content.
+-->
 <script lang="ts">
     import type { Snippet } from 'svelte'
 

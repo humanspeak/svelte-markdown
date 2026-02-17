@@ -1,3 +1,17 @@
+<!--
+@component
+Renders a markdown heading (`# … ######`) as an `<h1>` through `<h6>` element.
+
+When `options.headerIds` is `true`, an `id` attribute is generated from the
+heading text via `github-slugger`, optionally prefixed by `options.headerPrefix`.
+
+@prop {number} depth - Heading level (1–6).
+@prop {string} raw - Original markdown source of the heading line.
+@prop {string} text - Plain-text content used for slug generation.
+@prop {SvelteMarkdownOptions} options - Parser options (controls ID generation).
+@prop {(val: string) => string} slug - Slugger function for generating heading IDs.
+@prop {Snippet} [children] - Rendered inline content of the heading.
+-->
 <script lang="ts">
     import type { Snippet } from 'svelte'
     import type { SvelteMarkdownOptions } from '$lib/types.js'

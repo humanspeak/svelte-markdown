@@ -1,3 +1,7 @@
+<!--
+@component
+Renders an inline code span (`` `code` ``) as a `<code>` element.
+-->
 <script lang="ts">
     interface Props {
         raw: string

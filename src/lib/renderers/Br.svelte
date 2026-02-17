@@ -1,3 +1,7 @@
+<!--
+@component
+Renders a markdown line break as a `<br />` element.
+-->
 <script lang="ts">
     import type { Snippet } from 'svelte'
 

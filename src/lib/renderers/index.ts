@@ -1,3 +1,17 @@
+/**
+ * Barrel export for all built-in markdown renderer components.
+ *
+ * Each export corresponds to a key in the {@link Renderers} type and maps
+ * one-to-one with a markdown token type produced by the `marked` lexer.
+ *
+ * @module
+ */
+
+/**
+ * Placeholder component rendered for markdown token types that have been
+ * blocked via `excludeRenderersOnly`, `allowRenderersOnly`, or
+ * `buildUnsupportedRenderers`.
+ */
 export { default as Unsupported } from '$lib/renderers/_Unsupported.svelte'
 export { default as Blockquote } from '$lib/renderers/Blockquote.svelte'
 export { default as Br } from '$lib/renderers/Br.svelte'

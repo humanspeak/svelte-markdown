@@ -1,3 +1,16 @@
+/**
+ * Default HTML tag renderer registry.
+ *
+ * Maps every supported HTML tag name (e.g. `'div'`, `'span'`) to its
+ * corresponding Svelte component.  The map is used by `SvelteMarkdown`
+ * when rendering raw HTML blocks embedded in markdown.
+ *
+ * Use the `allowHtmlOnly` / `excludeHtmlOnly` helpers (or replace
+ * individual entries with `null`) to restrict which tags are rendered.
+ *
+ * @module
+ */
+
 import type { Component } from 'svelte'
 import A from './A.svelte'
 import Abbr from './Abbr.svelte'
@@ -84,10 +97,22 @@ import Ul from './Ul.svelte'
 import Var from './Var.svelte'
 import UnsupportedHTML from './_UnsupportedHTML.svelte'
 
+/**
+ * Record type mapping HTML tag names to their Svelte renderer components.
+ *
+ * A `null` value means the tag is explicitly blocked and will not be
+ * rendered.  This interface is used by the allow/deny filter utilities.
+ */
 export interface HtmlRenderers {
     [key: string]: Component<any, any, any> | null // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
+/**
+ * Default map of every supported HTML tag to its renderer component.
+ *
+ * Passed as the `html` key of `defaultRenderers`.  Override individual
+ * entries via the `renderers.html` prop on `SvelteMarkdown`.
+ */
 export const Html: HtmlRenderers = {
     a: A,
     abbr: Abbr,
@@ -175,4 +200,12 @@ export const Html: HtmlRenderers = {
 }
 
 export default Html
+
+/**
+ * Placeholder component rendered in place of HTML tags that have been
+ * blocked via `excludeHtmlOnly`, `allowHtmlOnly`, or `buildUnsupportedHTML`.
+ *
+ * Renders the tag name and content as plain, escaped text so the user can
+ * see that a tag was present but intentionally suppressed.
+ */
 export { UnsupportedHTML }
