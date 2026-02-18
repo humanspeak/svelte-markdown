@@ -20,6 +20,7 @@ A powerful, customizable markdown renderer for Svelte with TypeScript support. B
 - 🚀 Full markdown syntax support through Marked
 - 💪 Complete TypeScript support with strict typing
 - 🔄 Svelte 5 runes compatibility
+- ✂️ Inline snippet overrides — customize renderers without separate files
 - 🎨 Customizable component rendering system
 - ♿ WCAG 2.1 accessibility compliance
 - 🎯 GitHub-style slug generation for headers
@@ -258,6 +259,114 @@ Here's a complete example of a custom renderer with TypeScript support:
 ```
 
 If you would like to extend other renderers please take a look inside the [renderers folder](https://github.com/humanspeak/svelte-markdown/tree/main/src/lib/renderers) for the default implentation of them. If you would like feature additions please feel free to open an issue!
+
+## Snippet Overrides (Svelte 5)
+
+For simple tweaks — adding a class, changing an attribute, wrapping in a div — you can override renderers inline with Svelte 5 snippets instead of creating separate component files:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = '# Hello\n\nA paragraph with [a link](https://example.com).'
+</script>
+
+<SvelteMarkdown {source}>
+    {#snippet paragraph({ children })}
+        <p class="prose">{@render children?.()}</p>
+    {/snippet}
+
+    {#snippet heading({ depth, children })}
+        {#if depth === 1}
+            <h1 class="title">{@render children?.()}</h1>
+        {:else}
+            <h2>{@render children?.()}</h2>
+        {/if}
+    {/snippet}
+
+    {#snippet link({ href, title, children })}
+        <a {href} {title} target="_blank" rel="noopener noreferrer">
+            {@render children?.()}
+        </a>
+    {/snippet}
+
+    {#snippet code({ lang, text })}
+        <pre class="highlight {lang}"><code>{text}</code></pre>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+### How it works
+
+- **Container renderers** (paragraph, heading, blockquote, list, etc.) receive a `children` snippet for nested content
+- **Leaf renderers** (code, image, hr, br) receive only data props — no `children`
+- **Precedence**: snippet > component renderer > default. If both a snippet and a `renderers.paragraph` component are provided, the snippet wins
+
+### HTML tag snippets
+
+HTML tag snippets use an `html_` prefix to avoid collisions with markdown renderer names:
+
+```svelte
+<SvelteMarkdown {source}>
+    {#snippet html_div({ attributes, children })}
+        <div class="custom-wrapper" {...attributes}>{@render children?.()}</div>
+    {/snippet}
+
+    {#snippet html_a({ attributes, children })}
+        <a {...attributes} target="_blank" rel="noopener noreferrer">
+            {@render children?.()}
+        </a>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+All HTML snippets share a uniform props interface: `{ attributes?: Record<string, any>, children?: Snippet }`.
+
+### Custom HTML Tags
+
+You can render arbitrary (non-standard) HTML tags like `<click>`, `<tooltip>`, or any custom element by providing a renderer or snippet for the tag name. The parsing pipeline accepts any tag name — you just need to tell `SvelteMarkdown` how to render it.
+
+**Component renderer approach:**
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import ClickButton from './ClickButton.svelte'
+
+    const source = '<click>Click Me</click>'
+    const renderers = { html: { click: ClickButton } }
+</script>
+
+<SvelteMarkdown {source} {renderers} />
+```
+
+**Snippet override approach:**
+
+```svelte
+<SvelteMarkdown source={'<click data-action="submit">Click Me</click>'}>
+    {#snippet html_click({ attributes, children })}
+        <button {...attributes} class="custom-btn">{@render children?.()}</button>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+Both approaches work for any tag name. Snippet overrides take precedence over component renderers when both are provided.
+
+### TypeScript
+
+All snippet prop types are exported for use in external components:
+
+```typescript
+import type {
+    ParagraphSnippetProps,
+    HeadingSnippetProps,
+    LinkSnippetProps,
+    CodeSnippetProps,
+    HtmlSnippetProps,
+    SnippetOverrides,
+    HtmlSnippetOverrides
+} from '@humanspeak/svelte-markdown'
+```
 
 ## Advanced Features
 
