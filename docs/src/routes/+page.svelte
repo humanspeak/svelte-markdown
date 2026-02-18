@@ -93,10 +93,10 @@
             icon: 'fa-solid fa-paintbrush'
         },
         {
-            title: 'Token Caching',
+            title: 'Svelte 5 Snippets',
             description:
-                'Built-in LRU cache delivers 50-200x faster re-renders for previously parsed content.',
-            icon: 'fa-solid fa-bolt'
+                'Override renderers inline with Svelte 5 snippets — no separate component files needed.',
+            icon: 'fa-solid fa-scissors'
         },
         {
             title: 'TypeScript First',
