@@ -19,7 +19,127 @@
  */
 
 import type { Token, TokensList } from 'marked'
+import type { Snippet } from 'svelte'
 import type { MarkedOptions, Renderers } from './utils/markdown-parser.js'
+import type { HtmlKey } from './utils/rendererKeys.js'
+
+// --- Markdown snippet prop types ---
+
+export interface ParagraphSnippetProps {
+    children?: Snippet
+}
+export interface HeadingSnippetProps {
+    depth: number
+    raw: string
+    text: string
+    options: SvelteMarkdownOptions
+    slug: (val: string) => string // trunk-ignore(eslint/no-unused-vars)
+    children?: Snippet
+}
+export interface LinkSnippetProps {
+    href?: string
+    title?: string
+    children?: Snippet
+}
+export interface ImageSnippetProps {
+    href?: string
+    title?: string
+    text?: string
+}
+export interface CodeSnippetProps {
+    lang: string
+    text: string
+}
+export interface CodespanSnippetProps {
+    raw: string
+}
+export interface BlockquoteSnippetProps {
+    children?: Snippet
+}
+export interface ListSnippetProps {
+    ordered?: boolean
+    start?: number
+    children?: Snippet
+}
+export interface ListItemSnippetProps {
+    children?: Snippet
+    listItemIndex?: number
+}
+export interface TableSnippetProps {
+    children?: Snippet
+}
+export interface TableHeadSnippetProps {
+    children?: Snippet
+}
+export interface TableBodySnippetProps {
+    children?: Snippet
+}
+export interface TableRowSnippetProps {
+    children?: Snippet
+}
+export interface TableCellSnippetProps {
+    header: boolean
+    align: 'left' | 'center' | 'right' | 'justify' | 'char' | null | undefined
+    children?: Snippet
+}
+export interface EmSnippetProps {
+    children?: Snippet
+}
+export interface StrongSnippetProps {
+    children?: Snippet
+}
+export interface DelSnippetProps {
+    children?: Snippet
+}
+export type HrSnippetProps = Record<string, never>
+export type BrSnippetProps = Record<string, never>
+export interface TextSnippetProps {
+    children?: Snippet
+}
+export interface RawTextSnippetProps {
+    text: string
+}
+export interface EscapeSnippetProps {
+    text: string
+}
+
+export type SnippetOverrides = {
+    paragraph?: Snippet<[ParagraphSnippetProps]>
+    heading?: Snippet<[HeadingSnippetProps]>
+    link?: Snippet<[LinkSnippetProps]>
+    image?: Snippet<[ImageSnippetProps]>
+    code?: Snippet<[CodeSnippetProps]>
+    codespan?: Snippet<[CodespanSnippetProps]>
+    blockquote?: Snippet<[BlockquoteSnippetProps]>
+    list?: Snippet<[ListSnippetProps]>
+    listitem?: Snippet<[ListItemSnippetProps]>
+    orderedlistitem?: Snippet<[ListItemSnippetProps]>
+    unorderedlistitem?: Snippet<[ListItemSnippetProps]>
+    table?: Snippet<[TableSnippetProps]>
+    tablehead?: Snippet<[TableHeadSnippetProps]>
+    tablebody?: Snippet<[TableBodySnippetProps]>
+    tablerow?: Snippet<[TableRowSnippetProps]>
+    tablecell?: Snippet<[TableCellSnippetProps]>
+    em?: Snippet<[EmSnippetProps]>
+    strong?: Snippet<[StrongSnippetProps]>
+    del?: Snippet<[DelSnippetProps]>
+    hr?: Snippet<[HrSnippetProps]>
+    br?: Snippet<[BrSnippetProps]>
+    text?: Snippet<[TextSnippetProps]>
+    rawtext?: Snippet<[RawTextSnippetProps]>
+    escape?: Snippet<[EscapeSnippetProps]>
+}
+
+// --- HTML snippet types ---
+
+export interface HtmlSnippetProps {
+    attributes?: Record<string, any> // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
+    children?: Snippet
+}
+
+export type HtmlSnippetOverrides = {
+    [K in HtmlKey as `html_${K}`]?: Snippet<[HtmlSnippetProps]>
+}
 
 export type SvelteMarkdownProps<T extends Renderers = Renderers> = {
     /**
@@ -62,7 +182,8 @@ export type SvelteMarkdownProps<T extends Renderers = Renderers> = {
      * @param tokens - The parsed token array or `TokensList`.
      */
     parsed?: (tokens: Token[] | TokensList) => void // trunk-ignore(eslint/no-unused-vars)
-}
+} & Partial<SnippetOverrides> &
+    Partial<HtmlSnippetOverrides>
 
 export interface SvelteMarkdownOptions extends MarkedOptions {
     /**

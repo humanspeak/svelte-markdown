@@ -18,7 +18,35 @@
 
 import { type HtmlRenderers } from '$lib/renderers/html/index.js'
 import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
-import type { SvelteMarkdownOptions, SvelteMarkdownProps } from '$lib/types.js'
+import type {
+    BlockquoteSnippetProps,
+    BrSnippetProps,
+    CodeSnippetProps,
+    CodespanSnippetProps,
+    DelSnippetProps,
+    EmSnippetProps,
+    EscapeSnippetProps,
+    HeadingSnippetProps,
+    HrSnippetProps,
+    HtmlSnippetOverrides,
+    HtmlSnippetProps,
+    ImageSnippetProps,
+    LinkSnippetProps,
+    ListItemSnippetProps,
+    ListSnippetProps,
+    ParagraphSnippetProps,
+    RawTextSnippetProps,
+    SnippetOverrides,
+    StrongSnippetProps,
+    SvelteMarkdownOptions,
+    SvelteMarkdownProps,
+    TableBodySnippetProps,
+    TableCellSnippetProps,
+    TableHeadSnippetProps,
+    TableRowSnippetProps,
+    TableSnippetProps,
+    TextSnippetProps
+} from '$lib/types.js'
 import {
     defaultRenderers,
     type RendererComponent,
@@ -88,11 +116,36 @@ export { TokenCache, tokenCache } from '$lib/utils/token-cache.js'
 
 /** Re-exported types for consumer convenience. */
 export type {
+    BlockquoteSnippetProps,
+    BrSnippetProps,
+    CodeSnippetProps,
+    CodespanSnippetProps,
+    DelSnippetProps,
+    EmSnippetProps,
+    EscapeSnippetProps,
+    HeadingSnippetProps,
+    HrSnippetProps,
     HtmlRenderers,
+    HtmlSnippetOverrides,
+    HtmlSnippetProps,
+    ImageSnippetProps,
+    LinkSnippetProps,
+    ListItemSnippetProps,
+    ListSnippetProps,
+    ParagraphSnippetProps,
+    RawTextSnippetProps,
     RendererComponent,
     Renderers,
+    SnippetOverrides,
+    StrongSnippetProps,
     SvelteMarkdownOptions,
     SvelteMarkdownProps,
+    TableBodySnippetProps,
+    TableCellSnippetProps,
+    TableHeadSnippetProps,
+    TableRowSnippetProps,
+    TableSnippetProps,
+    TextSnippetProps,
     Token,
     TokensList
 }
