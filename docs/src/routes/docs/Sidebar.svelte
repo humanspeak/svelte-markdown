@@ -5,6 +5,8 @@
 <script lang="ts">
     import { motion } from '@humanspeak/svelte-motion'
     import { onMount } from 'svelte'
+    import { slide } from 'svelte/transition'
+    import { PersistedState } from 'runed'
 
     const { currentPath } = $props()
 
@@ -17,6 +19,7 @@
 
     type NavSection = {
         title: string
+        icon: string
         items: NavItem[]
     }
 
@@ -27,10 +30,12 @@
     }
 
     let otherProjects: NavItem[] = $state([])
+    const openSections = new PersistedState<Record<string, boolean>>('sidebar-sections', {})
 
-    const navigation = $derived<NavSection[]>([
+    const navigation: NavSection[] = $derived([
         {
             title: 'Get Started',
+            icon: 'fa-solid fa-rocket',
             items: [
                 {
                     title: 'Getting Started',
@@ -41,6 +46,7 @@
         },
         {
             title: 'API Reference',
+            icon: 'fa-solid fa-book',
             items: [
                 {
                     title: 'SvelteMarkdown',
@@ -56,6 +62,7 @@
         },
         {
             title: 'Renderers',
+            icon: 'fa-solid fa-paintbrush',
             items: [
                 {
                     title: 'Markdown Renderers',
@@ -71,11 +78,17 @@
                     title: 'Custom Renderers',
                     href: '/docs/renderers/custom-renderers',
                     icon: 'fa-solid fa-paintbrush'
+                },
+                {
+                    title: 'Snippet Overrides',
+                    href: '/docs/renderers/snippet-overrides',
+                    icon: 'fa-solid fa-scissors'
                 }
             ]
         },
         {
             title: 'Advanced',
+            icon: 'fa-solid fa-gear',
             items: [
                 {
                     title: 'Token Caching',
@@ -96,6 +109,7 @@
         },
         {
             title: 'Examples',
+            icon: 'fa-solid fa-code',
             items: [
                 {
                     title: 'Overview',
@@ -111,6 +125,11 @@
                     title: 'Custom Renderers',
                     href: '/docs/examples/custom-renderers',
                     icon: 'fa-solid fa-paintbrush'
+                },
+                {
+                    title: 'Snippet Overrides',
+                    href: '/docs/examples/snippet-overrides',
+                    icon: 'fa-solid fa-scissors'
                 },
                 {
                     title: 'HTML Filtering',
@@ -131,6 +150,7 @@
         },
         {
             title: 'Interactive Demos',
+            icon: 'fa-solid fa-play',
             items: [
                 {
                     title: 'All Examples',
@@ -148,6 +168,11 @@
                     icon: 'fa-solid fa-paintbrush'
                 },
                 {
+                    title: 'Snippet Overrides',
+                    href: '/examples/snippet-overrides',
+                    icon: 'fa-solid fa-scissors'
+                },
+                {
                     title: 'HTML Filtering',
                     href: '/examples/html-filtering',
                     icon: 'fa-solid fa-filter'
@@ -161,6 +186,7 @@
         },
         {
             title: 'Love and Respect',
+            icon: 'fa-solid fa-heart',
             items: [
                 {
                     title: 'Beye.ai',
@@ -174,11 +200,24 @@
             ? [
                   {
                       title: 'Other Projects',
+                      icon: 'fa-solid fa-cube',
                       items: otherProjects
                   }
               ]
             : [])
     ])
+
+    const isSectionOpen = (section: NavSection): boolean => {
+        if (section.title in openSections.current) return openSections.current[section.title]
+        return true
+    }
+
+    const toggleSection = (section: NavSection) => {
+        openSections.current = {
+            ...openSections.current,
+            [section.title]: !isSectionOpen(section)
+        }
+    }
 
     onMount(async () => {
         try {
@@ -200,25 +239,17 @@
         }
     })
 
-    function formatTitle(slug: string): string {
-        return `/${slug.toLowerCase()}`
-    }
+    const formatTitle = (slug: string): string => slug.toLowerCase()
 
-    /**
-     * @param {string} href
-     * @returns {boolean}
-     */
-    function isActive(href: string) {
+    const isActive = (href: string) => {
         const basePath = currentPath.split(/[?#]/)[0]
         if (href === '/docs' || href === '/docs/examples') {
-            // Only mark index pages active for the exact page or when query/hash is present
             return (
                 basePath === href ||
                 currentPath.startsWith(`${href}?`) ||
                 currentPath.startsWith(`${href}#`)
             )
         }
-        // Exact match, same page with query/hash, or a true nested path ("href/...")
         return (
             basePath === href ||
             currentPath.startsWith(`${href}?`) ||
@@ -228,55 +259,85 @@
     }
 </script>
 
-<nav class="p-6">
-    <div class="space-y-8">
+<nav class="p-2">
+    <div class="space-y-2">
         {#each navigation as section (section.title)}
             <div>
-                <h3 class="text-text-primary mb-3 text-sm font-semibold tracking-wide uppercase">
-                    {section.title}
-                </h3>
-                <ul class="space-y-1">
-                    {#each section.items as item (item.href)}
-                        <motion.li
-                            whileHover={{ x: 2 }}
-                            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                <button
+                    onclick={() => toggleSection(section)}
+                    class="text-text-primary hover:bg-muted flex w-full items-center justify-between rounded-md px-3 py-1.5 text-sm font-semibold tracking-wide uppercase transition-colors duration-150"
+                >
+                    <span class="flex items-center gap-2 text-left">
+                        <motion.span
+                            class="inline-flex shrink-0"
+                            whileHover={{ scale: 1.25 }}
+                            transition={{ type: 'spring', stiffness: 500, damping: 15 }}
                         >
-                            <a
-                                href={item.href}
-                                target={item?.external ? '_blank' : undefined}
-                                rel={item?.external ? 'noopener' : undefined}
-                                class="group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150
-						     	{isActive(item.href)
-                                    ? 'bg-sidebar-active text-sidebar-active-foreground'
-                                    : 'text-sidebar-foreground hover:bg-muted hover:text-text-primary'}"
+                            <i class="{section.icon} fa-fw text-muted-foreground text-sm"></i>
+                        </motion.span>
+                        {section.title}
+                    </span>
+                    <i
+                        class="fa-solid fa-chevron-down text-muted-foreground shrink-0 text-xs transition-transform duration-200 {isSectionOpen(
+                            section
+                        )
+                            ? 'rotate-180'
+                            : ''}"
+                    ></i>
+                </button>
+                {#if isSectionOpen(section)}
+                    <ul
+                        class="border-border mt-1 ml-3 space-y-1 border-l pl-1"
+                        transition:slide={{ duration: 200 }}
+                    >
+                        {#each section.items as item (item.href)}
+                            <motion.li
+                                whileHover={{ x: 2 }}
+                                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                             >
-                                {#if item.icon}
-                                    <motion.span
-                                        class="mr-3 inline-flex"
-                                        whileHover={{ scale: 1.25 }}
-                                        transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-                                    >
+                                <a
+                                    href={item.href}
+                                    target={item?.external ? '_blank' : undefined}
+                                    rel={item?.external ? 'noopener' : undefined}
+                                    class="group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150
+                                     {isActive(item.href)
+                                        ? 'bg-accent text-accent-foreground'
+                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
+                                >
+                                    {#if item.icon}
+                                        <motion.span
+                                            class="mr-3 inline-flex"
+                                            whileHover={{ scale: 1.25 }}
+                                            transition={{
+                                                type: 'spring',
+                                                stiffness: 500,
+                                                damping: 15
+                                            }}
+                                        >
+                                            <i
+                                                class="{item.icon} fa-fw text-sm {isActive(
+                                                    item.href
+                                                )
+                                                    ? 'text-accent-foreground'
+                                                    : 'text-muted-foreground group-hover:text-foreground'}"
+                                            ></i>
+                                        </motion.span>
+                                    {:else}
                                         <i
-                                            class="{item.icon} fa-fw text-sm {isActive(item.href)
-                                                ? 'text-sidebar-active-foreground'
-                                                : 'text-text-muted group-hover:text-text-secondary'}"
+                                            class="fa-solid fa-arrow-right fa-fw text-muted-foreground mr-3 text-xs"
                                         ></i>
-                                    </motion.span>
-                                {:else}
-                                    <i
-                                        class="fa-solid fa-arrow-right fa-fw text-text-muted mr-3 text-xs"
-                                    ></i>
-                                {/if}
-                                {item.title}
-                                {#if item?.external}
-                                    <i
-                                        class="fa-solid fa-arrow-up-right-from-square ml-2 text-xs opacity-50"
-                                    ></i>
-                                {/if}
-                            </a>
-                        </motion.li>
-                    {/each}
-                </ul>
+                                    {/if}
+                                    {item.title}
+                                    {#if item?.external}
+                                        <i
+                                            class="fa-solid fa-arrow-up-right-from-square ml-2 text-xs opacity-50"
+                                        ></i>
+                                    {/if}
+                                </a>
+                            </motion.li>
+                        {/each}
+                    </ul>
+                {/if}
             </div>
         {/each}
     </div>

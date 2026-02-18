@@ -18,7 +18,8 @@
     },
     "dependencies": {
         "@humanspeak/svelte-markdown": "workspace:*",
-        "github-slugger": "^2.0.0"
+        "github-slugger": "^2.0.0",
+        "runed": "^0.37.1"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20260217.0",
