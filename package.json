@@ -86,10 +86,10 @@
         }
     },
     "dependencies": {
-        "@humanspeak/memory-cache": "^1.0.4",
+        "@humanspeak/memory-cache": "^1.0.5",
         "github-slugger": "^2.0.0",
         "htmlparser2": "^10.1.0",
-        "marked": "^17.0.2"
+        "marked": "^17.0.3"
     },
     "devDependencies": {
         "@eslint/compat": "^2.0.2",
@@ -121,7 +121,7 @@
         "prettier-plugin-svelte": "^3.4.1",
         "prettier-plugin-tailwindcss": "^0.7.2",
         "publint": "^0.3.17",
-        "svelte": "^5.51.2",
+        "svelte": "^5.51.3",
         "svelte-check": "^4.4.0",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.56.0",

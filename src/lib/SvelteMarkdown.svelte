@@ -59,6 +59,7 @@
         type TokensList
     } from '$lib/utils/markdown-parser.js'
     import { parseAndCacheTokens } from '$lib/utils/parse-and-cache.js'
+    import { rendererKeysInternal, htmlRendererKeysInternal } from '$lib/utils/rendererKeys.js'
 
     const {
         source = [],
@@ -104,12 +105,40 @@
               }
             : defaultRenderers.html
     })
+
+    // Collect markdown snippet overrides (keys matching renderer names)
+    const snippetOverrides = $derived(
+        Object.fromEntries(
+            rendererKeysInternal
+                .filter((key) => key in rest && rest[key] != null)
+                .map((key) => [key, rest[key]])
+        )
+    )
+
+    // Collect HTML snippet overrides (keys matching html_<tag>)
+    const htmlSnippetOverrides = $derived(
+        Object.fromEntries(
+            htmlRendererKeysInternal
+                .filter((key) => `html_${key}` in rest && rest[`html_${key}`] != null)
+                .map((key) => [key, rest[`html_${key}`]])
+        )
+    )
+
+    // Passthrough: everything that isn't a known snippet override
+    const snippetKeySet = $derived(
+        new Set([...rendererKeysInternal, ...htmlRendererKeysInternal.map((k) => `html_${k}`)])
+    )
+    const passThroughProps = $derived(
+        Object.fromEntries(Object.entries(rest).filter(([key]) => !snippetKeySet.has(key)))
+    )
 </script>
 
 <Parser
     {tokens}
-    {...rest}
+    {...passThroughProps}
     options={combinedOptions}
     slug={(val: string): string => (slugger ? slugger.slug(val) : '')}
     renderers={combinedRenderers}
+    {snippetOverrides}
+    {htmlSnippetOverrides}
 />

@@ -1,4 +1,0 @@
-
-# Eslint went thru a major version bump, so we need to skip it
-eslint
-@eslint/js

@@ -18,12 +18,13 @@
     },
     "dependencies": {
         "@humanspeak/svelte-markdown": "workspace:*",
-        "github-slugger": "^2.0.0"
+        "github-slugger": "^2.0.0",
+        "runed": "^0.37.1"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20260217.0",
         "@eslint/compat": "^2.0.2",
-        "@eslint/js": "^9.39.2",
+        "@eslint/js": "^10.0.1",
         "@humanspeak/svelte-motion": "^0.1.21",
         "@sveltejs/adapter-cloudflare": "^7.2.7",
         "@sveltejs/kit": "^2.52.0",
@@ -35,11 +36,11 @@
         "@typescript-eslint/parser": "^8.56.0",
         "autoprefixer": "^10.4.24",
         "chokidar-cli": "^3.0.0",
-        "eslint": "^9.39.2",
+        "eslint": "^10.0.0",
         "eslint-config-prettier": "10.1.8",
         "eslint-plugin-svelte": "3.15.0",
         "globals": "^17.3.0",
-        "lucide-svelte": "^0.564.0",
+        "lucide-svelte": "^0.574.0",
         "mdsvex": "^0.12.6",
         "mode-watcher": "^1.1.0",
         "prettier": "^3.8.1",
@@ -48,14 +49,14 @@
         "prettier-plugin-svelte": "^3.4.1",
         "prettier-plugin-tailwindcss": "^0.7.2",
         "shiki": "^3.22.0",
-        "svelte": "^5.51.2",
+        "svelte": "^5.51.3",
         "svelte-check": "^4.4.0",
         "tailwind-merge": "^3.4.1",
         "tailwindcss": "^4.1.18",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.56.0",
         "vite": "^7.3.1",
-        "wrangler": "^4.65.0"
+        "wrangler": "^4.66.0"
     },
     "volta": {
         "node": "24.13.0"
