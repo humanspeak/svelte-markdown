@@ -1,0 +1,9 @@
+<script lang="ts">
+    import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
+    import ClickRenderer from './ClickRenderer.svelte'
+
+    const { source }: { source: string } = $props()
+    const renderers = { html: { click: ClickRenderer } }
+</script>
+
+<SvelteMarkdown {source} {renderers} />

@@ -59,7 +59,7 @@
         type TokensList
     } from '$lib/utils/markdown-parser.js'
     import { parseAndCacheTokens } from '$lib/utils/parse-and-cache.js'
-    import { rendererKeysInternal, htmlRendererKeysInternal } from '$lib/utils/rendererKeys.js'
+    import { rendererKeysInternal } from '$lib/utils/rendererKeys.js'
 
     const {
         source = [],
@@ -118,15 +118,18 @@
     // Collect HTML snippet overrides (keys matching html_<tag>)
     const htmlSnippetOverrides = $derived(
         Object.fromEntries(
-            htmlRendererKeysInternal
-                .filter((key) => `html_${key}` in rest && rest[`html_${key}`] != null)
-                .map((key) => [key, rest[`html_${key}`]])
+            Object.entries(rest)
+                .filter(([key, val]) => key.startsWith('html_') && val != null)
+                .map(([key, val]) => [key.slice(5), val])
         )
     )
 
     // Passthrough: everything that isn't a known snippet override
     const snippetKeySet = $derived(
-        new Set([...rendererKeysInternal, ...htmlRendererKeysInternal.map((k) => `html_${k}`)])
+        new Set([
+            ...rendererKeysInternal,
+            ...Object.keys(rest).filter((k) => k.startsWith('html_'))
+        ])
     )
     const passThroughProps = $derived(
         Object.fromEntries(Object.entries(rest).filter(([key]) => !snippetKeySet.has(key)))
