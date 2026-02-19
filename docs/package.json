@@ -19,6 +19,8 @@
     "dependencies": {
         "@humanspeak/svelte-markdown": "workspace:*",
         "github-slugger": "^2.0.0",
+        "katex": "^0.16.28",
+        "marked-katex-extension": "^5.1.7",
         "runed": "^0.37.1"
     },
     "devDependencies": {
@@ -32,6 +34,7 @@
         "@tailwindcss/postcss": "^4.2.0",
         "@tailwindcss/typography": "^0.5.19",
         "@tailwindcss/vite": "^4.2.0",
+        "@types/katex": "^0.16.8",
         "@typescript-eslint/eslint-plugin": "^8.56.0",
         "@typescript-eslint/parser": "^8.56.0",
         "autoprefixer": "^10.4.24",

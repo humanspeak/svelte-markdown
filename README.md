@@ -25,7 +25,7 @@ A powerful, customizable markdown renderer for Svelte with TypeScript support. B
 - ♿ WCAG 2.1 accessibility compliance
 - 🎯 GitHub-style slug generation for headers
 - 🧪 Comprehensive test coverage (vitest and playwright)
-- 🎨 Custom Marked extensions support (e.g., GitHub-style alerts)
+- 🧩 First-class marked extensions support via `extensions` prop (e.g., KaTeX math, alerts)
 - ⚡ Intelligent token caching (50-200x faster re-renders)
 - 🖼️ Smart image lazy loading with fade-in animation
 
@@ -72,7 +72,8 @@ import type {
     Renderers,
     Token,
     TokensList,
-    SvelteMarkdownOptions
+    SvelteMarkdownOptions,
+    MarkedExtension
 } from '@humanspeak/svelte-markdown'
 ```
 
@@ -352,6 +353,111 @@ You can render arbitrary (non-standard) HTML tags like `<click>`, `<tooltip>`, o
 
 Both approaches work for any tag name. Snippet overrides take precedence over component renderers when both are provided.
 
+## Marked Extensions
+
+Use third-party [marked extensions](https://marked.js.org/using_advanced#extensions) via the `extensions` prop. The component handles registering tokenizers internally — you just provide renderers for the custom token types.
+
+### KaTeX Math Rendering
+
+```bash
+npm install marked-katex-extension katex
+```
+
+**Component renderer approach:**
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
+    import markedKatex from 'marked-katex-extension'
+    import KatexRenderer from './KatexRenderer.svelte'
+
+    interface KatexRenderers extends Renderers {
+        inlineKatex: RendererComponent
+        blockKatex: RendererComponent
+    }
+
+    const renderers: Partial<KatexRenderers> = {
+        inlineKatex: KatexRenderer,
+        blockKatex: KatexRenderer
+    }
+</script>
+
+<svelte:head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css" crossorigin="anonymous" />
+</svelte:head>
+
+<SvelteMarkdown
+    source="Euler's identity: $e^{{i\pi}} + 1 = 0$"
+    extensions={[markedKatex({ throwOnError: false })]}
+    {renderers}
+/>
+```
+
+Where `KatexRenderer.svelte` is:
+
+```svelte
+<script lang="ts">
+    import katex from 'katex'
+
+    interface Props {
+        text: string
+        displayMode?: boolean
+    }
+    const { text, displayMode = false }: Props = $props()
+
+    const html = $derived(katex.renderToString(text, { throwOnError: false, displayMode }))
+</script>
+
+{@html html}
+```
+
+**Snippet override approach** (no separate component file needed):
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import katex from 'katex'
+    import markedKatex from 'marked-katex-extension'
+</script>
+
+<svelte:head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css" crossorigin="anonymous" />
+</svelte:head>
+
+<SvelteMarkdown
+    source="Euler's identity: $e^{{i\pi}} + 1 = 0$"
+    extensions={[markedKatex({ throwOnError: false })]}
+>
+    {#snippet inlineKatex(props)}
+        {@html katex.renderToString(props.text, { displayMode: false })}
+    {/snippet}
+    {#snippet blockKatex(props)}
+        {@html katex.renderToString(props.text, { displayMode: true })}
+    {/snippet}
+</SvelteMarkdown>
+```
+
+### How It Works
+
+Marked extensions define custom token types with a `name` property (e.g., `inlineKatex`, `blockKatex`, `alert`). When you pass extensions via the `extensions` prop, SvelteMarkdown automatically extracts these token type names and makes them available as both **component renderer keys** and **snippet override names**.
+
+To find the token type names for any extension, check its source or documentation for the `name` field in its `extensions` array:
+
+```js
+// Example: marked-katex-extension registers tokens named "inlineKatex" and "blockKatex"
+// → use renderers={{ inlineKatex: ..., blockKatex: ... }}
+// → or {#snippet inlineKatex(props)} and {#snippet blockKatex(props)}
+
+// Example: a custom alert extension registers a token named "alert"
+// → use renderers={{ alert: AlertComponent }}
+// → or {#snippet alert(props)}
+```
+
+Each snippet/component receives the token's properties as props (e.g., `text`, `displayMode` for KaTeX; `text`, `level` for alerts).
+
+See the [full documentation](https://markdown.svelte.page/docs/advanced/marked-extensions) and [interactive demo](https://markdown.svelte.page/examples/marked-extensions).
+
 ### TypeScript
 
 All snippet prop types are exported for use in external components:
@@ -526,12 +632,13 @@ The component emits a `parsed` event when tokens are calculated:
 
 ## Props
 
-| Prop      | Type                    | Description                           |
-| --------- | ----------------------- | ------------------------------------- |
-| source    | `string \| Token[]`     | Markdown content or pre-parsed tokens |
-| renderers | `Partial<Renderers>`    | Custom component overrides            |
-| options   | `SvelteMarkdownOptions` | Marked parser configuration           |
-| isInline  | `boolean`               | Toggle inline parsing mode            |
+| Prop       | Type                    | Description                                      |
+| ---------- | ----------------------- | ------------------------------------------------ |
+| source     | `string \| Token[]`     | Markdown content or pre-parsed tokens            |
+| renderers  | `Partial<Renderers>`    | Custom component overrides                       |
+| options    | `SvelteMarkdownOptions` | Marked parser configuration                      |
+| isInline   | `boolean`               | Toggle inline parsing mode                       |
+| extensions | `MarkedExtension[]`     | Third-party marked extensions (e.g., KaTeX math) |
 
 ## Security
 

@@ -60,6 +60,7 @@
     } from '$lib/utils/markdown-parser.js'
     import { parseAndCacheTokens } from '$lib/utils/parse-and-cache.js'
     import { rendererKeysInternal } from '$lib/utils/rendererKeys.js'
+    import { Marked } from 'marked'
 
     const {
         source = [],
@@ -67,12 +68,23 @@
         options = {},
         isInline = false,
         parsed = () => {},
+        extensions = [],
         ...rest
     }: SvelteMarkdownProps & {
         [key: string]: unknown
     } = $props()
 
-    const combinedOptions = $derived({ ...defaultOptions, ...options })
+    // Extract custom token type names from the extensions array
+    const extensionTokenNames = $derived(
+        extensions.flatMap((ext) => ext.extensions?.map((e) => e.name) ?? [])
+    )
+
+    // Create a scoped Marked instance and extract its resolved defaults
+    const extensionDefaults = $derived(
+        extensions.length > 0 ? new Marked(...extensions).defaults : {}
+    )
+
+    const combinedOptions = $derived({ ...defaultOptions, ...extensionDefaults, ...options })
     const slugger = new Slugger()
 
     const tokens = $derived.by(() => {
@@ -106,10 +118,13 @@
             : defaultRenderers.html
     })
 
-    // Collect markdown snippet overrides (keys matching renderer names)
+    // All renderer keys: built-in + extension token names
+    const allRendererKeys = $derived([...rendererKeysInternal, ...extensionTokenNames])
+
+    // Collect markdown snippet overrides (keys matching renderer names or extension token names)
     const snippetOverrides = $derived(
         Object.fromEntries(
-            rendererKeysInternal
+            allRendererKeys
                 .filter((key) => key in rest && rest[key] != null)
                 .map((key) => [key, rest[key]])
         )
@@ -126,10 +141,7 @@
 
     // Passthrough: everything that isn't a known snippet override
     const snippetKeySet = $derived(
-        new Set([
-            ...rendererKeysInternal,
-            ...Object.keys(rest).filter((k) => k.startsWith('html_'))
-        ])
+        new Set([...allRendererKeys, ...Object.keys(rest).filter((k) => k.startsWith('html_'))])
     )
     const passThroughProps = $derived(
         Object.fromEntries(Object.entries(rest).filter(([key]) => !snippetKeySet.has(key)))

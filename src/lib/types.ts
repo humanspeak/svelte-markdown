@@ -18,7 +18,7 @@
  * @packageDocumentation
  */
 
-import type { Token, TokensList } from 'marked'
+import type { MarkedExtension, Token, TokensList } from 'marked'
 import type { Snippet } from 'svelte'
 import type { MarkedOptions, Renderers } from './utils/markdown-parser.js'
 import type { HtmlKey } from './utils/rendererKeys.js'
@@ -164,6 +164,30 @@ export type SvelteMarkdownProps<T extends Renderers = Renderers> = {
      * generation settings.  Merged with {@link defaultOptions}.
      */
     options?: Partial<SvelteMarkdownOptions>
+
+    /**
+     * Array of marked extensions to apply when parsing.
+     *
+     * Internally creates a scoped `Marked` instance, extracts its resolved
+     * defaults, and merges them into the parser options so the lexer
+     * recognises any custom token types the extensions define.
+     *
+     * Extension token names are also used to collect snippet overrides,
+     * enabling both component-renderer and snippet-based rendering of
+     * custom tokens.
+     *
+     * @defaultValue `[]`
+     *
+     * @example
+     * ```svelte
+     * <SvelteMarkdown
+     *   source={markdown}
+     *   extensions={[markedKatex({ throwOnError: false })]}
+     *   renderers={{ inlineKatex: KatexRenderer, blockKatex: KatexRenderer }}
+     * />
+     * ```
+     */
+    extensions?: MarkedExtension[]
 
     /**
      * When `true`, the source is parsed with `Lexer.lexInline()` instead of

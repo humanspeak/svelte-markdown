@@ -114,6 +114,9 @@ export {
 export { MemoryCache } from '$lib/utils/cache.js'
 export { TokenCache, tokenCache } from '$lib/utils/token-cache.js'
 
+/** Re-exported `MarkedExtension` type for the `extensions` prop. */
+export type { MarkedExtension } from 'marked'
+
 /** Re-exported types for consumer convenience. */
 export type {
     BlockquoteSnippetProps,

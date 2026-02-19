@@ -64,6 +64,13 @@
                         'Access parsed token data via the parsed callback prop for debugging or processing.',
                     href: '/docs/examples/parsed-callback',
                     icon: 'fa-solid fa-diagram-project'
+                },
+                {
+                    title: 'Marked Extensions',
+                    description:
+                        'Integrate third-party marked extensions like KaTeX math rendering with custom Svelte renderers.',
+                    href: '/docs/advanced/marked-extensions',
+                    icon: 'fa-solid fa-puzzle-piece'
                 }
             ]
         }

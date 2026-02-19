@@ -104,6 +104,11 @@
                     title: 'Security',
                     href: '/docs/advanced/security',
                     icon: 'fa-solid fa-lock'
+                },
+                {
+                    title: 'Marked Extensions',
+                    href: '/docs/advanced/marked-extensions',
+                    icon: 'fa-solid fa-puzzle-piece'
                 }
             ]
         },
@@ -181,6 +186,11 @@
                     title: 'Caching Performance',
                     href: '/examples/caching-performance',
                     icon: 'fa-solid fa-gauge-high'
+                },
+                {
+                    title: 'Marked Extensions',
+                    href: '/examples/marked-extensions',
+                    icon: 'fa-solid fa-puzzle-piece'
                 }
             ]
         },

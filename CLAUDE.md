@@ -153,6 +153,7 @@ Per PRD.md, the following are explicitly out of scope:
 - Pre-commit hooks will format code automatically
 - CI runs on Node 20, 22, and 24
 - Package published automatically on release via GitHub Actions
+- **README.md must be updated** when adding new features, props, or public API changes
 
 ## Security Considerations
 

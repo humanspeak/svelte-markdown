@@ -95,7 +95,7 @@
             />
         {/each}
     {/if}
-{:else if type in renderers}
+{:else if type in renderers || type in snippetOverrides}
     {#if type === 'table'}
         {#if renderers.table && renderers.tablerow && renderers.tablecell}
             {@const tableSnippet = snippetOverrides[type]}
