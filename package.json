@@ -1,6 +1,6 @@
 {
     "name": "@humanspeak/svelte-markdown",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Fast, customizable markdown renderer for Svelte with built-in caching, TypeScript support, and Svelte 5 runes",
     "keywords": [
         "svelte",
