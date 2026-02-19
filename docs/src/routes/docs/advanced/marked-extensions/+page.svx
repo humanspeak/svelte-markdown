@@ -1,0 +1,226 @@
+---
+title: Marked Extensions
+description: How to use third-party marked extensions like KaTeX math rendering with @humanspeak/svelte-markdown
+---
+
+# Marked Extensions
+
+`@humanspeak/svelte-markdown` supports any [marked extension](https://marked.js.org/using_advanced#extensions) that adds custom token types. Pass extensions via the `extensions` prop and provide renderers for the custom token types — either as **component renderers** or **snippet overrides**.
+
+## How It Works
+
+Marked extensions define custom token types, each with a `name` property (e.g., `inlineKatex`, `blockKatex`, `alert`). When you pass extensions via the `extensions` prop, SvelteMarkdown:
+
+1. **Registers** the extension's tokenizers internally so the lexer produces the custom tokens
+2. **Extracts** the token type `name`s from the extensions array
+3. **Makes** those names available as both **component renderer keys** (`renderers={{ inlineKatex: ... }}`) and **snippet override names** (`{#snippet inlineKatex(props)}`)
+
+Each snippet or component receives the token's own properties as props. For example, `marked-katex-extension` produces tokens with `text` and `displayMode`, so your renderer gets `{ text: string, displayMode: boolean }`.
+
+### Finding Token Type Names
+
+To discover the snippet/renderer names for any extension, check the `name` field in its `extensions` array:
+
+```js
+// marked-katex-extension → tokens named "inlineKatex" and "blockKatex"
+// → {#snippet inlineKatex(props)} and {#snippet blockKatex(props)}
+// → or renderers={{ inlineKatex: ..., blockKatex: ... }}
+
+// A custom alert extension → token named "alert"
+// → {#snippet alert(props)}
+// → or renderers={{ alert: AlertComponent }}
+```
+
+You can also inspect the tokens at runtime using the `parsed` callback:
+
+```html
+<SvelteMarkdown {source} {extensions} parsed={(tokens) => console.log(tokens)} />
+```
+
+## Step-by-Step: KaTeX Math Rendering
+
+This example uses [`marked-katex-extension`](https://www.npmjs.com/package/marked-katex-extension) to add `$...$` (inline) and `$$...$$` (block) math syntax.
+
+### 1. Install Dependencies
+
+```bash
+npm install marked-katex-extension katex
+```
+
+### 2. Create a Svelte Renderer
+
+The `marked-katex-extension` produces tokens with `text` and `displayMode` properties. Create a Svelte component that calls `katex.renderToString()`:
+
+```html
+<!-- KatexRenderer.svelte -->
+<script lang="ts">
+    import katex from 'katex'
+
+    interface Props {
+        text: string
+        displayMode?: boolean
+    }
+
+    const { text, displayMode = false }: Props = $props()
+
+    const html = $derived(
+        katex.renderToString(text, { throwOnError: false, displayMode })
+    )
+</script>
+
+{@html html}
+```
+
+This single component handles both `inlineKatex` (displayMode = false) and `blockKatex` (displayMode = true) tokens.
+
+### 3. Wire Up with Component Renderers
+
+Pass the extension via the `extensions` prop and map token types to your component via `renderers`:
+
+```html
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
+    import markedKatex from 'marked-katex-extension'
+    import KatexRenderer from './KatexRenderer.svelte'
+
+    interface KatexRenderers extends Renderers {
+        inlineKatex: RendererComponent
+        blockKatex: RendererComponent
+    }
+
+    const renderers: Partial<KatexRenderers> = {
+        inlineKatex: KatexRenderer,
+        blockKatex: KatexRenderer
+    }
+</script>
+
+<SvelteMarkdown
+    source={markdown}
+    extensions={[markedKatex({ throwOnError: false })]}
+    {renderers}
+/>
+```
+
+### 4. Alternative: Snippet Overrides
+
+Instead of component renderers, you can use snippet overrides for inline rendering:
+
+```html
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import katex from 'katex'
+    import markedKatex from 'marked-katex-extension'
+</script>
+
+<svelte:head>
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+        crossorigin="anonymous"
+    />
+</svelte:head>
+
+<SvelteMarkdown
+    source={markdown}
+    extensions={[markedKatex({ throwOnError: false })]}
+>
+    {#snippet inlineKatex(props)}
+        {@html katex.renderToString(props.text, { displayMode: false })}
+    {/snippet}
+    {#snippet blockKatex(props)}
+        {@html katex.renderToString(props.text, { displayMode: true })}
+    {/snippet}
+</SvelteMarkdown>
+```
+
+### 5. Include KaTeX CSS
+
+KaTeX requires its stylesheet for proper math formatting:
+
+```html
+<svelte:head>
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+        crossorigin="anonymous"
+    />
+</svelte:head>
+```
+
+### Complete Example
+
+Putting it all together with component renderers:
+
+```html
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
+    import markedKatex from 'marked-katex-extension'
+    import KatexRenderer from './KatexRenderer.svelte'
+
+    interface KatexRenderers extends Renderers {
+        inlineKatex: RendererComponent
+        blockKatex: RendererComponent
+    }
+
+    const renderers: Partial<KatexRenderers> = {
+        inlineKatex: KatexRenderer,
+        blockKatex: KatexRenderer
+    }
+
+    const source = `
+# Euler's Identity
+
+The equation $e^{i\\pi} + 1 = 0$ is considered the most beautiful in mathematics.
+
+$$
+e^{i\\pi} + 1 = 0
+$$
+`
+</script>
+
+<svelte:head>
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+        crossorigin="anonymous"
+    />
+</svelte:head>
+
+<SvelteMarkdown
+    {source}
+    extensions={[markedKatex({ throwOnError: false })]}
+    {renderers}
+/>
+```
+
+## General Pattern
+
+The same pattern works for any marked extension:
+
+1. **Install** the extension package
+2. **Discover** the token type names — check the extension's `extensions[].name` fields, or use the `parsed` callback to inspect tokens
+3. **Pass** the extension via the `extensions` prop
+4. **Render** the custom tokens — either map the token type name(s) to Svelte components via `renderers`, or use inline `{#snippet tokenName(props)}` overrides
+5. **Include** any required CSS or external resources
+
+The token type `name` is the key that connects everything: it's what the extension calls the token, what you use as the `renderers` key, and what you use as the snippet name.
+
+## Extension Ecosystem
+
+The [marked ecosystem](https://marked.js.org/using_advanced#extensions) includes extensions for:
+
+- **Math**: `marked-katex-extension`, `marked-mathjax`
+- **Alerts/Admonitions**: `marked-alert`, custom GFM-style alerts
+- **Diagrams**: Extensions wrapping Mermaid, PlantUML, etc.
+- **Syntax highlighting**: `marked-highlight`
+- **Custom containers**: `marked-custom-heading-id`, `marked-footnote`
+
+Any extension that adds custom token types can be integrated using the pattern above.
+
+## Related
+
+- [Interactive Demo](/examples/marked-extensions) -- try KaTeX math rendering live with both component and snippet approaches
+- [Custom Renderers](/docs/renderers/custom-renderers) -- override built-in markdown renderers
+- [Types & Exports](/docs/api/types) -- `RendererComponent`, `Renderers` type definitions

@@ -44,6 +44,13 @@
             description:
                 'Explore token caching and see the performance improvement on repeated renders.',
             icon: 'fa-solid fa-gauge-high'
+        },
+        {
+            slug: 'marked-extensions',
+            title: 'Marked Extensions',
+            description:
+                'Live KaTeX math rendering with the extensions prop. Try component renderers and snippet overrides.',
+            icon: 'fa-solid fa-puzzle-piece'
         }
     ]
 </script>
