@@ -273,6 +273,37 @@ You can also override the renderers for specific HTML tags that appear in raw HT
 />
 ```
 
+## Custom HTML Tags
+
+The parsing pipeline accepts any HTML tag name, not just the ~90 built-in ones. To render a custom tag like `<click>`, `<tooltip>`, or a web component, provide a renderer under the `html` key:
+
+```html
+<!-- ClickButton.svelte -->
+<script lang="ts">
+    import type { Snippet } from 'svelte'
+
+    const { children, ...rest }: { children?: Snippet; [key: string]: any } = $props()
+</script>
+
+<button class="click-btn" {...rest}>
+    {@render children?.()}
+</button>
+```
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import ClickButton from './ClickButton.svelte'
+</script>
+
+<SvelteMarkdown
+    source={'<click data-action="submit">Click Me</click>'}
+    renderers={{ html: { click: ClickButton } }}
+/>
+```
+
+Custom tags work exactly like built-in HTML tag overrides — the component receives the tag's attributes and a `children` snippet for nested content. You can also use [snippet overrides](/docs/renderers/snippet-overrides#custom-html-tags) for quick inline customization.
+
 ## Setting a Renderer to `null`
 
 You can set any renderer to `null` to suppress that element type entirely:

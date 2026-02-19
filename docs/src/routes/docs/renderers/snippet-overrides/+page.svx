@@ -1,0 +1,356 @@
+---
+title: Snippet Overrides
+description: Customize markdown rendering inline using Svelte 5 snippets — no separate files needed
+---
+
+# Snippet Overrides
+
+Svelte 5 snippets let you customize how markdown elements render **directly in your template**, without creating separate component files. This is ideal for quick tweaks — adding a class, wrapping in a div, changing an attribute — where a full component would be overkill.
+
+## How It Works
+
+Pass named snippets as children of `<SvelteMarkdown>`. Each snippet name matches a renderer key and receives the same props the corresponding component would, plus a `children` snippet for container elements:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = '# Hello\n\nA paragraph with [a link](https://example.com).'
+</script>
+
+<SvelteMarkdown {source}>
+    {#snippet heading({ depth, children })}
+        <svelte:element this="h{depth}" class="my-heading">
+            {@render children?.()}
+        </svelte:element>
+    {/snippet}
+
+    {#snippet paragraph({ children })}
+        <p class="prose">{@render children?.()}</p>
+    {/snippet}
+
+    {#snippet link({ href, title, children })}
+        <a {href} {title} target="_blank" rel="noopener noreferrer">
+            {@render children?.()}
+        </a>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## Container vs Leaf Renderers
+
+Renderers fall into two categories based on whether they have nested content:
+
+### Container Renderers
+
+These receive a `children` snippet that renders their inner content. You **must** call `{@render children?.()}` to display nested elements:
+
+| Renderer | Key Props |
+|----------|-----------|
+| `paragraph` | `children` |
+| `heading` | `depth`, `raw`, `text`, `options`, `slug`, `children` |
+| `link` | `href`, `title`, `children` |
+| `blockquote` | `children` |
+| `list` | `ordered`, `start`, `children` |
+| `listitem` | `children` |
+| `table` | `children` |
+| `tablehead` | `children` |
+| `tablebody` | `children` |
+| `tablerow` | `children` |
+| `tablecell` | `header`, `align`, `children` |
+| `em` | `children` |
+| `strong` | `children` |
+| `del` | `children` |
+| `text` | `children` |
+
+### Leaf Renderers
+
+These render terminal content and do **not** receive `children`:
+
+| Renderer | Key Props |
+|----------|-----------|
+| `code` | `lang`, `text` |
+| `codespan` | `raw` |
+| `image` | `href`, `title`, `text` |
+| `hr` | *(none)* |
+| `br` | *(none)* |
+| `rawtext` | `text` |
+| `escape` | `text` |
+
+## Examples
+
+### Custom Paragraph
+
+```html
+<SvelteMarkdown source="Hello world">
+    {#snippet paragraph({ children })}
+        <p class="prose leading-relaxed">{@render children?.()}</p>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+### Heading with Wrapper
+
+```html
+<SvelteMarkdown source="## Section Title">
+    {#snippet heading({ depth, children })}
+        <div class="heading-wrapper">
+            <svelte:element this="h{depth}" class="title">
+                {@render children?.()}
+            </svelte:element>
+        </div>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+### External Links
+
+```html
+<SvelteMarkdown source="Visit [Svelte](https://svelte.dev)">
+    {#snippet link({ href, title, children })}
+        <a {href} {title} target="_blank" rel="noopener noreferrer" class="external-link">
+            {@render children?.()}
+            <span aria-hidden="true"> ↗</span>
+        </a>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+### Code Block (Leaf)
+
+Since `code` is a leaf renderer, it receives data props but no `children`:
+
+```html
+<SvelteMarkdown source={"```js\nconsole.log('hi')\n```"}>
+    {#snippet code({ lang, text })}
+        <div class="code-wrapper">
+            {#if lang}<span class="lang-badge">{lang}</span>{/if}
+            <pre><code>{text}</code></pre>
+        </div>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+### Image (Leaf)
+
+```html
+<SvelteMarkdown source="![Alt text](/photo.jpg 'Caption')">
+    {#snippet image({ href, title, text })}
+        <figure>
+            <img src={href} alt={text} loading="lazy" />
+            {#if title}<figcaption>{title}</figcaption>{/if}
+        </figure>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+### Styled Blockquote
+
+```html
+<SvelteMarkdown source="> Important note here">
+    {#snippet blockquote({ children })}
+        <aside class="callout" role="note">
+            {@render children?.()}
+        </aside>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+### List with Custom Markers
+
+```html
+<SvelteMarkdown source="- First\n- Second\n- Third">
+    {#snippet list({ ordered, children })}
+        <ul class="custom-list">{@render children?.()}</ul>
+    {/snippet}
+
+    {#snippet listitem({ children })}
+        <li class="custom-item">
+            <span class="marker">→</span>
+            {@render children?.()}
+        </li>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+### Table with Scroll Container
+
+```html
+<SvelteMarkdown source="| A | B |\n|---|---|\n| 1 | 2 |">
+    {#snippet table({ children })}
+        <div class="overflow-x-auto rounded-lg border">
+            <table class="w-full">{@render children?.()}</table>
+        </div>
+    {/snippet}
+
+    {#snippet tablecell({ header, align, children })}
+        {#if header}
+            <th class="bg-gray-100 px-4 py-2" style:text-align={align}>
+                {@render children?.()}
+            </th>
+        {:else}
+            <td class="px-4 py-2" style:text-align={align}>
+                {@render children?.()}
+            </td>
+        {/if}
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## HTML Tag Snippets
+
+HTML tags that appear in raw HTML within markdown can also be overridden with snippets. To avoid name collisions with markdown renderer keys (e.g., `em`, `strong`, `code`), HTML snippets use an `html_` prefix.
+
+All HTML snippets share a uniform props interface:
+
+```typescript
+interface HtmlSnippetProps {
+    attributes?: Record<string, any>
+    children?: Snippet
+}
+```
+
+### Examples
+
+```html
+<SvelteMarkdown source={'<div class="note">Important</div>'}>
+    {#snippet html_div({ attributes, children })}
+        <div {...attributes} class="custom-wrapper">
+            {@render children?.()}
+        </div>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+```html
+<SvelteMarkdown source={'<a href="https://example.com">Link</a>'}>
+    {#snippet html_a({ attributes, children })}
+        <a {...attributes} target="_blank" rel="noopener noreferrer">
+            {@render children?.()}
+        </a>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## Custom HTML Tags
+
+Snippet overrides work for arbitrary (non-standard) HTML tags too, not just built-in ones. Use the `html_` prefix followed by the tag name:
+
+```html
+<SvelteMarkdown source={'<click data-action="submit">Click Me</click>'}>
+    {#snippet html_click({ attributes, children })}
+        <button {...attributes} class="custom-btn">
+            {@render children?.()}
+        </button>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+This works for any tag name — `html_tooltip`, `html_alert`, `html_my-component`, etc. The snippet receives the same `{ attributes, children }` props as built-in HTML tag snippets.
+
+If you also provide a component renderer for the same custom tag via `renderers={{ html: { click: ClickComponent } }}`, the snippet takes precedence.
+
+## Precedence
+
+When both a snippet override and a component renderer are provided for the same token type, the **snippet always wins**:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import CustomParagraph from './CustomParagraph.svelte'
+</script>
+
+<!-- The snippet takes precedence over the component renderer -->
+<SvelteMarkdown
+    source="Test"
+    renderers={{ paragraph: CustomParagraph }}
+>
+    {#snippet paragraph({ children })}
+        <p class="snippet-wins">{@render children?.()}</p>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+The full precedence order is: **Snippet > Component renderer > Default renderer**.
+
+## Partial Overrides
+
+You only need to override the renderers you care about. Everything else uses the default (or component renderer if provided):
+
+```html
+<SvelteMarkdown source="# Title\n\nA paragraph with **bold** text.">
+    {#snippet paragraph({ children })}
+        <p class="custom">{@render children?.()}</p>
+    {/snippet}
+    <!-- heading, strong, etc. all use their defaults -->
+</SvelteMarkdown>
+```
+
+## Combining with Component Renderers
+
+Snippets and component renderers work together. Use component renderers for complex, reusable overrides and snippets for quick, one-off tweaks:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import HighlightedCode from './HighlightedCode.svelte'
+</script>
+
+<SvelteMarkdown
+    source={markdown}
+    renderers={{ code: HighlightedCode }}
+>
+    {#snippet paragraph({ children })}
+        <p class="prose">{@render children?.()}</p>
+    {/snippet}
+
+    {#snippet link({ href, title, children })}
+        <a {href} {title} class="text-blue-600 underline">
+            {@render children?.()}
+        </a>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## TypeScript Types
+
+All snippet prop interfaces are exported for use in external code:
+
+```typescript
+import type {
+    ParagraphSnippetProps,
+    HeadingSnippetProps,
+    LinkSnippetProps,
+    ImageSnippetProps,
+    CodeSnippetProps,
+    CodespanSnippetProps,
+    BlockquoteSnippetProps,
+    ListSnippetProps,
+    ListItemSnippetProps,
+    TableSnippetProps,
+    TableCellSnippetProps,
+    HtmlSnippetProps,
+    SnippetOverrides,
+    HtmlSnippetOverrides
+} from '@humanspeak/svelte-markdown'
+```
+
+## When to Use Snippets vs Custom Renderers
+
+| Use Case | Recommended Approach |
+|----------|---------------------|
+| Add a CSS class to paragraphs | Snippet |
+| Open links in new tab | Snippet |
+| Syntax highlighting with external library | Component renderer |
+| Complex renderer with internal state | Component renderer |
+| One-off style tweak for a specific page | Snippet |
+| Reusable renderer across many pages | Component renderer |
+| Quick prototyping | Snippet |
+
+## Related
+
+- [Custom Renderers](/docs/renderers/custom-renderers) -- component-based renderer overrides
+- [Markdown Renderers](/docs/renderers/markdown-renderers) -- all 24 built-in renderers with their props
+- [HTML Renderers](/docs/renderers/html-renderers) -- all HTML tag renderers
+- [Snippet Overrides Examples](/docs/examples/snippet-overrides) -- runnable code examples
+- [Interactive Snippet Demo](/examples/snippet-overrides) -- live playground

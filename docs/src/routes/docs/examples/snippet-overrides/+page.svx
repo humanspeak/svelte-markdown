@@ -1,0 +1,384 @@
+---
+title: Snippet Overrides Examples
+description: Practical examples of using Svelte 5 snippet overrides to customize markdown rendering inline
+---
+
+# Snippet Overrides Examples
+
+These examples demonstrate how to use Svelte 5 snippets to customize markdown rendering directly in your template, without creating separate component files.
+
+## Basic Paragraph Styling
+
+Add a class or wrapper to paragraphs with a simple snippet:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = 'This paragraph gets custom styling automatically.'
+</script>
+
+<SvelteMarkdown {source}>
+    {#snippet paragraph({ children })}
+        <p class="prose text-gray-700 leading-relaxed">
+            {@render children?.()}
+        </p>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## External Links with Icon
+
+Open all links in a new tab and add a visual indicator:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+Check out [Svelte](https://svelte.dev) and [SvelteKit](https://kit.svelte.dev).
+    `
+</script>
+
+<SvelteMarkdown {source}>
+    {#snippet link({ href, title, children })}
+        <a
+            {href}
+            {title}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-blue-600 underline hover:text-blue-800"
+        >
+            {@render children?.()}
+            <span aria-hidden="true"> ↗</span>
+        </a>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## Headings with Anchor Links
+
+Add clickable anchor links to headings for easy deep-linking:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+## Getting Started
+Some intro text.
+
+## Installation
+Install the package.
+
+## Usage
+Use the component.
+    `
+</script>
+
+<SvelteMarkdown {source}>
+    {#snippet heading({ depth, text, slug, options, children })}
+        {@const id = options.headerIds ? options.headerPrefix + slug(text) : undefined}
+        <svelte:element this="h{depth}" {id} class="group relative">
+            {@render children?.()}
+            {#if id}
+                <a
+                    href="#{id}"
+                    class="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Link to {text}"
+                >
+                    #
+                </a>
+            {/if}
+        </svelte:element>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## Code Blocks with Language Badge
+
+Wrap code blocks with a language indicator:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = "```typescript\nconst greeting: string = 'Hello, Svelte!'\n```"
+</script>
+
+<SvelteMarkdown {source}>
+    {#snippet code({ lang, text })}
+        <div class="relative rounded-lg overflow-hidden border">
+            {#if lang}
+                <div class="absolute top-0 right-0 px-2 py-1 text-xs bg-gray-200 rounded-bl">
+                    {lang}
+                </div>
+            {/if}
+            <pre class="p-4 overflow-x-auto"><code>{text}</code></pre>
+        </div>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## Callout-Style Blockquotes
+
+Transform blockquotes into styled callout boxes:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = '> **Note:** This is an important callout with **bold** text inside.'
+</script>
+
+<SvelteMarkdown {source}>
+    {#snippet blockquote({ children })}
+        <aside class="flex gap-3 p-4 my-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg" role="note">
+            <span class="text-blue-500 font-bold shrink-0">ℹ</span>
+            <div>{@render children?.()}</div>
+        </aside>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## Custom List Markers
+
+Replace default bullet points with custom markers:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+- First item
+- Second item
+- Third item
+    `
+</script>
+
+<SvelteMarkdown {source}>
+    {#snippet list({ ordered, children })}
+        {#if ordered}
+            <ol class="space-y-2">{@render children?.()}</ol>
+        {:else}
+            <ul class="space-y-2 list-none pl-0">{@render children?.()}</ul>
+        {/if}
+    {/snippet}
+
+    {#snippet listitem({ children })}
+        <li class="flex items-start gap-2">
+            <span class="text-green-500 shrink-0">✓</span>
+            <div>{@render children?.()}</div>
+        </li>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## Responsive Tables
+
+Wrap tables in a scrollable container with styling:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Snippets | ✅ Done | v0.9+ |
+| Caching | ✅ Done | 50-200x faster |
+| TypeScript | ✅ Done | Full support |
+    `
+</script>
+
+<SvelteMarkdown {source}>
+    {#snippet table({ children })}
+        <div class="overflow-x-auto my-4 rounded-lg border border-gray-200 shadow-sm">
+            <table class="w-full border-collapse">
+                {@render children?.()}
+            </table>
+        </div>
+    {/snippet}
+
+    {#snippet tablecell({ header, align, children })}
+        {#if header}
+            <th class="bg-gray-50 px-4 py-3 text-left text-sm font-semibold" style:text-align={align}>
+                {@render children?.()}
+            </th>
+        {:else}
+            <td class="px-4 py-3 text-sm border-t" style:text-align={align}>
+                {@render children?.()}
+            </td>
+        {/if}
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## Images with Captions
+
+Turn image titles into figure captions:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = "![A scenic mountain view](/mountain.jpg 'Photo taken in the Alps')"
+</script>
+
+<SvelteMarkdown {source}>
+    {#snippet image({ href, title, text })}
+        <figure class="my-6 text-center">
+            <img
+                src={href}
+                alt={text}
+                class="rounded-lg shadow-md max-w-full mx-auto"
+                loading="lazy"
+            />
+            {#if title}
+                <figcaption class="mt-2 text-sm text-gray-500 italic">
+                    {title}
+                </figcaption>
+            {/if}
+        </figure>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## HTML Tag Overrides
+
+Override how raw HTML tags render using the `html_` prefix:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+<div class="alert">This is an alert box</div>
+
+<a href="https://example.com">External link in HTML</a>
+    `
+</script>
+
+<SvelteMarkdown {source}>
+    {#snippet html_div({ attributes, children })}
+        <div {...attributes} class="p-4 rounded-lg bg-yellow-50 border border-yellow-200">
+            {@render children?.()}
+        </div>
+    {/snippet}
+
+    {#snippet html_a({ attributes, children })}
+        <a {...attributes} target="_blank" rel="noopener noreferrer" class="text-blue-600">
+            {@render children?.()}
+        </a>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## Multiple Overrides Together
+
+Combine several snippet overrides for a fully customized rendering experience:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+# Project Update
+
+Here's what changed this week:
+
+- Implemented **snippet overrides** for inline customization
+- Added [TypeScript types](https://www.typescriptlang.org/) for all props
+- Fixed a bug in the \`Parser\` component
+
+> **Tip:** Snippets are the fastest way to customize rendering.
+
+\`\`\`javascript
+const greeting = 'Hello from snippets!'
+\`\`\`
+    `
+</script>
+
+<SvelteMarkdown {source}>
+    {#snippet heading({ depth, children })}
+        <svelte:element this="h{depth}" class="font-bold text-gray-900 mb-4">
+            {@render children?.()}
+        </svelte:element>
+    {/snippet}
+
+    {#snippet paragraph({ children })}
+        <p class="text-gray-700 leading-relaxed mb-4">{@render children?.()}</p>
+    {/snippet}
+
+    {#snippet link({ href, title, children })}
+        <a {href} {title} target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">
+            {@render children?.()}
+        </a>
+    {/snippet}
+
+    {#snippet blockquote({ children })}
+        <aside class="border-l-4 border-blue-400 pl-4 my-4 italic text-gray-600">
+            {@render children?.()}
+        </aside>
+    {/snippet}
+
+    {#snippet code({ lang, text })}
+        <pre class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto my-4"><code>{text}</code></pre>
+    {/snippet}
+
+    {#snippet listitem({ children })}
+        <li class="flex items-start gap-2 mb-1">
+            <span class="text-blue-500">•</span>
+            <div>{@render children?.()}</div>
+        </li>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## Snippet vs Component Side-by-Side
+
+The same customization as a snippet override vs a component renderer:
+
+**Snippet approach** (inline, no extra file):
+```html
+<SvelteMarkdown {source}>
+    {#snippet link({ href, title, children })}
+        <a {href} {title} target="_blank" rel="noopener noreferrer">
+            {@render children?.()}
+        </a>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+**Component approach** (separate file):
+```html
+<!-- ExternalLink.svelte -->
+<script lang="ts">
+    import type { Snippet } from 'svelte'
+
+    interface Props {
+        href?: string
+        title?: string
+        children?: Snippet
+    }
+
+    const { href = '', title = undefined, children }: Props = $props()
+</script>
+
+<a {href} {title} target="_blank" rel="noopener noreferrer">
+    {@render children?.()}
+</a>
+```
+
+```html
+<!-- Usage -->
+<SvelteMarkdown {source} renderers={{ link: ExternalLink }} />
+```
+
+Both produce the same result. Use snippets for simple, one-off overrides. Use component renderers when you need styles, state, lifecycle hooks, or reusability across pages.
+
+## Related
+
+- [Snippet Overrides Guide](/docs/renderers/snippet-overrides) -- full documentation
+- [Custom Renderers Examples](/docs/examples/custom-renderers) -- component-based examples
+- [Interactive Snippet Demo](/examples/snippet-overrides) -- live playground
