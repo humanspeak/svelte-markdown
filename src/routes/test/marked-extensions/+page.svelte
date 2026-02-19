@@ -2,7 +2,7 @@
     import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
     import Alert from '$lib/test/marked_extensions/Alert.svelte'
     import type { RendererComponent, Renderers } from '$lib/utils/markdown-parser.js'
-    import { marked, type TokenizerExtension } from 'marked'
+    import type { TokenizerExtension } from 'marked'
 
     let htmlBody = `
 > [!WARNING]
@@ -28,8 +28,7 @@
         }
     }
 
-    marked.use({ extensions: [alertTokenizer] })
-    const options = marked.defaults
+    const extensions = [{ extensions: [alertTokenizer] }]
 
     interface CustomRenderers extends Renderers {
         alert: RendererComponent
@@ -44,7 +43,7 @@
     <textarea bind:value={htmlBody} placeholder="Enter markdown here" data-testid="markdown-input">
     </textarea>
     <div class="preview">
-        <SvelteMarkdown {options} source={htmlBody} {renderers} />
+        <SvelteMarkdown {extensions} source={htmlBody} {renderers} />
     </div>
 </div>
 
