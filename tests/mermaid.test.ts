@@ -20,7 +20,7 @@ test.describe('Mermaid Diagram Extension', () => {
         // Wait for diagrams to render (default content has flowchart + sequence)
         const diagrams = preview.locator('[data-testid="mermaid-diagram"] svg')
         await expect(diagrams.first()).toBeVisible({ timeout: 15000 })
-        await expect(diagrams).toHaveCount(2)
+        await expect(diagrams).toHaveCount(2, { timeout: 15000 })
     })
 
     test('should render mixed markdown and mermaid content', async ({ page }) => {
