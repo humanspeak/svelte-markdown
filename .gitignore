@@ -34,3 +34,6 @@ junit-vitest.xml
 junit-playwright.xml
 .svelte-kit
 docs-old/
+
+.playwright-mcp/**
+.claude/plans/**

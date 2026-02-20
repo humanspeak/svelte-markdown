@@ -47,6 +47,10 @@
         ".": {
             "types": "./dist/index.d.ts",
             "svelte": "./dist/index.js"
+        },
+        "./extensions": {
+            "types": "./dist/extensions/index.d.ts",
+            "svelte": "./dist/extensions/index.js"
         }
     },
     "svelte": "./dist/index.js",
@@ -97,19 +101,19 @@
         "@playwright/cli": "^0.1.1",
         "@playwright/test": "^1.58.2",
         "@sveltejs/adapter-auto": "^7.0.1",
-        "@sveltejs/kit": "^2.52.2",
+        "@sveltejs/kit": "^2.53.0",
         "@sveltejs/package": "^2.5.7",
         "@sveltejs/vite-plugin-svelte": "^6.2.4",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/svelte": "^5.3.1",
         "@testing-library/user-event": "^14.6.1",
         "@types/katex": "^0.16.8",
-        "@types/node": "^25.2.3",
+        "@types/node": "^25.3.0",
         "@typescript-eslint/eslint-plugin": "^8.56.0",
         "@typescript-eslint/parser": "^8.56.0",
         "@vitest/coverage-v8": "^4.0.18",
         "concurrently": "^9.2.1",
-        "eslint": "^10.0.0",
+        "eslint": "^10.0.1",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-import": "^2.32.0",
         "eslint-plugin-svelte": "^3.15.0",
@@ -119,23 +123,30 @@
         "jsdom": "^28.1.0",
         "katex": "^0.16.28",
         "marked-katex-extension": "^5.1.7",
+        "mermaid": "^11.12.3",
         "prettier": "^3.8.1",
         "prettier-plugin-organize-imports": "^4.3.0",
         "prettier-plugin-svelte": "^3.5.0",
         "prettier-plugin-tailwindcss": "^0.7.2",
         "publint": "^0.3.17",
         "svelte": "^5.53.0",
-        "svelte-check": "^4.4.1",
+        "svelte-check": "^4.4.3",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.56.0",
         "vite": "^7.3.1",
         "vitest": "^4.0.18"
     },
     "peerDependencies": {
+        "mermaid": ">=10.0.0",
         "svelte": "^5.0.0"
     },
+    "peerDependenciesMeta": {
+        "mermaid": {
+            "optional": true
+        }
+    },
     "volta": {
-        "node": "24.12.0"
+        "node": "22.16.0"
     },
     "publishConfig": {
         "access": "public"

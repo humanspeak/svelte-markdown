@@ -438,6 +438,53 @@ Where `KatexRenderer.svelte` is:
 </SvelteMarkdown>
 ```
 
+### Mermaid Diagrams (Async Rendering)
+
+The package includes built-in `markedMermaid` and `MermaidRenderer` helpers for Mermaid diagram support. Install mermaid as an optional peer dependency:
+
+```bash
+npm install mermaid
+```
+
+Then use the built-in helpers — no boilerplate needed:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
+    import { markedMermaid, MermaidRenderer } from '@humanspeak/svelte-markdown/extensions'
+
+    // markdown containing fenced mermaid code blocks
+    let { source } = $props()
+
+    interface MermaidRenderers extends Renderers {
+        mermaid: RendererComponent
+    }
+
+    const renderers: Partial<MermaidRenderers> = {
+        mermaid: MermaidRenderer
+    }
+</script>
+
+<SvelteMarkdown {source} extensions={[markedMermaid()]} {renderers} />
+```
+
+`markedMermaid()` is a zero-dependency tokenizer that converts ` ```mermaid ` code blocks into custom tokens. `MermaidRenderer` lazy-loads mermaid in the browser, renders SVG asynchronously, and automatically re-renders when dark/light mode changes.
+
+You can also use snippet overrides to wrap `MermaidRenderer` with custom markup:
+
+```svelte
+<SvelteMarkdown source={markdown} extensions={[markedMermaid()]}>
+    {#snippet mermaid(props)}
+        <div class="my-diagram-wrapper">
+            <MermaidRenderer text={props.text} />
+        </div>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+Since Mermaid rendering is async, the snippet delegates to `MermaidRenderer` rather than calling `mermaid.render()` directly. This pattern works for any async extension — keep the async logic in a component and use the snippet for layout customization.
+
 ### How It Works
 
 Marked extensions define custom token types with a `name` property (e.g., `inlineKatex`, `blockKatex`, `alert`). When you pass extensions via the `extensions` prop, SvelteMarkdown automatically extracts these token type names and makes them available as both **component renderer keys** and **snippet override names**.
