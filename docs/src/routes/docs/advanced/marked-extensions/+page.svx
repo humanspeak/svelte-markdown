@@ -240,13 +240,21 @@ The built-in `MermaidRenderer` handles:
 - **Unique IDs**: `crypto.randomUUID()` prevents collisions when multiple diagrams render
 - **Theme reactivity**: A `MutationObserver` watches the `<html>` class for dark/light changes and re-renders with the correct Mermaid theme via per-diagram directives
 
-### Why Component Renderers for Async Extensions?
+### Snippet Overrides for Async Extensions
 
-Snippet overrides run synchronously during render, which makes them unsuitable for async operations like `mermaid.render()`. Component renderers can use `onMount` and manage their own async lifecycle, making them the recommended approach for:
+You can also use snippet overrides to wrap `MermaidRenderer` with custom markup — extra classes, wrapper divs, or surrounding content:
 
-- **Mermaid** — async SVG rendering
-- **Code highlighting** — async loading of language grammars
-- **Any extension** requiring DOM access or async initialization
+```html
+<SvelteMarkdown source={markdown} extensions={[markedMermaid()]}>
+    {#snippet mermaid(props)}
+        <div class="my-diagram-wrapper">
+            <MermaidRenderer text={props.text} />
+        </div>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+Since snippets run synchronously during render, they delegate the async work to `MermaidRenderer` rather than calling `mermaid.render()` directly. This pattern works for any async extension — keep the async logic in a component and use the snippet for layout customization.
 
 ## General Pattern
 

@@ -468,7 +468,19 @@ Then use the built-in helpers — no boilerplate needed:
 
 `markedMermaid()` is a zero-dependency tokenizer that converts ` ```mermaid ` code blocks into custom tokens. `MermaidRenderer` lazy-loads mermaid in the browser, renders SVG asynchronously, and automatically re-renders when dark/light mode changes.
 
-Component renderers are recommended over snippets for async extensions since snippets run synchronously during render.
+You can also use snippet overrides to wrap `MermaidRenderer` with custom markup:
+
+```svelte
+<SvelteMarkdown source={markdown} extensions={[markedMermaid()]}>
+    {#snippet mermaid(props)}
+        <div class="my-diagram-wrapper">
+            <MermaidRenderer text={props.text} />
+        </div>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+Since Mermaid rendering is async, the snippet delegates to `MermaidRenderer` rather than calling `mermaid.render()` directly. This pattern works for any async extension — keep the async logic in a component and use the snippet for layout customization.
 
 ### How It Works
 
