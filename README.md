@@ -448,14 +448,14 @@ npm install mermaid
 
 Then use the built-in helpers — no boilerplate needed:
 
-````svelte
+```svelte
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
     import { markedMermaid, MermaidRenderer } from '@humanspeak/svelte-markdown/extensions'
 
-    const markdown =
-        '```mermaid\ngraph TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[OK]\n    B -->|No| D[Retry]\n```'
+    // markdown containing fenced mermaid code blocks
+    let { source } = $props()
 
     interface MermaidRenderers extends Renderers {
         mermaid: RendererComponent
@@ -466,8 +466,8 @@ Then use the built-in helpers — no boilerplate needed:
     }
 </script>
 
-<SvelteMarkdown source={markdown} extensions={[markedMermaid()]} {renderers} />
-````
+<SvelteMarkdown {source} extensions={[markedMermaid()]} {renderers} />
+```
 
 `markedMermaid()` is a zero-dependency tokenizer that converts ` ```mermaid ` code blocks into custom tokens. `MermaidRenderer` lazy-loads mermaid in the browser, renders SVG asynchronously, and automatically re-renders when dark/light mode changes.
 
