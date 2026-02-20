@@ -438,6 +438,38 @@ Where `KatexRenderer.svelte` is:
 </SvelteMarkdown>
 ```
 
+### Mermaid Diagrams (Async Rendering)
+
+The package includes built-in `markedMermaid` and `MermaidRenderer` helpers for Mermaid diagram support. Install mermaid as an optional peer dependency:
+
+```bash
+npm install mermaid
+```
+
+Then use the built-in helpers — no boilerplate needed:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
+    import { markedMermaid, MermaidRenderer } from '@humanspeak/svelte-markdown/extensions'
+
+    interface MermaidRenderers extends Renderers {
+        mermaid: RendererComponent
+    }
+
+    const renderers: Partial<MermaidRenderers> = {
+        mermaid: MermaidRenderer
+    }
+</script>
+
+<SvelteMarkdown source={markdown} extensions={[markedMermaid()]} {renderers} />
+```
+
+`markedMermaid()` is a zero-dependency tokenizer that converts ` ```mermaid ` code blocks into custom tokens. `MermaidRenderer` lazy-loads mermaid in the browser, renders SVG asynchronously, and automatically re-renders when dark/light mode changes.
+
+Component renderers are recommended over snippets for async extensions since snippets run synchronously during render.
+
 ### How It Works
 
 Marked extensions define custom token types with a `name` property (e.g., `inlineKatex`, `blockKatex`, `alert`). When you pass extensions via the `extensions` prop, SvelteMarkdown automatically extracts these token type names and makes them available as both **component renderer keys** and **snippet override names**.

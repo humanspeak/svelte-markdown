@@ -191,6 +191,11 @@
                     title: 'Marked Extensions',
                     href: '/examples/marked-extensions',
                     icon: 'fa-solid fa-puzzle-piece'
+                },
+                {
+                    title: 'Mermaid Diagrams',
+                    href: '/examples/mermaid',
+                    icon: 'fa-solid fa-diagram-project'
                 }
             ]
         },

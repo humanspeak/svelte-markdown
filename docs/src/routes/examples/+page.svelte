@@ -51,6 +51,13 @@
             description:
                 'Live KaTeX math rendering with the extensions prop. Try component renderers and snippet overrides.',
             icon: 'fa-solid fa-puzzle-piece'
+        },
+        {
+            slug: 'mermaid',
+            title: 'Mermaid Diagrams',
+            description:
+                'Async Mermaid diagram rendering with a custom marked extension. Flowcharts, sequence diagrams, and more.',
+            icon: 'fa-solid fa-diagram-project'
         }
     ]
 </script>

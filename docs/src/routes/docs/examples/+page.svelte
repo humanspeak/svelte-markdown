@@ -71,6 +71,13 @@
                         'Integrate third-party marked extensions like KaTeX math rendering with custom Svelte renderers.',
                     href: '/docs/advanced/marked-extensions',
                     icon: 'fa-solid fa-puzzle-piece'
+                },
+                {
+                    title: 'Mermaid Diagrams',
+                    description:
+                        'Render Mermaid diagrams with a custom marked extension and async component renderers.',
+                    href: '/examples/mermaid',
+                    icon: 'fa-solid fa-diagram-project'
                 }
             ]
         }
