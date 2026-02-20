@@ -44,7 +44,7 @@
         ;(async () => {
             try {
                 const mod = (await import('mermaid')).default
-                mod.initialize({ startOnLoad: false })
+                mod.initialize({ startOnLoad: false, securityLevel: 'strict' })
                 mermaidModule = mod
             } catch (e) {
                 error = e instanceof Error ? e.message : String(e)
