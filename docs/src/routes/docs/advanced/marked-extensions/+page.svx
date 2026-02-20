@@ -217,6 +217,15 @@ The package exports `markedMermaid()` (a zero-dep tokenizer for ` ```mermaid ` c
     import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
     import { markedMermaid, MermaidRenderer } from '@humanspeak/svelte-markdown/extensions'
 
+    const markdown = `
+\`\`\`mermaid
+graph TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Action 1]
+    B -->|No| D[Action 2]
+\`\`\`
+`
+
     interface MermaidRenderers extends Renderers {
         mermaid: RendererComponent
     }
