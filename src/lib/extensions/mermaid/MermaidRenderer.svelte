@@ -13,9 +13,11 @@
     let error = $state('')
     let loading = $state(true)
     let mermaidModule: typeof import('mermaid').default | null = $state(null)
+    let renderCounter = 0
 
     async function renderDiagram(diagramText: string) {
         if (!mermaidModule) return
+        const current = ++renderCounter
         try {
             error = ''
             const isDark = document.documentElement.classList.contains('dark')
@@ -23,8 +25,10 @@
             const themed = `%%{init: {'theme': '${theme}'}}%%\n${diagramText}`
             const id = `mermaid-${crypto.randomUUID()}`
             const result = await mermaidModule.render(id, themed)
+            if (current !== renderCounter) return
             svg = result.svg
         } catch (e) {
+            if (current !== renderCounter) return
             error = e instanceof Error ? e.message : String(e)
         }
     }
