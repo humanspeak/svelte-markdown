@@ -1,4 +1,7 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://memory.svelte.page/sitemap.xml
+Sitemap: https://markdown.svelte.page/sitemap.xml
+
+# LLM discovery — see https://llmstxt.org
+LLMsTxt: https://markdown.svelte.page/llms.txt
