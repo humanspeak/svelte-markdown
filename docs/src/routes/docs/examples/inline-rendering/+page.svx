@@ -3,6 +3,16 @@ title: Inline Rendering
 description: Examples of using the isInline prop for inline markdown rendering
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Inline Rendering Examples | Svelte Markdown'
+        seo.description = 'Examples of using the isInline prop for inline markdown rendering'
+    }
+</script>
+
 # Inline Rendering
 
 The `isInline` prop tells `SvelteMarkdown` to parse the source as inline markdown rather than block-level markdown. This is useful when you want to render markdown within a `<span>`, `<p>`, or other inline HTML context without producing block-level elements like `<p>`, `<h1>`, or `<ul>`.

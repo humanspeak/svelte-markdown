@@ -3,6 +3,16 @@ title: Marked Extensions
 description: How to use third-party marked extensions like KaTeX math rendering with @humanspeak/svelte-markdown
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Marked Extensions | Svelte Markdown'
+        seo.description = 'How to use third-party marked extensions like KaTeX math rendering with @humanspeak/svelte-markdown'
+    }
+</script>
+
 # Marked Extensions
 
 `@humanspeak/svelte-markdown` supports any [marked extension](https://marked.js.org/using_advanced#extensions) that adds custom token types. Pass extensions via the `extensions` prop and provide renderers for the custom token types — either as **component renderers** or **snippet overrides**.

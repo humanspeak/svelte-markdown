@@ -3,6 +3,16 @@ title: Getting Started
 description: Get started with @humanspeak/svelte-markdown, a powerful markdown renderer for Svelte 5
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Getting Started | Svelte Markdown'
+        seo.description = 'Get started with @humanspeak/svelte-markdown, a powerful markdown renderer for Svelte 5'
+    }
+</script>
+
 # Getting Started
 
 **@humanspeak/svelte-markdown** is a powerful, customizable markdown renderer for Svelte 5 with full TypeScript support. It parses markdown using [Marked](https://marked.js.org/) and renders it through a composable system of Svelte components that you can override and extend.

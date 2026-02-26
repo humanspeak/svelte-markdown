@@ -3,6 +3,16 @@ title: HTML Renderers
 description: Documentation for all 69+ built-in HTML tag renderer components
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'HTML Renderers | Svelte Markdown'
+        seo.description = 'Documentation for all 69+ built-in HTML tag renderer components'
+    }
+</script>
+
 # HTML Renderers
 
 When your markdown source contains raw HTML (which Marked parses as `html` tokens), `@humanspeak/svelte-markdown` renders each HTML tag through a dedicated Svelte component. The package ships with renderers for 69+ standard HTML tags.

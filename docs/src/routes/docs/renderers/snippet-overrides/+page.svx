@@ -3,6 +3,16 @@ title: Snippet Overrides
 description: Customize markdown rendering inline using Svelte 5 snippets — no separate files needed
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Snippet Overrides | Svelte Markdown'
+        seo.description = 'Customize markdown rendering inline using Svelte 5 snippets — no separate files needed'
+    }
+</script>
+
 # Snippet Overrides
 
 Svelte 5 snippets let you customize how markdown elements render **directly in your template**, without creating separate component files. This is ideal for quick tweaks — adding a class, wrapping in a div, changing an attribute — where a full component would be overkill.

@@ -3,6 +3,16 @@ title: Allow/Deny Filtering
 description: Control which markdown elements and HTML tags are rendered
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Allow/Deny Filtering | Svelte Markdown'
+        seo.description = 'Control which markdown elements and HTML tags are rendered'
+    }
+</script>
+
 # Allow/Deny Filtering
 
 `@humanspeak/svelte-markdown` provides a set of utility functions for controlling which elements are rendered. You can allowlist specific elements (blocking everything else), denylist specific elements (allowing everything else), or block all elements of a category.

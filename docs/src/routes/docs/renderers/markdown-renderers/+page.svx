@@ -3,6 +3,16 @@ title: Markdown Renderers
 description: Documentation for all 24 built-in markdown renderer components
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Markdown Renderers | Svelte Markdown'
+        seo.description = 'Documentation for all 24 built-in markdown renderer components'
+    }
+</script>
+
 # Markdown Renderers
 
 `@humanspeak/svelte-markdown` includes 24 built-in renderer components that handle the various token types produced by the Marked parser. Each renderer is a Svelte 5 component that accepts specific props based on the token type it handles.

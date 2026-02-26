@@ -3,6 +3,16 @@ title: Custom Renderers Examples
 description: Practical examples of creating and using custom renderer components
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Custom Renderers Examples | Svelte Markdown'
+        seo.description = 'Practical examples of creating and using custom renderer components'
+    }
+</script>
+
 # Custom Renderers Examples
 
 These examples demonstrate how to create custom renderers to change the way specific markdown elements are rendered.

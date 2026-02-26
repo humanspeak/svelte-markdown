@@ -3,6 +3,16 @@ title: Custom Renderers
 description: Guide to creating custom renderer components for @humanspeak/svelte-markdown
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Custom Renderers | Svelte Markdown'
+        seo.description = 'Guide to creating custom renderer components for @humanspeak/svelte-markdown'
+    }
+</script>
+
 # Custom Renderers
 
 One of the most powerful features of `@humanspeak/svelte-markdown` is the ability to replace any built-in renderer with your own Svelte component. This gives you full control over how each markdown element is rendered.
