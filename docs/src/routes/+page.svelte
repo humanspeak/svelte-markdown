@@ -4,6 +4,7 @@
     import { type BreadcrumbContext } from '$lib/components/contexts/Breadcrumb/type'
     import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { motion } from '@humanspeak/svelte-motion'
 
     let headingContainer: HTMLDivElement | null = $state(null)
     const breadcrumbContext = $state<BreadcrumbContext | undefined>(getBreadcrumbContext())
@@ -417,6 +418,42 @@ Happy coding! <span style="color: hotpink">\u{2665}</span>`
                                 <SvelteMarkdown {source} />
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Examples CTA Section -->
+        <section class="relative px-6 py-10">
+            <div class="container mx-auto max-w-7xl">
+                <div
+                    class="border-brand-500/20 from-brand-500/10 to-brand-600/10 relative overflow-hidden rounded-2xl border bg-gradient-to-r p-8 text-center md:p-12"
+                >
+                    <div
+                        class="from-brand-500/5 pointer-events-none absolute inset-0 bg-gradient-to-br to-transparent"
+                    ></div>
+                    <div class="relative z-10">
+                        <div
+                            class="from-brand-500 to-brand-600 mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br text-white"
+                        >
+                            <i class="fa-solid fa-flask text-xl"></i>
+                        </div>
+                        <h2 class="text-foreground mb-3 text-2xl font-bold md:text-3xl">
+                            Explore Interactive Examples
+                        </h2>
+                        <p class="text-muted-foreground mx-auto mb-6 max-w-xl text-sm md:text-base">
+                            See custom renderers, HTML filtering, marked extensions, Mermaid
+                            diagrams, code formatting, and more — all with live editors.
+                        </p>
+                        <motion.a
+                            href="/examples"
+                            class="from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 inline-flex items-center rounded-lg bg-gradient-to-r px-5 py-2.5 font-medium text-white transition-all duration-200"
+                            whileTap={{ scale: 0.96 }}
+                            whileHover={{ scale: 1.03 }}
+                        >
+                            Browse Examples
+                            <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </motion.a>
                     </div>
                 </div>
             </div>
