@@ -11,10 +11,19 @@ import type { SvelteMarkdownOptions } from '$lib/types.js'
 import type { Token, TokensList } from '$lib/utils/markdown-parser.js'
 import { tokenCache } from '$lib/utils/token-cache.js'
 import { shrinkHtmlTokens } from '$lib/utils/token-cleanup.js'
-import { Lexer } from 'marked'
+import { Lexer, Marked } from 'marked'
 
 /**
- * Parses markdown source with caching.
+ * Lex and clean tokens from markdown source. Shared by sync and async paths.
+ */
+function lexAndClean(source: string, options: SvelteMarkdownOptions, isInline: boolean): Token[] {
+    const lexer = new Lexer(options)
+    const parsedTokens = isInline ? lexer.inlineTokens(source) : lexer.lex(source)
+    return shrinkHtmlTokens(parsedTokens) as Token[]
+}
+
+/**
+ * Parses markdown source with caching (synchronous path).
  * Checks cache first, parses on miss, stores result, and returns tokens.
  *
  * @param source - Raw markdown string to parse
@@ -45,13 +54,57 @@ export function parseAndCacheTokens(
     }
 
     // Cache miss - parse and store
-    const lexer = new Lexer(options)
-    const parsedTokens = isInline ? lexer.inlineTokens(source) : lexer.lex(source)
-
-    const cleanedTokens = shrinkHtmlTokens(parsedTokens) as Token[]
+    const cleanedTokens = lexAndClean(source, options, isInline)
 
     if (typeof options.walkTokens === 'function') {
         cleanedTokens.forEach(options.walkTokens)
+    }
+
+    // Cache the cleaned tokens for next time
+    tokenCache.setTokens(source, options, cleanedTokens)
+
+    return cleanedTokens
+}
+
+/**
+ * Parses markdown source with caching (async path).
+ * Uses Marked's recursive walkTokens with Promise.all to properly
+ * handle async walkTokens callbacks (e.g. marked-code-format).
+ *
+ * @param source - Raw markdown string to parse
+ * @param options - Svelte markdown parser options
+ * @param isInline - Whether to parse as inline markdown (no block elements)
+ * @returns Promise resolving to cleaned and cached token array
+ *
+ * @example
+ * ```typescript
+ * import { parseAndCacheTokensAsync } from './parse-and-cache.js'
+ *
+ * const tokens = await parseAndCacheTokensAsync('# Hello', opts, false)
+ * ```
+ */
+export async function parseAndCacheTokensAsync(
+    source: string,
+    options: SvelteMarkdownOptions,
+    isInline: boolean
+): Promise<Token[] | TokensList> {
+    // Check cache first - avoids expensive parsing
+    const cached = tokenCache.getTokens(source, options)
+    if (cached) {
+        return cached
+    }
+
+    // Cache miss - parse and store
+    const cleanedTokens = lexAndClean(source, options, isInline)
+
+    if (typeof options.walkTokens === 'function') {
+        // Use Marked's recursive walkTokens which handles tables, lists,
+        // nested tokens, and extension childTokens. Await all returned
+        // promises so async walkTokens callbacks complete before caching.
+        const marked = new Marked()
+        marked.defaults = { ...marked.defaults, ...options }
+        const results = marked.walkTokens(cleanedTokens, options.walkTokens)
+        await Promise.all(results)
     }
 
     // Cache the cleaned tokens for next time

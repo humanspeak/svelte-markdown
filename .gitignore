@@ -37,3 +37,6 @@ docs-old/
 
 .playwright-mcp/**
 .claude/plans/**
+
+# mprocs
+mprocs.log

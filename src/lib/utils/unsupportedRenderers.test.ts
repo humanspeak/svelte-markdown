@@ -9,13 +9,17 @@ import {
 } from './unsupportedRenderers.js'
 
 describe('unsupported renderers helpers', () => {
-    it('buildUnsupportedRenderers maps all non-html keys to Unsupported', () => {
+    it('buildUnsupportedRenderers maps all non-html keys to Unsupported (preserving null defaults)', () => {
         const map = buildUnsupportedRenderers()
         Object.keys(defaultRenderers)
             .filter((k) => k !== 'html')
             .forEach((k) => {
                 // @ts-expect-error: index by runtime key
-                expect(map[k]).toBe(Unsupported)
+                const expected = defaultRenderers[k] === null ? null : Unsupported
+                // @ts-expect-error: index by runtime key
+                expect(map[k], `${k} should be ${expected === null ? 'null' : 'Unsupported'}`).toBe(
+                    expected
+                )
             })
     })
 
@@ -57,17 +61,23 @@ describe('unsupported renderers helpers', () => {
 })
 
 describe('unsupported renderers negative tests', () => {
-    it('allowRenderersOnly with empty array maps every key to Unsupported', () => {
+    it('allowRenderersOnly with empty array maps every key to Unsupported (preserving null defaults)', () => {
         const map = allowRenderersOnly([])
         for (const key of rendererKeysInternal) {
-            expect(map[key], `${key} should be Unsupported`).toBe(Unsupported)
+            const expected = defaultRenderers[key] === null ? null : Unsupported
+            expect(map[key], `${key} should be ${expected === null ? 'null' : 'Unsupported'}`).toBe(
+                expected
+            )
         }
     })
 
-    it('allowRenderersOnly with all invalid keys maps every key to Unsupported', () => {
+    it('allowRenderersOnly with all invalid keys maps every key to Unsupported (preserving null defaults)', () => {
         const map = allowRenderersOnly(['fake-key-1', 'fake-key-2'] as any)
         for (const key of rendererKeysInternal) {
-            expect(map[key], `${key} should be Unsupported`).toBe(Unsupported)
+            const expected = defaultRenderers[key] === null ? null : Unsupported
+            expect(map[key], `${key} should be ${expected === null ? 'null' : 'Unsupported'}`).toBe(
+                expected
+            )
         }
     })
 

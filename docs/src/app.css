@@ -295,6 +295,45 @@
     }
 }
 
+/* Code block header bar (language label + copy button) — outside @layer base
+   so these rules beat FontAwesome's injected SVG display styles. */
+.code-block-header {
+    @apply border-border flex items-center justify-between border-b px-4 py-2;
+    background: var(--color-code-block-background);
+}
+
+.code-block-lang {
+    @apply text-muted-foreground text-xs font-medium tracking-wide uppercase;
+}
+
+.code-block-copy {
+    @apply text-muted-foreground hover:text-text-primary cursor-pointer border-0 bg-transparent p-1;
+    transition:
+        color 150ms,
+        transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.code-block-copy:hover {
+    transform: scale(1.25);
+}
+
+.code-block-copy:active {
+    transform: scale(0.95);
+}
+
+.code-block-copy .icon-check {
+    display: none !important;
+}
+
+.code-block-copy.copied .icon-copy {
+    display: none !important;
+}
+
+.code-block-copy.copied .icon-check {
+    display: inline !important;
+    color: var(--color-brand-500);
+}
+
 /* Orb backgrounds using the brand color */
 .orb-a-bg {
     background: radial-gradient(

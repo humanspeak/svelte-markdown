@@ -7,6 +7,7 @@
     import Sidebar from './Sidebar.svelte'
     import TableOfContents from './TableOfContents.svelte'
     import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
+    import { enhanceCodeBlocks } from '$lib/actions/enhanceCodeBlocks'
 
     const { children } = $props()
 
@@ -102,7 +103,11 @@
         <main class="flex-1">
             <div class="flex">
                 <!-- Content -->
-                <article bind:this={contentElement} class="flex-1 px-4 py-8 sm:px-6 lg:px-8">
+                <article
+                    bind:this={contentElement}
+                    use:enhanceCodeBlocks
+                    class="flex-1 px-4 py-8 sm:px-6 lg:px-8"
+                >
                     <div
                         class="prose text-text-primary prose-slate dark:prose-invert prose-headings:scroll-mt-20 max-w-none"
                     >

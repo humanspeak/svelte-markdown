@@ -65,12 +65,14 @@ export const createFilterUtilities = <
 
     /**
      * Builds a map where every key is set to the unsupported component.
-     * Useful for starting with a "deny all" approach.
+     * Keys whose default value is null are preserved as null so that
+     * fallback chains (e.g. orderedlistitem || listitem) still work.
      */
     const buildUnsupported = (): TResult => {
         const result = {} as TResult
         for (const key of keys) {
-            ;(result as Record<TKey, FilterComponent>)[key] = unsupportedComponent
+            ;(result as Record<TKey, FilterComponent>)[key] =
+                defaultsMap[key] === null ? null : unsupportedComponent
         }
         return result
     }

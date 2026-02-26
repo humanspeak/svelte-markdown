@@ -58,7 +58,7 @@
         type Token,
         type TokensList
     } from '$lib/utils/markdown-parser.js'
-    import { parseAndCacheTokens } from '$lib/utils/parse-and-cache.js'
+    import { parseAndCacheTokens, parseAndCacheTokensAsync } from '$lib/utils/parse-and-cache.js'
     import { rendererKeysInternal } from '$lib/utils/rendererKeys.js'
     import { Marked } from 'marked'
 
@@ -87,7 +87,13 @@
     const combinedOptions = $derived({ ...defaultOptions, ...extensionDefaults, ...options })
     const slugger = new Slugger()
 
-    const tokens = $derived.by(() => {
+    // Detect if any extension requires async processing
+    const hasAsyncExtension = $derived(extensions.some((ext) => ext.async === true))
+
+    // Synchronous token derivation (default fast path)
+    const syncTokens = $derived.by(() => {
+        if (hasAsyncExtension) return undefined
+
         // Pre-parsed tokens - skip caching and parsing
         if (Array.isArray(source)) {
             return source as Token[]
@@ -101,6 +107,47 @@
         // Parse with caching (handles cache lookup, parsing, and storage)
         return parseAndCacheTokens(source as string, combinedOptions, isInline)
     }) satisfies Token[] | TokensList | undefined
+
+    // Async token state (used only when extensions require async walkTokens)
+    let asyncTokens = $state<Token[] | TokensList | undefined>(undefined)
+    let asyncRequestId = 0
+
+    $effect(() => {
+        if (!hasAsyncExtension) return
+
+        // Pre-parsed tokens - skip caching and parsing
+        if (Array.isArray(source)) {
+            asyncTokens = source as Token[]
+            return
+        }
+
+        // Empty string - return empty array
+        if (source === '') {
+            asyncTokens = []
+            return
+        }
+
+        // Async parse with caching
+        const currentSource = source as string
+        const currentOptions = combinedOptions
+        const currentInline = isInline
+        const requestId = ++asyncRequestId
+        parseAndCacheTokensAsync(currentSource, currentOptions, currentInline)
+            .then((result) => {
+                if (requestId === asyncRequestId) {
+                    asyncTokens = result
+                }
+            })
+            .catch((error) => {
+                if (requestId === asyncRequestId) {
+                    console.error('[svelte-markdown] async walkTokens failed:', error)
+                    asyncTokens = []
+                }
+            })
+    })
+
+    // Unified tokens: prefer sync path, fall back to async
+    const tokens = $derived(hasAsyncExtension ? asyncTokens : syncTokens)
 
     $effect(() => {
         if (!tokens) return

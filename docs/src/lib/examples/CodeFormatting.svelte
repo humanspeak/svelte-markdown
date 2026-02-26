@@ -1,74 +1,64 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
-    import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
-    import { markedMermaid, MermaidRenderer } from '@humanspeak/svelte-markdown/extensions'
+    import markedCodeFormat from 'marked-code-format'
+    import prettierPluginBabel from 'prettier/plugins/babel'
+    import prettierPluginEstree from 'prettier/plugins/estree'
+    import prettierPluginCss from 'prettier/plugins/postcss'
+    import prettierPluginTypescript from 'prettier/plugins/typescript'
     import { createHighlighter } from 'shiki'
     import { onMount } from 'svelte'
 
-    const defaultMarkdown = `# Mermaid Diagrams
+    const defaultMarkdown = `# Code Formatting with marked-code-format
 
-## Flowchart
+Auto-format code blocks with [Prettier](https://prettier.io/) by adding the \`prettier\` attribute to your code fences.
 
-\`\`\`mermaid
-graph TD
-    A[Start] --> B{Decision}
-    B -->|Yes| C[Action 1]
-    B -->|No| D[Action 2]
-    C --> E[End]
-    D --> E
+## JavaScript
+
+\`\`\`js prettier
+function   fibonacci(n){if(n<=1)return n
+return fibonacci(n-1)+fibonacci(n-2)}
+
+const   result=fibonacci(10)
+console.log(result)
 \`\`\`
 
-## Sequence Diagram
+## CSS
 
-\`\`\`mermaid
-sequenceDiagram
-    participant A as Alice
-    participant B as Bob
-    A->>B: Hello Bob!
-    B->>A: Hi Alice!
-    A->>B: How are you?
-    B->>A: Great, thanks!
+\`\`\`css prettier
+.container{display:flex;justify-content:center;align-items:center;gap:1rem}
+.card{border-radius:0.5rem;padding:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.12)}
 \`\`\`
 
-## Mixed Content
+## TypeScript
 
-Regular markdown works alongside diagrams: **bold**, *italic*, and \`inline code\`.
+\`\`\`ts prettier
+interface User{name:string;age:number;email?:string}
+const greet=(user:User):string=>\`Hello, \${user.name}! You are \${user.age} years old.\`
+\`\`\`
 
-> **Tip:** Use \\\`\\\`\\\`mermaid code blocks to create diagrams.
+## Unformatted (no prettier attribute)
 
-### Class Diagram
+\`\`\`js
+const x={a:1,b:2,c:3}
+\`\`\`
 
-\`\`\`mermaid
-classDiagram
-    class Animal {
-        +String name
-        +int age
-        +makeSound()
-    }
-    class Dog {
-        +fetch()
-    }
-    class Cat {
-        +purr()
-    }
-    Animal <|-- Dog
-    Animal <|-- Cat
-\`\`\``
+> **Tip:** Only code fences with the \`prettier\` attribute are formatted. Others are left as-is.`
 
-    let mode: 'component' | 'snippet' = $state('component')
+    let mode: 'extension' | 'snippet' = $state('extension')
     let input = $state(defaultMarkdown)
     let source = $state(defaultMarkdown)
     let debounceTimer = $state<ReturnType<typeof setTimeout> | undefined>(undefined)
 
-    const extensions = [markedMermaid()]
-
-    interface MermaidRenderers extends Renderers {
-        mermaid: RendererComponent
-    }
-
-    const renderers: Partial<MermaidRenderers> = {
-        mermaid: MermaidRenderer
-    }
+    const extensions = [
+        markedCodeFormat({
+            plugins: [
+                prettierPluginBabel,
+                prettierPluginEstree,
+                prettierPluginCss,
+                prettierPluginTypescript
+            ]
+        })
+    ]
 
     function handleInput(event: Event) {
         const target = event.target as HTMLTextAreaElement
@@ -91,41 +81,44 @@ classDiagram
         }
     }
 
-    const componentCode = `\x3Cscript lang="ts">
+    const extensionCode = `\x3Cscript lang="ts">
   import SvelteMarkdown from '@humanspeak/svelte-markdown'
-  import { markedMermaid, MermaidRenderer }
-    from '@humanspeak/svelte-markdown/extensions'
+  import markedCodeFormat from 'marked-code-format'
+  // Prettier standalone requires explicit parser plugins
+  import prettierBabel from 'prettier/plugins/babel'
+  import prettierEstree from 'prettier/plugins/estree'
+  import prettierCss from 'prettier/plugins/postcss'
+  import prettierTs from 'prettier/plugins/typescript'
 
-  const source = '\\\`\\\`\\\`mermaid\\ngraph LR\\n  A --> B\\n\\\`\\\`\\\`'
-  const renderers = { mermaid: MermaidRenderer }
+  const source = '\\\`\\\`\\\`js prettier\\nconst x={a:1,b:2}\\n\\\`\\\`\\\`'
+
+  const extensions = [
+    markedCodeFormat({
+      plugins: [prettierBabel, prettierEstree, prettierCss, prettierTs]
+    })
+  ]
 \x3C/script>
 
-\x3CSvelteMarkdown
-  {source}
-  extensions={[markedMermaid()]}
-  {renderers}
-/>`
+\x3CSvelteMarkdown {source} {extensions} />`
 
     const snippetCode = `\x3Cscript lang="ts">
   import SvelteMarkdown from '@humanspeak/svelte-markdown'
-  import { markedMermaid, MermaidRenderer }
-    from '@humanspeak/svelte-markdown/extensions'
 
-  const source = '\\\`\\\`\\\`mermaid\\ngraph LR\\n  A --> B\\n\\\`\\\`\\\`'
+  const source = '# Hello\\n\\n\\\`\\\`\\\`js\\nconst x = 1\\n\\\`\\\`\\\`'
 \x3C/script>
 
-\x3CSvelteMarkdown
-  {source}
-  extensions={[markedMermaid()]}
->
-  {#snippet mermaid(props)}
-    \x3Cdiv class="my-diagram-wrapper">
-      \x3CMermaidRenderer text={props.text} />
+\x3CSvelteMarkdown {source}>
+  {#snippet code(props)}
+    \x3Cdiv class="code-block">
+      {#if props.lang}
+        \x3Cspan class="code-lang">{props.lang}\x3C/span>
+      {/if}
+      \x3Cpre>\x3Ccode>{props.text}\x3C/code>\x3C/pre>
     \x3C/div>
   {/snippet}
 \x3C/SvelteMarkdown>`
 
-    let highlightedComponent = $state('')
+    let highlightedExtension = $state('')
     let highlightedSnippet = $state('')
 
     onMount(async () => {
@@ -140,7 +133,7 @@ classDiagram
             return `<div class="shiki-light">${light}</div><div class="shiki-dark">${dark}</div>`
         }
 
-        highlightedComponent = highlight(componentCode)
+        highlightedExtension = highlight(extensionCode)
         highlightedSnippet = highlight(snippetCode)
     })
 </script>
@@ -149,12 +142,17 @@ classDiagram
     <!-- Header -->
     <div class="mb-6 flex items-center justify-between">
         <div>
-            <h2 class="text-foreground text-2xl font-bold">Mermaid Diagrams</h2>
+            <h2 class="text-foreground text-2xl font-bold">Code Formatting</h2>
             <p class="text-muted-foreground mt-1 text-sm">
-                Live Mermaid diagram rendering powered by the <code
-                    class="bg-muted text-brand-600 rounded px-1 py-0.5 text-xs">extensions</code
+                Live Prettier formatting powered by
+                <code class="bg-muted text-brand-600 rounded px-1 py-0.5 text-xs"
+                    >marked-code-format</code
                 >
-                prop with built-in helpers. Edit the markdown to try your own diagrams.
+                — an async
+                <code class="bg-muted text-brand-600 rounded px-1 py-0.5 text-xs">walkTokens</code>
+                extension. Add the
+                <code class="bg-muted rounded px-1 py-0.5 text-xs">prettier</code>
+                attribute to any code fence to auto-format it.
             </p>
         </div>
         <button
@@ -175,11 +173,14 @@ classDiagram
                 <i class="fa-solid fa-download"></i>
             </div>
             <div>
-                <p class="text-foreground text-sm font-medium">Peer Dependency</p>
+                <p class="text-foreground text-sm font-medium">Install Dependencies</p>
                 <p class="text-muted-foreground mt-0.5 text-xs">
-                    <code class="bg-muted rounded px-1">mermaid</code> is not bundled with this
-                    package — install it separately:
-                    <code class="bg-muted rounded px-1">npm install mermaid</code>
+                    <code class="bg-muted rounded px-1">marked-code-format</code> and
+                    <code class="bg-muted rounded px-1">prettier</code> are not bundled — install
+                    them separately:
+                    <code class="bg-muted rounded px-1"
+                        >npm install marked-code-format prettier</code
+                    >
                 </p>
             </div>
         </div>
@@ -188,12 +189,12 @@ classDiagram
     <!-- Mode Toggle -->
     <div class="mb-6 flex items-center gap-3">
         <button
-            onclick={() => (mode = 'component')}
-            class="rounded-lg px-4 py-2 text-sm font-medium transition-colors {mode === 'component'
+            onclick={() => (mode = 'extension')}
+            class="rounded-lg px-4 py-2 text-sm font-medium transition-colors {mode === 'extension'
                 ? 'bg-brand-600 text-white'
                 : 'border-border bg-card text-muted-foreground hover:text-foreground border'}"
         >
-            Component Renderers
+            marked-code-format
         </button>
         <button
             onclick={() => (mode = 'snippet')}
@@ -207,21 +208,23 @@ classDiagram
 
     <!-- Info Banner -->
     <div class="border-border bg-card mb-6 rounded-xl border p-4 shadow-sm">
-        {#if mode === 'component'}
+        {#if mode === 'extension'}
             <div class="flex items-start gap-3">
                 <div
                     class="bg-brand-500/10 text-brand-600 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm"
                 >
-                    <i class="fa-solid fa-cube"></i>
+                    <i class="fa-solid fa-bolt"></i>
                 </div>
                 <div>
-                    <p class="text-foreground text-sm font-medium">Component Renderers</p>
+                    <p class="text-foreground text-sm font-medium">
+                        Async Extension (No Renderers Needed)
+                    </p>
                     <p class="text-muted-foreground mt-0.5 text-xs">
-                        The built-in <code class="bg-muted rounded px-1">MermaidRenderer</code>
-                        component handles async rendering, loading/error states, and dark mode reactivity.
-                        Pass it via the
-                        <code class="bg-muted rounded px-1">renderers</code> prop for zero-config diagram
-                        support.
+                        <code class="bg-muted rounded px-1">marked-code-format</code> uses an async
+                        <code class="bg-muted rounded px-1">walkTokens</code> callback to format
+                        code with Prettier. SvelteMarkdown detects the
+                        <code class="bg-muted rounded px-1">async: true</code> flag and awaits the transformation
+                        before rendering — no custom renderers required.
                     </p>
                 </div>
             </div>
@@ -235,10 +238,11 @@ classDiagram
                 <div>
                     <p class="text-foreground text-sm font-medium">Snippet Overrides</p>
                     <p class="text-muted-foreground mt-0.5 text-xs">
-                        Use a <code class="bg-muted rounded px-1">{'{#snippet mermaid}'}</code>
-                        to wrap <code class="bg-muted rounded px-1">MermaidRenderer</code> with custom
-                        markup — add wrapper divs, extra classes, or surrounding content. Since Mermaid
-                        is async, the snippet delegates rendering to the component.
+                        Override the <code class="bg-muted rounded px-1">{'{#snippet code}'}</code>
+                        to customize code block rendering with a language badge and styled container.
+                        No extension needed — just a snippet that receives
+                        <code class="bg-muted rounded px-1">lang</code> and
+                        <code class="bg-muted rounded px-1">text</code> props.
                     </p>
                 </div>
             </div>
@@ -262,7 +266,7 @@ classDiagram
                 oninput={handleInput}
                 class="border-border bg-background text-foreground focus:ring-brand-500/50 min-h-[500px] w-full flex-1 resize-y rounded-lg border p-4 font-mono text-sm focus:ring-2 focus:outline-none"
                 spellcheck="false"
-                placeholder="Type markdown with ```mermaid blocks here..."
+                placeholder="Type markdown with code blocks here..."
             ></textarea>
         </div>
 
@@ -274,13 +278,18 @@ classDiagram
                 </h3>
             </div>
             <div class="prose prose-sm dark:prose-invert max-w-none flex-1 overflow-auto">
-                {#if mode === 'component'}
-                    <SvelteMarkdown {source} {extensions} {renderers} />
+                {#if mode === 'extension'}
+                    <SvelteMarkdown {source} {extensions} />
                 {:else}
-                    <SvelteMarkdown {source} {extensions}>
-                        {#snippet mermaid(props: { text: string })}
-                            <div class="my-diagram-wrapper">
-                                <MermaidRenderer text={props.text} />
+                    <SvelteMarkdown {source}>
+                        {#snippet code(props: { lang: string; text: string })}
+                            <div class="code-block">
+                                {#if props.lang}
+                                    <div class="code-lang-badge">
+                                        {props.lang}
+                                    </div>
+                                {/if}
+                                <pre class={props.lang}><code>{props.text}</code></pre>
                             </div>
                         {/snippet}
                     </SvelteMarkdown>
@@ -292,18 +301,18 @@ classDiagram
     <!-- Code Reference -->
     <div class="border-border bg-card mt-6 rounded-xl border p-6 shadow-sm">
         <h3 class="text-foreground mb-3 text-sm font-semibold tracking-wide uppercase">
-            {mode === 'component' ? 'Component Renderer' : 'Snippet Override'} Code
+            {mode === 'extension' ? 'Extension' : 'Snippet Override'} Code
         </h3>
         <div class="prose prose-sm dark:prose-invert max-w-none">
-            {#if mode === 'component'}
-                {#if highlightedComponent}
+            {#if mode === 'extension'}
+                {#if highlightedExtension}
                     <div class="shiki-container">
                         <!-- trunk-ignore(eslint/svelte/no-at-html-tags) -->
-                        {@html highlightedComponent}
+                        {@html highlightedExtension}
                     </div>
                 {:else}
                     <pre class="bg-background overflow-x-auto rounded-lg p-4 text-sm"><code
-                            class="text-foreground">{componentCode}</code
+                            class="text-foreground">{extensionCode}</code
                         ></pre>
                 {/if}
             {:else if highlightedSnippet}
@@ -319,3 +328,24 @@ classDiagram
         </div>
     </div>
 </div>
+
+<style>
+    .code-block {
+        position: relative;
+        margin: 1rem 0;
+    }
+
+    .code-lang-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 0.125rem 0.5rem;
+        font-size: 0.625rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-muted-foreground);
+        background: var(--color-muted);
+        border-radius: 0 0.375rem 0 0.375rem;
+    }
+</style>

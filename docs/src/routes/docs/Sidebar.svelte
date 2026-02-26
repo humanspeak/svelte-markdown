@@ -196,6 +196,11 @@
                     title: 'Mermaid Diagrams',
                     href: '/examples/mermaid',
                     icon: 'fa-solid fa-diagram-project'
+                },
+                {
+                    title: 'Code Formatting',
+                    href: '/examples/code-formatting',
+                    icon: 'fa-solid fa-code'
                 }
             ]
         },

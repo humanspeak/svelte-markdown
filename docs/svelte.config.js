@@ -26,8 +26,9 @@ const config = {
                         theme: 'one-dark-pro'
                     })
 
+                    const encoded = Buffer.from(code).toString('base64')
                     const combinedHtml = `
-                        <div class="shiki-container">
+                        <div class="shiki-container" data-code="${encoded}" data-lang="${lang}">
                             <div class="shiki-light">${lightHtml}</div>
                             <div class="shiki-dark">${darkHtml}</div>
                         </div>
