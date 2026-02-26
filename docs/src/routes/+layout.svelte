@@ -50,7 +50,7 @@
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href={canonicalUrl} />
 
-    <!-- JSON-LD structured data -->
+    <!-- JSON-LD structured data: SoftwareApplication -->
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
@@ -76,6 +76,23 @@
             "releaseNotes": "https://github.com/humanspeak/svelte-markdown/releases",
             "requirements": "Svelte 5",
             "url": "https://markdown.svelte.page"
+        }
+    </script>
+
+    <!-- JSON-LD structured data: WebSite -->
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "Svelte Markdown",
+            "alternateName": "@humanspeak/svelte-markdown",
+            "url": "https://markdown.svelte.page",
+            "description": "A powerful, customizable markdown renderer for Svelte 5 with TypeScript support.",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Humanspeak, Inc.",
+                "url": "https://humanspeak.com"
+            }
         }
     </script>
 </svelte:head>
