@@ -2,7 +2,15 @@
     import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import Example from '$lib/components/general/Example.svelte'
-    import CodeFormatting from '$lib/examples/CodeFormatting.svelte'
+    import type { Component } from 'svelte'
+    import { onMount } from 'svelte'
+
+    let CodeFormatting: Component | null = $state(null)
+
+    onMount(async () => {
+        const mod = await import('$lib/examples/CodeFormatting.svelte')
+        CodeFormatting = mod.default
+    })
 
     const breadcrumbs = getBreadcrumbContext()
     $effect(() => {
@@ -26,5 +34,12 @@
     title="Code Formatting"
     sourceUrl="https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/CodeFormatting.svelte"
 >
-    <CodeFormatting />
+    {#if CodeFormatting}
+        <CodeFormatting />
+    {:else}
+        <div class="text-muted-foreground flex items-center justify-center gap-2 py-16 text-sm">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Loading code formatting demo…
+        </div>
+    {/if}
 </Example>

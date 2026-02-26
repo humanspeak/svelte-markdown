@@ -1,11 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
-    import markedCodeFormat from 'marked-code-format'
-    import prettierPluginBabel from 'prettier/plugins/babel'
-    import prettierPluginEstree from 'prettier/plugins/estree'
-    import prettierPluginCss from 'prettier/plugins/postcss'
-    import prettierPluginTypescript from 'prettier/plugins/typescript'
-    import { createHighlighter } from 'shiki'
+    import type { MarkedExtension } from 'marked'
     import { onMount } from 'svelte'
 
     const defaultMarkdown = `# Code Formatting with marked-code-format
@@ -48,17 +43,8 @@ const x={a:1,b:2,c:3}
     let input = $state(defaultMarkdown)
     let source = $state(defaultMarkdown)
     let debounceTimer = $state<ReturnType<typeof setTimeout> | undefined>(undefined)
-
-    const extensions = [
-        markedCodeFormat({
-            plugins: [
-                prettierPluginBabel,
-                prettierPluginEstree,
-                prettierPluginCss,
-                prettierPluginTypescript
-            ]
-        })
-    ]
+    let extensions = $state<MarkedExtension[]>([])
+    let ready = $state(false)
 
     function handleInput(event: Event) {
         const target = event.target as HTMLTextAreaElement
@@ -122,6 +108,34 @@ const x={a:1,b:2,c:3}
     let highlightedSnippet = $state('')
 
     onMount(async () => {
+        const [
+            { default: markedCodeFormat },
+            { default: prettierPluginBabel },
+            { default: prettierPluginEstree },
+            { default: prettierPluginCss },
+            { default: prettierPluginTypescript },
+            { createHighlighter }
+        ] = await Promise.all([
+            import('marked-code-format'),
+            import('prettier/plugins/babel'),
+            import('prettier/plugins/estree'),
+            import('prettier/plugins/postcss'),
+            import('prettier/plugins/typescript'),
+            import('shiki')
+        ])
+
+        extensions = [
+            markedCodeFormat({
+                plugins: [
+                    prettierPluginBabel,
+                    prettierPluginEstree,
+                    prettierPluginCss,
+                    prettierPluginTypescript
+                ]
+            })
+        ]
+        ready = true
+
         const highlighter = await createHighlighter({
             themes: ['github-light', 'one-dark-pro'],
             langs: ['svelte']
@@ -279,7 +293,14 @@ const x={a:1,b:2,c:3}
             </div>
             <div class="prose prose-sm dark:prose-invert max-w-none flex-1 overflow-auto">
                 {#if mode === 'extension'}
-                    <SvelteMarkdown {source} {extensions} />
+                    {#if ready}
+                        <SvelteMarkdown {source} {extensions} />
+                    {:else}
+                        <div class="text-muted-foreground flex items-center gap-2 py-8 text-sm">
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                            Loading formatter…
+                        </div>
+                    {/if}
                 {:else}
                     <SvelteMarkdown {source}>
                         {#snippet code(props: { lang: string; text: string })}
