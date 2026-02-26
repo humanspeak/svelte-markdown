@@ -20,8 +20,10 @@
         "@humanspeak/svelte-markdown": "workspace:*",
         "github-slugger": "^2.0.0",
         "katex": "^0.16.33",
+        "marked-code-format": "^1.1.6",
         "marked-katex-extension": "^5.1.7",
         "mermaid": "^11.12.3",
+        "prettier": "^3.8.1",
         "runed": "^0.37.1"
     },
     "devDependencies": {
@@ -47,7 +49,6 @@
         "lucide-svelte": "^0.575.0",
         "mdsvex": "^0.12.6",
         "mode-watcher": "^1.1.0",
-        "prettier": "^3.8.1",
         "prettier-plugin-organize-imports": "^4.3.0",
         "prettier-plugin-sort-json": "^4.2.0",
         "prettier-plugin-svelte": "^3.5.0",

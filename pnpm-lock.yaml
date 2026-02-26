@@ -150,12 +150,18 @@ importers:
       katex:
         specifier: ^0.16.33
         version: 0.16.33
+      marked-code-format:
+        specifier: ^1.1.6
+        version: 1.1.6(marked@17.0.3)(prettier@3.8.1)
       marked-katex-extension:
         specifier: ^5.1.7
         version: 5.1.7(katex@0.16.33)(marked@17.0.3)
       mermaid:
         specifier: ^11.12.3
         version: 11.12.3
+      prettier:
+        specifier: ^3.8.1
+        version: 3.8.1
       runed:
         specifier: ^0.37.1
         version: 0.37.1(@sveltejs/kit@2.53.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.53.5)(vite@7.3.1(@types/node@25.3.1)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)))(svelte@5.53.5)(typescript@5.9.3)(vite@7.3.1(@types/node@25.3.1)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)))(svelte@5.53.5)
@@ -226,9 +232,6 @@ importers:
       mode-watcher:
         specifier: ^1.1.0
         version: 1.1.0(svelte@5.53.5)
-      prettier:
-        specifier: ^3.8.1
-        version: 3.8.1
       prettier-plugin-organize-imports:
         specifier: ^4.3.0
         version: 4.3.0(prettier@3.8.1)(typescript@5.9.3)
@@ -1727,6 +1730,9 @@ packages:
     resolution: {integrity: sha512-hsU18Ae8CDTR6Kgu9DYf0EbCr/a5iGL0rytQDobUcdpYOKokk8LEjVphnXkDkgpi0wYVsqrXuP0bZxJaTqdgoA==}
     engines: {node: '>= 0.4'}
 
+  attributes-parser@2.2.3:
+    resolution: {integrity: sha512-zjOUWt95la8AdUO+kP1GBOonWrV5jy9NjJP+z9tva/DSA6FIzGKcN/gk3tdqQf/pOeB8dkyd3FCPrjhELMmrkg==}
+
   autoprefixer@10.4.27:
     resolution: {integrity: sha512-NP9APE+tO+LuJGn7/9+cohklunJsXWiaWEfV3si4Gi/XHDwVNgkwr1J3RQYFIvPy76GmJ9/bW8vyoU1LcxwKHA==}
     engines: {node: ^10 || ^12 || >=14}
@@ -2753,6 +2759,9 @@ packages:
   json-buffer@3.0.1:
     resolution: {integrity: sha512-4bV5BfR2mqfQTJm+V5tPPdf+ZpuhiIvTuAB5g8kcrXOZpTT/QwwVRWBywX1ozr6lEuPdbHxwaJlm9G6mI2sfSQ==}
 
+  json-loose@1.2.4:
+    resolution: {integrity: sha512-lwMWNC5pvVI33rhYWmAsmtICWE2IH7euDY/iIPeMFE5AuzAifYgqQrjqSMzwbrFV6MWPs41XD+CajElHI4cZMQ==}
+
   json-schema-traverse@0.4.1:
     resolution: {integrity: sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==}
 
@@ -2915,6 +2924,12 @@ packages:
     resolution: {integrity: sha512-hXdUTZYIVOt1Ex//jAQi+wTZZpUpwBj/0QsOzqegb3rGMMeJiSEu5xLHnYfBrRV4RH2+OCSOO95Is/7x1WJ4bw==}
     engines: {node: '>=10'}
 
+  marked-code-format@1.1.6:
+    resolution: {integrity: sha512-DSzefm4DvOOGNdtCx+WekoLyXd8rwcEROSzyydnbJ3rQ2vuE2dKW8cpJui/ulUUHMvyrF9TCq351Fqjd81ocEQ==}
+    peerDependencies:
+      marked: '>=7.0.0'
+      prettier: '>=3.0.0'
+
   marked-katex-extension@5.1.7:
     resolution: {integrity: sha512-CVFzrqwpXGVaHByqcVvO/JfzW/OMWrAF3pEfNYNIruzBzM64moANSHapCg1qbzEN+NGf5unHwkMfwJIXHzyDAw==}
     peerDependencies:
@@ -2990,6 +3005,9 @@ packages:
     resolution: {integrity: sha512-mUT9RRGPDYenk59qJauN1rhsIMKBmWA3xMF+uRwE8MW/tjhaDSCCARqkSuDTq8vr4/2KcAxIGVjACxTjdk5C3g==}
     peerDependencies:
       svelte: ^5.27.0
+
+  moo@0.5.2:
+    resolution: {integrity: sha512-iSAJLHYKnX41mKcJKjqvnAN9sf0LMDTXDEvFv+ffuRR9a1MIuXLjMNL6EsnDHSkKLTWNqQQ5uo61P4EbU4NU+Q==}
 
   motion-dom@12.34.3:
     resolution: {integrity: sha512-sYgFe+pR9aIM7o4fhs2aXtOI+oqlUd33N9Yoxcgo1Fv7M20sRkHtCmzE/VRNIcq7uNJ+qio+Xubt1FXH3pQ+eQ==}
@@ -5239,6 +5257,10 @@ snapshots:
 
   async-function@1.0.0: {}
 
+  attributes-parser@2.2.3:
+    dependencies:
+      json-loose: 1.2.4
+
   autoprefixer@10.4.27(postcss@8.5.6):
     dependencies:
       browserslist: 4.28.1
@@ -6435,6 +6457,10 @@ snapshots:
 
   json-buffer@3.0.1: {}
 
+  json-loose@1.2.4:
+    dependencies:
+      moo: 0.5.2
+
   json-schema-traverse@0.4.1: {}
 
   json-stable-stringify-without-jsonify@1.0.1: {}
@@ -6564,6 +6590,12 @@ snapshots:
     dependencies:
       semver: 7.7.3
 
+  marked-code-format@1.1.6(marked@17.0.3)(prettier@3.8.1):
+    dependencies:
+      attributes-parser: 2.2.3
+      marked: 17.0.3
+      prettier: 3.8.1
+
   marked-katex-extension@5.1.7(katex@0.16.33)(marked@17.0.3):
     dependencies:
       katex: 0.16.33
@@ -6675,6 +6707,8 @@ snapshots:
       runed: 0.25.0(svelte@5.53.5)
       svelte: 5.53.5
       svelte-toolbelt: 0.7.1(svelte@5.53.5)
+
+  moo@0.5.2: {}
 
   motion-dom@12.34.3:
     dependencies:

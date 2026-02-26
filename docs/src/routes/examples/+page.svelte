@@ -58,6 +58,13 @@
             description:
                 'Async Mermaid diagram rendering with a custom marked extension. Flowcharts, sequence diagrams, and more.',
             icon: 'fa-solid fa-diagram-project'
+        },
+        {
+            slug: 'code-formatting',
+            title: 'Code Formatting',
+            description:
+                'Enhance code blocks with walkTokens extensions and snippet overrides. No custom renderers required.',
+            icon: 'fa-solid fa-code'
         }
     ]
 </script>

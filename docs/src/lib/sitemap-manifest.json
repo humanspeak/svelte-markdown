@@ -1,5 +1,5 @@
 {
-    "/": "2026-02-18",
+    "/": "2026-02-26",
     "/docs/advanced/allow-deny": "2026-02-17",
     "/docs/advanced/marked-extensions": "2026-02-20",
     "/docs/advanced/security": "2026-02-17",
@@ -18,8 +18,9 @@
     "/docs/renderers/html-renderers": "2026-02-17",
     "/docs/renderers/markdown-renderers": "2026-02-17",
     "/docs/renderers/snippet-overrides": "2026-02-18",
-    "/examples": "2026-02-20",
+    "/examples": "2026-02-26",
     "/examples/caching-performance": "2026-02-17",
+    "/examples/code-formatting": "2026-02-26",
     "/examples/custom-renderers": "2026-02-17",
     "/examples/html-filtering": "2026-02-17",
     "/examples/marked-extensions": "2026-02-19",
