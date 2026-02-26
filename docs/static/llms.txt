@@ -1,0 +1,65 @@
+# Svelte Markdown
+
+> A powerful, customizable markdown renderer for Svelte 5 with TypeScript support. Built on Marked and HTMLParser2 with 24 markdown renderers, 69+ HTML tag renderers, LRU token caching, and allow/deny filtering utilities.
+
+## Overview
+
+- Package: `@humanspeak/svelte-markdown`
+- Version: 8.x (latest)
+- License: MIT
+- Requires: Svelte 5
+- Maintained by: [Humanspeak, Inc.](https://humanspeak.com)
+
+## Installation
+
+```bash
+npm install @humanspeak/svelte-markdown
+```
+
+## Basic Usage
+
+```svelte
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    const source = '# Hello World\n\nThis is **bold** and *italic* text.'
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+## Key Features
+
+- Svelte 5 runes compatibility ($props, $derived)
+- Full TypeScript support with complete type definitions
+- 24 built-in markdown renderers (heading, paragraph, link, code, table, etc.)
+- 69+ HTML tag renderers for raw HTML within markdown
+- LRU token caching (50-200x faster re-renders)
+- Allow/deny filtering for HTML tags and markdown renderers
+- Custom renderer components for full output control
+- Svelte 5 snippet overrides for inline customization
+- Marked extensions support (KaTeX, Mermaid, etc.)
+- Async markdown parsing support
+- Secure HTML parsing via HTMLParser2
+
+## Documentation
+
+- [Getting Started](https://markdown.svelte.page/docs/getting-started)
+- [API Reference](https://markdown.svelte.page/docs/api/svelte-markdown)
+- [Types & Exports](https://markdown.svelte.page/docs/api/types)
+- [Markdown Renderers](https://markdown.svelte.page/docs/renderers/markdown-renderers)
+- [HTML Renderers](https://markdown.svelte.page/docs/renderers/html-renderers)
+- [Custom Renderers](https://markdown.svelte.page/docs/renderers/custom-renderers)
+- [Snippet Overrides](https://markdown.svelte.page/docs/renderers/snippet-overrides)
+- [Token Caching](https://markdown.svelte.page/docs/advanced/token-caching)
+- [Allow/Deny Filtering](https://markdown.svelte.page/docs/advanced/allow-deny)
+- [Security](https://markdown.svelte.page/docs/advanced/security)
+- [Marked Extensions](https://markdown.svelte.page/docs/advanced/marked-extensions)
+- [Migration Guide](https://markdown.svelte.page/docs/migration)
+- [Full LLM Reference](https://markdown.svelte.page/llms-full.txt)
+
+## Links
+
+- Homepage: <https://markdown.svelte.page>
+- Repository: <https://github.com/humanspeak/svelte-markdown>
+- NPM: <https://www.npmjs.com/package/@humanspeak/svelte-markdown>
+- Issues: <https://github.com/humanspeak/svelte-markdown/issues>
