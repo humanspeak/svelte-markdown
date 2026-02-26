@@ -110,6 +110,7 @@
 
     // Async token state (used only when extensions require async walkTokens)
     let asyncTokens = $state<Token[] | TokensList | undefined>(undefined)
+    let asyncRequestId = 0
 
     $effect(() => {
         if (!hasAsyncExtension) return
@@ -130,13 +131,18 @@
         const currentSource = source as string
         const currentOptions = combinedOptions
         const currentInline = isInline
+        const requestId = ++asyncRequestId
         parseAndCacheTokensAsync(currentSource, currentOptions, currentInline)
             .then((result) => {
-                asyncTokens = result
+                if (requestId === asyncRequestId) {
+                    asyncTokens = result
+                }
             })
             .catch((error) => {
-                console.error('[svelte-markdown] async walkTokens failed:', error)
-                asyncTokens = []
+                if (requestId === asyncRequestId) {
+                    console.error('[svelte-markdown] async walkTokens failed:', error)
+                    asyncTokens = []
+                }
             })
     })
 
