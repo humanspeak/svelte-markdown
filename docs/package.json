@@ -10,11 +10,13 @@
         "deploy": "npm run build && wrangler pages deploy",
         "dev": "vite dev",
         "format": "prettier --write .",
+        "generate-social": "tsx ./scripts/generate-social-images.ts",
         "lint": "prettier --check . && eslint .",
         "lint:fix": "npm run format && eslint . --fix",
         "preview": "vite preview",
         "sitemap:manifest": "node ./scripts/generate-sitemap-manifest.mjs",
-        "sitemap:watch": "chokidar 'src/routes/**/*.svelte' 'src/routes/**/*.svx' 'src/routes/**/*.md' --ignore 'src/routes/examples/+page.ts' -c 'node ./scripts/generate-sitemap-manifest.mjs' --initial --silent"
+        "sitemap:watch": "chokidar 'src/routes/**/*.svelte' 'src/routes/**/*.svx' 'src/routes/**/*.md' --ignore 'src/routes/examples/+page.ts' -c 'node ./scripts/generate-sitemap-manifest.mjs' --initial --silent",
+        "social:watch": "chokidar 'src/lib/components/OG.svelte' -c 'tsx ./scripts/generate-social-images.ts' --initial --silent"
     },
     "dependencies": {
         "@humanspeak/svelte-markdown": "workspace:*",
@@ -53,6 +55,7 @@
         "prettier-plugin-sort-json": "^4.2.0",
         "prettier-plugin-svelte": "^3.5.0",
         "prettier-plugin-tailwindcss": "^0.7.2",
+        "puppeteer": "^24.37.5",
         "shiki": "^3.23.0",
         "svelte": "^5.53.5",
         "svelte-check": "^4.4.4",
