@@ -44,16 +44,10 @@ async function main() {
 
     try {
         console.log('Generating Twitter card...')
-        await captureImage(
-            `${baseUrl}?type=twitter`,
-            path.join(outputDir, 'svelte-markdown-twitter.png')
-        )
+        await captureImage(`${baseUrl}?type=twitter`, path.join(outputDir, 'twitter-default.png'))
 
         console.log('Generating OpenGraph card...')
-        await captureImage(
-            `${baseUrl}?type=og`,
-            path.join(outputDir, 'svelte-markdown-opengraph.png')
-        )
+        await captureImage(`${baseUrl}?type=og`, path.join(outputDir, 'og-default.png'))
 
         console.log('Social images generated successfully!')
     } catch (error) {

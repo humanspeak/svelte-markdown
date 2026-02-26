@@ -43,7 +43,7 @@
             <div
                 class="flex w-fit items-center space-x-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold tracking-wide text-white/80 uppercase backdrop-blur-md"
             >
-                <img src="{url}/humanspeak.svg" alt="Humanspeak" class="h-4 w-4 opacity-80" />
+                <img src="{url}/humanspeak-dark.svg" alt="Humanspeak" class="h-4 w-4 opacity-80" />
                 <span>@humanspeak/svelte-markdown</span>
             </div>
 
@@ -84,7 +84,7 @@
             <div class="flex items-center space-x-6">
                 <!-- Authorship -->
                 <div class="flex items-center space-x-4">
-                    <img src="{url}/humanspeak.svg" alt="Logo" class="h-12 w-12 opacity-90" />
+                    <img src="{url}/humanspeak-dark.svg" alt="Logo" class="h-12 w-12 opacity-90" />
                     <div class="flex flex-col">
                         <span class="text-sm font-semibold tracking-wider text-white/50 uppercase"
                             >Created by</span

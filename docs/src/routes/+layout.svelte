@@ -29,7 +29,7 @@
     <meta property="og:description" content={seo.description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:image" content="{imageLocation}svelte-markdown-opengraph.png" />
+    <meta property="og:image" content="{imageLocation}og-default.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
 
@@ -37,7 +37,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={seo.title} />
     <meta name="twitter:description" content={seo.description} />
-    <meta name="twitter:image" content="{imageLocation}svelte-markdown-twitter.png" />
+    <meta name="twitter:image" content="{imageLocation}twitter-default.png" />
 
     <!-- Keywords -->
     <meta
