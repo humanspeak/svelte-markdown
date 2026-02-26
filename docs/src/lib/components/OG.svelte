@@ -57,7 +57,7 @@
             <p
                 class:text-4xl={type === 'og'}
                 class:text-3xl={type === 'twitter'}
-                class="max-w-3xl leading-snug font-medium text-white/70"
+                class="max-w-5xl leading-snug font-medium text-white/70"
             >
                 Fast, secure markdown rendering with built-in caching and snippet overrides.
             </p>
