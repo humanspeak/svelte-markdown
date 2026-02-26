@@ -393,6 +393,18 @@ console.log('code');
             expect(visited.length).toBeGreaterThan(1)
             expect(visited).toContain('list')
         })
+
+        it('should propagate walkTokens rejection', async () => {
+            const source = '# Test'
+            const walkTokens = vi.fn(async () => {
+                throw new Error('Async failure')
+            })
+            const options: SvelteMarkdownOptions = { walkTokens }
+
+            await expect(parseAndCacheTokensAsync(source, options, false)).rejects.toThrow(
+                'Async failure'
+            )
+        })
     })
 
     describe('Return Type', () => {

@@ -130,9 +130,14 @@
         const currentSource = source as string
         const currentOptions = combinedOptions
         const currentInline = isInline
-        parseAndCacheTokensAsync(currentSource, currentOptions, currentInline).then((result) => {
-            asyncTokens = result
-        })
+        parseAndCacheTokensAsync(currentSource, currentOptions, currentInline)
+            .then((result) => {
+                asyncTokens = result
+            })
+            .catch((error) => {
+                console.error('[svelte-markdown] async walkTokens failed:', error)
+                asyncTokens = []
+            })
     })
 
     // Unified tokens: prefer sync path, fall back to async

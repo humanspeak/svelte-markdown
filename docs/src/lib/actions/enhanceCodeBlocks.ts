@@ -72,10 +72,10 @@ const enhance = (container: HTMLElement) => {
         copyBtn.addEventListener('click', () => {
             const code = getCode(block)
             if (!code) return
-            navigator.clipboard.writeText(code)
-
-            copyBtn.classList.add('copied')
-            setTimeout(() => copyBtn.classList.remove('copied'), 2000)
+            navigator.clipboard.writeText(code).then(() => {
+                copyBtn.classList.add('copied')
+                setTimeout(() => copyBtn.classList.remove('copied'), 2000)
+            })
         })
 
         header.appendChild(langSpan)
