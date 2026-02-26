@@ -30,8 +30,20 @@ function readPkgName(dir) {
 
 /** Copy text to clipboard (cross-platform). */
 function copyToClipboard(text) {
-    const cmd = platform() === 'darwin' ? 'pbcopy' : 'xclip -selection clipboard'
-    execSync(cmd, { input: text })
+    const os = platform()
+    let cmd
+    if (os === 'darwin') {
+        cmd = 'pbcopy'
+    } else if (os === 'win32') {
+        cmd = 'clip'
+    } else {
+        cmd = 'xclip -selection clipboard'
+    }
+    try {
+        execSync(cmd, { input: text, stdio: ['pipe', 'ignore', 'ignore'] })
+    } catch {
+        console.warn('⚠ Clipboard utility not found. Install xclip or wl-copy.')
+    }
 }
 
 /** @type {Map<string, {name: string, port: number, source: string}>} */
