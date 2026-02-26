@@ -80,6 +80,7 @@ $$`
   import markedKatex from 'marked-katex-extension'
   import KatexRenderer from './KatexRenderer.svelte'
 
+  const source = 'Euler: $e^{i\\\\pi} + 1 = 0$'
   const renderers = {
     inlineKatex: KatexRenderer,
     blockKatex: KatexRenderer
@@ -93,7 +94,7 @@ $$`
 \x3C/svelte:head>
 
 \x3CSvelteMarkdown
-  source={markdown}
+  {source}
   extensions={[markedKatex({ throwOnError: false })]}
   {renderers}
 />`
@@ -120,6 +121,8 @@ $$`
   import SvelteMarkdown from '@humanspeak/svelte-markdown'
   import katex from 'katex'
   import markedKatex from 'marked-katex-extension'
+
+  const source = 'Euler: $e^{i\\\\pi} + 1 = 0$'
 \x3C/script>
 
 \x3Csvelte:head>
@@ -129,7 +132,7 @@ $$`
 \x3C/svelte:head>
 
 \x3CSvelteMarkdown
-  source={markdown}
+  {source}
   extensions={[markedKatex({ throwOnError: false })]}
 >
   {#snippet inlineKatex(props)}

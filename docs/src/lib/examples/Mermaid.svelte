@@ -96,11 +96,12 @@ classDiagram
   import { markedMermaid, MermaidRenderer }
     from '@humanspeak/svelte-markdown/extensions'
 
+  const source = '\\\`\\\`\\\`mermaid\\ngraph LR\\n  A --> B\\n\\\`\\\`\\\`'
   const renderers = { mermaid: MermaidRenderer }
 \x3C/script>
 
 \x3CSvelteMarkdown
-  source={markdown}
+  {source}
   extensions={[markedMermaid()]}
   {renderers}
 />`
@@ -109,10 +110,12 @@ classDiagram
   import SvelteMarkdown from '@humanspeak/svelte-markdown'
   import { markedMermaid, MermaidRenderer }
     from '@humanspeak/svelte-markdown/extensions'
+
+  const source = '\\\`\\\`\\\`mermaid\\ngraph LR\\n  A --> B\\n\\\`\\\`\\\`'
 \x3C/script>
 
 \x3CSvelteMarkdown
-  source={markdown}
+  {source}
   extensions={[markedMermaid()]}
 >
   {#snippet mermaid(props)}

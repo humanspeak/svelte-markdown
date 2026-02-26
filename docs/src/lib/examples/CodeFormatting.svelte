@@ -90,6 +90,8 @@ const x={a:1,b:2,c:3}
   import prettierCss from 'prettier/plugins/postcss'
   import prettierTs from 'prettier/plugins/typescript'
 
+  const source = '\\\`\\\`\\\`js prettier\\nconst x={a:1,b:2}\\n\\\`\\\`\\\`'
+
   const extensions = [
     markedCodeFormat({
       plugins: [prettierBabel, prettierEstree, prettierCss, prettierTs]
@@ -97,13 +99,15 @@ const x={a:1,b:2,c:3}
   ]
 \x3C/script>
 
-\x3CSvelteMarkdown source={markdown} {extensions} />`
+\x3CSvelteMarkdown {source} {extensions} />`
 
     const snippetCode = `\x3Cscript lang="ts">
   import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+  const source = '# Hello\\n\\n\\\`\\\`\\\`js\\nconst x = 1\\n\\\`\\\`\\\`'
 \x3C/script>
 
-\x3CSvelteMarkdown source={markdown}>
+\x3CSvelteMarkdown {source}>
   {#snippet code(props)}
     \x3Cdiv class="code-block">
       {#if props.lang}
