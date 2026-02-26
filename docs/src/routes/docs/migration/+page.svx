@@ -1,0 +1,192 @@
+---
+title: Migration Guide
+description: Migrate from svelte-markdown to @humanspeak/svelte-markdown for Svelte 5 with improved TypeScript support, caching, and new features
+---
+
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Migration Guide | Svelte Markdown'
+        seo.description = 'Migrate from svelte-markdown to @humanspeak/svelte-markdown for Svelte 5 with improved TypeScript support, caching, and new features'
+    }
+</script>
+
+# Migration Guide
+
+Migrate from the original `svelte-markdown` (by Pablo Berganza) to `@humanspeak/svelte-markdown` -- the actively maintained Svelte 5 successor.
+
+## Why Migrate?
+
+The original `svelte-markdown` package is no longer actively maintained and does not support Svelte 5. `@humanspeak/svelte-markdown` is a drop-in replacement that adds:
+
+- **Svelte 5 support** -- built with runes (`$props`, `$derived`, `$state`)
+- **Full TypeScript support** -- complete type definitions for all exports
+- **Token caching** -- LRU cache for 50-200x faster re-renders
+- **69+ HTML tag renderers** -- dedicated components for HTML within markdown
+- **Allow/deny filtering** -- fine-grained control over rendered elements
+- **Snippet overrides** -- customize rendering inline with Svelte 5 snippets
+- **Marked extensions** -- KaTeX, Mermaid, and any marked extension via the `extensions` prop
+- **Async parsing** -- support for async marked extensions
+- **Active maintenance** -- regular updates, bug fixes, and new features
+
+## Step-by-Step Migration
+
+### 1. Update Dependencies
+
+Remove the old package and install the new one:
+
+```bash
+# Remove old package
+npm uninstall svelte-markdown
+
+# Install new package
+npm install @humanspeak/svelte-markdown
+```
+
+### 2. Update Imports
+
+Find and replace all imports. Change this:
+
+```javascript
+import SvelteMarkdown from 'svelte-markdown'
+```
+
+To this:
+
+```javascript
+import SvelteMarkdown from '@humanspeak/svelte-markdown'
+```
+
+### 3. Update Svelte to Version 5
+
+`@humanspeak/svelte-markdown` requires Svelte 5. If you haven't upgraded yet:
+
+```bash
+npm install svelte@5
+```
+
+See the [official Svelte 5 migration guide](https://svelte.dev/docs/svelte/v5-migration-guide) for framework-level changes.
+
+### 4. Update Custom Renderers
+
+If you have custom renderer components, update them to use Svelte 5 runes:
+
+**Before (Svelte 4):**
+
+```html
+<script>
+    export let href = ''
+    export let title = ''
+</script>
+
+<a {href} {title}>
+    <slot />
+</a>
+```
+
+**After (Svelte 5):**
+
+```html
+<script>
+    const { href = '', title = '', children } = $props()
+</script>
+
+<a {href} {title}>
+    {@render children?.()}
+</a>
+```
+
+### 5. Update Component Usage (if needed)
+
+The core API is the same. The `source`, `renderers`, `options`, `isInline`, and `parsed` props work identically:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    const source = '# Hello World'
+</script>
+
+<!-- Same API as before -->
+<SvelteMarkdown {source} />
+```
+
+## New Features Available After Migration
+
+Once migrated, you can immediately use these new capabilities:
+
+### Token Caching
+
+Automatic LRU caching for parsed markdown tokens -- no code changes needed:
+
+```html
+<!-- Caching is enabled by default -->
+<SvelteMarkdown {source} />
+```
+
+### Allow/Deny Filtering
+
+Control exactly which elements are rendered:
+
+```html
+<script>
+    import SvelteMarkdown, { allowHtmlOnly, excludeRenderersOnly } from '@humanspeak/svelte-markdown'
+
+    const htmlRenderers = allowHtmlOnly(['strong', 'em', 'a'])
+    const renderers = excludeRenderersOnly(['html', 'image'])
+</script>
+
+<SvelteMarkdown {source} {renderers} {htmlRenderers} />
+```
+
+### Snippet Overrides
+
+Customize rendering inline without creating separate component files:
+
+```html
+{#snippet heading(props)}
+    <h1 class="custom-heading">{@render props.children?.()}</h1>
+{/snippet}
+
+<SvelteMarkdown {source} snippetOverrides={{ heading }} />
+```
+
+### Marked Extensions
+
+Use any marked extension directly:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import markedKatex from 'marked-katex-extension'
+
+    const extensions = [markedKatex({ throwOnError: false })]
+</script>
+
+<SvelteMarkdown source="Euler's identity: $e^{'{'}i\\pi{'}'} + 1 = 0$" {extensions} />
+```
+
+## API Compatibility
+
+| Feature | svelte-markdown | @humanspeak/svelte-markdown |
+|---------|----------------|----------------------------|
+| `source` prop | string | string \| Token[] |
+| `renderers` prop | object | Partial\<Renderers\> (typed) |
+| `options` prop | object | Partial\<SvelteMarkdownOptions\> (typed) |
+| `isInline` prop | boolean | boolean |
+| `parsed` callback | function | function |
+| `extensions` prop | -- | MarkedExtension[] |
+| `snippetOverrides` prop | -- | SnippetOverrides |
+| Custom renderers | Svelte 4 components | Svelte 5 components |
+| TypeScript | Partial | Full type coverage |
+| HTML tag renderers | -- | 69+ built-in |
+| Token caching | -- | Built-in LRU |
+| Allow/deny filtering | -- | 6 utility functions |
+
+## Related
+
+- [Getting Started](/docs/getting-started) -- installation and setup
+- [SvelteMarkdown API](/docs/api/svelte-markdown) -- full component reference
+- [Custom Renderers](/docs/renderers/custom-renderers) -- building custom renderers
+- [Types & Exports](/docs/api/types) -- all exported types and utilities
