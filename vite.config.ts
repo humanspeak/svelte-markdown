@@ -40,6 +40,9 @@ export default defineConfig({
         ],
         reporters: ['verbose', ['junit', { outputFile: './junit-vitest.xml' }]]
     },
+    server: {
+        port: 8233
+    },
     build: {
         sourcemap: true
     }
