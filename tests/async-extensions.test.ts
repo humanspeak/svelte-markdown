@@ -35,9 +35,11 @@ test.describe('Async walkTokens Extensions', () => {
         await textarea.clear()
         await textarea.fill('```js\nnew code\n```')
 
-        // Wait for async transformation to complete
-        const codeBlock = preview.locator('pre code')
-        await expect(codeBlock).toHaveText('NEW CODE', { timeout: 10000 })
+        // Wait for async transformation to complete.
+        // First wait for exactly 1 code block (old content had 2).
+        const codeBlocks = preview.locator('pre code')
+        await expect(codeBlocks).toHaveCount(1, { timeout: 10000 })
+        await expect(codeBlocks.first()).toHaveText('NEW CODE', { timeout: 10000 })
     })
 
     test('should handle markdown with no code blocks (async extension is a no-op)', async ({
