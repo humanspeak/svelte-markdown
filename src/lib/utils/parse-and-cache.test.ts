@@ -1,6 +1,6 @@
 import type { SvelteMarkdownOptions } from '$lib/types.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { parseAndCacheTokens } from './parse-and-cache.js'
+import { parseAndCacheTokens, parseAndCacheTokensAsync } from './parse-and-cache.js'
 import { tokenCache } from './token-cache.js'
 
 describe('parseAndCacheTokens', () => {
@@ -332,6 +332,66 @@ console.log('code');
                 expect(tokens).toBeDefined()
                 expect(Array.isArray(tokens)).toBe(true)
             })
+        })
+    })
+
+    describe('Async walkTokens', () => {
+        it('should invoke async walkTokens and await completion', async () => {
+            const source = '```js\nconsole.log("hello")\n```'
+            const walkTokens = vi.fn(async (token: { type: string; text?: string }) => {
+                if (token.type === 'code' && token.text) {
+                    // Simulate async work via microtask (Promise.resolve)
+                    await Promise.resolve()
+                    token.text = token.text.toUpperCase()
+                }
+            })
+            const options: SvelteMarkdownOptions = { walkTokens }
+
+            const tokens = await parseAndCacheTokensAsync(source, options, false)
+
+            expect(walkTokens).toHaveBeenCalled()
+            // The async modification should have been applied
+            const codeToken = tokens.find(
+                (t: { type: string }) => t.type === 'code'
+            ) as unknown as { text: string }
+            expect(codeToken).toBeDefined()
+            expect(codeToken.text).toBe('CONSOLE.LOG("HELLO")')
+        })
+
+        it('should return cached tokens on subsequent async calls', async () => {
+            const source = '# Async Cache Test'
+            const options: SvelteMarkdownOptions = {}
+
+            const tokens1 = await parseAndCacheTokensAsync(source, options, false)
+            const tokens2 = await parseAndCacheTokensAsync(source, options, false)
+
+            expect(tokens2).toBe(tokens1)
+        })
+
+        it('should handle walkTokens that returns void (non-async)', async () => {
+            const source = '# Test'
+            const walkTokens = vi.fn(() => {})
+            const options: SvelteMarkdownOptions = { walkTokens }
+
+            const tokens = await parseAndCacheTokensAsync(source, options, false)
+
+            expect(tokens).toBeDefined()
+            expect(walkTokens).toHaveBeenCalled()
+        })
+
+        it('should walk nested tokens recursively', async () => {
+            const source = '- item with **bold**'
+            const visited: string[] = []
+            const walkTokens = vi.fn(async (token: { type: string }) => {
+                visited.push(token.type)
+            })
+            const options: SvelteMarkdownOptions = { walkTokens }
+
+            await parseAndCacheTokensAsync(source, options, false)
+
+            // Should visit list, list_item, text, strong, and nested text tokens
+            expect(visited.length).toBeGreaterThan(1)
+            expect(visited).toContain('list')
         })
     })
 
