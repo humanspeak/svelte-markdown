@@ -50,7 +50,8 @@ const config = {
                     'self',
                     'https://kit.fontawesome.com',
                     'https://*.ahrefs.com',
-                    'unsafe-inline'
+                    'unsafe-inline',
+                    'wasm-unsafe-eval'
                 ],
                 'style-src': ['self', 'unsafe-inline', 'https://kit.fontawesome.com'],
                 'img-src': ['self', 'data:', 'https:'],
