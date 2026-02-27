@@ -113,7 +113,7 @@
         }
     ]
 
-    const defaultMarkdown = `# Welcome to My Markdown Playground! \u{1F3A8}
+    const defaultMarkdown = `## Welcome to My Markdown Playground! \u{1F3A8}
 
 Hey there! This is a *fun* example of mixing **Markdown** and <em>HTML</em> together.
 
@@ -249,9 +249,9 @@ Happy coding! <span style="color: hotpink">\u{2665}</span>`
                         <p
                             class="text-muted-foreground mt-6 text-base leading-7 text-pretty md:text-lg"
                         >
-                            A powerful, customizable markdown renderer for Svelte 5. 24 renderers,
-                            69+ HTML tags, token caching, and allow/deny utilities—all with full
-                            TypeScript support.
+                            A powerful, customizable markdown renderer for Svelte 5. <br />24
+                            renderers, 69+ HTML tags, token caching, and allow/deny utilities—all
+                            with full TypeScript support.
                         </p>
                         <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
                             <a
