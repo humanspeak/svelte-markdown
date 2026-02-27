@@ -69,7 +69,8 @@ export const GET = async ({ params, url }) => {
 
     return new Response(body, {
         headers: {
-            'content-type': 'image/png'
+            'content-type': 'image/png',
+            'cache-control': 'public, max-age=86400, s-maxage=2592000, stale-while-revalidate=86400'
         }
     })
 }
