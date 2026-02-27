@@ -203,6 +203,16 @@
                     icon: 'fa-solid fa-diagram-project'
                 },
                 {
+                    title: 'GitHub Alerts',
+                    href: '/examples/github-alerts',
+                    icon: 'fa-solid fa-triangle-exclamation'
+                },
+                {
+                    title: 'Footnotes',
+                    href: '/examples/footnotes',
+                    icon: 'fa-solid fa-superscript'
+                },
+                {
                     title: 'Code Formatting',
                     href: '/examples/code-formatting',
                     icon: 'fa-solid fa-code'

@@ -485,6 +485,88 @@ You can also use snippet overrides to wrap `MermaidRenderer` with custom markup:
 
 Since Mermaid rendering is async, the snippet delegates to `MermaidRenderer` rather than calling `mermaid.render()` directly. This pattern works for any async extension — keep the async logic in a component and use the snippet for layout customization.
 
+### GitHub Alerts
+
+Built-in support for [GitHub-style alerts/admonitions](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts). Five alert types are supported: `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, and `CAUTION`.
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
+    import { markedAlert, AlertRenderer } from '@humanspeak/svelte-markdown/extensions'
+
+    const source = `
+> [!NOTE]
+> Useful information that users should know.
+
+> [!WARNING]
+> Urgent info that needs immediate attention.
+`
+
+    interface AlertRenderers extends Renderers {
+        alert: RendererComponent
+    }
+
+    const renderers: Partial<AlertRenderers> = {
+        alert: AlertRenderer
+    }
+</script>
+
+<SvelteMarkdown {source} extensions={[markedAlert()]} {renderers} />
+```
+
+`AlertRenderer` renders a `<div class="markdown-alert markdown-alert-{type}">` with a title — no inline styles, so you can theme it with your own CSS. You can also use snippet overrides:
+
+```svelte
+<SvelteMarkdown source={markdown} extensions={[markedAlert()]}>
+    {#snippet alert(props)}
+        <div class="my-alert my-alert-{props.alertType}">
+            <strong>{props.alertType}</strong>
+            <p>{props.text}</p>
+        </div>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+### Footnotes
+
+Built-in support for footnote references and definitions. Footnote references (`[^id]`) render as superscript links, and definitions (`[^id]: content`) render as a numbered list at the end of the document with back-links.
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
+    import {
+        markedFootnote,
+        FootnoteRef,
+        FootnoteSection
+    } from '@humanspeak/svelte-markdown/extensions'
+
+    const source = `
+Here is a statement[^1] with a footnote.
+
+Another claim[^note] that needs a source.
+
+[^1]: This is the first footnote.
+[^note]: This is a named footnote.
+`
+
+    interface FootnoteRenderers extends Renderers {
+        footnoteRef: RendererComponent
+        footnoteSection: RendererComponent
+    }
+
+    const renderers: Partial<FootnoteRenderers> = {
+        footnoteRef: FootnoteRef,
+        footnoteSection: FootnoteSection
+    }
+</script>
+
+<SvelteMarkdown {source} extensions={[markedFootnote()]} {renderers} />
+```
+
+`FootnoteRef` renders `<sup><a href="#fn-{id}">{id}</a></sup>` and `FootnoteSection` renders an `<ol>` with bidirectional links (ref to definition and back). You can also use snippet overrides for custom rendering.
+
 ### How It Works
 
 Marked extensions define custom token types with a `name` property (e.g., `inlineKatex`, `blockKatex`, `alert`). When you pass extensions via the `extensions` prop, SvelteMarkdown automatically extracts these token type names and makes them available as both **component renderer keys** and **snippet override names**.
