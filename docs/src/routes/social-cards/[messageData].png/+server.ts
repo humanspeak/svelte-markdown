@@ -24,6 +24,7 @@ export const GET = async ({ params, url }) => {
     if (messageData) {
         try {
             const parsed = decodeMessageData(messageData)
+            if (parsed.type) type = parsed.type
             if (parsed.title) title = parsed.title
             if (parsed.description) description = parsed.description
             if (parsed.features) features = parsed.features

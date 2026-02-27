@@ -5,6 +5,7 @@ description: Examples of using the isInline prop for inline markdown rendering
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
@@ -12,7 +13,15 @@ description: Examples of using the isInline prop for inline markdown rendering
         seo.description = 'Examples of using the isInline prop for inline markdown rendering'
         seo.ogTitle = 'Inline Rendering'
         seo.ogTagline = 'Render markdown inline without block-level elements.'
+        seo.ogFeatures = ['isInline Prop', 'No Block Elements', 'Inline Context', 'Span Friendly']
     }
+
+    const breadcrumbs = getBreadcrumbContext()
+    $effect(() => {
+        if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples', href: '/docs/examples' }, { title: 'Inline Rendering' }]
+        }
+    })
 </script>
 
 # Inline Rendering

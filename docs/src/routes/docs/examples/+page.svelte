@@ -16,6 +16,7 @@
             'Real-world usage examples for @humanspeak/svelte-markdown covering basic rendering, custom renderers, HTML filtering, inline rendering, and the parsed callback.'
         seo.ogTitle = 'Usage Examples'
         seo.ogTagline = 'Real-world patterns for rendering markdown.'
+        seo.ogFeatures = ['Basic Rendering', 'Custom Renderers', 'HTML Filtering', 'Inline Mode']
     }
 
     const examples = [

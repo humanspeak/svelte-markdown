@@ -21,6 +21,7 @@
             'Interactive demo of HTML allow/deny filtering in @humanspeak/svelte-markdown. Control which HTML tags are rendered from markdown content.'
         seo.ogTitle = 'HTML Filtering'
         seo.ogTagline = 'Interactive allow/deny tag filtering demo.'
+        seo.ogFeatures = ['Allow/Deny', 'Tag Control', 'Live Toggle', 'Safe HTML']
     }
 </script>
 

@@ -21,6 +21,7 @@
             'Explore token caching performance in @humanspeak/svelte-markdown. See the 50-200x speedup from built-in LRU caching.'
         seo.ogTitle = 'Caching Performance'
         seo.ogTagline = 'See the 50-200x speedup from LRU caching.'
+        seo.ogFeatures = ['Benchmark', '50-200x Speed', 'LRU Cache', 'Real-Time Stats']
     }
 </script>
 

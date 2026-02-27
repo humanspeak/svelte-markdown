@@ -5,6 +5,7 @@ description: Performance optimization through built-in LRU token caching
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
@@ -12,7 +13,15 @@ description: Performance optimization through built-in LRU token caching
         seo.description = 'Performance optimization through built-in LRU token caching'
         seo.ogTitle = 'Token Caching'
         seo.ogTagline = '50-200x faster re-renders with built-in LRU caching.'
+        seo.ogFeatures = ['50-200x Faster', 'LRU Cache', 'Auto Caching', 'TTL Expiry']
     }
+
+    const breadcrumbs = getBreadcrumbContext()
+    $effect(() => {
+        if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Advanced', href: '/docs/advanced/marked-extensions' }, { title: 'Token Caching' }]
+        }
+    })
 </script>
 
 # Token Caching

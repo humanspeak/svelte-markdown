@@ -29,6 +29,7 @@
             'Interactive demo of marked extensions for code block formatting in @humanspeak/svelte-markdown. See walkTokens extensions and snippet overrides for enhanced code display.'
         seo.ogTitle = 'Code Formatting'
         seo.ogTagline = 'Enhanced code blocks with syntax highlighting.'
+        seo.ogFeatures = ['Syntax Highlight', 'Line Numbers', 'Copy Button', 'Language Tags']
     }
 </script>
 

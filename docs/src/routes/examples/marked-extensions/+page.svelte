@@ -21,6 +21,7 @@
             'Interactive demo of marked extensions with KaTeX math rendering in @humanspeak/svelte-markdown. See component renderers and snippet overrides side by side.'
         seo.ogTitle = 'Marked Extensions'
         seo.ogTagline = 'KaTeX math rendering demo.'
+        seo.ogFeatures = ['KaTeX Math', 'Live Preview', 'Component Mode', 'Snippet Mode']
     }
 </script>
 

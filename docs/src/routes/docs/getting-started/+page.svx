@@ -5,6 +5,7 @@ description: Get started with @humanspeak/svelte-markdown, a powerful markdown r
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
@@ -12,7 +13,15 @@ description: Get started with @humanspeak/svelte-markdown, a powerful markdown r
         seo.description = 'Get started with @humanspeak/svelte-markdown, a powerful markdown renderer for Svelte 5'
         seo.ogTitle = 'Getting Started'
         seo.ogTagline = 'Install, configure, and render your first markdown in minutes.'
+        seo.ogFeatures = ['Quick Install', 'Svelte 5', 'TypeScript', 'SvelteKit Ready']
     }
+
+    const breadcrumbs = getBreadcrumbContext()
+    $effect(() => {
+        if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Getting Started' }]
+        }
+    })
 </script>
 
 # Getting Started

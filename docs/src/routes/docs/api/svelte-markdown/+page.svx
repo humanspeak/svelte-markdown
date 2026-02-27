@@ -5,6 +5,7 @@ description: Complete API reference for the SvelteMarkdown component
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
@@ -12,7 +13,15 @@ description: Complete API reference for the SvelteMarkdown component
         seo.description = 'Complete API reference for the SvelteMarkdown component'
         seo.ogTitle = 'Component API'
         seo.ogTagline = 'Props, events, and configuration for SvelteMarkdown.'
+        seo.ogFeatures = ['Props Reference', 'Event Callbacks', 'Token Input', 'Inline Mode']
     }
+
+    const breadcrumbs = getBreadcrumbContext()
+    $effect(() => {
+        if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'API', href: '/docs/api/svelte-markdown' }, { title: 'SvelteMarkdown' }]
+        }
+    })
 </script>
 
 # SvelteMarkdown Component

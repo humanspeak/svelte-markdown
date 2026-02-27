@@ -21,6 +21,7 @@
             'Interactive demo of Mermaid diagram rendering with a custom marked extension in @humanspeak/svelte-markdown. See async component renderers for flowcharts, sequence diagrams, and more.'
         seo.ogTitle = 'Mermaid Diagrams'
         seo.ogTagline = 'Flowcharts and sequence diagrams in markdown.'
+        seo.ogFeatures = ['Flowcharts', 'Sequence Diagrams', 'Custom Extension', 'Async Render']
     }
 </script>
 

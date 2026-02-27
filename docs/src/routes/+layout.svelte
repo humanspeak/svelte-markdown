@@ -24,12 +24,12 @@
     // Dynamic per-page social card images (only when ogTitle is set; home page keeps static defaults)
     const ogImageUrl = $derived(
         seo.ogTitle
-            ? `${page.url.origin}/social-cards/${encodeMessageData({ type: 'og', title: seo.ogTitle, description: seo.ogTagline ?? seo.description })}.png`
+            ? `${page.url.origin}/social-cards/${encodeMessageData({ type: 'og', title: seo.ogTitle, description: seo.ogTagline ?? seo.description, features: seo.ogFeatures })}.png`
             : `${page.url.origin}/og-default.png`
     )
     const twitterImageUrl = $derived(
         seo.ogTitle
-            ? `${page.url.origin}/social-cards/${encodeMessageData({ type: 'twitter', title: seo.ogTitle, description: seo.ogTagline ?? seo.description })}.png`
+            ? `${page.url.origin}/social-cards/${encodeMessageData({ type: 'twitter', title: seo.ogTitle, description: seo.ogTagline ?? seo.description, features: seo.ogFeatures })}.png`
             : `${page.url.origin}/twitter-default.png`
     )
 </script>

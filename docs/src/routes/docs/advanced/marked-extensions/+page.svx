@@ -5,6 +5,7 @@ description: How to use third-party marked extensions like KaTeX math rendering 
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
@@ -12,7 +13,15 @@ description: How to use third-party marked extensions like KaTeX math rendering 
         seo.description = 'How to use third-party marked extensions like KaTeX math rendering with @humanspeak/svelte-markdown'
         seo.ogTitle = 'Marked Extensions'
         seo.ogTagline = 'Add KaTeX, syntax highlighting, and more.'
+        seo.ogFeatures = ['KaTeX Math', 'Custom Tokens', 'Third Party', 'Plugin System']
     }
+
+    const breadcrumbs = getBreadcrumbContext()
+    $effect(() => {
+        if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Advanced', href: '/docs/advanced/marked-extensions' }, { title: 'Marked Extensions' }]
+        }
+    })
 </script>
 
 # Marked Extensions

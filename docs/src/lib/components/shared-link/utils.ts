@@ -1,4 +1,5 @@
 export type MessageData = {
+    type?: 'og' | 'twitter'
     title?: string
     description?: string
     features?: string[]

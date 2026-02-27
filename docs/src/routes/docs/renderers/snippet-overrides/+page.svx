@@ -5,6 +5,7 @@ description: Customize markdown rendering inline using Svelte 5 snippets — no 
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
@@ -12,7 +13,15 @@ description: Customize markdown rendering inline using Svelte 5 snippets — no 
         seo.description = 'Customize markdown rendering inline using Svelte 5 snippets — no separate files needed'
         seo.ogTitle = 'Snippet Overrides'
         seo.ogTagline = 'Customize rendering inline with Svelte 5 snippets.'
+        seo.ogFeatures = ['Svelte 5 Snippets', 'Inline Override', 'No Extra Files', 'Type Safe']
     }
+
+    const breadcrumbs = getBreadcrumbContext()
+    $effect(() => {
+        if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Renderers', href: '/docs/renderers/markdown-renderers' }, { title: 'Snippets' }]
+        }
+    })
 </script>
 
 # Snippet Overrides

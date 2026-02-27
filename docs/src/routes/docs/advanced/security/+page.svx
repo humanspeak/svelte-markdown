@@ -5,6 +5,7 @@ description: Security considerations, XSS protection, and sanitization guidance 
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
@@ -12,7 +13,15 @@ description: Security considerations, XSS protection, and sanitization guidance 
         seo.description = 'Security considerations, XSS protection, and sanitization guidance for @humanspeak/svelte-markdown'
         seo.ogTitle = 'Security'
         seo.ogTagline = 'XSS protection and sanitization guidance.'
+        seo.ogFeatures = ['XSS Protection', 'HTML Sanitization', 'Secure Parsing', 'Best Practices']
     }
+
+    const breadcrumbs = getBreadcrumbContext()
+    $effect(() => {
+        if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Advanced', href: '/docs/advanced/marked-extensions' }, { title: 'Security' }]
+        }
+    })
 </script>
 
 # Security

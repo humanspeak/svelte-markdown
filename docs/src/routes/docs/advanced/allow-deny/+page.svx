@@ -5,6 +5,7 @@ description: Control which markdown elements and HTML tags are rendered
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
@@ -12,7 +13,15 @@ description: Control which markdown elements and HTML tags are rendered
         seo.description = 'Control which markdown elements and HTML tags are rendered'
         seo.ogTitle = 'Allow/Deny'
         seo.ogTagline = 'Control which elements and HTML tags render.'
+        seo.ogFeatures = ['Allowlist', 'Denylist', 'HTML Tags', 'Markdown Tokens']
     }
+
+    const breadcrumbs = getBreadcrumbContext()
+    $effect(() => {
+        if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Advanced', href: '/docs/advanced/marked-extensions' }, { title: 'Allow/Deny' }]
+        }
+    })
 </script>
 
 # Allow/Deny Filtering
