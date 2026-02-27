@@ -19,9 +19,9 @@
         "social:watch": "chokidar 'src/lib/components/OG.svelte' -c 'tsx ./scripts/generate-social-images.ts' --initial --silent"
     },
     "dependencies": {
+        "@cf-wasm/resvg": "^0.3.3",
         "@humanspeak/svelte-markdown": "workspace:*",
         "@humanspeak/svelte-satori-fix": "^0.0.2",
-        "@resvg/resvg-js": "^2.6.2",
         "github-slugger": "^2.0.0",
         "katex": "^0.16.33",
         "marked-code-format": "^1.1.6",
