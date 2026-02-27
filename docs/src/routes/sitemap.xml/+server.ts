@@ -47,7 +47,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
     // Unique, sorted, and exclude private/underscore folders
     const routes = [...new Set(pageFiles.map(toPath))]
-        .filter((p) => !/\/_(?:.*)|\/(?:\+|__)/.test(p))
+        .filter((p) => !/\/_(?:.*)|\/(?:\+|__)/.test(p) && p !== '/social-cards')
         .sort()
 
     const today = new Date().toISOString().slice(0, 10)
