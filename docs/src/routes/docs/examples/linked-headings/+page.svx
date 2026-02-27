@@ -1,0 +1,176 @@
+---
+title: Linked Headings Examples
+description: How to add clickable anchor links to markdown headings using snippet overrides and custom renderers
+---
+
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Linked Headings Examples | Svelte Markdown'
+        seo.description = 'How to add clickable anchor links to markdown headings using snippet overrides and custom renderers'
+        seo.ogTitle = 'Linked Headings'
+        seo.ogTagline = 'Clickable anchor links for headings.'
+        seo.ogFeatures = ['Snippet Override', 'Custom Renderer', 'Hover Reveal', 'Permalink']
+        seo.ogSlug = 'docs-examples-linked-headings'
+    }
+
+    const breadcrumbs = getBreadcrumbContext()
+    $effect(() => {
+        if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples', href: '/docs/examples' }, { title: 'Linked Headings' }]
+        }
+    })
+</script>
+
+# Linked Headings Examples
+
+By default, `@humanspeak/svelte-markdown` renders headings with `id` attributes (via `headerIds` option) but no clickable anchor links. Documentation sites commonly want headings that users can click or hover to get a permalink. Here are several approaches.
+
+## Snippet Override (Recommended)
+
+The simplest approach — add a hover-reveal `#` link after each heading inline:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = `
+## Getting Started
+Some intro text.
+
+## Installation
+Install the package.
+
+## Usage
+Use the component.
+    `
+</script>
+
+<SvelteMarkdown {source}>
+    {#snippet heading({ depth, text, slug, options, children })}
+        {@const id = options.headerIds ? options.headerPrefix + slug(text) : undefined}
+        <svelte:element this="h{depth}" {id} class="group relative">
+            {@render children?.()}
+            {#if id}
+                <a
+                    href="#{id}"
+                    class="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Link to {text}"
+                >
+                    #
+                </a>
+            {/if}
+        </svelte:element>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+The `slug` function (from `github-slugger`) and `options` object are passed as snippet props. The `id` is computed the same way the built-in `Heading.svelte` renderer does it.
+
+## Custom Renderer Component
+
+For reuse across multiple pages, create a dedicated component:
+
+```html
+<!-- LinkedHeading.svelte -->
+<script lang="ts">
+    import type { Snippet } from 'svelte'
+    import type { SvelteMarkdownOptions } from '@humanspeak/svelte-markdown'
+
+    interface Props {
+        depth: number
+        raw: string
+        text: string
+        options: SvelteMarkdownOptions
+        slug: (val: string) => string
+        children?: Snippet
+    }
+
+    const { depth, raw, text, options, slug, children }: Props = $props()
+
+    const id = $derived(options.headerIds ? options.headerPrefix + slug(text) : undefined)
+</script>
+
+<svelte:element this="h{depth}" {id} class="group relative">
+    {@render children?.()}
+    {#if id}
+        <a
+            href="#{id}"
+            class="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label="Link to {text}"
+        >
+            #
+        </a>
+    {/if}
+</svelte:element>
+```
+
+Then use it via the `renderers` prop:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import LinkedHeading from './LinkedHeading.svelte'
+</script>
+
+<SvelteMarkdown {source} renderers={{ heading: LinkedHeading }} />
+```
+
+## Variation: Always-Visible Link Icon
+
+Instead of a hover-reveal `#`, show a subtle link icon that's always visible:
+
+```html
+<SvelteMarkdown {source}>
+    {#snippet heading({ depth, text, slug, options, children })}
+        {@const id = options.headerIds ? options.headerPrefix + slug(text) : undefined}
+        <svelte:element this="h{depth}" {id}>
+            {@render children?.()}
+            {#if id}
+                <a href="#{id}" class="ml-2 text-gray-400 hover:text-gray-600" aria-label="Link to {text}">
+                    🔗
+                </a>
+            {/if}
+        </svelte:element>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## Variation: Wrapping Heading in a Link
+
+Wrap the entire heading text in an `<a>` tag for a larger click target:
+
+```html
+<SvelteMarkdown {source}>
+    {#snippet heading({ depth, text, slug, options, children })}
+        {@const id = options.headerIds ? options.headerPrefix + slug(text) : undefined}
+        <svelte:element this="h{depth}" {id} class="group">
+            <a href={id ? `#${id}` : undefined} class="no-underline hover:underline text-inherit">
+                {@render children?.()}
+            </a>
+        </svelte:element>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+## Snippet Props Reference
+
+The `heading` snippet receives these props from the built-in renderer:
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `depth` | `number` | Heading level (1–6) |
+| `raw` | `string` | Original markdown source of the heading line |
+| `text` | `string` | Plain-text content used for slug generation |
+| `options` | `SvelteMarkdownOptions` | Parser options (controls `headerIds`, `headerPrefix`) |
+| `slug` | `(val: string) => string` | Slugger function for generating heading IDs |
+| `children` | `Snippet` | Rendered inline content of the heading |
+
+## Related
+
+- [Snippet Overrides Guide](/docs/renderers/snippet-overrides) — full documentation on snippet overrides
+- [Snippet Overrides Examples](/docs/examples/snippet-overrides) — more snippet override patterns
+- [Interactive Linked Headings Demo](/examples/linked-headings) — live playground

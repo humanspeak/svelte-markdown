@@ -90,6 +90,13 @@
             description:
                 'Customize rendering inline with Svelte 5 snippets. No separate component files needed.',
             icon: 'fa-solid fa-scissors'
+        },
+        {
+            slug: 'linked-headings',
+            title: 'Linked Headings',
+            description:
+                'Add clickable anchor links to headings with snippet overrides or custom renderers for easy deep-linking.',
+            icon: 'fa-solid fa-link'
         }
     ]
 </script>

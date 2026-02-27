@@ -147,6 +147,11 @@
                     title: 'Parsed Callback',
                     href: '/docs/examples/parsed-callback',
                     icon: 'fa-solid fa-diagram-project'
+                },
+                {
+                    title: 'Linked Headings',
+                    href: '/docs/examples/linked-headings',
+                    icon: 'fa-solid fa-link'
                 }
             ]
         },
@@ -208,6 +213,11 @@
                     title: 'Code Formatting',
                     href: '/examples/code-formatting',
                     icon: 'fa-solid fa-code'
+                },
+                {
+                    title: 'Linked Headings',
+                    href: '/examples/linked-headings',
+                    icon: 'fa-solid fa-link'
                 }
             ]
         },
