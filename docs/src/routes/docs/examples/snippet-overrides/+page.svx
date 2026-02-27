@@ -10,6 +10,8 @@ description: Practical examples of using Svelte 5 snippet overrides to customize
     if (seo) {
         seo.title = 'Snippet Overrides Examples | Svelte Markdown'
         seo.description = 'Practical examples of using Svelte 5 snippet overrides to customize markdown rendering inline'
+        seo.ogTitle = 'Snippet Overrides'
+        seo.ogTagline = 'Inline rendering customization examples.'
     }
 </script>
 

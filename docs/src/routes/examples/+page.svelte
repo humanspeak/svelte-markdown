@@ -14,6 +14,8 @@
         seo.title = 'Interactive Examples | Svelte Markdown'
         seo.description =
             'Explore interactive examples of @humanspeak/svelte-markdown featuring a live playground, custom renderers, HTML filtering, and caching performance demos.'
+        seo.ogTitle = 'Interactive Examples'
+        seo.ogTagline = 'Live demos of markdown rendering features.'
     }
 
     const examples = [

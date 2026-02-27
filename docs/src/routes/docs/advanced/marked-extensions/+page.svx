@@ -10,6 +10,8 @@ description: How to use third-party marked extensions like KaTeX math rendering 
     if (seo) {
         seo.title = 'Marked Extensions | Svelte Markdown'
         seo.description = 'How to use third-party marked extensions like KaTeX math rendering with @humanspeak/svelte-markdown'
+        seo.ogTitle = 'Marked Extensions'
+        seo.ogTagline = 'Add KaTeX, syntax highlighting, and more.'
     }
 </script>
 

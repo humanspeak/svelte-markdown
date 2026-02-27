@@ -10,6 +10,8 @@ description: Migrate from svelte-markdown to @humanspeak/svelte-markdown for Sve
     if (seo) {
         seo.title = 'Migration Guide | Svelte Markdown'
         seo.description = 'Migrate from svelte-markdown to @humanspeak/svelte-markdown for Svelte 5 with improved TypeScript support, caching, and new features'
+        seo.ogTitle = 'Migration Guide'
+        seo.ogTagline = 'Upgrade from svelte-markdown to Svelte 5.'
     }
 </script>
 

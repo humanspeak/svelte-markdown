@@ -10,6 +10,8 @@ description: Common markdown rendering examples with @humanspeak/svelte-markdown
     if (seo) {
         seo.title = 'Basic Rendering Examples | Svelte Markdown'
         seo.description = 'Common markdown rendering examples with @humanspeak/svelte-markdown'
+        seo.ogTitle = 'Basic Rendering'
+        seo.ogTagline = 'Common markdown rendering patterns and examples.'
     }
 </script>
 

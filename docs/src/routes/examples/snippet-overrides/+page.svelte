@@ -19,6 +19,8 @@
         seo.title = 'Snippet Overrides | Examples | Svelte Markdown'
         seo.description =
             'Interactive demo of Svelte 5 snippet overrides in @humanspeak/svelte-markdown. See how to customize rendering inline without separate component files.'
+        seo.ogTitle = 'Snippet Overrides'
+        seo.ogTagline = 'Customize rendering inline without separate files.'
     }
 </script>
 

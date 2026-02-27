@@ -10,6 +10,8 @@ description: Complete API reference for the SvelteMarkdown component
     if (seo) {
         seo.title = 'SvelteMarkdown Component API | Svelte Markdown'
         seo.description = 'Complete API reference for the SvelteMarkdown component'
+        seo.ogTitle = 'Component API'
+        seo.ogTagline = 'Props, events, and configuration for SvelteMarkdown.'
     }
 </script>
 

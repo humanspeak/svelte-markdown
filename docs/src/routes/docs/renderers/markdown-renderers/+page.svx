@@ -10,6 +10,8 @@ description: Documentation for all 24 built-in markdown renderer components
     if (seo) {
         seo.title = 'Markdown Renderers | Svelte Markdown'
         seo.description = 'Documentation for all 24 built-in markdown renderer components'
+        seo.ogTitle = 'Markdown Renderers'
+        seo.ogTagline = '24 built-in token renderer components.'
     }
 </script>
 

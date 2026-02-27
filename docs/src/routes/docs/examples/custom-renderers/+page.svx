@@ -10,6 +10,8 @@ description: Practical examples of creating and using custom renderer components
     if (seo) {
         seo.title = 'Custom Renderers Examples | Svelte Markdown'
         seo.description = 'Practical examples of creating and using custom renderer components'
+        seo.ogTitle = 'Custom Renderers'
+        seo.ogTagline = 'Practical examples of custom renderer components.'
     }
 </script>
 

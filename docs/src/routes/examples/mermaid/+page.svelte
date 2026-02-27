@@ -19,6 +19,8 @@
         seo.title = 'Mermaid Diagrams | Examples | Svelte Markdown'
         seo.description =
             'Interactive demo of Mermaid diagram rendering with a custom marked extension in @humanspeak/svelte-markdown. See async component renderers for flowcharts, sequence diagrams, and more.'
+        seo.ogTitle = 'Mermaid Diagrams'
+        seo.ogTagline = 'Flowcharts and sequence diagrams in markdown.'
     }
 </script>
 

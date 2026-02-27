@@ -10,6 +10,8 @@ description: All exported types, functions, constants, and utilities from @human
     if (seo) {
         seo.title = 'Types & Exports | Svelte Markdown'
         seo.description = 'All exported types, functions, constants, and utilities from @humanspeak/svelte-markdown'
+        seo.ogTitle = 'Types & Exports'
+        seo.ogTagline = 'All exported types, functions, and utilities.'
     }
 </script>
 

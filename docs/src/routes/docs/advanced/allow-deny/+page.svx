@@ -10,6 +10,8 @@ description: Control which markdown elements and HTML tags are rendered
     if (seo) {
         seo.title = 'Allow/Deny Filtering | Svelte Markdown'
         seo.description = 'Control which markdown elements and HTML tags are rendered'
+        seo.ogTitle = 'Allow/Deny'
+        seo.ogTagline = 'Control which elements and HTML tags render.'
     }
 </script>
 

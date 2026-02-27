@@ -10,6 +10,8 @@ description: Examples of using the parsed callback prop to inspect and use token
     if (seo) {
         seo.title = 'Parsed Callback Examples | Svelte Markdown'
         seo.description = 'Examples of using the parsed callback prop to inspect and use token data'
+        seo.ogTitle = 'Parsed Callback'
+        seo.ogTagline = 'Inspect and use token data at parse time.'
     }
 </script>
 

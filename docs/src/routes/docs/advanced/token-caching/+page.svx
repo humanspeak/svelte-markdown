@@ -10,6 +10,8 @@ description: Performance optimization through built-in LRU token caching
     if (seo) {
         seo.title = 'Token Caching | Svelte Markdown'
         seo.description = 'Performance optimization through built-in LRU token caching'
+        seo.ogTitle = 'Token Caching'
+        seo.ogTagline = '50-200x faster re-renders with built-in LRU caching.'
     }
 </script>
 

@@ -10,6 +10,8 @@ description: Practical examples of filtering HTML tags in markdown content
     if (seo) {
         seo.title = 'HTML Filtering Examples | Svelte Markdown'
         seo.description = 'Practical examples of filtering HTML tags in markdown content'
+        seo.ogTitle = 'HTML Filtering'
+        seo.ogTagline = 'Control which HTML tags render from markdown.'
     }
 </script>
 

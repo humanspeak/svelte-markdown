@@ -10,6 +10,8 @@ description: Documentation for all 69+ built-in HTML tag renderer components
     if (seo) {
         seo.title = 'HTML Renderers | Svelte Markdown'
         seo.description = 'Documentation for all 69+ built-in HTML tag renderer components'
+        seo.ogTitle = 'HTML Renderers'
+        seo.ogTagline = '69+ built-in HTML tag renderer components.'
     }
 </script>
 

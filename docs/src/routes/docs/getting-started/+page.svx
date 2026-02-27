@@ -10,6 +10,8 @@ description: Get started with @humanspeak/svelte-markdown, a powerful markdown r
     if (seo) {
         seo.title = 'Getting Started | Svelte Markdown'
         seo.description = 'Get started with @humanspeak/svelte-markdown, a powerful markdown renderer for Svelte 5'
+        seo.ogTitle = 'Getting Started'
+        seo.ogTagline = 'Install, configure, and render your first markdown in minutes.'
     }
 </script>
 

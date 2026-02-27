@@ -10,6 +10,8 @@ description: Customize markdown rendering inline using Svelte 5 snippets — no 
     if (seo) {
         seo.title = 'Snippet Overrides | Svelte Markdown'
         seo.description = 'Customize markdown rendering inline using Svelte 5 snippets — no separate files needed'
+        seo.ogTitle = 'Snippet Overrides'
+        seo.ogTagline = 'Customize rendering inline with Svelte 5 snippets.'
     }
 </script>
 

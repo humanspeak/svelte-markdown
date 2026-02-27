@@ -10,6 +10,8 @@ description: Security considerations, XSS protection, and sanitization guidance 
     if (seo) {
         seo.title = 'Security | Svelte Markdown'
         seo.description = 'Security considerations, XSS protection, and sanitization guidance for @humanspeak/svelte-markdown'
+        seo.ogTitle = 'Security'
+        seo.ogTagline = 'XSS protection and sanitization guidance.'
     }
 </script>
 

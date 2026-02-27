@@ -10,6 +10,8 @@ description: Examples of using the isInline prop for inline markdown rendering
     if (seo) {
         seo.title = 'Inline Rendering Examples | Svelte Markdown'
         seo.description = 'Examples of using the isInline prop for inline markdown rendering'
+        seo.ogTitle = 'Inline Rendering'
+        seo.ogTagline = 'Render markdown inline without block-level elements.'
     }
 </script>
 

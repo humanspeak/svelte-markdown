@@ -10,6 +10,8 @@ description: Guide to creating custom renderer components for @humanspeak/svelte
     if (seo) {
         seo.title = 'Custom Renderers | Svelte Markdown'
         seo.description = 'Guide to creating custom renderer components for @humanspeak/svelte-markdown'
+        seo.ogTitle = 'Custom Renderers'
+        seo.ogTagline = 'Build your own Svelte renderer components.'
     }
 </script>
 

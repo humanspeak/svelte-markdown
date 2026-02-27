@@ -19,6 +19,8 @@
         seo.title = 'Live Playground | Examples | Svelte Markdown'
         seo.description =
             'Interactive markdown playground with live preview. Edit markdown and HTML in real-time, powered by @humanspeak/svelte-markdown.'
+        seo.ogTitle = 'Live Playground'
+        seo.ogTagline = 'Edit markdown and HTML with real-time preview.'
     }
 </script>
 
