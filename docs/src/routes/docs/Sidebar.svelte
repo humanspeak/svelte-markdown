@@ -4,11 +4,8 @@
 -->
 <script lang="ts">
     import { motion } from '@humanspeak/svelte-motion'
-    import { onMount } from 'svelte'
     import { slide } from 'svelte/transition'
     import { PersistedState } from 'runed'
-
-    const { currentPath } = $props()
 
     type NavItem = {
         title: string
@@ -23,13 +20,8 @@
         items: NavItem[]
     }
 
-    type OtherProject = {
-        url: string
-        slug: string
-        shortDescription: string
-    }
-
-    let otherProjects: NavItem[] = $state([])
+    const { currentPath, otherProjects = [] }: { currentPath: string; otherProjects: NavItem[] } =
+        $props()
     const openSections = new PersistedState<Record<string, boolean>>('sidebar-sections', {})
 
     const navigation: NavSection[] = $derived([
@@ -253,28 +245,6 @@
             [section.title]: !isSectionOpen(section)
         }
     }
-
-    onMount(async () => {
-        try {
-            const response = await fetch('/api/other-projects')
-            if (!response.ok) {
-                return
-            }
-            const projects: OtherProject[] = await response.json()
-
-            // Convert to nav items format
-            otherProjects = projects.map((project) => ({
-                title: formatTitle(project.slug),
-                href: project.url,
-                icon: 'fa-solid fa-heart',
-                external: true
-            }))
-        } catch (error) {
-            console.error('Failed to load other projects:', error)
-        }
-    })
-
-    const formatTitle = (slug: string): string => slug.toLowerCase()
 
     const isActive = (href: string) => {
         const basePath = currentPath.split(/[?#]/)[0]
