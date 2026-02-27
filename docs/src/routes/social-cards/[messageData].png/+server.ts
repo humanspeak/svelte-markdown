@@ -1,5 +1,6 @@
 import { read } from '$app/server'
 import OG from '$lib/components/shared-link/OG.svelte'
+import { decodeMessageData } from '$lib/components/shared-link/utils'
 import LatoExtraBold from '$lib/fonts/lato/Lato-ExtraBold.ttf'
 import LatoExtraBoldItalic from '$lib/fonts/lato/Lato-ExtraBoldItalic.ttf'
 import Lato from '$lib/fonts/lato/Lato-Regular.ttf'
@@ -22,12 +23,10 @@ export const GET = async ({ params, url }) => {
     let features = ['Svelte 5 Runes', 'TypeScript First', '50-200x Caching', 'Marked Extensions']
     if (messageData) {
         try {
-            ;({ type, title, description, features } = JSON.parse(messageData) as {
-                type: 'og' | 'twitter'
-                title: string
-                description: string
-                features: string[]
-            })
+            const parsed = decodeMessageData(messageData)
+            if (parsed.title) title = parsed.title
+            if (parsed.description) description = parsed.description
+            if (parsed.features) features = parsed.features
         } catch {
             // ignore
         }
