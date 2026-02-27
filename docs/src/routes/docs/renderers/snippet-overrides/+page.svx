@@ -14,6 +14,7 @@ description: Customize markdown rendering inline using Svelte 5 snippets — no 
         seo.ogTitle = 'Snippet Overrides'
         seo.ogTagline = 'Customize rendering inline with Svelte 5 snippets.'
         seo.ogFeatures = ['Svelte 5 Snippets', 'Inline Override', 'No Extra Files', 'Type Safe']
+        seo.ogSlug = 'docs-renderers-snippet-overrides'
     }
 
     const breadcrumbs = getBreadcrumbContext()

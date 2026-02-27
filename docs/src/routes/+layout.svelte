@@ -7,8 +7,6 @@
     import BreadcrumbJsonLd from '$lib/components/contexts/Breadcrumb/BreadcrumbJsonLd.svelte'
     import SeoContext from '$lib/components/contexts/Seo/SeoContext.svelte'
     import type { SeoContext as SeoContextType } from '$lib/components/contexts/Seo/type'
-    import { encodeMessageData } from '$lib/components/shared-link/utils'
-
     const { children } = $props()
 
     // Dynamic canonical URL based on current page path
@@ -21,15 +19,15 @@
             'A powerful, customizable markdown renderer for Svelte 5 with TypeScript support, 24 renderers, 69+ HTML tags, token caching, and allow/deny utilities.'
     })
 
-    // Dynamic per-page social card images (only when ogTitle is set; home page keeps static defaults)
+    // Dynamic per-page social card images (only when ogSlug is set; home page keeps static defaults)
     const ogImageUrl = $derived(
-        seo.ogTitle
-            ? `${page.url.origin}/social-cards/${encodeMessageData({ type: 'og', title: seo.ogTitle, description: seo.ogTagline ?? seo.description, features: seo.ogFeatures })}.png`
+        seo.ogSlug
+            ? `${page.url.origin}/social-cards/og-${seo.ogSlug}.png`
             : `${page.url.origin}/og-default.png`
     )
     const twitterImageUrl = $derived(
-        seo.ogTitle
-            ? `${page.url.origin}/social-cards/${encodeMessageData({ type: 'twitter', title: seo.ogTitle, description: seo.ogTagline ?? seo.description, features: seo.ogFeatures })}.png`
+        seo.ogSlug
+            ? `${page.url.origin}/social-cards/twitter-${seo.ogSlug}.png`
             : `${page.url.origin}/twitter-default.png`
     )
 </script>

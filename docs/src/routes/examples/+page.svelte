@@ -17,6 +17,7 @@
         seo.ogTitle = 'Interactive Examples'
         seo.ogTagline = 'Live demos of markdown rendering features.'
         seo.ogFeatures = ['Live Editors', '8 Demos', 'Source Code', 'Try It Now']
+        seo.ogSlug = 'examples'
     }
 
     const examples = [

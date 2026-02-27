@@ -22,6 +22,7 @@
         seo.ogTitle = 'Mermaid Diagrams'
         seo.ogTagline = 'Flowcharts and sequence diagrams in markdown.'
         seo.ogFeatures = ['Flowcharts', 'Sequence Diagrams', 'Custom Extension', 'Async Render']
+        seo.ogSlug = 'examples-mermaid'
     }
 </script>
 

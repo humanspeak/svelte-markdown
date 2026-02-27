@@ -22,6 +22,7 @@
         seo.ogTitle = 'Snippet Overrides'
         seo.ogTagline = 'Customize rendering inline without separate files.'
         seo.ogFeatures = ['Inline Override', 'No Extra Files', 'Live Demo', 'Svelte 5']
+        seo.ogSlug = 'examples-snippet-overrides'
     }
 </script>
 

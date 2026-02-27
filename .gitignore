@@ -40,3 +40,6 @@ docs-old/
 
 # mprocs
 mprocs.log
+
+# docs
+docs/static/social-cards/**

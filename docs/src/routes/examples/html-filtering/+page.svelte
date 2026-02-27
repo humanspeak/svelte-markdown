@@ -22,6 +22,7 @@
         seo.ogTitle = 'HTML Filtering'
         seo.ogTagline = 'Interactive allow/deny tag filtering demo.'
         seo.ogFeatures = ['Allow/Deny', 'Tag Control', 'Live Toggle', 'Safe HTML']
+        seo.ogSlug = 'examples-html-filtering'
     }
 </script>
 

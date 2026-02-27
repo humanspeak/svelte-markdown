@@ -14,6 +14,7 @@ description: Practical examples of creating and using custom renderer components
         seo.ogTitle = 'Custom Renderers'
         seo.ogTagline = 'Practical examples of custom renderer components.'
         seo.ogFeatures = ['Link Override', 'Code Blocks', 'Image Renderer', 'Practical Code']
+        seo.ogSlug = 'docs-examples-custom-renderers'
     }
 
     const breadcrumbs = getBreadcrumbContext()

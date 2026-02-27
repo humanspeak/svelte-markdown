@@ -14,6 +14,7 @@ description: Documentation for all 24 built-in markdown renderer components
         seo.ogTitle = 'Markdown Renderers'
         seo.ogTagline = '24 built-in token renderer components.'
         seo.ogFeatures = ['24 Renderers', 'Custom Override', 'Snippet Overrides', 'Full GFM']
+        seo.ogSlug = 'docs-renderers-markdown-renderers'
     }
 
     const breadcrumbs = getBreadcrumbContext()

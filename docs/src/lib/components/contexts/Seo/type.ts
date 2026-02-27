@@ -5,4 +5,5 @@ export type SeoContext = {
     ogTitle?: string
     ogTagline?: string
     ogFeatures?: string[]
+    ogSlug?: string
 }

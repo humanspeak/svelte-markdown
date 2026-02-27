@@ -17,6 +17,7 @@
         seo.ogTitle = 'Usage Examples'
         seo.ogTagline = 'Real-world patterns for rendering markdown.'
         seo.ogFeatures = ['Basic Rendering', 'Custom Renderers', 'HTML Filtering', 'Inline Mode']
+        seo.ogSlug = 'docs-examples'
     }
 
     const examples = [

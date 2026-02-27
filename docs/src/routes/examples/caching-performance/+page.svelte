@@ -22,6 +22,7 @@
         seo.ogTitle = 'Caching Performance'
         seo.ogTagline = 'See the 50-200x speedup from LRU caching.'
         seo.ogFeatures = ['Benchmark', '50-200x Speed', 'LRU Cache', 'Real-Time Stats']
+        seo.ogSlug = 'examples-caching-performance'
     }
 </script>
 

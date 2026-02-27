@@ -30,6 +30,7 @@
         seo.ogTitle = 'Code Formatting'
         seo.ogTagline = 'Enhanced code blocks with syntax highlighting.'
         seo.ogFeatures = ['Syntax Highlight', 'Line Numbers', 'Copy Button', 'Language Tags']
+        seo.ogSlug = 'examples-code-formatting'
     }
 </script>
 

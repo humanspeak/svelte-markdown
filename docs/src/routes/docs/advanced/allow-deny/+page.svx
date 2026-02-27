@@ -14,6 +14,7 @@ description: Control which markdown elements and HTML tags are rendered
         seo.ogTitle = 'Allow/Deny'
         seo.ogTagline = 'Control which elements and HTML tags render.'
         seo.ogFeatures = ['Allowlist', 'Denylist', 'HTML Tags', 'Markdown Tokens']
+        seo.ogSlug = 'docs-advanced-allow-deny'
     }
 
     const breadcrumbs = getBreadcrumbContext()

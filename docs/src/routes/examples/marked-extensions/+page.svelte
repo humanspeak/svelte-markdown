@@ -22,6 +22,7 @@
         seo.ogTitle = 'Marked Extensions'
         seo.ogTagline = 'KaTeX math rendering demo.'
         seo.ogFeatures = ['KaTeX Math', 'Live Preview', 'Component Mode', 'Snippet Mode']
+        seo.ogSlug = 'examples-marked-extensions'
     }
 </script>
 

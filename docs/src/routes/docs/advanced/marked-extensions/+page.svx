@@ -14,6 +14,7 @@ description: How to use third-party marked extensions like KaTeX math rendering 
         seo.ogTitle = 'Marked Extensions'
         seo.ogTagline = 'Add KaTeX, syntax highlighting, and more.'
         seo.ogFeatures = ['KaTeX Math', 'Custom Tokens', 'Third Party', 'Plugin System']
+        seo.ogSlug = 'docs-advanced-marked-extensions'
     }
 
     const breadcrumbs = getBreadcrumbContext()
