@@ -3,6 +3,16 @@ title: Security
 description: Security considerations, XSS protection, and sanitization guidance for @humanspeak/svelte-markdown
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Security | Svelte Markdown'
+        seo.description = 'Security considerations, XSS protection, and sanitization guidance for @humanspeak/svelte-markdown'
+    }
+</script>
+
 # Security
 
 `@humanspeak/svelte-markdown` renders markdown content into HTML. When processing user-generated markdown, it is important to understand the security implications and how to protect against cross-site scripting (XSS) and other injection attacks.

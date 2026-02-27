@@ -3,6 +3,16 @@ title: Token Caching
 description: Performance optimization through built-in LRU token caching
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Token Caching | Svelte Markdown'
+        seo.description = 'Performance optimization through built-in LRU token caching'
+    }
+</script>
+
 # Token Caching
 
 `@humanspeak/svelte-markdown` includes a built-in LRU (Least Recently Used) token cache that dramatically improves performance for repeated renders of the same markdown content. When you pass a string to the `source` prop, the parsed tokens are automatically cached and reused on subsequent renders.

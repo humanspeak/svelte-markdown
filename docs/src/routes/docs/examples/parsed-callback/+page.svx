@@ -3,6 +3,16 @@ title: Parsed Callback
 description: Examples of using the parsed callback prop to inspect and use token data
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Parsed Callback Examples | Svelte Markdown'
+        seo.description = 'Examples of using the parsed callback prop to inspect and use token data'
+    }
+</script>
+
 # Parsed Callback
 
 The `parsed` prop accepts a callback function that is invoked with the parsed token array whenever the markdown source is parsed. This is useful for building features on top of the token tree, such as tables of contents, word counts, or content analysis.

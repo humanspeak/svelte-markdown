@@ -3,6 +3,16 @@ title: Snippet Overrides Examples
 description: Practical examples of using Svelte 5 snippet overrides to customize markdown rendering inline
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Snippet Overrides Examples | Svelte Markdown'
+        seo.description = 'Practical examples of using Svelte 5 snippet overrides to customize markdown rendering inline'
+    }
+</script>
+
 # Snippet Overrides Examples
 
 These examples demonstrate how to use Svelte 5 snippets to customize markdown rendering directly in your template, without creating separate component files.

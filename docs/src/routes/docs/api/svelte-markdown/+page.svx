@@ -3,6 +3,16 @@ title: SvelteMarkdown Component
 description: Complete API reference for the SvelteMarkdown component
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'SvelteMarkdown Component API | Svelte Markdown'
+        seo.description = 'Complete API reference for the SvelteMarkdown component'
+    }
+</script>
+
 # SvelteMarkdown Component
 
 The `SvelteMarkdown` component is the main entry point for rendering markdown content. It accepts a markdown string (or pre-parsed tokens), parses it, and renders the result through a composable system of Svelte renderer components.

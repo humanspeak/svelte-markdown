@@ -3,6 +3,16 @@ title: Basic Rendering
 description: Common markdown rendering examples with @humanspeak/svelte-markdown
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Basic Rendering Examples | Svelte Markdown'
+        seo.description = 'Common markdown rendering examples with @humanspeak/svelte-markdown'
+    }
+</script>
+
 # Basic Rendering
 
 These examples demonstrate common usage patterns for rendering markdown with `@humanspeak/svelte-markdown`.

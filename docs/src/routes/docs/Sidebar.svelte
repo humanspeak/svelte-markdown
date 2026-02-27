@@ -41,6 +41,11 @@
                     title: 'Getting Started',
                     href: '/docs/getting-started',
                     icon: 'fa-solid fa-rocket'
+                },
+                {
+                    title: 'Migration Guide',
+                    href: '/docs/migration',
+                    icon: 'fa-solid fa-right-left'
                 }
             ]
         },

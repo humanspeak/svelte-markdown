@@ -4,6 +4,7 @@
     import { page } from '$app/state'
     import { MotionConfig } from '@humanspeak/svelte-motion'
     import BreadcrumbContext from '$lib/components/contexts/Breadcrumb/BreadcrumbContext.svelte'
+    import BreadcrumbJsonLd from '$lib/components/contexts/Breadcrumb/BreadcrumbJsonLd.svelte'
     import SeoContext from '$lib/components/contexts/Seo/SeoContext.svelte'
     import type { SeoContext as SeoContextType } from '$lib/components/contexts/Seo/type'
 
@@ -29,7 +30,7 @@
     <meta property="og:description" content={seo.description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:image" content="{imageLocation}svelte-markdown-opengraph.png" />
+    <meta property="og:image" content="{imageLocation}og-default.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
 
@@ -37,7 +38,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={seo.title} />
     <meta name="twitter:description" content={seo.description} />
-    <meta name="twitter:image" content="{imageLocation}svelte-markdown-twitter.png" />
+    <meta name="twitter:image" content="{imageLocation}twitter-default.png" />
 
     <!-- Keywords -->
     <meta
@@ -49,8 +50,9 @@
     <meta name="author" content="Humanspeak, Inc." />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href={canonicalUrl} />
+    <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-optimized content" />
 
-    <!-- JSON-LD structured data -->
+    <!-- JSON-LD structured data: SoftwareApplication -->
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
@@ -59,7 +61,12 @@
             "author": {
                 "@type": "Organization",
                 "name": "Humanspeak, Inc.",
-                "url": "https://humanspeak.com"
+                "url": "https://humanspeak.com",
+                "sameAs": [
+                    "https://github.com/humanspeak",
+                    "https://www.npmjs.com/package/@humanspeak/svelte-markdown",
+                    "https://github.com/humanspeak/svelte-markdown"
+                ]
             },
             "description": "A powerful, customizable markdown renderer for Svelte 5 with TypeScript support, 24 renderers, 69+ HTML tags, token caching, and allow/deny utilities.",
             "downloadUrl": "https://www.npmjs.com/package/@humanspeak/svelte-markdown",
@@ -78,11 +85,34 @@
             "url": "https://markdown.svelte.page"
         }
     </script>
+
+    <!-- JSON-LD structured data: WebSite -->
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "Svelte Markdown",
+            "alternateName": "@humanspeak/svelte-markdown",
+            "url": "https://markdown.svelte.page",
+            "description": "A powerful, customizable markdown renderer for Svelte 5 with TypeScript support.",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Humanspeak, Inc.",
+                "url": "https://humanspeak.com",
+                "sameAs": [
+                    "https://github.com/humanspeak",
+                    "https://www.npmjs.com/package/@humanspeak/svelte-markdown",
+                    "https://github.com/humanspeak/svelte-markdown"
+                ]
+            }
+        }
+    </script>
 </svelte:head>
 
 <ModeWatcher />
 <SeoContext {seo}>
     <BreadcrumbContext>
+        <BreadcrumbJsonLd />
         <MotionConfig transition={{ duration: 0.5 }}>
             {@render children?.()}
         </MotionConfig>

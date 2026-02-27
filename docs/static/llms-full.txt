@@ -1,0 +1,295 @@
+# Svelte Markdown - Complete Reference
+
+> A powerful, customizable markdown renderer for Svelte 5 with TypeScript support. Built on Marked and HTMLParser2 with 24 markdown renderers, 69+ HTML tag renderers, LRU token caching, and allow/deny filtering utilities.
+
+## Package Information
+
+- Package: `@humanspeak/svelte-markdown`
+- Version: 8.x (latest)
+- License: MIT
+- Requires: Svelte 5
+- Parser: Marked
+- HTML Parser: HTMLParser2
+- Heading IDs: github-slugger
+- Maintained by: Humanspeak, Inc.
+- Homepage: https://markdown.svelte.page
+- Repository: https://github.com/humanspeak/svelte-markdown
+
+## Installation
+
+```bash
+npm install @humanspeak/svelte-markdown
+# or
+pnpm add @humanspeak/svelte-markdown
+# or
+yarn add @humanspeak/svelte-markdown
+```
+
+## SvelteMarkdown Component Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| source | string \| Token[] | [] | Markdown string or pre-parsed tokens to render |
+| renderers | Partial<Renderers> | {} | Custom renderer components to override defaults |
+| options | Partial<SvelteMarkdownOptions> | {} | Parser configuration options |
+| isInline | boolean | false | Parse as inline markdown (no block-level elements) |
+| parsed | (tokens: Token[] \| TokensList) => void | () => {} | Callback invoked with parsed tokens |
+| extensions | MarkedExtension[] | [] | Array of marked extensions |
+
+## Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| headerIds | boolean | true | Generate id attributes on headings |
+| headerPrefix | string | '' | Prefix for generated heading IDs |
+| gfm | boolean | true | Enable GitHub Flavored Markdown |
+| breaks | boolean | false | Convert single newlines to br |
+
+## Basic Usage
+
+```svelte
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    const source = '# Hello World\n\nThis is **bold** and *italic* text.'
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+## Custom Renderers
+
+Override any built-in renderer with your own Svelte component:
+
+```svelte
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import CustomLink from './CustomLink.svelte'
+    const source = 'Visit [example](https://example.com)'
+</script>
+
+<SvelteMarkdown {source} renderers={{ link: CustomLink }} />
+```
+
+## Snippet Overrides
+
+Customize rendering inline using Svelte 5 snippets without separate component files:
+
+```svelte
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    const source = '# Hello World'
+</script>
+
+{#snippet heading(props)}
+    <h1 class="custom-heading">{@render props.children?.()}</h1>
+{/snippet}
+
+<SvelteMarkdown {source} snippetOverrides={{ heading }} />
+```
+
+## 24 Markdown Renderer Keys
+
+The following keys can be used in the `renderers` prop to override default rendering:
+
+- heading - h1-h6 elements
+- paragraph - p elements
+- text - plain text content
+- rawtext - raw/unescaped text
+- escape - escaped characters
+- link - a elements
+- image - img elements
+- em - emphasis (italic)
+- strong - bold text
+- codespan - inline code
+- code - fenced code blocks
+- blockquote - blockquotes
+- list - ul/ol containers
+- listitem - li elements
+- orderedlistitem - ordered li elements
+- unorderedlistitem - unordered li elements
+- hr - horizontal rules
+- html - raw HTML passthrough
+- br - line breaks
+- del - strikethrough (GFM)
+- table - table elements
+- tablehead - thead elements
+- tablebody - tbody elements
+- tablerow - tr elements
+- tablecell - th/td elements
+
+## 79 HTML Tag Renderers
+
+Built-in renderers for HTML tags found within markdown content:
+
+a, abbr, address, article, aside, audio, b, bdi, bdo, blockquote, br, button, canvas, cite, code, datalist, dd, del, details, dfn, dialog, div, dl, dt, em, embed, fieldset, footer, form, h1, h2, h3, h4, h5, h6, header, hgroup, hr, i, iframe, img, input, kbd, label, legend, li, main, mark, menu, meter, nav, ol, optgroup, option, output, p, param, picture, pre, progress, s, samp, section, select, small, source, span, strong, sub, summary, sup, table, tbody, td, textarea, tfoot, th, thead, tr, track, u, ul, var
+
+## Token Caching
+
+Built-in LRU cache provides 50-200x faster re-renders for repeated content:
+
+```svelte
+<script>
+    import SvelteMarkdown, { TokenCache } from '@humanspeak/svelte-markdown'
+
+    // Use default shared cache (50 docs, 5-min TTL)
+    const source = '# Cached Content'
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+### TokenCache Configuration
+
+```typescript
+import { TokenCache } from '@humanspeak/svelte-markdown'
+
+const cache = new TokenCache({
+    maxSize: 100,     // Max cached documents (default: 50)
+    ttl: 600000       // TTL in ms (default: 300000 = 5 min)
+})
+```
+
+### MemoryCache (Generic)
+
+```typescript
+import { MemoryCache } from '@humanspeak/svelte-markdown'
+
+const cache = new MemoryCache<string, any>({
+    maxSize: 100,
+    ttl: 300000
+})
+```
+
+## Allow/Deny Filtering
+
+### HTML Tag Filtering
+
+```typescript
+import { allowHtmlOnly, excludeHtmlOnly, buildUnsupportedHTML } from '@humanspeak/svelte-markdown'
+
+// Only allow specific HTML tags
+const htmlRenderers = allowHtmlOnly(['strong', 'em', 'a'])
+
+// Block specific HTML tags
+const htmlRenderers = excludeHtmlOnly(['iframe', 'script'])
+
+// Block ALL HTML tags
+const htmlRenderers = buildUnsupportedHTML()
+```
+
+### Markdown Renderer Filtering
+
+```typescript
+import { allowRenderersOnly, excludeRenderersOnly, buildUnsupportedRenderers } from '@humanspeak/svelte-markdown'
+
+// Only allow specific renderers
+const renderers = allowRenderersOnly(['paragraph', 'link', 'text'])
+
+// Block specific renderers
+const renderers = excludeRenderersOnly(['html', 'image'])
+
+// Block ALL renderers
+const renderers = buildUnsupportedRenderers()
+```
+
+## Marked Extensions
+
+Use third-party marked extensions via the `extensions` prop:
+
+```svelte
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const extensions = [myCustomExtension]
+    const source = 'Content with custom syntax'
+</script>
+
+<SvelteMarkdown {source} {extensions} />
+```
+
+## Exported Types
+
+- SvelteMarkdownProps - Component props type
+- SvelteMarkdownOptions - Parser options type
+- Renderers - Map of renderer key to component
+- HtmlRenderers - Map of HTML tag to component
+- RendererComponent - Individual renderer component type
+- Token - Marked token type
+- TokensList - Array of tokens
+- MarkedExtension - Marked extension type
+- SnippetOverrides - Snippet override props type
+- HtmlSnippetOverrides - HTML snippet override props type
+
+### Snippet Props Types
+
+- HeadingSnippetProps
+- ParagraphSnippetProps
+- TextSnippetProps
+- RawTextSnippetProps
+- EscapeSnippetProps
+- LinkSnippetProps
+- ImageSnippetProps
+- EmSnippetProps
+- StrongSnippetProps
+- CodespanSnippetProps
+- CodeSnippetProps
+- BlockquoteSnippetProps
+- ListSnippetProps
+- ListItemSnippetProps
+- HrSnippetProps
+- HtmlSnippetProps
+- BrSnippetProps
+- DelSnippetProps
+- TableSnippetProps
+- TableHeadSnippetProps
+- TableBodySnippetProps
+- TableRowSnippetProps
+- TableCellSnippetProps
+
+## Exported Constants
+
+- defaultRenderers - Default renderer component map
+- rendererKeys - Array of all markdown renderer key names
+- htmlRendererKeys - Array of all HTML tag renderer key names
+
+## Exported Components
+
+- SvelteMarkdown (default) - Main markdown rendering component
+- Html - HTML tag renderer map and component
+- Unsupported - Placeholder for blocked markdown tokens
+- UnsupportedHTML - Placeholder for blocked HTML tags
+
+## Migration from pablo-abc/svelte-markdown
+
+This package (`@humanspeak/svelte-markdown`) is the maintained successor to the original `svelte-markdown` by Pablo Berganza. Key differences:
+
+1. **Svelte 5 required** - Uses runes ($props, $derived, $state) instead of Svelte 4 stores
+2. **TypeScript first** - Complete type definitions for all exports
+3. **New package name** - `@humanspeak/svelte-markdown` instead of `svelte-markdown`
+4. **Import change** - `import SvelteMarkdown from '@humanspeak/svelte-markdown'`
+5. **New features** - Token caching, allow/deny filtering, snippet overrides, HTML tag renderers, marked extensions support, async parsing
+6. **Active maintenance** - Regular updates, bug fixes, and new features
+
+### Migration Steps
+
+1. Uninstall old package: `npm uninstall svelte-markdown`
+2. Install new package: `npm install @humanspeak/svelte-markdown`
+3. Update imports: change `'svelte-markdown'` to `'@humanspeak/svelte-markdown'`
+4. Update Svelte version to 5.x if not already
+5. Custom renderers: update to use `$props()` instead of `export let`
+
+## Documentation Links
+
+- [Getting Started](https://markdown.svelte.page/docs/getting-started)
+- [API Reference](https://markdown.svelte.page/docs/api/svelte-markdown)
+- [Types & Exports](https://markdown.svelte.page/docs/api/types)
+- [Markdown Renderers](https://markdown.svelte.page/docs/renderers/markdown-renderers)
+- [HTML Renderers](https://markdown.svelte.page/docs/renderers/html-renderers)
+- [Custom Renderers](https://markdown.svelte.page/docs/renderers/custom-renderers)
+- [Snippet Overrides](https://markdown.svelte.page/docs/renderers/snippet-overrides)
+- [Token Caching](https://markdown.svelte.page/docs/advanced/token-caching)
+- [Allow/Deny Filtering](https://markdown.svelte.page/docs/advanced/allow-deny)
+- [Security](https://markdown.svelte.page/docs/advanced/security)
+- [Marked Extensions](https://markdown.svelte.page/docs/advanced/marked-extensions)
+- [Migration Guide](https://markdown.svelte.page/docs/migration)
+- [Interactive Playground](https://markdown.svelte.page/examples/playground)

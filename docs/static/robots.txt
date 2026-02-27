@@ -1,4 +1,29 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://memory.svelte.page/sitemap.xml
+# AI crawlers — explicit welcome
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Anthropic-ai
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://markdown.svelte.page/sitemap.xml
+
+# LLM discovery — see https://llmstxt.org
+LLMsTxt: https://markdown.svelte.page/llms.txt

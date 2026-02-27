@@ -3,6 +3,16 @@ title: Types & Exports
 description: All exported types, functions, constants, and utilities from @humanspeak/svelte-markdown
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Types & Exports | Svelte Markdown'
+        seo.description = 'All exported types, functions, constants, and utilities from @humanspeak/svelte-markdown'
+    }
+</script>
+
 # Types & Exports
 
 This page documents every named export from `@humanspeak/svelte-markdown`. The package provides a default export (the component) plus types, utility functions, constants, and cache classes.

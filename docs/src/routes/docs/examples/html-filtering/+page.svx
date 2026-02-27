@@ -3,6 +3,16 @@ title: HTML Filtering Examples
 description: Practical examples of filtering HTML tags in markdown content
 ---
 
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'HTML Filtering Examples | Svelte Markdown'
+        seo.description = 'Practical examples of filtering HTML tags in markdown content'
+    }
+</script>
+
 # HTML Filtering Examples
 
 These examples demonstrate how to use the allow/deny filtering utilities to control which HTML tags are rendered within markdown content.
