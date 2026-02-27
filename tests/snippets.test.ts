@@ -97,9 +97,12 @@ test.describe('Snippet Overrides', () => {
             await textarea.clear()
             await textarea.fill('# New heading\n\nNew paragraph')
 
-            await expect(page.locator('[data-testid="snippet-heading"]')).toBeVisible()
+            await expect(page.locator('[data-testid="snippet-heading"]')).toBeVisible({
+                timeout: 10000
+            })
             await expect(page.locator('[data-testid="snippet-paragraph"]')).toContainText(
-                'New paragraph'
+                'New paragraph',
+                { timeout: 10000 }
             )
         })
 

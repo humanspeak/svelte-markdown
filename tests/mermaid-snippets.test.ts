@@ -70,7 +70,13 @@ test.describe('Mermaid Snippet Overrides', () => {
         const wrapper = preview.locator('[data-testid="snippet-wrapper"]')
         await expect(wrapper).toBeVisible({ timeout: 15000 })
 
-        // Should show error or diagram inside the wrapper (not crash)
+        // Wait for mermaid to finish loading (loading → error or diagram)
+        const anyMermaidState = wrapper.locator(
+            '[data-testid="mermaid-loading"], [data-testid="mermaid-error"], [data-testid="mermaid-diagram"]'
+        )
+        await expect(anyMermaidState.first()).toBeVisible({ timeout: 15000 })
+
+        // Once visible, wait for loading to resolve to error or diagram
         const errorOrDiagram = wrapper.locator(
             '[data-testid="mermaid-error"], [data-testid="mermaid-diagram"]'
         )
