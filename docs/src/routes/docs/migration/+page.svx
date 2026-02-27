@@ -5,12 +5,23 @@ description: Migrate from svelte-markdown to @humanspeak/svelte-markdown for Sve
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Migration Guide | Svelte Markdown'
         seo.description = 'Migrate from svelte-markdown to @humanspeak/svelte-markdown for Svelte 5 with improved TypeScript support, caching, and new features'
+        seo.ogTitle = 'Migration Guide'
+        seo.ogTagline = 'Upgrade from svelte-markdown to Svelte 5.'
+        seo.ogFeatures = ['Svelte 5 Upgrade', 'API Changes', 'New Features', 'Step by Step']
     }
+
+    const breadcrumbs = getBreadcrumbContext()
+    $effect(() => {
+        if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Migration' }]
+        }
+    })
 </script>
 
 # Migration Guide

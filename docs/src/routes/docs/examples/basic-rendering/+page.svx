@@ -5,12 +5,23 @@ description: Common markdown rendering examples with @humanspeak/svelte-markdown
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Basic Rendering Examples | Svelte Markdown'
         seo.description = 'Common markdown rendering examples with @humanspeak/svelte-markdown'
+        seo.ogTitle = 'Basic Rendering'
+        seo.ogTagline = 'Common markdown rendering patterns and examples.'
+        seo.ogFeatures = ['String Input', 'Token Input', 'Reactive Updates', 'SvelteKit']
     }
+
+    const breadcrumbs = getBreadcrumbContext()
+    $effect(() => {
+        if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples', href: '/docs/examples' }, { title: 'Basic Rendering' }]
+        }
+    })
 </script>
 
 # Basic Rendering

@@ -19,6 +19,9 @@
         seo.title = 'Custom Renderers | Examples | Svelte Markdown'
         seo.description =
             'Interactive demo of custom renderer overrides in @humanspeak/svelte-markdown. See how to control which markdown elements render.'
+        seo.ogTitle = 'Custom Renderers'
+        seo.ogTagline = 'Interactive demo of renderer overrides.'
+        seo.ogFeatures = ['Live Demo', 'Override Props', 'Component Swap', 'See Results']
     }
 </script>
 

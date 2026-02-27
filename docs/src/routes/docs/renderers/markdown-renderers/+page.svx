@@ -5,12 +5,23 @@ description: Documentation for all 24 built-in markdown renderer components
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Markdown Renderers | Svelte Markdown'
         seo.description = 'Documentation for all 24 built-in markdown renderer components'
+        seo.ogTitle = 'Markdown Renderers'
+        seo.ogTagline = '24 built-in token renderer components.'
+        seo.ogFeatures = ['24 Renderers', 'Custom Override', 'Snippet Overrides', 'Full GFM']
     }
+
+    const breadcrumbs = getBreadcrumbContext()
+    $effect(() => {
+        if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Renderers' }, { title: 'Markdown' }]
+        }
+    })
 </script>
 
 # Markdown Renderers

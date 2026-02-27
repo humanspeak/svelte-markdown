@@ -7,9 +7,9 @@
     import BreadcrumbJsonLd from '$lib/components/contexts/Breadcrumb/BreadcrumbJsonLd.svelte'
     import SeoContext from '$lib/components/contexts/Seo/SeoContext.svelte'
     import type { SeoContext as SeoContextType } from '$lib/components/contexts/Seo/type'
+    import { encodeMessageData } from '$lib/components/shared-link/utils'
 
     const { children } = $props()
-    const imageLocation = `${page.url.origin}/`
 
     // Dynamic canonical URL based on current page path
     const canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`)
@@ -20,6 +20,18 @@
         description:
             'A powerful, customizable markdown renderer for Svelte 5 with TypeScript support, 24 renderers, 69+ HTML tags, token caching, and allow/deny utilities.'
     })
+
+    // Dynamic per-page social card images (only when ogTitle is set; home page keeps static defaults)
+    const ogImageUrl = $derived(
+        seo.ogTitle
+            ? `${page.url.origin}/social-cards/${encodeMessageData({ type: 'og', title: seo.ogTitle, description: seo.ogTagline ?? seo.description, features: seo.ogFeatures })}.png`
+            : `${page.url.origin}/og-default.png`
+    )
+    const twitterImageUrl = $derived(
+        seo.ogTitle
+            ? `${page.url.origin}/social-cards/${encodeMessageData({ type: 'twitter', title: seo.ogTitle, description: seo.ogTagline ?? seo.description, features: seo.ogFeatures })}.png`
+            : `${page.url.origin}/twitter-default.png`
+    )
 </script>
 
 <svelte:head>
@@ -30,7 +42,7 @@
     <meta property="og:description" content={seo.description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:image" content="{imageLocation}og-default.png" />
+    <meta property="og:image" content={ogImageUrl} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
 
@@ -38,7 +50,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={seo.title} />
     <meta name="twitter:description" content={seo.description} />
-    <meta name="twitter:image" content="{imageLocation}twitter-default.png" />
+    <meta name="twitter:image" content={twitterImageUrl} />
 
     <!-- Keywords -->
     <meta

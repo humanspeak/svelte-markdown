@@ -5,12 +5,23 @@ description: All exported types, functions, constants, and utilities from @human
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Types & Exports | Svelte Markdown'
         seo.description = 'All exported types, functions, constants, and utilities from @humanspeak/svelte-markdown'
+        seo.ogTitle = 'Types & Exports'
+        seo.ogTagline = 'All exported types, functions, and utilities.'
+        seo.ogFeatures = ['Type Safety', 'Utility Functions', 'Constants', 'Cache Classes']
     }
+
+    const breadcrumbs = getBreadcrumbContext()
+    $effect(() => {
+        if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'API' }, { title: 'Types & Exports' }]
+        }
+    })
 </script>
 
 # Types & Exports

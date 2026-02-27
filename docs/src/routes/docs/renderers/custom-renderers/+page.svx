@@ -5,12 +5,23 @@ description: Guide to creating custom renderer components for @humanspeak/svelte
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Custom Renderers | Svelte Markdown'
         seo.description = 'Guide to creating custom renderer components for @humanspeak/svelte-markdown'
+        seo.ogTitle = 'Custom Renderers'
+        seo.ogTagline = 'Build your own Svelte renderer components.'
+        seo.ogFeatures = ['Component Override', 'Full Control', 'Type Safe', 'Svelte 5']
     }
+
+    const breadcrumbs = getBreadcrumbContext()
+    $effect(() => {
+        if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Renderers' }, { title: 'Custom' }]
+        }
+    })
 </script>
 
 # Custom Renderers

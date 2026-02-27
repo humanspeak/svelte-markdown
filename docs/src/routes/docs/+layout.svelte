@@ -6,21 +6,12 @@
     import Footer from '$lib/components/general/Footer.svelte'
     import Sidebar from './Sidebar.svelte'
     import TableOfContents from './TableOfContents.svelte'
-    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
     import { enhanceCodeBlocks } from '$lib/actions/enhanceCodeBlocks'
 
     const { children } = $props()
 
     let contentElement: HTMLElement | undefined = $state(undefined)
     let headings: { id: string; text: string; level: number; element: HTMLElement }[] = $state([])
-
-    // Create breadcrumb store and context
-    const breadcrumbs = $derived(getBreadcrumbContext())
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Get Started' }]
-        }
-    })
 
     /**
      * Extract headings from content for table of contents

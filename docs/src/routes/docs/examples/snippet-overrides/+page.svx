@@ -5,12 +5,23 @@ description: Practical examples of using Svelte 5 snippet overrides to customize
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Snippet Overrides Examples | Svelte Markdown'
         seo.description = 'Practical examples of using Svelte 5 snippet overrides to customize markdown rendering inline'
+        seo.ogTitle = 'Snippet Overrides'
+        seo.ogTagline = 'Inline rendering customization examples.'
+        seo.ogFeatures = ['Paragraph Style', 'Link Target', 'Code Highlight', 'Image Wrap']
     }
+
+    const breadcrumbs = getBreadcrumbContext()
+    $effect(() => {
+        if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples', href: '/docs/examples' }, { title: 'Snippet Overrides' }]
+        }
+    })
 </script>
 
 # Snippet Overrides Examples
