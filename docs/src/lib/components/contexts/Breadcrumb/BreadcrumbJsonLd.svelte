@@ -22,6 +22,7 @@
 
 <svelte:head>
     {#if jsonLd}
-        {@html `<script type="application/ld+json">${jsonLd}</script>`}
+        <!-- trunk-ignore(eslint/svelte/no-at-html-tags) -->
+        {@html '<script type="application/ld+json">' + jsonLd + '<' + '/script>'}
     {/if}
 </svelte:head>
