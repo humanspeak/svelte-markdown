@@ -20,51 +20,55 @@
             'A powerful, customizable markdown renderer for Svelte 5 with TypeScript support, 24 renderers, 69+ HTML tags, token caching, and allow/deny utilities.'
     })
 
-    const softwareAppSchema = {
-        '@context': 'https://schema.org',
-        '@type': 'SoftwareApplication',
-        name: 'Svelte Markdown',
-        description:
-            'A powerful, customizable markdown renderer for Svelte 5 with TypeScript support, 24 renderers, 69+ HTML tags, token caching, and allow/deny utilities.',
-        url: 'https://markdown.svelte.page',
-        downloadUrl: 'https://www.npmjs.com/package/@humanspeak/svelte-markdown',
-        applicationCategory: 'DeveloperApplication',
-        operatingSystem: 'Any',
-        softwareRequirements: 'Svelte 5',
-        license: 'https://opensource.org/licenses/MIT',
-        keywords: [
-            'svelte',
-            'markdown',
-            'renderer',
-            'svelte-5',
-            'typescript',
-            'html',
-            'parser',
-            'marked'
-        ],
-        releaseNotes: 'https://github.com/humanspeak/svelte-markdown/releases',
-        author: {
-            '@type': 'Organization',
-            name: 'Humanspeak, Inc.',
-            url: 'https://humanspeak.com',
-            sameAs: [
-                'https://github.com/humanspeak',
-                'https://www.npmjs.com/package/@humanspeak/svelte-markdown',
-                'https://github.com/humanspeak/svelte-markdown'
-            ]
-        },
-        offers: {
-            '@type': 'Offer',
-            price: '0',
-            priceCurrency: 'USD'
-        },
-        aggregateRating: {
-            '@type': 'AggregateRating',
-            ratingValue: '5',
-            ratingCount: String(githubStats.stars),
-            bestRating: '5'
-        }
-    }
+    const softwareAppJsonLd =
+        '<script type="application/ld+json">' +
+        JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'Svelte Markdown',
+            description:
+                'A powerful, customizable markdown renderer for Svelte 5 with TypeScript support, 24 renderers, 69+ HTML tags, token caching, and allow/deny utilities.',
+            url: 'https://markdown.svelte.page',
+            downloadUrl: 'https://www.npmjs.com/package/@humanspeak/svelte-markdown',
+            applicationCategory: 'DeveloperApplication',
+            operatingSystem: 'Any',
+            softwareRequirements: 'Svelte 5',
+            license: 'https://opensource.org/licenses/MIT',
+            keywords: [
+                'svelte',
+                'markdown',
+                'renderer',
+                'svelte-5',
+                'typescript',
+                'html',
+                'parser',
+                'marked'
+            ],
+            releaseNotes: 'https://github.com/humanspeak/svelte-markdown/releases',
+            author: {
+                '@type': 'Organization',
+                name: 'Humanspeak, Inc.',
+                url: 'https://humanspeak.com',
+                sameAs: [
+                    'https://github.com/humanspeak',
+                    'https://www.npmjs.com/package/@humanspeak/svelte-markdown',
+                    'https://github.com/humanspeak/svelte-markdown'
+                ]
+            },
+            offers: {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'USD'
+            },
+            aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: '5',
+                ratingCount: String(githubStats.stars),
+                bestRating: '5'
+            }
+        }) +
+        '<' +
+        '/script>'
 
     // Dynamic per-page social card images (only when ogSlug is set; home page keeps static defaults)
     const ogImageUrl = $derived(
@@ -110,7 +114,8 @@
     <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-optimized content" />
 
     <!-- JSON-LD structured data: SoftwareApplication -->
-    {@html `<script type="application/ld+json">${JSON.stringify(softwareAppSchema)}</script>`}
+    <!-- trunk-ignore(eslint/svelte/no-at-html-tags) -->
+    {@html softwareAppJsonLd}
 
     <!-- JSON-LD structured data: WebSite -->
     <script type="application/ld+json">
