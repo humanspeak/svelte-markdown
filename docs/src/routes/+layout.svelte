@@ -4,6 +4,7 @@
     import { page } from '$app/state'
     import { MotionConfig } from '@humanspeak/svelte-motion'
     import BreadcrumbContext from '$lib/components/contexts/Breadcrumb/BreadcrumbContext.svelte'
+    import BreadcrumbJsonLd from '$lib/components/contexts/Breadcrumb/BreadcrumbJsonLd.svelte'
     import SeoContext from '$lib/components/contexts/Seo/SeoContext.svelte'
     import type { SeoContext as SeoContextType } from '$lib/components/contexts/Seo/type'
 
@@ -49,6 +50,7 @@
     <meta name="author" content="Humanspeak, Inc." />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href={canonicalUrl} />
+    <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-optimized content" />
 
     <!-- JSON-LD structured data: SoftwareApplication -->
     <script type="application/ld+json">
@@ -59,7 +61,12 @@
             "author": {
                 "@type": "Organization",
                 "name": "Humanspeak, Inc.",
-                "url": "https://humanspeak.com"
+                "url": "https://humanspeak.com",
+                "sameAs": [
+                    "https://github.com/humanspeak",
+                    "https://www.npmjs.com/package/@humanspeak/svelte-markdown",
+                    "https://github.com/humanspeak/svelte-markdown"
+                ]
             },
             "description": "A powerful, customizable markdown renderer for Svelte 5 with TypeScript support, 24 renderers, 69+ HTML tags, token caching, and allow/deny utilities.",
             "downloadUrl": "https://www.npmjs.com/package/@humanspeak/svelte-markdown",
@@ -91,7 +98,12 @@
             "publisher": {
                 "@type": "Organization",
                 "name": "Humanspeak, Inc.",
-                "url": "https://humanspeak.com"
+                "url": "https://humanspeak.com",
+                "sameAs": [
+                    "https://github.com/humanspeak",
+                    "https://www.npmjs.com/package/@humanspeak/svelte-markdown",
+                    "https://github.com/humanspeak/svelte-markdown"
+                ]
             }
         }
     </script>
@@ -100,6 +112,7 @@
 <ModeWatcher />
 <SeoContext {seo}>
     <BreadcrumbContext>
+        <BreadcrumbJsonLd />
         <MotionConfig transition={{ duration: 0.5 }}>
             {@render children?.()}
         </MotionConfig>
