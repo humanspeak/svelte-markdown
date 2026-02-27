@@ -19,7 +19,7 @@ description: Documentation for all 69+ built-in HTML tag renderer components
     const breadcrumbs = getBreadcrumbContext()
     $effect(() => {
         if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Renderers', href: '/docs/renderers/markdown-renderers' }, { title: 'HTML' }]
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Renderers' }, { title: 'HTML' }]
         }
     })
 </script>

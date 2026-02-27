@@ -19,7 +19,7 @@ description: Performance optimization through built-in LRU token caching
     const breadcrumbs = getBreadcrumbContext()
     $effect(() => {
         if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Advanced', href: '/docs/advanced/marked-extensions' }, { title: 'Token Caching' }]
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Advanced' }, { title: 'Token Caching' }]
         }
     })
 </script>

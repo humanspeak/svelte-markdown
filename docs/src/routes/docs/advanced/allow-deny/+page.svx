@@ -19,7 +19,7 @@ description: Control which markdown elements and HTML tags are rendered
     const breadcrumbs = getBreadcrumbContext()
     $effect(() => {
         if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Advanced', href: '/docs/advanced/marked-extensions' }, { title: 'Allow/Deny' }]
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Advanced' }, { title: 'Allow/Deny' }]
         }
     })
 </script>

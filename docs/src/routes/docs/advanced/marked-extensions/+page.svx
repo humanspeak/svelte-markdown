@@ -19,7 +19,7 @@ description: How to use third-party marked extensions like KaTeX math rendering 
     const breadcrumbs = getBreadcrumbContext()
     $effect(() => {
         if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Advanced', href: '/docs/advanced/marked-extensions' }, { title: 'Marked Extensions' }]
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Advanced' }, { title: 'Marked Extensions' }]
         }
     })
 </script>

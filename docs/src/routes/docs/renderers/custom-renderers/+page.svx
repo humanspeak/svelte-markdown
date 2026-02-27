@@ -19,7 +19,7 @@ description: Guide to creating custom renderer components for @humanspeak/svelte
     const breadcrumbs = getBreadcrumbContext()
     $effect(() => {
         if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Renderers', href: '/docs/renderers/markdown-renderers' }, { title: 'Custom' }]
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Renderers' }, { title: 'Custom' }]
         }
     })
 </script>
