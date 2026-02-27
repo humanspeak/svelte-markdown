@@ -179,8 +179,8 @@ importers:
         specifier: ^0.1.27
         version: 0.1.27(svelte@5.53.5)
       '@humanspeak/svelte-satori-fix':
-        specifier: ^0.0.2
-        version: 0.0.2(svelte@5.53.5)
+        specifier: ^0.0.3
+        version: 0.0.3(svelte@5.53.5)
       '@resvg/resvg-js':
         specifier: ^2.6.2
         version: 2.6.2
@@ -829,8 +829,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@humanspeak/svelte-satori-fix@0.0.2':
-    resolution: {integrity: sha512-4onAvV0rzpxOZtYjUjLfeCAoSwI912ZNOgaEnRtRyyHnGP4IJYGV9iOX5eDzA7Ku7peGWjdYgjoEx9ccegeBeA==}
+  '@humanspeak/svelte-satori-fix@0.0.3':
+    resolution: {integrity: sha512-8oLATwSYZh8A/nGE1QAs5292jnBMkhBqgMtpMIl/fYzokgIR3Ds4J4ks81q+HTwTyGm7ID7tVUG/iWf7v5I3Jw==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -4570,7 +4570,7 @@ snapshots:
       - react
       - react-dom
 
-  '@humanspeak/svelte-satori-fix@0.0.2(svelte@5.53.5)':
+  '@humanspeak/svelte-satori-fix@0.0.3(svelte@5.53.5)':
     dependencies:
       svelte: 5.53.5
 
