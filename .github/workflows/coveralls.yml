@@ -44,6 +44,7 @@ jobs:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   flag-name: node-${{ matrix.node-version }}
                   parallel: true
+                  fail-on-error: false
               if: matrix.node-version == '22'
 
             - name: Cache dependencies
@@ -65,3 +66,4 @@ jobs:
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   parallel-finished: true
+                  fail-on-error: false

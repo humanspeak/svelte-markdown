@@ -7,11 +7,6 @@ export default defineConfig({
     server: {
         port: 8234
     },
-    ssr: {
-        resolve: {
-            conditions: ['workerd', 'worker']
-        }
-    },
     build: {
         rollupOptions: {
             output: {

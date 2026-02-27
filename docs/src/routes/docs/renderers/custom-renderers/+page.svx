@@ -14,6 +14,7 @@ description: Guide to creating custom renderer components for @humanspeak/svelte
         seo.ogTitle = 'Custom Renderers'
         seo.ogTagline = 'Build your own Svelte renderer components.'
         seo.ogFeatures = ['Component Override', 'Full Control', 'Type Safe', 'Svelte 5']
+        seo.ogSlug = 'docs-renderers-custom-renderers'
     }
 
     const breadcrumbs = getBreadcrumbContext()

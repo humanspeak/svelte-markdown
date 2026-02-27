@@ -14,6 +14,7 @@ description: Practical examples of filtering HTML tags in markdown content
         seo.ogTitle = 'HTML Filtering'
         seo.ogTagline = 'Control which HTML tags render from markdown.'
         seo.ogFeatures = ['Block All HTML', 'Allowlist Tags', 'Denylist Tags', 'Safe Rendering']
+        seo.ogSlug = 'docs-examples-html-filtering'
     }
 
     const breadcrumbs = getBreadcrumbContext()

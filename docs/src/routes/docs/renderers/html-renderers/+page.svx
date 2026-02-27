@@ -14,6 +14,7 @@ description: Documentation for all 69+ built-in HTML tag renderer components
         seo.ogTitle = 'HTML Renderers'
         seo.ogTagline = '69+ built-in HTML tag renderer components.'
         seo.ogFeatures = ['69+ HTML Tags', 'Allow/Deny', 'Custom Override', 'Secure Parsing']
+        seo.ogSlug = 'docs-renderers-html-renderers'
     }
 
     const breadcrumbs = getBreadcrumbContext()

@@ -14,6 +14,7 @@ description: Get started with @humanspeak/svelte-markdown, a powerful markdown r
         seo.ogTitle = 'Getting Started'
         seo.ogTagline = 'Install, configure, and render your first markdown in minutes.'
         seo.ogFeatures = ['Quick Install', 'Svelte 5', 'TypeScript', 'SvelteKit Ready']
+        seo.ogSlug = 'docs-getting-started'
     }
 
     const breadcrumbs = getBreadcrumbContext()

@@ -14,6 +14,7 @@ description: Examples of using the isInline prop for inline markdown rendering
         seo.ogTitle = 'Inline Rendering'
         seo.ogTagline = 'Render markdown inline without block-level elements.'
         seo.ogFeatures = ['isInline Prop', 'No Block Elements', 'Inline Context', 'Span Friendly']
+        seo.ogSlug = 'docs-examples-inline-rendering'
     }
 
     const breadcrumbs = getBreadcrumbContext()

@@ -22,6 +22,7 @@
         seo.ogTitle = 'Custom Renderers'
         seo.ogTagline = 'Interactive demo of renderer overrides.'
         seo.ogFeatures = ['Live Demo', 'Override Props', 'Component Swap', 'See Results']
+        seo.ogSlug = 'examples-custom-renderers'
     }
 </script>
 

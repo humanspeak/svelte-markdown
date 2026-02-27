@@ -14,6 +14,7 @@ description: All exported types, functions, constants, and utilities from @human
         seo.ogTitle = 'Types & Exports'
         seo.ogTagline = 'All exported types, functions, and utilities.'
         seo.ogFeatures = ['Type Safety', 'Utility Functions', 'Constants', 'Cache Classes']
+        seo.ogSlug = 'docs-api-types'
     }
 
     const breadcrumbs = getBreadcrumbContext()

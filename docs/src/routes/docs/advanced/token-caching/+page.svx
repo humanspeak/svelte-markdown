@@ -14,6 +14,7 @@ description: Performance optimization through built-in LRU token caching
         seo.ogTitle = 'Token Caching'
         seo.ogTagline = '50-200x faster re-renders with built-in LRU caching.'
         seo.ogFeatures = ['50-200x Faster', 'LRU Cache', 'Auto Caching', 'TTL Expiry']
+        seo.ogSlug = 'docs-advanced-token-caching'
     }
 
     const breadcrumbs = getBreadcrumbContext()

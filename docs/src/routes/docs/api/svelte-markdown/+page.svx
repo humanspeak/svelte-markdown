@@ -14,6 +14,7 @@ description: Complete API reference for the SvelteMarkdown component
         seo.ogTitle = 'Component API'
         seo.ogTagline = 'Props, events, and configuration for SvelteMarkdown.'
         seo.ogFeatures = ['Props Reference', 'Event Callbacks', 'Token Input', 'Inline Mode']
+        seo.ogSlug = 'docs-api-svelte-markdown'
     }
 
     const breadcrumbs = getBreadcrumbContext()

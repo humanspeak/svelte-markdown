@@ -22,6 +22,7 @@
         seo.ogTitle = 'Live Playground'
         seo.ogTagline = 'Edit markdown and HTML with real-time preview.'
         seo.ogFeatures = ['Edit & Preview', 'Real-Time', 'Markdown + HTML', 'Full Editor']
+        seo.ogSlug = 'examples-playground'
     }
 </script>
 

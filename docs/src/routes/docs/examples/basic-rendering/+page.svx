@@ -14,6 +14,7 @@ description: Common markdown rendering examples with @humanspeak/svelte-markdown
         seo.ogTitle = 'Basic Rendering'
         seo.ogTagline = 'Common markdown rendering patterns and examples.'
         seo.ogFeatures = ['String Input', 'Token Input', 'Reactive Updates', 'SvelteKit']
+        seo.ogSlug = 'docs-examples-basic-rendering'
     }
 
     const breadcrumbs = getBreadcrumbContext()
