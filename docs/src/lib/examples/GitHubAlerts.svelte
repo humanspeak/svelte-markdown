@@ -70,6 +70,8 @@ Regular markdown works alongside alerts: **bold**, *italic*, and \`inline code\`
   import { markedAlert, AlertRenderer }
     from '@humanspeak/svelte-markdown/extensions'
 
+  const source = '> [!NOTE]\\n> Important info here.'
+
   interface AlertRenderers extends Renderers {
     alert: RendererComponent
   }
@@ -80,7 +82,7 @@ Regular markdown works alongside alerts: **bold**, *italic*, and \`inline code\`
 \x3C/script>
 
 \x3CSvelteMarkdown
-  source={markdown}
+  {source}
   extensions={[markedAlert()]}
   {renderers}
 />`
@@ -117,10 +119,12 @@ Regular markdown works alongside alerts: **bold**, *italic*, and \`inline code\`
   import SvelteMarkdown from '@humanspeak/svelte-markdown'
   import { markedAlert }
     from '@humanspeak/svelte-markdown/extensions'
+
+  const source = '> [!NOTE]\\n> Important info here.'
 \x3C/script>
 
 \x3CSvelteMarkdown
-  source={markdown}
+  {source}
   extensions={[markedAlert()]}
 >
   {#snippet alert(props)}

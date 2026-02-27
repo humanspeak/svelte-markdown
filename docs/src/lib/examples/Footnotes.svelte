@@ -71,6 +71,8 @@ When documenting APIs, footnotes[^api] help explain edge cases without breaking 
     markedFootnote, FootnoteRef, FootnoteSection
   } from '@humanspeak/svelte-markdown/extensions'
 
+  const source = 'A statement[^1] with a citation.\\n\\n[^1]: The citation.'
+
   interface FootnoteRenderers extends Renderers {
     footnoteRef: RendererComponent
     footnoteSection: RendererComponent
@@ -83,7 +85,7 @@ When documenting APIs, footnotes[^api] help explain edge cases without breaking 
 \x3C/script>
 
 \x3CSvelteMarkdown
-  source={markdown}
+  {source}
   extensions={[markedFootnote()]}
   {renderers}
 />`
@@ -123,10 +125,12 @@ When documenting APIs, footnotes[^api] help explain edge cases without breaking 
   import SvelteMarkdown from '@humanspeak/svelte-markdown'
   import { markedFootnote }
     from '@humanspeak/svelte-markdown/extensions'
+
+  const source = 'A statement[^1] with a citation.\\n\\n[^1]: The citation.'
 \x3C/script>
 
 \x3CSvelteMarkdown
-  source={markdown}
+  {source}
   extensions={[markedFootnote()]}
 >
   {#snippet footnoteRef(props)}
