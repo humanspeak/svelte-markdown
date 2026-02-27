@@ -1,6 +1,6 @@
 <script lang="ts">
     import { page } from '$app/state'
-    import OG from '$lib/components/OG.svelte'
+    import OG from '$lib/components/shared-link/OG.svelte'
 
     const cardType: 'og' | 'twitter' = $derived(page.url.searchParams.get('type') || 'og') as
         | 'og'

@@ -1,6 +1,86 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
+@font-face {
+    font-family: 'lato';
+    src: url('./lib/fonts/lato/Lato-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'lato';
+    src: url('./lib/fonts/lato/Lato-LightItalic.ttf') format('truetype');
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'lato';
+    src: url('./lib/fonts/lato/Lato-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'lato';
+    src: url('./lib/fonts/lato/Lato-Italic.ttf') format('truetype');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'lato';
+    src: url('./lib/fonts/lato/Lato-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'lato';
+    src: url('./lib/fonts/lato/Lato-BoldItalic.ttf') format('truetype');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'lato';
+    src: url('./lib/fonts/lato/Lato-Black.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'lato';
+    src: url('./lib/fonts/lato/Lato-BlackItalic.ttf') format('truetype');
+    font-weight: 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'lato-extrabold';
+    src: url('./lib/fonts/lato/Lato-ExtraBold.ttf') format('truetype');
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'lato-extrabold';
+    src: url('./lib/fonts/lato/Lato-ExtraBoldItalic.ttf') format('truetype');
+    font-weight: 800;
+    font-style: italic;
+    font-display: swap;
+}
+
 :root {
     /* Brand colors - Humanspeak teal green */
     --color-brand-50: #f0fdfb;
@@ -179,6 +259,11 @@
 
     body {
         @apply bg-background text-foreground;
+        font-family:
+            'lato',
+            system-ui,
+            -apple-system,
+            sans-serif;
         font-feature-settings:
             'rlig' 1,
             'calt' 1;
