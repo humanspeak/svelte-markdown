@@ -16,7 +16,7 @@
             'Explore interactive examples of @humanspeak/svelte-markdown featuring a live playground, custom renderers, HTML filtering, and caching performance demos.'
         seo.ogTitle = 'Interactive Examples'
         seo.ogTagline = 'Live demos of markdown rendering features.'
-        seo.ogFeatures = ['Live Editors', '9 Demos', 'Source Code', 'Try It Now']
+        seo.ogFeatures = ['Live Editors', '8 Demos', 'Source Code', 'Try It Now']
     }
 
     const examples = [
@@ -68,6 +68,13 @@
             description:
                 'Enhance code blocks with walkTokens extensions and snippet overrides. No custom renderers required.',
             icon: 'fa-solid fa-code'
+        },
+        {
+            slug: 'snippet-overrides',
+            title: 'Snippet Overrides',
+            description:
+                'Customize rendering inline with Svelte 5 snippets. No separate component files needed.',
+            icon: 'fa-solid fa-scissors'
         }
     ]
 </script>
