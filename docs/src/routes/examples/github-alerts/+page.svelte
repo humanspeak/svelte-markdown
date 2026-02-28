@@ -5,14 +5,12 @@
     import GitHubAlerts from '$lib/examples/GitHubAlerts.svelte'
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [
-                { title: 'Examples', href: '/examples' },
-                { title: 'GitHub Alerts' }
-            ]
-        }
-    })
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [
+            { title: 'Examples', href: '/examples' },
+            { title: 'GitHub Alerts' }
+        ]
+    }
 
     const seo = getSeoContext()
     if (seo) {

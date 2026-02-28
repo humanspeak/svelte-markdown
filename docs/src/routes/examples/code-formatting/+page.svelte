@@ -13,14 +13,12 @@
     })
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [
-                { title: 'Examples', href: '/examples' },
-                { title: 'Code Formatting' }
-            ]
-        }
-    })
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [
+            { title: 'Examples', href: '/examples' },
+            { title: 'Code Formatting' }
+        ]
+    }
 
     const seo = getSeoContext()
     if (seo) {

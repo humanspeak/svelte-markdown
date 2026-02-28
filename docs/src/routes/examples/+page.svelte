@@ -2,12 +2,10 @@
     import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
 
-    const breadcrumbs = $derived(getBreadcrumbContext())
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Examples' }]
-        }
-    })
+    const breadcrumbs = getBreadcrumbContext()
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [{ title: 'Examples' }]
+    }
 
     const seo = getSeoContext()
     if (seo) {

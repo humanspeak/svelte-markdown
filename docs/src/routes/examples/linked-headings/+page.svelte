@@ -5,14 +5,12 @@
     import LinkedHeadings from '$lib/examples/LinkedHeadings.svelte'
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [
-                { title: 'Examples', href: '/examples' },
-                { title: 'Linked Headings' }
-            ]
-        }
-    })
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [
+            { title: 'Examples', href: '/examples' },
+            { title: 'Linked Headings' }
+        ]
+    }
 
     const seo = getSeoContext()
     if (seo) {

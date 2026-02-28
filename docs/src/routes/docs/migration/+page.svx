@@ -18,11 +18,8 @@ description: Migrate from svelte-markdown to @humanspeak/svelte-markdown for Sve
     }
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Migration' }]
-        }
-    })
+    if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Migration' }]        }
 </script>
 
 # Migration Guide

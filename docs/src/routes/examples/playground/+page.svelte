@@ -5,14 +5,12 @@
     import MarkdownPlayground from '$lib/examples/MarkdownPlayground.svelte'
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [
-                { title: 'Examples', href: '/examples' },
-                { title: 'Live Playground' }
-            ]
-        }
-    })
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [
+            { title: 'Examples', href: '/examples' },
+            { title: 'Live Playground' }
+        ]
+    }
 
     const seo = getSeoContext()
     if (seo) {

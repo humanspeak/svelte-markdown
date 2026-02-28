@@ -1,19 +1,16 @@
 <script lang="ts">
     import Header from '$lib/components/general/Header.svelte'
     import Footer from '$lib/components/general/Footer.svelte'
-    import { type BreadcrumbContext } from '$lib/components/contexts/Breadcrumb/type'
     import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import { motion } from '@humanspeak/svelte-motion'
 
     let headingContainer: HTMLDivElement | null = $state(null)
-    const breadcrumbContext = $state<BreadcrumbContext | undefined>(getBreadcrumbContext())
+    const breadcrumbContext = getBreadcrumbContext()
 
-    $effect(() => {
-        if (breadcrumbContext) {
-            breadcrumbContext.breadcrumbs = []
-        }
-    })
+    if (breadcrumbContext) {
+        breadcrumbContext.breadcrumbs = []
+    }
 
     function springTap(node: HTMLElement, options: { pressedScale?: number } = {}) {
         const pressedScale = options.pressedScale ?? 0.96

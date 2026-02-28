@@ -18,11 +18,8 @@ description: How to add clickable anchor links to markdown headings using snippe
     }
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples', href: '/docs/examples' }, { title: 'Linked Headings' }]
-        }
-    })
+    if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples', href: '/docs/examples' }, { title: 'Linked Headings' }]        }
 </script>
 
 # Linked Headings Examples

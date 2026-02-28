@@ -18,11 +18,8 @@ description: Practical examples of using Svelte 5 snippet overrides to customize
     }
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples', href: '/docs/examples' }, { title: 'Snippet Overrides' }]
-        }
-    })
+    if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples', href: '/docs/examples' }, { title: 'Snippet Overrides' }]        }
 </script>
 
 # Snippet Overrides Examples

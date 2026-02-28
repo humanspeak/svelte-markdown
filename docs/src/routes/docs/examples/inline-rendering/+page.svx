@@ -18,11 +18,8 @@ description: Examples of using the isInline prop for inline markdown rendering
     }
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples', href: '/docs/examples' }, { title: 'Inline Rendering' }]
-        }
-    })
+    if (breadcrumbs) {
+            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples', href: '/docs/examples' }, { title: 'Inline Rendering' }]        }
 </script>
 
 # Inline Rendering

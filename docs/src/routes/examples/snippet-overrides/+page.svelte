@@ -5,14 +5,12 @@
     import SnippetOverrides from '$lib/examples/SnippetOverrides.svelte'
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [
-                { title: 'Examples', href: '/examples' },
-                { title: 'Snippet Overrides' }
-            ]
-        }
-    })
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [
+            { title: 'Examples', href: '/examples' },
+            { title: 'Snippet Overrides' }
+        ]
+    }
 
     const seo = getSeoContext()
     if (seo) {

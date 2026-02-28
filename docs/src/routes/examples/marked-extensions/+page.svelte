@@ -5,14 +5,12 @@
     import MarkedExtensions from '$lib/examples/MarkedExtensions.svelte'
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [
-                { title: 'Examples', href: '/examples' },
-                { title: 'Marked Extensions' }
-            ]
-        }
-    })
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [
+            { title: 'Examples', href: '/examples' },
+            { title: 'Marked Extensions' }
+        ]
+    }
 
     const seo = getSeoContext()
     if (seo) {
