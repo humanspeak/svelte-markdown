@@ -64,6 +64,20 @@
             icon: 'fa-solid fa-diagram-project'
         },
         {
+            slug: 'github-alerts',
+            title: 'GitHub Alerts',
+            description:
+                'GitHub-style alert admonitions (NOTE, TIP, IMPORTANT, WARNING, CAUTION) with the built-in markedAlert extension.',
+            icon: 'fa-solid fa-triangle-exclamation'
+        },
+        {
+            slug: 'footnotes',
+            title: 'Footnotes',
+            description:
+                'Footnote references and definitions with bidirectional linking using the built-in markedFootnote extension.',
+            icon: 'fa-solid fa-superscript'
+        },
+        {
             slug: 'code-formatting',
             title: 'Code Formatting',
             description:
@@ -76,6 +90,13 @@
             description:
                 'Customize rendering inline with Svelte 5 snippets. No separate component files needed.',
             icon: 'fa-solid fa-scissors'
+        },
+        {
+            slug: 'linked-headings',
+            title: 'Linked Headings',
+            description:
+                'Add clickable anchor links to headings with snippet overrides or custom renderers for easy deep-linking.',
+            icon: 'fa-solid fa-link'
         }
     ]
 </script>

@@ -8,7 +8,7 @@
     import TableOfContents from './TableOfContents.svelte'
     import { enhanceCodeBlocks } from '$lib/actions/enhanceCodeBlocks'
 
-    const { children } = $props()
+    const { children, data } = $props()
 
     let contentElement: HTMLElement | undefined = $state(undefined)
     let headings: { id: string; text: string; level: number; element: HTMLElement }[] = $state([])
@@ -87,7 +87,7 @@
         <aside
             class="border-sidebar-border bg-sidebar-background/95 hidden w-64 shrink-0 border-r shadow-sm lg:sticky lg:top-0 lg:block lg:h-screen lg:overflow-y-auto"
         >
-            <Sidebar currentPath={page.url.pathname} />
+            <Sidebar currentPath={page.url.pathname} otherProjects={data.otherProjects} />
         </aside>
 
         <!-- Main content area -->
