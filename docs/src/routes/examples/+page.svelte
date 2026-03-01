@@ -1,13 +1,14 @@
 <script lang="ts">
     import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import Icon from '$lib/components/general/Icon.svelte'
+    import { ArrowRight, Rocket } from '@lucide/svelte'
+    import type { IconName } from '$lib/icons'
 
-    const breadcrumbs = $derived(getBreadcrumbContext())
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Examples' }]
-        }
-    })
+    const breadcrumbs = getBreadcrumbContext()
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [{ title: 'Examples' }]
+    }
 
     const seo = getSeoContext()
     if (seo) {
@@ -20,83 +21,83 @@
         seo.ogSlug = 'examples'
     }
 
-    const examples = [
+    const examples: { slug: string; title: string; description: string; icon: IconName }[] = [
         {
             slug: 'playground',
             title: 'Live Playground',
             description:
                 'Edit markdown in real-time and see it rendered instantly. Mix markdown with HTML tags.',
-            icon: 'fa-solid fa-pen-to-square'
+            icon: 'square-pen'
         },
         {
             slug: 'custom-renderers',
             title: 'Custom Renderers',
             description:
                 'See how to override default renderers and control which markdown elements are rendered.',
-            icon: 'fa-solid fa-paintbrush'
+            icon: 'paintbrush'
         },
         {
             slug: 'html-filtering',
             title: 'HTML Filtering',
             description:
                 'Interactive demo of allow/deny controls for HTML tags within markdown content.',
-            icon: 'fa-solid fa-filter'
+            icon: 'filter'
         },
         {
             slug: 'caching-performance',
             title: 'Caching Performance',
             description:
                 'Explore token caching and see the performance improvement on repeated renders.',
-            icon: 'fa-solid fa-gauge-high'
+            icon: 'gauge'
         },
         {
             slug: 'marked-extensions',
             title: 'Marked Extensions',
             description:
                 'Live KaTeX math rendering with the extensions prop. Try component renderers and snippet overrides.',
-            icon: 'fa-solid fa-puzzle-piece'
+            icon: 'puzzle'
         },
         {
             slug: 'mermaid',
             title: 'Mermaid Diagrams',
             description:
                 'Async Mermaid diagram rendering with a custom marked extension. Flowcharts, sequence diagrams, and more.',
-            icon: 'fa-solid fa-diagram-project'
+            icon: 'workflow'
         },
         {
             slug: 'github-alerts',
             title: 'GitHub Alerts',
             description:
                 'GitHub-style alert admonitions (NOTE, TIP, IMPORTANT, WARNING, CAUTION) with the built-in markedAlert extension.',
-            icon: 'fa-solid fa-triangle-exclamation'
+            icon: 'triangle-alert'
         },
         {
             slug: 'footnotes',
             title: 'Footnotes',
             description:
                 'Footnote references and definitions with bidirectional linking using the built-in markedFootnote extension.',
-            icon: 'fa-solid fa-superscript'
+            icon: 'superscript'
         },
         {
             slug: 'code-formatting',
             title: 'Code Formatting',
             description:
                 'Enhance code blocks with walkTokens extensions and snippet overrides. No custom renderers required.',
-            icon: 'fa-solid fa-code'
+            icon: 'code'
         },
         {
             slug: 'snippet-overrides',
             title: 'Snippet Overrides',
             description:
                 'Customize rendering inline with Svelte 5 snippets. No separate component files needed.',
-            icon: 'fa-solid fa-scissors'
+            icon: 'scissors'
         },
         {
             slug: 'linked-headings',
             title: 'Linked Headings',
             description:
                 'Add clickable anchor links to headings with snippet overrides or custom renderers for easy deep-linking.',
-            icon: 'fa-solid fa-link'
+            icon: 'link'
         }
     ]
 </script>
@@ -133,7 +134,7 @@
                     <div
                         class="from-brand-500 to-brand-600 mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br text-white transition-transform duration-300 group-hover:scale-110"
                     >
-                        <i class="{example.icon} text-lg"></i>
+                        <Icon name={example.icon} class="size-4.5" />
                     </div>
 
                     <h2
@@ -150,9 +151,9 @@
                         class="text-brand-600 group-hover:text-brand-700 flex items-center text-sm font-medium"
                     >
                         Try it
-                        <i
-                            class="fa-solid fa-arrow-right ml-2 transition-transform duration-200 group-hover:translate-x-1"
-                        ></i>
+                        <ArrowRight
+                            class="ml-2 size-4 transition-transform duration-200 group-hover:translate-x-1"
+                        />
                     </div>
                 </div>
 
@@ -180,7 +181,7 @@
                 class="from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 inline-flex items-center rounded-lg bg-gradient-to-r px-5 py-2.5 font-medium text-white transition-all duration-200"
             >
                 Get Started
-                <i class="fa-solid fa-rocket ml-2"></i>
+                <Rocket class="ml-2 size-4" />
             </a>
         </div>
     </div>

@@ -18,11 +18,9 @@ description: Documentation for all 24 built-in markdown renderer components
     }
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Renderers' }, { title: 'Markdown' }]
-        }
-    })
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Renderers' }, { title: 'Markdown' }]
+    }
 </script>
 
 # Markdown Renderers

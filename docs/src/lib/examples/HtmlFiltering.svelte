@@ -3,6 +3,8 @@
         allowHtmlOnly,
         buildUnsupportedHTML
     } from '@humanspeak/svelte-markdown'
+    import Icon from '$lib/components/general/Icon.svelte'
+    import type { IconName } from '$lib/icons'
 
     const sampleMarkdown = `# HTML Filtering Demo
 
@@ -51,22 +53,22 @@ ${`<${'script'}>alert('blocked')</${'script'}>`}`
 
     const renderers = $derived(htmlRenderers ? { html: htmlRenderers } : {})
 
-    const modeInfo: Record<FilterMode, { label: string; icon: string; description: string }> = {
+    const modeInfo: Record<FilterMode, { label: string; icon: IconName; description: string }> = {
         'allow-all': {
             label: 'Allow All HTML',
-            icon: 'fa-solid fa-shield-halved',
+            icon: 'shield-half',
             description:
                 'All HTML tags are rendered as-is. This includes potentially dangerous tags like <script> and <iframe>.'
         },
         'allow-safe': {
             label: 'Allow Only Safe',
-            icon: 'fa-solid fa-shield-check',
+            icon: 'shield-check',
             description:
                 'Only safe HTML tags are allowed: strong, em, div, span, details, summary, sup, sub, cite, and a. Dangerous tags like <script> and <iframe> are blocked.'
         },
         'block-all': {
             label: 'Block All HTML',
-            icon: 'fa-solid fa-shield',
+            icon: 'shield',
             description:
                 'All HTML tags are blocked. Only standard markdown formatting is rendered. Raw HTML is stripped from the output.'
         }
@@ -97,7 +99,7 @@ ${`<${'script'}>alert('blocked')</${'script'}>`}`
                     ? 'bg-brand-600 text-white'
                     : 'border-border bg-card text-muted-foreground hover:text-foreground border'}"
             >
-                <i class="{modeInfo[m].icon} text-xs"></i>
+                <Icon name={modeInfo[m].icon} class="size-3" />
                 {modeInfo[m].label}
             </button>
         {/each}
@@ -109,7 +111,7 @@ ${`<${'script'}>alert('blocked')</${'script'}>`}`
             <div
                 class="bg-brand-500/10 text-brand-600 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm"
             >
-                <i class={modeInfo[mode].icon}></i>
+                <Icon name={modeInfo[mode].icon} class="size-4" />
             </div>
             <div>
                 <p class="text-foreground text-sm font-medium">{modeInfo[mode].label}</p>

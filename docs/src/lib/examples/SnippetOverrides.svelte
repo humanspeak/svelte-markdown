@@ -1,5 +1,13 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import {
+        Check,
+        Scissors,
+        WandSparkles,
+        ChevronRight,
+        ExternalLink,
+        Lightbulb
+    } from '@lucide/svelte'
 
     const sampleMarkdown = `# Snippet Overrides Demo
 
@@ -79,7 +87,7 @@ Here is a feature comparison:
                 <div
                     class="bg-brand-500/10 text-brand-600 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm"
                 >
-                    <i class="fa-solid fa-check"></i>
+                    <Check class="size-4" />
                 </div>
                 <div>
                     <p class="text-foreground text-sm font-medium">Default Rendering</p>
@@ -94,7 +102,7 @@ Here is a feature comparison:
                 <div
                     class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-500/10 text-sm text-purple-600"
                 >
-                    <i class="fa-solid fa-scissors"></i>
+                    <Scissors class="size-4" />
                 </div>
                 <div>
                     <p class="text-foreground text-sm font-medium">Snippet Overrides Active</p>
@@ -129,11 +137,11 @@ Here is a feature comparison:
                             class="text-brand-700 dark:text-brand-400 flex items-center gap-2"
                         >
                             {#if depth === 1}
-                                <i class="fa-solid fa-scissors text-sm"></i>
+                                <Scissors class="size-3.5" />
                             {:else if depth === 2}
-                                <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
+                                <WandSparkles class="size-3.5" />
                             {:else}
-                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                                <ChevronRight class="size-3" />
                             {/if}
                             {@render children?.()}
                         </svelte:element>
@@ -148,7 +156,7 @@ Here is a feature comparison:
                             class="text-brand-600 dark:text-brand-400 inline-flex items-center gap-1 font-semibold no-underline hover:underline"
                         >
                             {@render children?.()}
-                            <i class="fa-solid fa-arrow-up-right-from-square text-[0.6em]"></i>
+                            <ExternalLink class="size-3" />
                         </a>
                     {/snippet}
 
@@ -158,7 +166,7 @@ Here is a feature comparison:
                             role="note"
                         >
                             <span class="shrink-0 text-amber-500">
-                                <i class="fa-solid fa-lightbulb"></i>
+                                <Lightbulb class="size-4" />
                             </span>
                             <div>{@render children?.()}</div>
                         </aside>
@@ -167,7 +175,7 @@ Here is a feature comparison:
                     {#snippet listitem({ children })}
                         <li class="flex items-start gap-2">
                             <span class="text-brand-500 mt-0.5 shrink-0"
-                                ><i class="fa-solid fa-check text-xs"></i></span
+                                ><Check class="size-3" /></span
                             >
                             <div>{@render children?.()}</div>
                         </li>

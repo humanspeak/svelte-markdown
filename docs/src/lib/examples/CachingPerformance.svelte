@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown, { TokenCache } from '@humanspeak/svelte-markdown'
+    import { Play, Trash2, Zap, Gauge, Recycle } from '@lucide/svelte'
 
     const defaultMarkdown = `# Token Caching Performance
 
@@ -116,14 +117,14 @@ This demo renders the above markdown and tracks timing to show the caching effec
                         onclick={render}
                         class="bg-brand-600 hover:bg-brand-700 w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors"
                     >
-                        <i class="fa-solid fa-play mr-2 text-xs"></i>
+                        <Play class="mr-2 size-3" />
                         Render
                     </button>
                     <button
                         onclick={clearAndRerender}
                         class="border-border bg-card text-muted-foreground hover:text-foreground hover:border-brand-500/50 w-full rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
                     >
-                        <i class="fa-solid fa-trash-can mr-2 text-xs"></i>
+                        <Trash2 class="mr-2 size-3" />
                         Clear Cache & Re-render
                     </button>
                 </div>
@@ -249,21 +250,21 @@ This demo renders the above markdown and tracks timing to show the caching effec
                 <h3 class="text-foreground mb-2 text-sm font-semibold">How Token Caching Works</h3>
                 <ul class="text-muted-foreground space-y-1.5 text-sm">
                     <li class="flex items-start gap-2">
-                        <i class="fa-solid fa-bolt text-brand-500 mt-0.5 text-xs"></i>
+                        <Zap class="text-brand-500 mt-0.5 size-3" />
                         <span>
                             First render parses markdown into tokens and stores them in an LRU
                             cache.
                         </span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <i class="fa-solid fa-gauge-high text-brand-500 mt-0.5 text-xs"></i>
+                        <Gauge class="text-brand-500 mt-0.5 size-3" />
                         <span>
                             Subsequent renders of the same content skip parsing and use cached
                             tokens (50-200x faster).
                         </span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <i class="fa-solid fa-recycle text-brand-500 mt-0.5 text-xs"></i>
+                        <Recycle class="text-brand-500 mt-0.5 size-3" />
                         <span>
                             The cache uses LRU eviction and TTL expiration to manage memory
                             automatically.

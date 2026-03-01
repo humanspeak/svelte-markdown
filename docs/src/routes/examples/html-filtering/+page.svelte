@@ -5,14 +5,12 @@
     import HtmlFiltering from '$lib/examples/HtmlFiltering.svelte'
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [
-                { title: 'Examples', href: '/examples' },
-                { title: 'HTML Filtering' }
-            ]
-        }
-    })
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [
+            { title: 'Examples', href: '/examples' },
+            { title: 'HTML Filtering' }
+        ]
+    }
 
     const seo = getSeoContext()
     if (seo) {

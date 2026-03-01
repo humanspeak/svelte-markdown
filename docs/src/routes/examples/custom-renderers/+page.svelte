@@ -5,14 +5,12 @@
     import CustomRenderers from '$lib/examples/CustomRenderers.svelte'
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [
-                { title: 'Examples', href: '/examples' },
-                { title: 'Custom Renderers' }
-            ]
-        }
-    })
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [
+            { title: 'Examples', href: '/examples' },
+            { title: 'Custom Renderers' }
+        ]
+    }
 
     const seo = getSeoContext()
     if (seo) {

@@ -5,14 +5,9 @@
     import Footnotes from '$lib/examples/Footnotes.svelte'
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [
-                { title: 'Examples', href: '/examples' },
-                { title: 'Footnotes' }
-            ]
-        }
-    })
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [{ title: 'Examples', href: '/examples' }, { title: 'Footnotes' }]
+    }
 
     const seo = getSeoContext()
     if (seo) {

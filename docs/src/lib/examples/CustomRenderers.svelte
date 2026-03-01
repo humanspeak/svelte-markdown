@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown, { allowRenderersOnly } from '@humanspeak/svelte-markdown'
+    import { Check, Filter } from '@lucide/svelte'
 
     const sampleMarkdown = `# Custom Renderers Demo
 
@@ -101,7 +102,7 @@ Here is a table for reference:
                 <div
                     class="bg-brand-500/10 text-brand-600 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm"
                 >
-                    <i class="fa-solid fa-check"></i>
+                    <Check class="size-4" />
                 </div>
                 <div>
                     <p class="text-foreground text-sm font-medium">All Renderers Active</p>
@@ -116,7 +117,7 @@ Here is a table for reference:
                 <div
                     class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-sm text-amber-600"
                 >
-                    <i class="fa-solid fa-filter"></i>
+                    <Filter class="size-4" />
                 </div>
                 <div>
                     <p class="text-foreground text-sm font-medium">Filtered Renderers</p>

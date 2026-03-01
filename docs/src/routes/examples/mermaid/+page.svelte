@@ -5,14 +5,12 @@
     import Mermaid from '$lib/examples/Mermaid.svelte'
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [
-                { title: 'Examples', href: '/examples' },
-                { title: 'Mermaid Diagrams' }
-            ]
-        }
-    })
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [
+            { title: 'Examples', href: '/examples' },
+            { title: 'Mermaid Diagrams' }
+        ]
+    }
 
     const seo = getSeoContext()
     if (seo) {

@@ -18,11 +18,9 @@ description: All exported types, functions, constants, and utilities from @human
     }
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'API' }, { title: 'Types & Exports' }]
-        }
-    })
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'API' }, { title: 'Types & Exports' }]
+    }
 </script>
 
 # Types & Exports

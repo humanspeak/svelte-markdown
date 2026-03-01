@@ -5,14 +5,12 @@
     import CachingPerformance from '$lib/examples/CachingPerformance.svelte'
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [
-                { title: 'Examples', href: '/examples' },
-                { title: 'Caching Performance' }
-            ]
-        }
-    })
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [
+            { title: 'Examples', href: '/examples' },
+            { title: 'Caching Performance' }
+        ]
+    }
 
     const seo = getSeoContext()
     if (seo) {

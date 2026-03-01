@@ -18,11 +18,9 @@ description: Complete API reference for the SvelteMarkdown component
     }
 
     const breadcrumbs = getBreadcrumbContext()
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'API' }, { title: 'SvelteMarkdown' }]
-        }
-    })
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'API' }, { title: 'SvelteMarkdown' }]
+    }
 </script>
 
 # SvelteMarkdown Component

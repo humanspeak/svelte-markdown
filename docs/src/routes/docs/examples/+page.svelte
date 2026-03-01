@@ -1,13 +1,14 @@
 <script lang="ts">
     import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import Icon from '$lib/components/general/Icon.svelte'
+    import { ArrowRight } from '@lucide/svelte'
+    import type { IconName } from '$lib/icons'
 
-    const breadcrumbs = $derived(getBreadcrumbContext())
-    $effect(() => {
-        if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples' }]
-        }
-    })
+    const breadcrumbs = getBreadcrumbContext()
+    if (breadcrumbs) {
+        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples' }]
+    }
 
     const seo = getSeoContext()
     if (seo) {
@@ -20,7 +21,10 @@
         seo.ogSlug = 'docs-examples'
     }
 
-    const examples = [
+    const examples: {
+        category: string
+        items: { title: string; description: string; href: string; icon: IconName }[]
+    }[] = [
         {
             category: 'Getting Started',
             items: [
@@ -29,14 +33,14 @@
                     description:
                         'Render markdown content with the SvelteMarkdown component. Covers string input, GFM, and common patterns.',
                     href: '/docs/examples/basic-rendering',
-                    icon: 'fa-solid fa-file-lines'
+                    icon: 'file-text'
                 },
                 {
                     title: 'Inline Rendering',
                     description:
                         'Use the isInline prop to render markdown without wrapping block elements.',
                     href: '/docs/examples/inline-rendering',
-                    icon: 'fa-solid fa-i-cursor'
+                    icon: 'text-cursor'
                 }
             ]
         },
@@ -48,14 +52,14 @@
                     description:
                         'Override default renderers with your own Svelte components for full control over output.',
                     href: '/docs/examples/custom-renderers',
-                    icon: 'fa-solid fa-paintbrush'
+                    icon: 'paintbrush'
                 },
                 {
                     title: 'HTML Filtering',
                     description:
                         'Use allow/deny utilities to control which HTML tags are rendered from markdown.',
                     href: '/docs/examples/html-filtering',
-                    icon: 'fa-solid fa-filter'
+                    icon: 'filter'
                 }
             ]
         },
@@ -67,21 +71,21 @@
                     description:
                         'Access parsed token data via the parsed callback prop for debugging or processing.',
                     href: '/docs/examples/parsed-callback',
-                    icon: 'fa-solid fa-diagram-project'
+                    icon: 'workflow'
                 },
                 {
                     title: 'Marked Extensions',
                     description:
                         'Integrate third-party marked extensions like KaTeX math rendering with custom Svelte renderers.',
                     href: '/docs/advanced/marked-extensions',
-                    icon: 'fa-solid fa-puzzle-piece'
+                    icon: 'puzzle'
                 },
                 {
                     title: 'Mermaid Diagrams',
                     description:
                         'Render Mermaid diagrams with a custom marked extension and async component renderers.',
                     href: '/examples/mermaid',
-                    icon: 'fa-solid fa-diagram-project'
+                    icon: 'workflow'
                 }
             ]
         }
@@ -147,7 +151,7 @@
                         <div
                             class="from-brand-500 to-brand-600 mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br text-white transition-transform duration-300 group-hover:scale-110"
                         >
-                            <i class={example.icon}></i>
+                            <Icon name={example.icon} class="size-4" />
                         </div>
 
                         <h3
@@ -165,9 +169,9 @@
                             class="text-brand-600 group-hover:text-brand-700 flex items-center text-sm font-medium"
                         >
                             View Example
-                            <i
-                                class="fa-solid fa-arrow-right ml-2 transition-transform duration-200 group-hover:translate-x-1"
-                            ></i>
+                            <ArrowRight
+                                class="ml-2 size-4 transition-transform duration-200 group-hover:translate-x-1"
+                            />
                         </div>
                     </div>
 
@@ -214,12 +218,12 @@
 <div class="not-prose">
     <h2 class="text-foreground mb-4 text-xl font-semibold">Best Practices</h2>
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {#each [{ icon: 'fa-solid fa-shield', title: 'Filter untrusted HTML', description: 'Use allowHtmlOnly/excludeHtmlOnly for user content' }, { icon: 'fa-solid fa-bolt', title: 'Leverage token caching', description: 'Repeated renders are 50-200x faster automatically' }, { icon: 'fa-solid fa-paintbrush', title: 'Use custom renderers', description: 'Override specific elements for custom styling' }, { icon: 'fa-solid fa-code', title: 'Use isInline for labels', description: 'Avoid block-level wrapping for inline content' }, { icon: 'fa-solid fa-diagram-project', title: 'Inspect tokens when debugging', description: 'Use the parsed callback to see the AST' }] as practice}
+        {#each [{ icon: 'shield' as IconName, title: 'Filter untrusted HTML', description: 'Use allowHtmlOnly/excludeHtmlOnly for user content' }, { icon: 'zap' as IconName, title: 'Leverage token caching', description: 'Repeated renders are 50-200x faster automatically' }, { icon: 'paintbrush' as IconName, title: 'Use custom renderers', description: 'Override specific elements for custom styling' }, { icon: 'code' as IconName, title: 'Use isInline for labels', description: 'Avoid block-level wrapping for inline content' }, { icon: 'workflow' as IconName, title: 'Inspect tokens when debugging', description: 'Use the parsed callback to see the AST' }] as practice}
             <div class="border-border bg-card flex items-start gap-3 rounded-lg border p-4">
                 <div
                     class="bg-brand-500/10 text-brand-600 flex h-8 w-8 shrink-0 items-center justify-center rounded-md"
                 >
-                    <i class="{practice.icon} text-sm"></i>
+                    <Icon name={practice.icon} class="size-3.5" />
                 </div>
                 <div>
                     <h3 class="text-foreground font-medium">{practice.title}</h3>

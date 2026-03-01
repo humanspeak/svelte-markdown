@@ -2,6 +2,7 @@
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import { createHighlighter } from 'shiki'
     import { onMount } from 'svelte'
+    import { Heading, Link, Scissors } from '@lucide/svelte'
 
     const sampleMarkdown = `# Linked Headings Demo
 
@@ -177,7 +178,7 @@ This is a deeply nested heading to show all levels work correctly.`
                 <div
                     class="bg-brand-500/10 text-brand-600 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm"
                 >
-                    <i class="fa-solid fa-heading"></i>
+                    <Heading class="size-4" />
                 </div>
                 <div>
                     <p class="text-foreground text-sm font-medium">Default Headings</p>
@@ -193,7 +194,7 @@ This is a deeply nested heading to show all levels work correctly.`
                 <div
                     class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-sm text-emerald-600"
                 >
-                    <i class="fa-solid fa-link"></i>
+                    <Link class="size-4" />
                 </div>
                 <div>
                     <p class="text-foreground text-sm font-medium">Custom Renderer</p>
@@ -211,7 +212,7 @@ This is a deeply nested heading to show all levels work correctly.`
                 <div
                     class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-500/10 text-sm text-purple-600"
                 >
-                    <i class="fa-solid fa-scissors"></i>
+                    <Scissors class="size-4" />
                 </div>
                 <div>
                     <p class="text-foreground text-sm font-medium">Snippet Override</p>
@@ -251,7 +252,7 @@ This is a deeply nested heading to show all levels work correctly.`
                                     <span
                                         class="text-brand-500 ml-2 text-[0.7em] opacity-0 transition-opacity group-hover:opacity-100"
                                     >
-                                        <i class="fa-solid fa-link"></i>
+                                        <Link class="inline size-3.5" />
                                     </span>
                                 {/if}
                             </a>

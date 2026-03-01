@@ -1,1 +1,4 @@
 .wrangler/
+static/og-default.png
+static/twitter-default.png
+src/lib/sitemap-manifest.json
