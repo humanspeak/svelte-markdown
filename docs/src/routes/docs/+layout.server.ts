@@ -15,11 +15,13 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
             otherProjects: projects.map((project) => ({
                 title: project.slug.toLowerCase(),
                 href: project.url,
-                icon: 'fa-solid fa-heart',
+                icon: 'heart' as const,
                 external: true
             }))
         }
     } catch {
-        return { otherProjects: [] }
+        return {
+            otherProjects: [] as { title: string; href: string; icon: 'heart'; external: boolean }[]
+        }
     }
 }

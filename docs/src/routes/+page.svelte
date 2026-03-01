@@ -1,9 +1,21 @@
 <script lang="ts">
     import Header from '$lib/components/general/Header.svelte'
     import Footer from '$lib/components/general/Footer.svelte'
+    import Icon from '$lib/components/general/Icon.svelte'
     import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import { motion } from '@humanspeak/svelte-motion'
+    import {
+        ArrowRight,
+        Rocket,
+        BookOpen,
+        Play,
+        RotateCw,
+        Pen,
+        Eye,
+        FlaskConical
+    } from '@lucide/svelte'
+    import type { IconName } from '$lib/icons'
 
     let headingContainer: HTMLDivElement | null = $state(null)
     const breadcrumbContext = getBreadcrumbContext()
@@ -12,101 +24,42 @@
         breadcrumbContext.breadcrumbs = []
     }
 
-    function springTap(node: HTMLElement, options: { pressedScale?: number } = {}) {
-        const pressedScale = options.pressedScale ?? 0.96
-        let downAnim: Animation | null = null
-        let upAnim: Animation | null = null
-
-        const press = () => {
-            upAnim?.cancel()
-            downAnim?.cancel()
-            downAnim = node.animate(
-                [{ transform: 'scale(1)' }, { transform: `scale(${pressedScale})` }],
-                {
-                    duration: 120,
-                    easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
-                    fill: 'forwards'
-                }
-            )
-        }
-
-        const release = () => {
-            downAnim?.cancel()
-            upAnim?.cancel()
-            upAnim = node.animate(
-                [
-                    { transform: `scale(${pressedScale})` },
-                    { transform: 'scale(1.03)' },
-                    { transform: 'scale(1)' }
-                ],
-                {
-                    duration: 220,
-                    easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
-                    fill: 'forwards'
-                }
-            )
-        }
-
-        const onPointerDown = () => press()
-        const onPointerUp = () => release()
-        const onPointerLeave = () => release()
-        const onBlur = () => release()
-
-        node.addEventListener('pointerdown', onPointerDown)
-        node.addEventListener('pointerup', onPointerUp)
-        node.addEventListener('pointerleave', onPointerLeave)
-        node.addEventListener('blur', onBlur)
-
-        node.style.touchAction = 'manipulation'
-
-        return {
-            destroy() {
-                node.removeEventListener('pointerdown', onPointerDown)
-                node.removeEventListener('pointerup', onPointerUp)
-                node.removeEventListener('pointerleave', onPointerLeave)
-                node.removeEventListener('blur', onBlur)
-                downAnim?.cancel()
-                upAnim?.cancel()
-            }
-        }
-    }
-
-    const features = [
+    const features: { title: string; description: string; icon: IconName }[] = [
         {
             title: 'Full Markdown Support',
             description:
                 'GitHub Flavored Markdown with 24 built-in renderers for headings, tables, code blocks, lists, and more.',
-            icon: 'fa-solid fa-file-lines'
+            icon: 'file-text'
         },
         {
             title: 'HTML Tag Rendering',
             description:
                 '69+ HTML tags supported with allow/deny controls to filter exactly which tags render.',
-            icon: 'fa-brands fa-html5'
+            icon: 'html5'
         },
         {
             title: 'Custom Renderers',
             description:
                 'Override any renderer with your own Svelte components for full control over markdown output.',
-            icon: 'fa-solid fa-paintbrush'
+            icon: 'paintbrush'
         },
         {
             title: 'Svelte 5 Snippets',
             description:
                 'Override renderers inline with Svelte 5 snippets — no separate component files needed.',
-            icon: 'fa-solid fa-scissors'
+            icon: 'scissors'
         },
         {
             title: 'TypeScript First',
             description:
                 'Full type safety with generics. All props, renderers, and options are properly typed.',
-            icon: 'fa-brands fa-js'
+            icon: 'javascript'
         },
         {
             title: 'Svelte 5 Native',
             description:
                 'Built for Svelte 5 with runes. Reactive, performant, and fully compatible with SvelteKit.',
-            icon: 'fa-solid fa-feather'
+            icon: 'feather'
         }
     ]
 
@@ -251,30 +204,33 @@ Happy coding! <span style="color: hotpink">\u{2665}</span>`
                             with full TypeScript support.
                         </p>
                         <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-                            <a
+                            <motion.a
                                 href="/docs/getting-started"
                                 class="bg-brand-600 hover:bg-brand-700 focus-visible:ring-brand-600/30 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-white shadow transition-colors focus:outline-none focus-visible:ring-2"
-                                use:springTap
+                                whileTap={{ scale: 0.96 }}
+                                whileHover={{ scale: 1.03 }}
                             >
                                 Get Started
-                                <i class="fa-solid fa-rocket ml-2 text-xs"></i>
-                            </a>
-                            <a
+                                <Rocket class="ml-2 size-3" />
+                            </motion.a>
+                            <motion.a
                                 href="/docs/api/svelte-markdown"
                                 class="border-border bg-card text-foreground hover:border-brand-500/50 hover:text-brand-700 focus-visible:ring-brand-600/20 inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
-                                use:springTap
+                                whileTap={{ scale: 0.96 }}
+                                whileHover={{ scale: 1.03 }}
                             >
                                 API Reference
-                                <i class="fa-solid fa-book ml-2 text-xs"></i>
-                            </a>
-                            <a
+                                <BookOpen class="ml-2 size-3" />
+                            </motion.a>
+                            <motion.a
                                 href="/examples/playground"
                                 class="border-border bg-card text-foreground hover:border-brand-500/50 hover:text-brand-700 focus-visible:ring-brand-600/20 inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
-                                use:springTap
+                                whileTap={{ scale: 0.96 }}
+                                whileHover={{ scale: 1.03 }}
                             >
                                 Playground
-                                <i class="fa-solid fa-play ml-2 text-xs"></i>
-                            </a>
+                                <Play class="ml-2 size-3" />
+                            </motion.a>
                         </div>
                         <ul
                             class="text-muted-foreground mt-10 flex flex-wrap justify-center gap-2 text-xs"
@@ -323,7 +279,7 @@ Happy coding! <span style="color: hotpink">\u{2665}</span>`
                                 <div
                                     class="from-brand-500 to-brand-600 mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br text-white"
                                 >
-                                    <i class={feature.icon}></i>
+                                    <Icon name={feature.icon} class="size-5" />
                                 </div>
                                 <h3
                                     class="group-hover:text-brand-600 mb-2 text-xl font-semibold transition-colors"
@@ -370,17 +326,17 @@ Happy coding! <span style="color: hotpink">\u{2665}</span>`
                         <div class="flex items-center gap-2">
                             <button
                                 onclick={resetPlayground}
-                                class="text-muted-foreground hover:text-foreground text-xs transition-colors"
+                                class="text-muted-foreground hover:text-foreground inline-flex items-center text-xs transition-colors"
                             >
-                                <i class="fa-solid fa-rotate-right mr-1"></i>
+                                <RotateCw class="mr-1 size-3" />
                                 Reset
                             </button>
                             <a
                                 href="/examples/playground"
-                                class="text-brand-600 hover:text-brand-700 text-xs font-medium transition-colors"
+                                class="text-brand-600 hover:text-brand-700 inline-flex items-center text-xs font-medium transition-colors"
                             >
                                 Full Playground
-                                <i class="fa-solid fa-arrow-right ml-1"></i>
+                                <ArrowRight class="ml-1 size-3" />
                             </a>
                         </div>
                     </div>
@@ -389,9 +345,9 @@ Happy coding! <span style="color: hotpink">\u{2665}</span>`
                         <!-- Editor -->
                         <div class="border-border bg-card lg:border-r">
                             <div
-                                class="border-border bg-muted/30 border-b px-4 py-1.5 text-xs font-medium"
+                                class="border-border bg-muted/30 flex items-center border-b px-4 py-1.5 text-xs font-medium"
                             >
-                                <i class="fa-solid fa-pen text-muted-foreground mr-1.5"></i>
+                                <Pen class="text-muted-foreground mr-1.5 size-3" />
                                 <span class="text-muted-foreground">Editor</span>
                             </div>
                             <textarea
@@ -404,9 +360,9 @@ Happy coding! <span style="color: hotpink">\u{2665}</span>`
                         <!-- Preview -->
                         <div class="bg-background">
                             <div
-                                class="border-border bg-muted/30 border-b px-4 py-1.5 text-xs font-medium"
+                                class="border-border bg-muted/30 flex items-center border-b px-4 py-1.5 text-xs font-medium"
                             >
-                                <i class="fa-solid fa-eye text-muted-foreground mr-1.5"></i>
+                                <Eye class="text-muted-foreground mr-1.5 size-3" />
                                 <span class="text-muted-foreground">Preview</span>
                             </div>
                             <div
@@ -433,7 +389,7 @@ Happy coding! <span style="color: hotpink">\u{2665}</span>`
                         <div
                             class="from-brand-500 to-brand-600 mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br text-white"
                         >
-                            <i class="fa-solid fa-flask text-xl"></i>
+                            <FlaskConical class="size-5" />
                         </div>
                         <h2 class="text-foreground mb-3 text-2xl font-bold md:text-3xl">
                             Explore Interactive Examples
@@ -449,7 +405,7 @@ Happy coding! <span style="color: hotpink">\u{2665}</span>`
                             whileHover={{ scale: 1.03 }}
                         >
                             Browse Examples
-                            <i class="fa-solid fa-arrow-right ml-2"></i>
+                            <ArrowRight class="ml-2 size-4" />
                         </motion.a>
                     </div>
                 </div>

@@ -8,6 +8,7 @@
     } from '@humanspeak/svelte-markdown/extensions'
     import { createHighlighter } from 'shiki'
     import { onMount } from 'svelte'
+    import { RotateCw, Box, Scissors } from '@lucide/svelte'
 
     const defaultMarkdown = `# Footnotes
 
@@ -188,7 +189,7 @@ When documenting APIs, footnotes[^api] help explain edge cases without breaking 
             onclick={reset}
             class="bg-brand-600 hover:bg-brand-700 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
         >
-            <i class="fa-solid fa-rotate-right text-xs"></i>
+            <RotateCw class="size-3" />
             Reset
         </button>
     </div>
@@ -220,7 +221,7 @@ When documenting APIs, footnotes[^api] help explain edge cases without breaking 
                 <div
                     class="bg-brand-500/10 text-brand-600 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm"
                 >
-                    <i class="fa-solid fa-cube"></i>
+                    <Box class="size-4" />
                 </div>
                 <div>
                     <p class="text-foreground text-sm font-medium">Component Renderers</p>
@@ -236,7 +237,7 @@ When documenting APIs, footnotes[^api] help explain edge cases without breaking 
                 <div
                     class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-500/10 text-sm text-purple-600"
                 >
-                    <i class="fa-solid fa-scissors"></i>
+                    <Scissors class="size-4" />
                 </div>
                 <div>
                     <p class="text-foreground text-sm font-medium">Snippet Overrides</p>

@@ -2,6 +2,7 @@
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import type { MarkedExtension } from 'marked'
     import { onMount } from 'svelte'
+    import { RotateCw, Download, Zap, Scissors, LoaderCircle } from '@lucide/svelte'
 
     const defaultMarkdown = `# Code Formatting with marked-code-format
 
@@ -173,7 +174,7 @@ const x={a:1,b:2,c:3}
             onclick={reset}
             class="bg-brand-600 hover:bg-brand-700 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
         >
-            <i class="fa-solid fa-rotate-right text-xs"></i>
+            <RotateCw class="size-3" />
             Reset
         </button>
     </div>
@@ -184,7 +185,7 @@ const x={a:1,b:2,c:3}
             <div
                 class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-sm text-amber-600"
             >
-                <i class="fa-solid fa-download"></i>
+                <Download class="size-4" />
             </div>
             <div>
                 <p class="text-foreground text-sm font-medium">Install Dependencies</p>
@@ -227,7 +228,7 @@ const x={a:1,b:2,c:3}
                 <div
                     class="bg-brand-500/10 text-brand-600 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm"
                 >
-                    <i class="fa-solid fa-bolt"></i>
+                    <Zap class="size-4" />
                 </div>
                 <div>
                     <p class="text-foreground text-sm font-medium">
@@ -247,7 +248,7 @@ const x={a:1,b:2,c:3}
                 <div
                     class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-500/10 text-sm text-purple-600"
                 >
-                    <i class="fa-solid fa-scissors"></i>
+                    <Scissors class="size-4" />
                 </div>
                 <div>
                     <p class="text-foreground text-sm font-medium">Snippet Overrides</p>
@@ -297,7 +298,7 @@ const x={a:1,b:2,c:3}
                         <SvelteMarkdown {source} {extensions} />
                     {:else}
                         <div class="text-muted-foreground flex items-center gap-2 py-8 text-sm">
-                            <i class="fa-solid fa-spinner fa-spin"></i>
+                            <LoaderCircle class="size-4 animate-spin" />
                             Loading formatter…
                         </div>
                     {/if}

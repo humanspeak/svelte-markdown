@@ -8,6 +8,8 @@
     import { type BreadcrumbContext } from '$lib/components/contexts/Breadcrumb/type'
     import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
     import { mode, setMode } from 'mode-watcher'
+    import { Sun, Moon, ChevronRight } from '@lucide/svelte'
+    import { SiGithub, SiNpm } from '@icons-pack/svelte-simple-icons'
 
     // Try to get breadcrumb context (may not exist on all pages)
     let breadcrumbContext = $state<BreadcrumbContext | undefined>(getBreadcrumbContext())
@@ -52,8 +54,7 @@
                         <!-- Dynamic breadcrumbs -->
                         {#each breadcrumbs as crumb, index (index)}
                             <li>
-                                <i class="fa-solid fa-chevron-right text-muted-foreground text-xs"
-                                ></i>
+                                <ChevronRight class="text-muted-foreground size-3" />
                             </li>
                             <li class="flex items-center">
                                 {#if index === breadcrumbs.length - 1 || !crumb.href}
@@ -90,9 +91,9 @@
                 class="border-border-muted text-text-muted hover:border-border-mid hover:text-text-secondary inline-flex size-6 items-center justify-center rounded-full border transition-colors"
             >
                 {#if mode.current === 'dark'}
-                    <i class="fa-sm fa-solid fa-sun transition-all"></i>
+                    <Sun class="size-3.5 transition-all" />
                 {:else}
-                    <i class="fa-sm fa-solid fa-moon absolute transition-all"></i>
+                    <Moon class="absolute size-3.5 transition-all" />
                 {/if}
             </motion.button>
 
@@ -108,7 +109,7 @@
                     whileTap={{ scale: 0.9 }}
                     whileHover={{ scale: 1.05 }}
                 >
-                    <i class="fa-brands fa-github fa-sm"></i>
+                    <SiGithub class="size-3.5" />
                 </motion.div>
             </a>
             <a
@@ -123,7 +124,7 @@
                     whileTap={{ scale: 0.9 }}
                     whileHover={{ scale: 1.05 }}
                 >
-                    <i class="fa-brands fa-npm fa-sm"></i>
+                    <SiNpm class="size-3.5" />
                 </motion.div>
             </a>
         </div>

@@ -1,22 +1,25 @@
 <!--
   Left sidebar navigation component
-  Hierarchical structure with FontAwesome icons and proper styling
+  Hierarchical structure with Lucide icons and proper styling
 -->
 <script lang="ts">
     import { motion } from '@humanspeak/svelte-motion'
     import { slide } from 'svelte/transition'
     import { PersistedState } from 'runed'
+    import Icon from '$lib/components/general/Icon.svelte'
+    import { ChevronDown, ArrowRight, ExternalLink } from '@lucide/svelte'
+    import type { IconName } from '$lib/icons'
 
     type NavItem = {
         title: string
         href: string
-        icon: string
+        icon: IconName
         external?: boolean
     }
 
     type NavSection = {
         title: string
-        icon: string
+        icon: IconName
         items: NavItem[]
     }
 
@@ -27,208 +30,208 @@
     const navigation: NavSection[] = $derived([
         {
             title: 'Get Started',
-            icon: 'fa-solid fa-rocket',
+            icon: 'rocket',
             items: [
                 {
                     title: 'Getting Started',
                     href: '/docs/getting-started',
-                    icon: 'fa-solid fa-rocket'
+                    icon: 'rocket'
                 },
                 {
                     title: 'Migration Guide',
                     href: '/docs/migration',
-                    icon: 'fa-solid fa-right-left'
+                    icon: 'arrow-right-left'
                 }
             ]
         },
         {
             title: 'API Reference',
-            icon: 'fa-solid fa-book',
+            icon: 'book-open',
             items: [
                 {
                     title: 'SvelteMarkdown',
                     href: '/docs/api/svelte-markdown',
-                    icon: 'fa-solid fa-cube'
+                    icon: 'box'
                 },
                 {
                     title: 'Types & Exports',
                     href: '/docs/api/types',
-                    icon: 'fa-solid fa-code'
+                    icon: 'code'
                 }
             ]
         },
         {
             title: 'Renderers',
-            icon: 'fa-solid fa-paintbrush',
+            icon: 'paintbrush',
             items: [
                 {
                     title: 'Markdown Renderers',
                     href: '/docs/renderers/markdown-renderers',
-                    icon: 'fa-solid fa-list'
+                    icon: 'list'
                 },
                 {
                     title: 'HTML Renderers',
                     href: '/docs/renderers/html-renderers',
-                    icon: 'fa-brands fa-html5'
+                    icon: 'html5'
                 },
                 {
                     title: 'Custom Renderers',
                     href: '/docs/renderers/custom-renderers',
-                    icon: 'fa-solid fa-paintbrush'
+                    icon: 'paintbrush'
                 },
                 {
                     title: 'Snippet Overrides',
                     href: '/docs/renderers/snippet-overrides',
-                    icon: 'fa-solid fa-scissors'
+                    icon: 'scissors'
                 }
             ]
         },
         {
             title: 'Advanced',
-            icon: 'fa-solid fa-gear',
+            icon: 'settings',
             items: [
                 {
                     title: 'Token Caching',
                     href: '/docs/advanced/token-caching',
-                    icon: 'fa-solid fa-bolt'
+                    icon: 'zap'
                 },
                 {
                     title: 'Allow/Deny',
                     href: '/docs/advanced/allow-deny',
-                    icon: 'fa-solid fa-shield'
+                    icon: 'shield'
                 },
                 {
                     title: 'Security',
                     href: '/docs/advanced/security',
-                    icon: 'fa-solid fa-lock'
+                    icon: 'lock'
                 },
                 {
                     title: 'Marked Extensions',
                     href: '/docs/advanced/marked-extensions',
-                    icon: 'fa-solid fa-puzzle-piece'
+                    icon: 'puzzle'
                 }
             ]
         },
         {
             title: 'Examples',
-            icon: 'fa-solid fa-code',
+            icon: 'code',
             items: [
                 {
                     title: 'Overview',
                     href: '/docs/examples',
-                    icon: 'fa-solid fa-code'
+                    icon: 'code'
                 },
                 {
                     title: 'Basic Rendering',
                     href: '/docs/examples/basic-rendering',
-                    icon: 'fa-solid fa-file-lines'
+                    icon: 'file-text'
                 },
                 {
                     title: 'Custom Renderers',
                     href: '/docs/examples/custom-renderers',
-                    icon: 'fa-solid fa-paintbrush'
+                    icon: 'paintbrush'
                 },
                 {
                     title: 'Snippet Overrides',
                     href: '/docs/examples/snippet-overrides',
-                    icon: 'fa-solid fa-scissors'
+                    icon: 'scissors'
                 },
                 {
                     title: 'HTML Filtering',
                     href: '/docs/examples/html-filtering',
-                    icon: 'fa-solid fa-filter'
+                    icon: 'filter'
                 },
                 {
                     title: 'Inline Rendering',
                     href: '/docs/examples/inline-rendering',
-                    icon: 'fa-solid fa-i-cursor'
+                    icon: 'text-cursor'
                 },
                 {
                     title: 'Parsed Callback',
                     href: '/docs/examples/parsed-callback',
-                    icon: 'fa-solid fa-diagram-project'
+                    icon: 'workflow'
                 },
                 {
                     title: 'Linked Headings',
                     href: '/docs/examples/linked-headings',
-                    icon: 'fa-solid fa-link'
+                    icon: 'link'
                 }
             ]
         },
         {
             title: 'Interactive Demos',
-            icon: 'fa-solid fa-play',
+            icon: 'play',
             items: [
                 {
                     title: 'All Examples',
                     href: '/examples',
-                    icon: 'fa-solid fa-play'
+                    icon: 'play'
                 },
                 {
                     title: 'Live Playground',
                     href: '/examples/playground',
-                    icon: 'fa-solid fa-pen-to-square'
+                    icon: 'square-pen'
                 },
                 {
                     title: 'Custom Renderers',
                     href: '/examples/custom-renderers',
-                    icon: 'fa-solid fa-paintbrush'
+                    icon: 'paintbrush'
                 },
                 {
                     title: 'Snippet Overrides',
                     href: '/examples/snippet-overrides',
-                    icon: 'fa-solid fa-scissors'
+                    icon: 'scissors'
                 },
                 {
                     title: 'HTML Filtering',
                     href: '/examples/html-filtering',
-                    icon: 'fa-solid fa-filter'
+                    icon: 'filter'
                 },
                 {
                     title: 'Caching Performance',
                     href: '/examples/caching-performance',
-                    icon: 'fa-solid fa-gauge-high'
+                    icon: 'gauge'
                 },
                 {
                     title: 'Marked Extensions',
                     href: '/examples/marked-extensions',
-                    icon: 'fa-solid fa-puzzle-piece'
+                    icon: 'puzzle'
                 },
                 {
                     title: 'Mermaid Diagrams',
                     href: '/examples/mermaid',
-                    icon: 'fa-solid fa-diagram-project'
+                    icon: 'workflow'
                 },
                 {
                     title: 'GitHub Alerts',
                     href: '/examples/github-alerts',
-                    icon: 'fa-solid fa-triangle-exclamation'
+                    icon: 'triangle-alert'
                 },
                 {
                     title: 'Footnotes',
                     href: '/examples/footnotes',
-                    icon: 'fa-solid fa-superscript'
+                    icon: 'superscript'
                 },
                 {
                     title: 'Code Formatting',
                     href: '/examples/code-formatting',
-                    icon: 'fa-solid fa-code'
+                    icon: 'code'
                 },
                 {
                     title: 'Linked Headings',
                     href: '/examples/linked-headings',
-                    icon: 'fa-solid fa-link'
+                    icon: 'link'
                 }
             ]
         },
         {
             title: 'Love and Respect',
-            icon: 'fa-solid fa-heart',
+            icon: 'heart',
             items: [
                 {
                     title: 'Beye.ai',
                     href: 'https://beye.ai',
-                    icon: 'fa-solid fa-heart',
+                    icon: 'heart',
                     external: true
                 }
             ]
@@ -237,7 +240,7 @@
             ? [
                   {
                       title: 'Other Projects',
-                      icon: 'fa-solid fa-cube',
+                      icon: 'box' as IconName,
                       items: otherProjects
                   }
               ]
@@ -288,17 +291,17 @@
                             whileHover={{ scale: 1.25 }}
                             transition={{ type: 'spring', stiffness: 500, damping: 15 }}
                         >
-                            <i class="{section.icon} fa-fw text-muted-foreground text-sm"></i>
+                            <Icon name={section.icon} class="text-muted-foreground size-3.5" />
                         </motion.span>
                         {section.title}
                     </span>
-                    <i
-                        class="fa-solid fa-chevron-down text-muted-foreground shrink-0 text-xs transition-transform duration-200 {isSectionOpen(
+                    <ChevronDown
+                        class="text-muted-foreground size-3 shrink-0 transition-transform duration-200 {isSectionOpen(
                             section
                         )
                             ? 'rotate-180'
                             : ''}"
-                    ></i>
+                    />
                 </button>
                 {#if isSectionOpen(section)}
                     <ul
@@ -329,24 +332,19 @@
                                                 damping: 15
                                             }}
                                         >
-                                            <i
-                                                class="{item.icon} fa-fw text-sm {isActive(
-                                                    item.href
-                                                )
+                                            <Icon
+                                                name={item.icon}
+                                                class="size-3.5 {isActive(item.href)
                                                     ? 'text-accent-foreground'
                                                     : 'text-muted-foreground group-hover:text-foreground'}"
-                                            ></i>
+                                            />
                                         </motion.span>
                                     {:else}
-                                        <i
-                                            class="fa-solid fa-arrow-right fa-fw text-muted-foreground mr-3 text-xs"
-                                        ></i>
+                                        <ArrowRight class="text-muted-foreground mr-3 size-3" />
                                     {/if}
                                     {item.title}
                                     {#if item?.external}
-                                        <i
-                                            class="fa-solid fa-arrow-up-right-from-square ml-2 text-xs opacity-50"
-                                        ></i>
+                                        <ExternalLink class="ml-2 size-3 opacity-50" />
                                     {/if}
                                 </a>
                             </motion.li>

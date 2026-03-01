@@ -46,21 +46,10 @@ const config = {
             mode: 'hash',
             directives: {
                 'default-src': ['self'],
-                'script-src': [
-                    'self',
-                    'https://kit.fontawesome.com',
-                    'https://*.ahrefs.com',
-                    'unsafe-inline',
-                    'wasm-unsafe-eval'
-                ],
-                'style-src': ['self', 'unsafe-inline', 'https://kit.fontawesome.com'],
+                'script-src': ['self', 'https://*.ahrefs.com', 'unsafe-inline', 'wasm-unsafe-eval'],
+                'style-src': ['self', 'unsafe-inline'],
                 'img-src': ['self', 'data:', 'https:'],
-                'font-src': [
-                    'self',
-                    'data:',
-                    'https://kit.fontawesome.com',
-                    'https://ka-p.fontawesome.com'
-                ],
+                'font-src': ['self', 'data:'],
                 'worker-src': ['self', 'blob:'],
                 'connect-src': ['self', 'https:'],
                 'frame-ancestors': ['none'],

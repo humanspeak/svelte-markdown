@@ -381,7 +381,7 @@
 }
 
 /* Code block header bar (language label + copy button) — outside @layer base
-   so these rules beat FontAwesome's injected SVG display styles. */
+   so these rules have sufficient specificity for icon toggle. */
 .code-block-header {
     @apply border-border flex items-center justify-between border-b px-4 py-2;
     background: var(--color-code-block-background);
@@ -407,15 +407,15 @@
 }
 
 .code-block-copy .icon-check {
-    display: none !important;
+    display: none;
 }
 
 .code-block-copy.copied .icon-copy {
-    display: none !important;
+    display: none;
 }
 
 .code-block-copy.copied .icon-check {
-    display: inline !important;
+    display: inline;
     color: var(--color-brand-500);
 }
 

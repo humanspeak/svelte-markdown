@@ -2,6 +2,7 @@
     import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import Example from '$lib/components/general/Example.svelte'
+    import { LoaderCircle } from '@lucide/svelte'
     import type { Component } from 'svelte'
     import { onMount } from 'svelte'
 
@@ -40,7 +41,7 @@
         <CodeFormatting />
     {:else}
         <div class="text-muted-foreground flex items-center justify-center gap-2 py-16 text-sm">
-            <i class="fa-solid fa-spinner fa-spin"></i>
+            <LoaderCircle class="size-4 animate-spin" />
             Loading code formatting demo…
         </div>
     {/if}

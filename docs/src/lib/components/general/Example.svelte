@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { Snippet } from 'svelte'
+    import { Grid2x2, ExternalLink, RotateCw } from '@lucide/svelte'
 
     type ExampleProps = {
         children: Snippet
@@ -23,7 +24,7 @@
                 href="/examples"
                 class="border-border text-muted-foreground hover:border-brand-500/50 hover:text-foreground inline-flex items-center justify-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm transition-colors"
             >
-                <i class="fa-solid fa-grid-2 text-xs"></i>
+                <Grid2x2 class="size-3" />
                 Examples
             </a>
             {#if title}
@@ -39,7 +40,7 @@
                     rel="noopener noreferrer"
                     class="border-border text-muted-foreground hover:border-brand-500/50 hover:text-foreground inline-flex items-center justify-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm transition-colors"
                 >
-                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                    <ExternalLink class="size-3" />
                     Source
                 </a>
             {/if}
@@ -48,7 +49,7 @@
                 class="border-border text-muted-foreground hover:border-brand-500/50 hover:text-foreground inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors"
                 title="Reset example"
             >
-                <i class="fa-solid fa-rotate-right text-xs"></i>
+                <RotateCw class="size-3" />
             </button>
         </div>
     </div>

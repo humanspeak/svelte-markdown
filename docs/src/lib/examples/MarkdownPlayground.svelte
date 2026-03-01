@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { RotateCw } from '@lucide/svelte'
 
     const defaultMarkdown = `# Welcome to My Markdown Playground! \u{1F3A8}
 
@@ -69,7 +70,7 @@ Happy coding! <span style="color: hotpink">\u{2665}</span>`
             onclick={reset}
             class="bg-brand-600 hover:bg-brand-700 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
         >
-            <i class="fa-solid fa-rotate-right text-xs"></i>
+            <RotateCw class="size-3" />
             Reset
         </button>
     </div>

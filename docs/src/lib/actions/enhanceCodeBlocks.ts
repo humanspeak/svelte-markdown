@@ -13,10 +13,10 @@ const LANG_NAMES: Record<string, string> = {
     text: 'Text'
 }
 
-/** @desc FontAwesome copy + check icons rendered inside every copy button. */
+/** @desc Lucide copy + check SVG icons rendered inside every copy button. */
 const COPY_ICON =
-    '<i class="fa-solid fa-copy icon-copy" style="font-size:14px"></i>' +
-    '<i class="fa-solid fa-check icon-check" style="font-size:14px"></i>'
+    '<svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>' +
+    '<svg class="icon-check" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
 
 /**
  * Extracts the copyable source code from a Shiki code block. Prefers the
