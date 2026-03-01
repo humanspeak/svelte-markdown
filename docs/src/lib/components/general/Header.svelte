@@ -93,7 +93,7 @@
                 {#if mode.current === 'dark'}
                     <Sun class="size-3.5 transition-all" />
                 {:else}
-                    <Moon class="absolute size-3.5 transition-all" />
+                    <Moon class="size-3.5 transition-all" />
                 {/if}
             </motion.button>
 
