@@ -19,7 +19,8 @@ description: Guide to creating custom renderer components for @humanspeak/svelte
 
     const breadcrumbs = getBreadcrumbContext()
     if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Renderers' }, { title: 'Custom' }]        }
+        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Renderers' }, { title: 'Custom' }]
+    }
 </script>
 
 # Custom Renderers

@@ -19,7 +19,8 @@ description: Customize markdown rendering inline using Svelte 5 snippets — no 
 
     const breadcrumbs = getBreadcrumbContext()
     if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Renderers' }, { title: 'Snippets' }]        }
+        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Renderers' }, { title: 'Snippets' }]
+    }
 </script>
 
 # Snippet Overrides

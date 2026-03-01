@@ -19,7 +19,8 @@ description: Complete API reference for the SvelteMarkdown component
 
     const breadcrumbs = getBreadcrumbContext()
     if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'API' }, { title: 'SvelteMarkdown' }]        }
+        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'API' }, { title: 'SvelteMarkdown' }]
+    }
 </script>
 
 # SvelteMarkdown Component

@@ -19,7 +19,8 @@ description: Control which markdown elements and HTML tags are rendered
 
     const breadcrumbs = getBreadcrumbContext()
     if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Advanced' }, { title: 'Allow/Deny' }]        }
+        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Advanced' }, { title: 'Allow/Deny' }]
+    }
 </script>
 
 # Allow/Deny Filtering

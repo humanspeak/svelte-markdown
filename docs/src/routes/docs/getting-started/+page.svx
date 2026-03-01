@@ -19,7 +19,8 @@ description: Get started with @humanspeak/svelte-markdown, a powerful markdown r
 
     const breadcrumbs = getBreadcrumbContext()
     if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Getting Started' }]        }
+        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Getting Started' }]
+    }
 </script>
 
 # Getting Started

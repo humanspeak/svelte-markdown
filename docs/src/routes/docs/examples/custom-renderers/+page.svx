@@ -19,7 +19,8 @@ description: Practical examples of creating and using custom renderer components
 
     const breadcrumbs = getBreadcrumbContext()
     if (breadcrumbs) {
-            breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples', href: '/docs/examples' }, { title: 'Custom Renderers' }]        }
+        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples', href: '/docs/examples' }, { title: 'Custom Renderers' }]
+    }
 </script>
 
 # Custom Renderers Examples
