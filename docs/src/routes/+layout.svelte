@@ -1,59 +1,47 @@
 <script lang="ts">
     import '../app.css'
     import { ModeWatcher } from 'mode-watcher'
-    import { page } from '$app/state'
     import { MotionConfig } from '@humanspeak/svelte-motion'
-    import BreadcrumbContext from '$lib/components/contexts/Breadcrumb/BreadcrumbContext.svelte'
-    import BreadcrumbJsonLd from '$lib/components/contexts/Breadcrumb/BreadcrumbJsonLd.svelte'
-    import SeoContext from '$lib/components/contexts/Seo/SeoContext.svelte'
-    import type { SeoContext as SeoContextType } from '$lib/components/contexts/Seo/type'
+    import {
+        BreadcrumbContextProvider,
+        BreadcrumbJsonLd,
+        SeoContextProvider,
+        SeoHead,
+        type SeoContext
+    } from '@humanspeak/docs-kit'
+    import { docsConfig } from '$lib/docs-config'
     import githubStats from '$lib/github-stats.json'
     const { children } = $props()
 
-    // Dynamic canonical URL based on current page path
-    const canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`)
-
-    // SEO state — owned here, passed to SeoContext for child access, read directly for meta tags
-    const seo = $state<SeoContextType>({
-        title: 'Svelte Markdown - Customizable Markdown Renderer for Svelte 5',
-        description:
-            'A powerful, customizable markdown renderer for Svelte 5 with TypeScript support, 24 renderers, 69+ HTML tags, token caching, and allow/deny utilities.'
+    // SEO state — owned here, passed to SeoContextProvider for child access
+    const seo = $state<SeoContext>({
+        title: `${docsConfig.name} - Customizable Markdown Renderer for Svelte 5`,
+        description: docsConfig.description
     })
+
+    const npmUrl = `https://www.npmjs.com/package/${docsConfig.npmPackage}`
+    const repoUrl = `https://github.com/${docsConfig.repo}`
 
     const softwareAppJsonLd =
         '<script type="application/ld+json">' +
         JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'SoftwareApplication',
-            name: 'Svelte Markdown',
-            description:
-                'A powerful, customizable markdown renderer for Svelte 5 with TypeScript support, 24 renderers, 69+ HTML tags, token caching, and allow/deny utilities.',
-            url: 'https://markdown.svelte.page',
-            downloadUrl: 'https://www.npmjs.com/package/@humanspeak/svelte-markdown',
+            name: docsConfig.name,
+            description: docsConfig.description,
+            url: docsConfig.url,
+            downloadUrl: npmUrl,
             applicationCategory: 'DeveloperApplication',
             operatingSystem: 'Any',
             softwareRequirements: 'Svelte 5',
             license: 'https://opensource.org/licenses/MIT',
-            keywords: [
-                'svelte',
-                'markdown',
-                'renderer',
-                'svelte-5',
-                'typescript',
-                'html',
-                'parser',
-                'marked'
-            ],
-            releaseNotes: 'https://github.com/humanspeak/svelte-markdown/releases',
+            keywords: docsConfig.keywords,
+            releaseNotes: `${repoUrl}/releases`,
             author: {
                 '@type': 'Organization',
                 name: 'Humanspeak, Inc.',
                 url: 'https://humanspeak.com',
-                sameAs: [
-                    'https://github.com/humanspeak',
-                    'https://www.npmjs.com/package/@humanspeak/svelte-markdown',
-                    'https://github.com/humanspeak/svelte-markdown'
-                ]
+                sameAs: ['https://github.com/humanspeak', npmUrl, repoUrl]
             },
             offers: {
                 '@type': 'Offer',
@@ -69,83 +57,21 @@
         }) +
         '<' +
         '/script>'
-
-    // Dynamic per-page social card images (only when ogSlug is set; home page keeps static defaults)
-    const ogImageUrl = $derived(
-        seo.ogSlug
-            ? `${page.url.origin}/social-cards/og-${seo.ogSlug}.png`
-            : `${page.url.origin}/og-default.png`
-    )
-    const twitterImageUrl = $derived(
-        seo.ogSlug
-            ? `${page.url.origin}/social-cards/twitter-${seo.ogSlug}.png`
-            : `${page.url.origin}/twitter-default.png`
-    )
 </script>
 
 <svelte:head>
-    <title>{seo.title}</title>
-    <meta name="description" content={seo.description} />
-    <!-- Open Graph / Social Media -->
-    <meta property="og:title" content={seo.title} />
-    <meta property="og:description" content={seo.description} />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:image" content={ogImageUrl} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={seo.title} />
-    <meta name="twitter:description" content={seo.description} />
-    <meta name="twitter:image" content={twitterImageUrl} />
-
-    <!-- Keywords -->
-    <meta
-        name="keywords"
-        content="svelte, markdown, renderer, svelte-5, typescript, html, parser, marked, custom-renderers, token-cache"
-    />
-
-    <!-- Additional Meta -->
-    <meta name="author" content="Humanspeak, Inc." />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href={canonicalUrl} />
-    <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-optimized content" />
-
     <!-- JSON-LD structured data: SoftwareApplication -->
     <!-- trunk-ignore(eslint/svelte/no-at-html-tags) -->
     {@html softwareAppJsonLd}
-
-    <!-- JSON-LD structured data: WebSite -->
-    <script type="application/ld+json">
-        {
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            "name": "Svelte Markdown",
-            "alternateName": "@humanspeak/svelte-markdown",
-            "url": "https://markdown.svelte.page",
-            "description": "A powerful, customizable markdown renderer for Svelte 5 with TypeScript support.",
-            "publisher": {
-                "@type": "Organization",
-                "name": "Humanspeak, Inc.",
-                "url": "https://humanspeak.com",
-                "sameAs": [
-                    "https://github.com/humanspeak",
-                    "https://www.npmjs.com/package/@humanspeak/svelte-markdown",
-                    "https://github.com/humanspeak/svelte-markdown"
-                ]
-            }
-        }
-    </script>
 </svelte:head>
 
 <ModeWatcher />
-<SeoContext {seo}>
-    <BreadcrumbContext>
-        <BreadcrumbJsonLd />
+<SeoContextProvider {seo}>
+    <SeoHead {seo} config={docsConfig} />
+    <BreadcrumbContextProvider>
+        <BreadcrumbJsonLd config={docsConfig} />
         <MotionConfig transition={{ duration: 0.5 }}>
             {@render children?.()}
         </MotionConfig>
-    </BreadcrumbContext>
-</SeoContext>
+    </BreadcrumbContextProvider>
+</SeoContextProvider>
