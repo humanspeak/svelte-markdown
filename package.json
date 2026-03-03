@@ -63,6 +63,7 @@
     ],
     "scripts": {
         "build": "vite build && npm run package",
+        "cf-typegen": "cd docs && npx wrangler types",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
         "dev": "vite dev",
