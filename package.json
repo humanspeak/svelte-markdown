@@ -101,14 +101,14 @@
         "@playwright/cli": "^0.1.1",
         "@playwright/test": "^1.58.2",
         "@sveltejs/adapter-auto": "^7.0.1",
-        "@sveltejs/kit": "^2.53.3",
+        "@sveltejs/kit": "^2.53.4",
         "@sveltejs/package": "^2.5.7",
         "@sveltejs/vite-plugin-svelte": "^6.2.4",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/svelte": "^5.3.1",
         "@testing-library/user-event": "^14.6.1",
         "@types/katex": "^0.16.8",
-        "@types/node": "^25.3.2",
+        "@types/node": "^25.3.3",
         "@typescript-eslint/eslint-plugin": "^8.56.1",
         "@typescript-eslint/parser": "^8.56.1",
         "@vitest/coverage-v8": "^4.0.18",
@@ -117,7 +117,7 @@
         "eslint-plugin-import": "^2.32.0",
         "eslint-plugin-svelte": "^3.15.0",
         "eslint-plugin-unused-imports": "^4.4.1",
-        "globals": "^17.3.0",
+        "globals": "^17.4.0",
         "husky": "^9.1.7",
         "jsdom": "^28.1.0",
         "katex": "^0.16.33",
@@ -126,10 +126,10 @@
         "mprocs": "^0.8.3",
         "prettier": "^3.8.1",
         "prettier-plugin-organize-imports": "^4.3.0",
-        "prettier-plugin-svelte": "^3.5.0",
+        "prettier-plugin-svelte": "^3.5.1",
         "prettier-plugin-tailwindcss": "^0.7.2",
-        "publint": "^0.3.17",
-        "svelte": "^5.53.5",
+        "publint": "^0.3.18",
+        "svelte": "^5.53.7",
         "svelte-check": "^4.4.4",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.56.1",
@@ -146,10 +146,15 @@
         }
     },
     "volta": {
-        "node": "22.16.0"
+        "node": "24.14.0"
     },
     "publishConfig": {
         "access": "public"
+    },
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "@humanspeak/docs-kit"
+        ]
     },
     "tags": [
         "svelte",
