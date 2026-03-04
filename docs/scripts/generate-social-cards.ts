@@ -13,5 +13,5 @@ await generateSocialCards({
         'Fast, secure markdown rendering with built-in caching and snippet overrides.',
     defaultFeatures: docsConfig.defaultFeatures,
     rootDir: ROOT,
-    fontsDir: path.join(ROOT, 'src/lib/fonts')
+    fontsDir: path.join(ROOT, 'node_modules/@humanspeak/docs-kit/dist/fonts')
 })
