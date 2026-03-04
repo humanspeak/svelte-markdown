@@ -5,7 +5,10 @@ import { defineConfig } from 'vite'
 export default defineConfig({
     plugins: [tailwindcss(), sveltekit()],
     server: {
-        port: 8234
+        port: 8234,
+        fs: {
+            allow: ['..']
+        }
     },
     build: {
         rollupOptions: {
