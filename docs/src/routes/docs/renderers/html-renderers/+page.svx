@@ -5,7 +5,6 @@ description: Documentation for all 69+ built-in HTML tag renderer components
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
@@ -15,11 +14,6 @@ description: Documentation for all 69+ built-in HTML tag renderer components
         seo.ogTagline = '69+ built-in HTML tag renderer components.'
         seo.ogFeatures = ['69+ HTML Tags', 'Allow/Deny', 'Custom Override', 'Secure Parsing']
         seo.ogSlug = 'docs-renderers-html-renderers'
-    }
-
-    const breadcrumbs = getBreadcrumbContext()
-    if (breadcrumbs) {
-        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Renderers' }, { title: 'HTML' }]
     }
 </script>
 

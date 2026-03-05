@@ -5,7 +5,6 @@ description: Security considerations, XSS protection, and sanitization guidance 
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
@@ -15,11 +14,6 @@ description: Security considerations, XSS protection, and sanitization guidance 
         seo.ogTagline = 'XSS protection and sanitization guidance.'
         seo.ogFeatures = ['XSS Protection', 'HTML Sanitization', 'Secure Parsing', 'Best Practices']
         seo.ogSlug = 'docs-advanced-security'
-    }
-
-    const breadcrumbs = getBreadcrumbContext()
-    if (breadcrumbs) {
-        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Advanced' }, { title: 'Security' }]
     }
 </script>
 
