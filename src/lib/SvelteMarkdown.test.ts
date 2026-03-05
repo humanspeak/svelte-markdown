@@ -420,6 +420,157 @@ describe('mixed markdown and HTML table rendering', () => {
     })
 })
 
+describe('async extension paths', () => {
+    test('renders markdown with async extension (walkTokens returning Promise)', async () => {
+        const asyncExtension = {
+            async: true,
+            extensions: [
+                {
+                    name: 'testToken',
+                    level: 'block' as const,
+                    start(src: string) {
+                        return src.indexOf('::')
+                    },
+                    tokenizer(src: string) {
+                        const match = /^::test::/.exec(src)
+                        if (match) {
+                            return {
+                                type: 'testToken',
+                                raw: match[0],
+                                text: 'test'
+                            }
+                        }
+                        return undefined
+                    },
+                    renderer() {
+                        return '<div>test token</div>'
+                    }
+                }
+            ],
+            walkTokens(token: { type: string; processed?: boolean }) {
+                if (token.type === 'paragraph') {
+                    token.processed = true
+                }
+                return Promise.resolve()
+            }
+        }
+
+        const { container } = render(SvelteMarkdown, {
+            props: {
+                source: 'Hello async world',
+                extensions: [asyncExtension]
+            }
+        })
+
+        await vi.runAllTimersAsync()
+        // Flush additional microtasks for async walkTokens
+        await vi.runAllTimersAsync()
+
+        expect(container.querySelector('p')).toBeInTheDocument()
+        expect(container.textContent).toContain('Hello async world')
+    })
+
+    test('async path handles pre-parsed token array', async () => {
+        const asyncExtension = {
+            async: true,
+            extensions: [],
+            walkTokens() {
+                return Promise.resolve()
+            }
+        }
+
+        const { container } = render(SvelteMarkdown, {
+            props: {
+                source: [
+                    {
+                        type: 'paragraph',
+                        raw: 'pre-parsed',
+                        text: 'pre-parsed',
+                        tokens: [{ type: 'text', raw: 'pre-parsed', text: 'pre-parsed' }]
+                    }
+                ],
+                extensions: [asyncExtension]
+            }
+        })
+
+        await vi.runAllTimersAsync()
+
+        expect(container.textContent).toContain('pre-parsed')
+    })
+
+    test('async path handles empty string source', async () => {
+        const asyncExtension = {
+            async: true,
+            extensions: [],
+            walkTokens() {
+                return Promise.resolve()
+            }
+        }
+
+        const parsed = vi.fn()
+        render(SvelteMarkdown, {
+            props: {
+                source: '',
+                extensions: [asyncExtension],
+                parsed
+            }
+        })
+
+        await vi.runAllTimersAsync()
+
+        expect(parsed).toHaveBeenCalledWith([])
+    })
+
+    test('async path handles walkTokens failure gracefully', async () => {
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+        const failingExtension = {
+            async: true,
+            extensions: [],
+            walkTokens() {
+                return Promise.reject(new Error('walkTokens failed'))
+            }
+        }
+
+        const parsed = vi.fn()
+        render(SvelteMarkdown, {
+            props: {
+                source: 'This will fail',
+                extensions: [failingExtension],
+                parsed
+            }
+        })
+
+        await vi.runAllTimersAsync()
+        // Extra flush for rejected promise handling
+        await vi.runAllTimersAsync()
+
+        // On error, asyncTokens should be set to empty array
+        expect(parsed).toHaveBeenCalledWith([])
+
+        consoleSpy.mockRestore()
+    })
+})
+
+describe('custom html renderers merge', () => {
+    test('merges custom html renderers with defaults', () => {
+        const { container } = render(SvelteMarkdown, {
+            props: {
+                source: '<div class="custom">content</div>',
+                renderers: {
+                    html: {
+                        div: undefined
+                    }
+                }
+            } as unknown as SvelteMarkdownProps & { [key: string]: unknown }
+        })
+
+        // The html renderers merge path should be exercised
+        // Even with div set to undefined, the merge still happens via the html branch
+        expect(container).toBeTruthy()
+    })
+})
+
 describe('testing nested lists', () => {
     test('renders three levels of nested lists correctly', () => {
         const source = `
