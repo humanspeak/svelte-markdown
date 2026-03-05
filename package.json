@@ -121,7 +121,7 @@
         "globals": "^17.4.0",
         "husky": "^9.1.7",
         "jsdom": "^28.1.0",
-        "katex": "^0.16.33",
+        "katex": "^0.16.35",
         "marked-katex-extension": "^5.1.7",
         "mermaid": "^11.12.3",
         "mprocs": "^0.8.3",

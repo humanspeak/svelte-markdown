@@ -16,6 +16,12 @@ describe('Br Component', () => {
         expect(br?.getAttribute('class')).toBe('line-break')
     })
 
+    it('should render br element with default empty attributes', () => {
+        const { container } = render(Br)
+        const br = container.querySelector('br')
+        expect(br).toBeTruthy()
+    })
+
     it('should handle additional attributes', () => {
         const { container } = render(Br, {
             props: {

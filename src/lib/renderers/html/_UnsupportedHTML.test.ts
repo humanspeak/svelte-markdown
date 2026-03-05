@@ -21,4 +21,30 @@ describe('_UnsupportedHTML Component', () => {
         })
         expect(container.textContent).toBe('<div></div>')
     })
+
+    it('renders with attributes', () => {
+        const { container } = render(UnsupportedHTML, {
+            props: {
+                tag: 'div',
+                attributes: {
+                    class: 'test',
+                    id: 'my-div'
+                }
+            }
+        })
+        expect(container.textContent).toContain('<div')
+        expect(container.textContent).toContain('class="test"')
+        expect(container.textContent).toContain('id="my-div"')
+        expect(container.textContent).toContain('</div>')
+    })
+
+    it('renders with empty attributes object', () => {
+        const { container } = render(UnsupportedHTML, {
+            props: {
+                tag: 'span',
+                attributes: {}
+            }
+        })
+        expect(container.textContent).toBe('<span></span>')
+    })
 })

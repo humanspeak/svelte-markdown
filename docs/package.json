@@ -22,7 +22,7 @@
         "@humanspeak/docs-kit": "github:humanspeak/docs-kit#2026.3.12",
         "@humanspeak/svelte-markdown": "workspace:*",
         "github-slugger": "^2.0.0",
-        "katex": "^0.16.33",
+        "katex": "^0.16.35",
         "marked-code-format": "^1.1.6",
         "marked-katex-extension": "^5.1.7",
         "mermaid": "^11.12.3",

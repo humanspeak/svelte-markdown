@@ -67,6 +67,29 @@ describe('Image (markdown)', () => {
         })
     })
 
+    it('does not override error state if error already occurred', async () => {
+        const { container } = render(Image, {
+            props: { href: '/broken.png', text: 'test', lazy: false }
+        })
+        const img = container.querySelector('img') as HTMLImageElement
+
+        // Simulate error first
+        img.dispatchEvent(new Event('error'))
+
+        await waitFor(() => {
+            expect(img?.classList.contains('error')).toBe(true)
+        })
+
+        // Then simulate load — should not clear error state
+        img.dispatchEvent(new Event('load'))
+
+        await waitFor(() => {
+            expect(img?.classList.contains('error')).toBe(true)
+            // fade-in should NOT be applied since error took precedence
+            expect(img?.classList.contains('fade-in')).toBe(false)
+        })
+    })
+
     it('should show image immediately when fadeIn=false (regression test)', async () => {
         const { container } = render(Image, {
             props: { href: '/test.png', text: 'test', lazy: false, fadeIn: false }
