@@ -94,11 +94,11 @@ importers:
         specifier: ^28.1.0
         version: 28.1.0
       katex:
-        specifier: ^0.16.33
-        version: 0.16.33
+        specifier: ^0.16.35
+        version: 0.16.35
       marked-katex-extension:
         specifier: ^5.1.7
-        version: 5.1.7(katex@0.16.33)(marked@17.0.4)
+        version: 5.1.7(katex@0.16.35)(marked@17.0.4)
       mermaid:
         specifier: ^11.12.3
         version: 11.12.3
@@ -151,14 +151,14 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0
       katex:
-        specifier: ^0.16.33
-        version: 0.16.33
+        specifier: ^0.16.35
+        version: 0.16.35
       marked-code-format:
         specifier: ^1.1.6
         version: 1.1.6(marked@17.0.4)(prettier@3.8.1)
       marked-katex-extension:
         specifier: ^5.1.7
-        version: 5.1.7(katex@0.16.33)(marked@17.0.4)
+        version: 5.1.7(katex@0.16.35)(marked@17.0.4)
       mermaid:
         specifier: ^11.12.3
         version: 11.12.3
@@ -2966,8 +2966,8 @@ packages:
     resolution: {integrity: sha512-g1MWMLBiz8FKi1e4w0UyVL3w+iJceWAFBAaBnnGKOpNa5f8TLktkbre1+s6oICydWAm+HRUGTmI+//xv2hvXYA==}
     hasBin: true
 
-  katex@0.16.33:
-    resolution: {integrity: sha512-q3N5u+1sY9Bu7T4nlXoiRBXWfwSefNGoKeOwekV+gw0cAXQlz2Ww6BLcmBxVDeXBMUDQv6fK5bcNaJLxob3ZQA==}
+  katex@0.16.35:
+    resolution: {integrity: sha512-S0+riEvy1CK4VKse1ivMff8gmabe/prY7sKB3njjhyoLLsNFDQYtKNgXrbWUggGDCJBz7Fctl5i8fLCESHXzSg==}
     hasBin: true
 
   keyv@4.5.4:
@@ -6862,7 +6862,7 @@ snapshots:
     dependencies:
       minimist: 1.2.8
 
-  katex@0.16.33:
+  katex@0.16.35:
     dependencies:
       commander: 8.3.0
 
@@ -6990,9 +6990,9 @@ snapshots:
       marked: 17.0.4
       prettier: 3.8.1
 
-  marked-katex-extension@5.1.7(katex@0.16.33)(marked@17.0.4):
+  marked-katex-extension@5.1.7(katex@0.16.35)(marked@17.0.4):
     dependencies:
-      katex: 0.16.33
+      katex: 0.16.35
       marked: 17.0.4
 
   marked@16.4.2: {}
@@ -7039,7 +7039,7 @@ snapshots:
       dagre-d3-es: 7.0.13
       dayjs: 1.11.19
       dompurify: 3.3.1
-      katex: 0.16.33
+      katex: 0.16.35
       khroma: 2.1.0
       lodash-es: 4.17.23
       marked: 16.4.2
