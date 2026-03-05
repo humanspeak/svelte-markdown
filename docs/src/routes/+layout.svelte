@@ -10,6 +10,7 @@
         type SeoContext
     } from '@humanspeak/docs-kit'
     import { docsConfig } from '$lib/docs-config'
+    import favicon from '$lib/assets/logo.svg'
     import githubStats from '$lib/github-stats.json'
     const { children } = $props()
 
@@ -67,7 +68,7 @@
 
 <ModeWatcher />
 <SeoContextProvider {seo}>
-    <SeoHead {seo} config={docsConfig} />
+    <SeoHead {seo} config={docsConfig} {favicon} />
     <BreadcrumbContextProvider>
         <BreadcrumbJsonLd config={docsConfig} />
         <MotionConfig transition={{ duration: 0.5 }}>

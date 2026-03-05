@@ -18,6 +18,10 @@ runtimes:
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
     ignore:
+        - linters: [ALL]
+          paths:
+              - '**/worker-configuration.d.ts'
+              - convex/_generated/**
         - linters: [osv-scanner]
           paths:
               - '**/pnpm-lock.yaml'

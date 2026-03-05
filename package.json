@@ -94,7 +94,7 @@
         "@humanspeak/memory-cache": "^1.0.5",
         "github-slugger": "^2.0.0",
         "htmlparser2": "^10.1.0",
-        "marked": "^17.0.3"
+        "marked": "^17.0.4"
     },
     "devDependencies": {
         "@eslint/compat": "^2.0.2",
