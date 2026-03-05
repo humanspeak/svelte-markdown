@@ -1,16 +1,7 @@
 <script lang="ts">
-    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import Example from '$lib/components/general/Example.svelte'
     import Mermaid from '$lib/examples/Mermaid.svelte'
-
-    const breadcrumbs = getBreadcrumbContext()
-    if (breadcrumbs) {
-        breadcrumbs.breadcrumbs = [
-            { title: 'Examples', href: '/examples' },
-            { title: 'Mermaid Diagrams' }
-        ]
-    }
 
     const seo = getSeoContext()
     if (seo) {

@@ -5,7 +5,6 @@ description: How to add clickable anchor links to markdown headings using snippe
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
@@ -15,11 +14,6 @@ description: How to add clickable anchor links to markdown headings using snippe
         seo.ogTagline = 'Clickable anchor links for headings.'
         seo.ogFeatures = ['Snippet Override', 'Custom Renderer', 'Hover Reveal', 'Permalink']
         seo.ogSlug = 'docs-examples-linked-headings'
-    }
-
-    const breadcrumbs = getBreadcrumbContext()
-    if (breadcrumbs) {
-        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples', href: '/docs/examples' }, { title: 'Linked Headings' }]
     }
 </script>
 

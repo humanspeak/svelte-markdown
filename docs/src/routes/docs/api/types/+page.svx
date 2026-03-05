@@ -5,7 +5,6 @@ description: All exported types, functions, constants, and utilities from @human
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
@@ -15,11 +14,6 @@ description: All exported types, functions, constants, and utilities from @human
         seo.ogTagline = 'All exported types, functions, and utilities.'
         seo.ogFeatures = ['Type Safety', 'Utility Functions', 'Constants', 'Cache Classes']
         seo.ogSlug = 'docs-api-types'
-    }
-
-    const breadcrumbs = getBreadcrumbContext()
-    if (breadcrumbs) {
-        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'API' }, { title: 'Types & Exports' }]
     }
 </script>
 

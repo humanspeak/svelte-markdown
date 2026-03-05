@@ -1,14 +1,8 @@
 <script lang="ts">
-    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import Icon from '$lib/components/general/Icon.svelte'
     import { ArrowRight } from '@lucide/svelte'
     import type { IconName } from '$lib/icons'
-
-    const breadcrumbs = getBreadcrumbContext()
-    if (breadcrumbs) {
-        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Examples' }]
-    }
 
     const seo = getSeoContext()
     if (seo) {

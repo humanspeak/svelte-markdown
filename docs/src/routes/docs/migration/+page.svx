@@ -5,7 +5,6 @@ description: Migrate from svelte-markdown to @humanspeak/svelte-markdown for Sve
 
 <script>
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
 
     const seo = getSeoContext()
     if (seo) {
@@ -15,11 +14,6 @@ description: Migrate from svelte-markdown to @humanspeak/svelte-markdown for Sve
         seo.ogTagline = 'Upgrade from svelte-markdown to Svelte 5.'
         seo.ogFeatures = ['Svelte 5 Upgrade', 'API Changes', 'New Features', 'Step by Step']
         seo.ogSlug = 'docs-migration'
-    }
-
-    const breadcrumbs = getBreadcrumbContext()
-    if (breadcrumbs) {
-        breadcrumbs.breadcrumbs = [{ title: 'Docs', href: '/docs' }, { title: 'Migration' }]
     }
 </script>
 
