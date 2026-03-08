@@ -55,11 +55,11 @@ export function buildBreadcrumbs(pathname: string): Breadcrumb[] {
             if (pathname.startsWith('/docs/')) {
                 const depth = pathname.replace('/docs/', '').split('/').length
                 if (depth === 1) {
-                    return [{ title: 'Docs', href: '/docs' }, { title: itemTitle }]
+                    return [{ title: 'Docs', href: '/docs/getting-started' }, { title: itemTitle }]
                 }
                 const sectionTitle = sectionBreadcrumbOverrides[section.title] ?? section.title
                 return [
-                    { title: 'Docs', href: '/docs' },
+                    { title: 'Docs', href: '/docs/getting-started' },
                     { title: sectionTitle },
                     { title: itemTitle }
                 ]
