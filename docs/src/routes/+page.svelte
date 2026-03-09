@@ -1,8 +1,8 @@
 <script lang="ts">
-    import Header from '$lib/components/general/Header.svelte'
-    import Footer from '$lib/components/general/Footer.svelte'
+    import { Header, Footer, getBreadcrumbContext } from '@humanspeak/docs-kit'
+    import { docsConfig } from '$lib/docs-config'
+    import favicon from '$lib/assets/logo.svg'
     import Icon from '$lib/components/general/Icon.svelte'
-    import { getBreadcrumbContext } from '$lib/components/contexts/Breadcrumb/Breadcrumb.context'
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import { motion } from '@humanspeak/svelte-motion'
     import {
@@ -163,7 +163,7 @@ Happy coding! <span style="color: hotpink">\u{2665}</span>`
 
 <div class="flex min-h-svh flex-col">
     <!-- Header with links -->
-    <Header />
+    <Header config={docsConfig} {favicon} />
     <div class="relative flex flex-1 flex-col overflow-hidden">
         <!-- Layer: subtle grid -->
         <div class="bg-grid pointer-events-none absolute inset-0 -z-20"></div>

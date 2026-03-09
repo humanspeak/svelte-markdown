@@ -142,14 +142,11 @@ importers:
   docs:
     dependencies:
       '@humanspeak/docs-kit':
-        specifier: github:humanspeak/docs-kit#2026.3.13
-        version: https://codeload.github.com/humanspeak/docs-kit/tar.gz/2014a516577b84e7a51fa200755651dceddfdb04(@humanspeak/svelte-motion@0.1.31(svelte@5.53.7))(@internationalized/date@3.11.0)(@lucide/svelte@0.577.0(svelte@5.53.7))(@sveltejs/kit@2.53.4(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.53.7)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)))(svelte@5.53.7)(typescript@5.9.3)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)))(mode-watcher@1.1.0(svelte@5.53.7))(svelte@5.53.7)
+        specifier: github:humanspeak/docs-kit#91bba34
+        version: https://codeload.github.com/humanspeak/docs-kit/tar.gz/91bba340a8dbd52e8b9a52162160017bdf1b7e01(@humanspeak/svelte-motion@0.1.31(svelte@5.53.7))(@internationalized/date@3.11.0)(@lucide/svelte@0.577.0(svelte@5.53.7))(@sveltejs/kit@2.53.4(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.53.7)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)))(svelte@5.53.7)(typescript@5.9.3)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)))(mode-watcher@1.1.0(svelte@5.53.7))(svelte@5.53.7)
       '@humanspeak/svelte-markdown':
         specifier: workspace:*
         version: link:..
-      github-slugger:
-        specifier: ^2.0.0
-        version: 2.0.0
       katex:
         specifier: ^0.16.35
         version: 0.16.35
@@ -826,8 +823,8 @@ packages:
     resolution: {integrity: sha512-/zUx+yOsIrG4Y43Eh2peDeKCxlRt/gET6aHfaKpuq267qXdYDFViVHfMaLyygZOnl0kGWxFIgsBy8QFuTLUXEQ==}
     engines: {node: '>=18.18.0'}
 
-  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/2014a516577b84e7a51fa200755651dceddfdb04':
-    resolution: {tarball: https://codeload.github.com/humanspeak/docs-kit/tar.gz/2014a516577b84e7a51fa200755651dceddfdb04}
+  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/91bba340a8dbd52e8b9a52162160017bdf1b7e01':
+    resolution: {tarball: https://codeload.github.com/humanspeak/docs-kit/tar.gz/91bba340a8dbd52e8b9a52162160017bdf1b7e01}
     version: 0.0.0
     peerDependencies:
       '@humanspeak/svelte-motion': '>=0.1.0'
@@ -4623,7 +4620,7 @@ snapshots:
       '@humanfs/core': 0.19.1
       '@humanwhocodes/retry': 0.4.3
 
-  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/2014a516577b84e7a51fa200755651dceddfdb04(@humanspeak/svelte-motion@0.1.31(svelte@5.53.7))(@internationalized/date@3.11.0)(@lucide/svelte@0.577.0(svelte@5.53.7))(@sveltejs/kit@2.53.4(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.53.7)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)))(svelte@5.53.7)(typescript@5.9.3)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)))(mode-watcher@1.1.0(svelte@5.53.7))(svelte@5.53.7)':
+  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/91bba340a8dbd52e8b9a52162160017bdf1b7e01(@humanspeak/svelte-motion@0.1.31(svelte@5.53.7))(@internationalized/date@3.11.0)(@lucide/svelte@0.577.0(svelte@5.53.7))(@sveltejs/kit@2.53.4(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.53.7)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)))(svelte@5.53.7)(typescript@5.9.3)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)))(mode-watcher@1.1.0(svelte@5.53.7))(svelte@5.53.7)':
     dependencies:
       '@humanspeak/svelte-motion': 0.1.31(svelte@5.53.7)
       '@humanspeak/svelte-satori-fix': 0.0.3(svelte@5.53.7)
@@ -4632,6 +4629,7 @@ snapshots:
       '@sveltejs/kit': 2.53.4(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.53.7)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)))(svelte@5.53.7)(typescript@5.9.3)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0))
       bits-ui: 2.16.2(@internationalized/date@3.11.0)(@sveltejs/kit@2.53.4(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.53.7)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)))(svelte@5.53.7)(typescript@5.9.3)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)))(svelte@5.53.7)
       clsx: 2.1.1
+      github-slugger: 2.0.0
       mode-watcher: 1.1.0(svelte@5.53.7)
       runed: 0.37.1(@sveltejs/kit@2.53.4(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.53.7)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)))(svelte@5.53.7)(typescript@5.9.3)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)))(svelte@5.53.7)
       satori: 0.24.1

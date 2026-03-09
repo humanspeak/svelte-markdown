@@ -1,3 +1,3 @@
-import { createSecurityHeadersHandle } from '@humanspeak/docs-kit/hooks'
+import { createDocsKitHandle } from '@humanspeak/docs-kit/hooks'
 
-export const handle = createSecurityHeadersHandle()
+export const handle = createDocsKitHandle()
