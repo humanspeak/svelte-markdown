@@ -7,7 +7,7 @@ Renders an HTML `<sup>` element. Accepts optional attributes and child content.
 
     interface Props {
         children?: Snippet
-        attributes?: Record<string, unknown>
+        attributes?: Record<string, any> // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
     }
 
     const { children, attributes }: Props = $props()
