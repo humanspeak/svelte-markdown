@@ -31,6 +31,8 @@ function getPriority(path: string): string {
     if (path === '/docs/getting-started' || path.startsWith('/docs/api/')) return '0.9'
     if (path.startsWith('/docs/renderers/') || path.startsWith('/docs/advanced/')) return '0.8'
     if (path.startsWith('/examples') || path.startsWith('/docs/examples')) return '0.7'
+    if (path === '/compare') return '0.8'
+    if (path.startsWith('/compare/')) return '0.7'
     return '0.5'
 }
 

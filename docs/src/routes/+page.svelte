@@ -15,6 +15,7 @@
         Eye,
         FlaskConical
     } from '@lucide/svelte'
+    import { competitors } from '$lib/compare-data'
     import type { IconName } from '$lib/icons'
 
     let headingContainer: HTMLDivElement | null = $state(null)
@@ -408,6 +409,53 @@ Happy coding! <span style="color: hotpink">\u{2665}</span>`
                             <ArrowRight class="ml-2 size-4" />
                         </motion.a>
                     </div>
+                </div>
+            </div>
+        </section>
+        <!-- Compare Section -->
+        <section class="relative px-6 py-10">
+            <div class="container mx-auto max-w-7xl">
+                <div class="mb-8 text-center">
+                    <h2
+                        class="from-brand-500 to-brand-600 mb-4 bg-gradient-to-r bg-clip-text text-3xl font-bold text-transparent md:text-4xl"
+                    >
+                        How We Compare
+                    </h2>
+                    <p class="text-muted-foreground mx-auto max-w-2xl">
+                        Honest, side-by-side comparisons with every major Svelte markdown library
+                        and editor.
+                    </p>
+                </div>
+                <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+                    {#each competitors as comp (comp.slug)}
+                        <a
+                            href="/compare/{comp.slug}"
+                            class="group border-border bg-card hover:border-brand-500/50 hover:shadow-brand-500/10 relative overflow-hidden rounded-lg border px-4 py-3 text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+                        >
+                            <div
+                                class="from-brand-500/5 absolute inset-0 bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                            ></div>
+                            <div class="relative z-10">
+                                <p
+                                    class="text-foreground group-hover:text-brand-600 text-sm font-semibold transition-colors"
+                                >
+                                    vs {comp.name}
+                                </p>
+                                <p class="text-muted-foreground mt-0.5 text-xs">
+                                    {comp.type}
+                                </p>
+                            </div>
+                        </a>
+                    {/each}
+                </div>
+                <div class="mt-6 text-center">
+                    <a
+                        href="/compare"
+                        class="text-brand-600 hover:text-brand-700 inline-flex items-center text-sm font-medium transition-colors"
+                    >
+                        View all comparisons
+                        <ArrowRight class="ml-1.5 size-3.5" />
+                    </a>
                 </div>
             </div>
         </section>

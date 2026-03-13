@@ -20,6 +20,7 @@ import {
     Shield,
     SquarePen,
     Superscript,
+    Swords,
     TextCursor,
     TriangleAlert,
     Workflow,
@@ -42,11 +43,16 @@ const itemBreadcrumbOverrides: Record<string, string> = {
 export function buildBreadcrumbs(pathname: string): Breadcrumb[] {
     if (pathname === '/docs') return [{ title: 'Docs' }]
     if (pathname === '/examples') return [{ title: 'Examples' }]
+    if (pathname === '/compare') return [{ title: 'Compare' }]
 
     for (const section of docsSections) {
         for (const item of section.items) {
             if (item.href !== pathname) continue
             const itemTitle = itemBreadcrumbOverrides[pathname] ?? item.title
+
+            if (pathname.startsWith('/compare/')) {
+                return [{ title: 'Compare', href: '/compare' }, { title: itemTitle }]
+            }
 
             if (pathname.startsWith('/examples/')) {
                 return [{ title: 'Examples', href: '/examples' }, { title: itemTitle }]
@@ -157,6 +163,23 @@ export const docsSections: NavSection[] = [
             { title: 'Footnotes', href: '/examples/footnotes', icon: Superscript },
             { title: 'Code Formatting', href: '/examples/code-formatting', icon: Code },
             { title: 'Linked Headings', href: '/examples/linked-headings', icon: Link }
+        ]
+    },
+    {
+        title: 'Compare',
+        icon: Swords,
+        items: [
+            { title: 'All Comparisons', href: '/compare', icon: Swords },
+            { title: 'vs MDsveX', href: '/compare/vs-mdsvex', icon: Swords },
+            { title: 'vs Tiptap', href: '/compare/vs-tiptap', icon: Swords },
+            { title: 'vs markdown-it', href: '/compare/vs-markdown-it', icon: Swords },
+            { title: 'vs marked', href: '/compare/vs-marked', icon: Swords },
+            { title: 'vs Milkdown', href: '/compare/vs-milkdown', icon: Swords },
+            { title: 'vs svelte-exmarkdown', href: '/compare/vs-svelte-exmarkdown', icon: Swords },
+            { title: 'vs Carta', href: '/compare/vs-carta', icon: Swords },
+            { title: 'vs ByteMD', href: '/compare/vs-bytemd', icon: Swords },
+            { title: 'vs unified/remark', href: '/compare/vs-unified-remark', icon: Swords },
+            { title: 'vs ProseMirror', href: '/compare/vs-prosemirror', icon: Swords }
         ]
     }
 ]
