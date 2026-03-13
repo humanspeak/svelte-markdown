@@ -149,11 +149,11 @@ Control exactly which elements are rendered:
 Customize rendering inline without creating separate component files:
 
 ```html
-{#snippet heading(props)}
-    <h1 class="custom-heading">{@render props.children?.()}</h1>
-{/snippet}
-
-<SvelteMarkdown {source} snippetOverrides={{ heading }} />
+<SvelteMarkdown {source}>
+    {#snippet heading(props)}
+        <h1 class="custom-heading">{@render props.children?.()}</h1>
+    {/snippet}
+</SvelteMarkdown>
 ```
 
 ### Marked Extensions
