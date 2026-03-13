@@ -287,7 +287,7 @@ export const competitors: Competitor[] = [
         ],
         prosUs: [
             ...shared.prosUs,
-            "All of marked's power, wrapped in Svelte components",
+            'All the power of marked, wrapped in Svelte components',
             'Full marked extensions API pass-through',
             'No {@html} needed — renders as safe Svelte components'
         ],
