@@ -2,15 +2,15 @@
     import SvelteMarkdown, { TokenCache } from '@humanspeak/svelte-markdown'
     import { Play, Trash2, Zap, Gauge, Recycle } from '@lucide/svelte'
 
-    const defaultMarkdown = `# Token Caching Performance
+    const defaultMarkdown = `## Token Caching Performance
 
 Svelte Markdown includes a built-in **LRU token cache** that dramatically speeds up re-renders.
 
-## How It Works
+### How It Works
 
 When markdown is first parsed, the resulting tokens are stored in a cache keyed by content hash. Subsequent renders of the *same content* skip parsing entirely and use cached tokens.
 
-### Performance Characteristics
+#### Performance Characteristics
 
 | Metric | First Render | Cached Render |
 |--------|:------------:|:-------------:|
@@ -18,7 +18,7 @@ When markdown is first parsed, the resulting tokens are stored in a cache keyed 
 | Memory | ~5MB/50 docs | Same |
 | Hash computation | ~0.05ms/10KB | ~0.05ms/10KB |
 
-### Features
+#### Features
 
 1. **LRU eviction** - Oldest entries removed when cache is full
 2. **TTL support** - Entries expire after a configurable duration
@@ -36,7 +36,7 @@ const cache = new TokenCache({
 
 > Token caching provides 50-200x faster re-renders for previously parsed content.
 
-### Supported Token Types
+#### Supported Token Types
 
 - Paragraphs, headings, and text
 - **Bold**, *italic*, and ~~strikethrough~~

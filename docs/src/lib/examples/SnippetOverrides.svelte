@@ -9,13 +9,13 @@
         Lightbulb
     } from '@lucide/svelte'
 
-    const sampleMarkdown = `# Snippet Overrides Demo
+    const sampleMarkdown = `## Snippet Overrides Demo
 
-## Inline Customization
+### Inline Customization
 
 Svelte 5 snippets let you **customize rendering** directly in your template. No separate files needed for simple tweaks.
 
-### Key Benefits
+#### Key Benefits
 
 1. **Inline** — customize right where you use the component
 2. **Type-safe** — full TypeScript support for snippet props

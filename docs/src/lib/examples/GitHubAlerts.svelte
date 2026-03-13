@@ -6,7 +6,7 @@
     import { onMount } from 'svelte'
     import { RotateCw, Box, Scissors } from '@lucide/svelte'
 
-    const defaultMarkdown = `# GitHub Alerts
+    const defaultMarkdown = `## GitHub Alerts
 
 GitHub-style alerts highlight critical information in documentation.
 
@@ -25,7 +25,7 @@ GitHub-style alerts highlight critical information in documentation.
 > [!CAUTION]
 > Advises about risks or negative outcomes of certain actions.
 
-## Mixed Content
+### Mixed Content
 
 Regular markdown works alongside alerts: **bold**, *italic*, and \`inline code\`.`
 

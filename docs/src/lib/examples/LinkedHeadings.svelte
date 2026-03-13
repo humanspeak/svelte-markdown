@@ -4,13 +4,13 @@
     import { onMount } from 'svelte'
     import { Heading, Link, Scissors } from '@lucide/svelte'
 
-    const sampleMarkdown = `# Linked Headings Demo
+    const sampleMarkdown = `## Linked Headings Demo
 
-## Getting Started
+### Getting Started
 
 Headings rendered by svelte-markdown include \`id\` attributes by default, but they don't have clickable anchor links. This example shows two ways to add them.
 
-### Installation
+#### Installation
 
 Install the package with your preferred package manager:
 
@@ -18,21 +18,21 @@ Install the package with your preferred package manager:
 pnpm add @humanspeak/svelte-markdown
 \`\`\`
 
-## Configuration
+### Configuration
 
 Configure the component with your markdown source and any options you need.
 
-### Basic Usage
+#### Basic Usage
 
 Import and use the component in your Svelte file.
 
-## Advanced Topics
+### Advanced Topics
 
-### Custom Slug Functions
+#### Custom Slug Functions
 
 You can provide a custom slug function for full control over heading IDs.
 
-#### Nested Heading Example
+##### Nested Heading Example
 
 This is a deeply nested heading to show all levels work correctly.`
 
