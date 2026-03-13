@@ -42,6 +42,40 @@
 <svelte:head>
     <title>{title}</title>
     <meta name="description" content={description} />
+    {@html `<script type="application/ld+json">${JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: title,
+        description,
+        author: {
+            '@type': 'Organization',
+            name: 'Humanspeak, Inc.',
+            url: 'https://humanspeak.com'
+        },
+        publisher: {
+            '@type': 'Organization',
+            name: 'Humanspeak, Inc.',
+            url: 'https://humanspeak.com'
+        },
+        mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': `https://markdown.svelte.page/compare/${competitor.slug}`
+        },
+        about: [
+            {
+                '@type': 'SoftwareApplication',
+                name: '@humanspeak/svelte-markdown',
+                applicationCategory: 'DeveloperApplication'
+            },
+            {
+                '@type': 'SoftwareApplication',
+                name: competitor.name,
+                ...(competitor.website ? { url: competitor.website } : {}),
+                applicationCategory: 'DeveloperApplication'
+            }
+        ],
+        keywords: competitor.keywords
+    })}</script>`}
 </svelte:head>
 
 <div class="container mx-auto px-4 py-12">

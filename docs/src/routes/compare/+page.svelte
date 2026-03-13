@@ -21,6 +21,27 @@
 <svelte:head>
     <title>{title}</title>
     <meta name="description" content={description} />
+    {@html `<script type="application/ld+json">${JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: title,
+        description,
+        url: 'https://markdown.svelte.page/compare',
+        mainEntity: {
+            '@type': 'ItemList',
+            itemListElement: competitors.map((c, i) => ({
+                '@type': 'ListItem',
+                position: i + 1,
+                name: `Svelte Markdown vs ${c.name}`,
+                url: `https://markdown.svelte.page/compare/${c.slug}`
+            }))
+        },
+        publisher: {
+            '@type': 'Organization',
+            name: 'Humanspeak, Inc.',
+            url: 'https://humanspeak.com'
+        }
+    })}</script>`}
 </svelte:head>
 
 <div class="container mx-auto px-4 py-12">
