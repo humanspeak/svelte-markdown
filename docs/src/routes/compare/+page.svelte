@@ -3,17 +3,25 @@
     import { competitors } from '$lib/compare-data'
     import { ArrowRight, Rocket, Swords } from '@lucide/svelte'
 
+    const title = 'Compare | Svelte Markdown vs Alternatives'
+    const description =
+        'See how @humanspeak/svelte-markdown compares to MDsveX, Tiptap, markdown-it, marked, Milkdown, and more. Honest feature comparisons for every Svelte markdown library.'
+
     const seo = getSeoContext()
     if (seo) {
-        seo.title = 'Compare | Svelte Markdown vs Alternatives'
-        seo.description =
-            'See how @humanspeak/svelte-markdown compares to MDsveX, Tiptap, markdown-it, marked, Milkdown, and more. Honest feature comparisons for every Svelte markdown library.'
+        seo.title = title
+        seo.description = description
         seo.ogTitle = 'Svelte Markdown vs Alternatives'
         seo.ogTagline = 'Honest comparisons with every major option.'
         seo.ogFeatures = ['10 Comparisons', 'Feature Tables', 'Honest Pros/Cons', 'Use Case Guides']
         seo.ogSlug = 'compare'
     }
 </script>
+
+<svelte:head>
+    <title>{title}</title>
+    <meta name="description" content={description} />
+</svelte:head>
 
 <div class="container mx-auto px-4 py-12">
     <!-- Hero Section -->

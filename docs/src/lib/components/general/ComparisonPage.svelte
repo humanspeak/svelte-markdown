@@ -17,9 +17,12 @@
     const { competitor }: { competitor: Competitor } = $props()
 
     const seo = getSeoContext()
+    const title = `Svelte Markdown vs ${competitor.name} | Compare`
+    const description = competitor.description
+
     if (seo) {
-        seo.title = `Svelte Markdown vs ${competitor.name} | Compare`
-        seo.description = competitor.description
+        seo.title = title
+        seo.description = description
         seo.ogTitle = `vs ${competitor.name}`
         seo.ogTagline = competitor.tagline
         seo.ogFeatures = ['Feature Comparison', 'Pros & Cons', 'Use Case Guide', 'Honest Review']
@@ -35,6 +38,11 @@
         return { type: 'text', text: value }
     }
 </script>
+
+<svelte:head>
+    <title>{title}</title>
+    <meta name="description" content={description} />
+</svelte:head>
 
 <div class="container mx-auto px-4 py-12">
     <!-- Hero Section -->
