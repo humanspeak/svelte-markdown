@@ -20,7 +20,7 @@
         "social:watch": "chokidar 'src/lib/components/shared-link/OG.svelte' 'scripts/generate-social-cards.ts' -c 'tsx ./scripts/generate-social-cards.ts' --initial --silent"
     },
     "dependencies": {
-        "@humanspeak/docs-kit": "github:humanspeak/docs-kit#2026.3.17",
+        "@humanspeak/docs-kit": "github:humanspeak/docs-kit#2026.3.18",
         "@humanspeak/svelte-markdown": "workspace:*",
         "katex": "^0.16.38",
         "marked-code-format": "^1.1.6",

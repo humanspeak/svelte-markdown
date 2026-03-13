@@ -3,45 +3,48 @@
     import { competitors } from '$lib/compare-data'
     import { ArrowRight, Rocket, Swords } from '@lucide/svelte'
 
-    const title = 'Compare | Svelte Markdown vs Alternatives'
-    const description =
-        'See how @humanspeak/svelte-markdown compares to MDsveX, Tiptap, markdown-it, marked, Milkdown, and more. Honest feature comparisons for every Svelte markdown library.'
-
     const seo = getSeoContext()
     if (seo) {
-        seo.title = title
-        seo.description = description
+        seo.title = 'Compare | Svelte Markdown vs Alternatives'
+        seo.description =
+            'See how @humanspeak/svelte-markdown compares to MDsveX, Tiptap, markdown-it, marked, Milkdown, and more. Honest feature comparisons for every Svelte markdown library.'
         seo.ogTitle = 'Svelte Markdown vs Alternatives'
         seo.ogTagline = 'Honest comparisons with every major option.'
         seo.ogFeatures = ['10 Comparisons', 'Feature Tables', 'Honest Pros/Cons', 'Use Case Guides']
         seo.ogSlug = 'compare'
     }
+
+    const collectionJsonLd =
+        '<script type="application/ld+json">' +
+        JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'CollectionPage',
+            name: 'Compare | Svelte Markdown vs Alternatives',
+            description:
+                'See how @humanspeak/svelte-markdown compares to MDsveX, Tiptap, markdown-it, marked, Milkdown, and more. Honest feature comparisons for every Svelte markdown library.',
+            url: 'https://markdown.svelte.page/compare',
+            mainEntity: {
+                '@type': 'ItemList',
+                itemListElement: competitors.map((c, i) => ({
+                    '@type': 'ListItem',
+                    position: i + 1,
+                    name: `Svelte Markdown vs ${c.name}`,
+                    url: `https://markdown.svelte.page/compare/${c.slug}`
+                }))
+            },
+            publisher: {
+                '@type': 'Organization',
+                name: 'Humanspeak, Inc.',
+                url: 'https://humanspeak.com'
+            }
+        }) +
+        '</' +
+        'script>'
 </script>
 
 <svelte:head>
-    <title>{title}</title>
-    <meta name="description" content={description} />
-    {@html `<script type="application/ld+json">${JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'CollectionPage',
-        name: title,
-        description,
-        url: 'https://markdown.svelte.page/compare',
-        mainEntity: {
-            '@type': 'ItemList',
-            itemListElement: competitors.map((c, i) => ({
-                '@type': 'ListItem',
-                position: i + 1,
-                name: `Svelte Markdown vs ${c.name}`,
-                url: `https://markdown.svelte.page/compare/${c.slug}`
-            }))
-        },
-        publisher: {
-            '@type': 'Organization',
-            name: 'Humanspeak, Inc.',
-            url: 'https://humanspeak.com'
-        }
-    })}</script>`}
+    <!-- trunk-ignore(eslint/svelte/no-at-html-tags) -->
+    {@html collectionJsonLd}
 </svelte:head>
 
 <div class="container mx-auto px-4 py-12">

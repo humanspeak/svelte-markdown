@@ -17,17 +17,53 @@
     const { competitor }: { competitor: Competitor } = $props()
 
     const seo = getSeoContext()
-    const title = `Svelte Markdown vs ${competitor.name} | Compare`
-    const description = competitor.description
-
     if (seo) {
-        seo.title = title
-        seo.description = description
+        seo.title = `Svelte Markdown vs ${competitor.name} | Compare`
+        seo.description = competitor.description
         seo.ogTitle = `vs ${competitor.name}`
         seo.ogTagline = competitor.tagline
         seo.ogFeatures = ['Feature Comparison', 'Pros & Cons', 'Use Case Guide', 'Honest Review']
         seo.ogSlug = `compare/${competitor.slug}`
     }
+
+    const articleJsonLd =
+        '<script type="application/ld+json">' +
+        JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Article',
+            headline: `Svelte Markdown vs ${competitor.name} | Compare`,
+            description: competitor.description,
+            author: {
+                '@type': 'Organization',
+                name: 'Humanspeak, Inc.',
+                url: 'https://humanspeak.com'
+            },
+            publisher: {
+                '@type': 'Organization',
+                name: 'Humanspeak, Inc.',
+                url: 'https://humanspeak.com'
+            },
+            mainEntityOfPage: {
+                '@type': 'WebPage',
+                '@id': `https://markdown.svelte.page/compare/${competitor.slug}`
+            },
+            about: [
+                {
+                    '@type': 'SoftwareApplication',
+                    name: '@humanspeak/svelte-markdown',
+                    applicationCategory: 'DeveloperApplication'
+                },
+                {
+                    '@type': 'SoftwareApplication',
+                    name: competitor.name,
+                    ...(competitor.website ? { url: competitor.website } : {}),
+                    applicationCategory: 'DeveloperApplication'
+                }
+            ],
+            keywords: competitor.keywords
+        }) +
+        '</' +
+        'script>'
 
     function renderCell(value: string | boolean): {
         type: 'yes' | 'no' | 'partial' | 'text'
@@ -40,42 +76,8 @@
 </script>
 
 <svelte:head>
-    <title>{title}</title>
-    <meta name="description" content={description} />
-    {@html `<script type="application/ld+json">${JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'Article',
-        headline: title,
-        description,
-        author: {
-            '@type': 'Organization',
-            name: 'Humanspeak, Inc.',
-            url: 'https://humanspeak.com'
-        },
-        publisher: {
-            '@type': 'Organization',
-            name: 'Humanspeak, Inc.',
-            url: 'https://humanspeak.com'
-        },
-        mainEntityOfPage: {
-            '@type': 'WebPage',
-            '@id': `https://markdown.svelte.page/compare/${competitor.slug}`
-        },
-        about: [
-            {
-                '@type': 'SoftwareApplication',
-                name: '@humanspeak/svelte-markdown',
-                applicationCategory: 'DeveloperApplication'
-            },
-            {
-                '@type': 'SoftwareApplication',
-                name: competitor.name,
-                ...(competitor.website ? { url: competitor.website } : {}),
-                applicationCategory: 'DeveloperApplication'
-            }
-        ],
-        keywords: competitor.keywords
-    })}</script>`}
+    <!-- trunk-ignore(eslint/svelte/no-at-html-tags) -->
+    {@html articleJsonLd}
 </svelte:head>
 
 <div class="container mx-auto px-4 py-12">
