@@ -8,11 +8,11 @@
     import KatexRenderer from './KatexRenderer.svelte'
     import { RotateCw, Box, Scissors } from '@lucide/svelte'
 
-    const defaultMarkdown = `# Euler's Identity
+    const defaultMarkdown = `## Euler's Identity
 
 The equation $e^{i\\pi} + 1 = 0$ unites five fundamental constants.
 
-## Quadratic Formula
+### Quadratic Formula
 
 Every quadratic $ax^2 + bx + c = 0$ has solutions:
 
@@ -20,11 +20,11 @@ $$
 x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
 $$
 
-## Mixed Content
+### Mixed Content
 
 Markdown works alongside math: **bold**, *italic*, and inline $\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}$.
 
-### Gaussian Integral
+#### Gaussian Integral
 
 $$
 \\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}
@@ -32,7 +32,7 @@ $$
 
 > **Tip:** Use \`$...$\` for inline math and \`$$...$$\` for block math.
 
-### Matrix Example
+#### Matrix Example
 
 $$
 \\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix} \\begin{pmatrix} x \\\\ y \\end{pmatrix} = \\begin{pmatrix} ax + by \\\\ cx + dy \\end{pmatrix}

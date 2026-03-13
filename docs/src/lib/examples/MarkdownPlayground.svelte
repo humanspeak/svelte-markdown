@@ -2,11 +2,11 @@
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import { RotateCw } from '@lucide/svelte'
 
-    const defaultMarkdown = `# Welcome to My Markdown Playground! \u{1F3A8}
+    const defaultMarkdown = `## Welcome to My Markdown Playground! \u{1F3A8}
 
 Hey there! This is a *fun* example of mixing **Markdown** and <em>HTML</em> together.
 
-## Things I Love:
+### Things I Love:
 1. Writing in <strong>bold</strong> and _italic_
 2. Making lists (like this one!)
 3. Using emojis \u{1F680} \u{2728} \u{1F308}

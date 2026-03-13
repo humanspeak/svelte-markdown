@@ -4,11 +4,11 @@
     import { onMount } from 'svelte'
     import { RotateCw, Download, Zap, Scissors, LoaderCircle } from '@lucide/svelte'
 
-    const defaultMarkdown = `# Code Formatting with marked-code-format
+    const defaultMarkdown = `## Code Formatting with marked-code-format
 
 Auto-format code blocks with [Prettier](https://prettier.io/) by adding the \`prettier\` attribute to your code fences.
 
-## JavaScript
+### JavaScript
 
 \`\`\`js prettier
 function   fibonacci(n){if(n<=1)return n
@@ -18,21 +18,21 @@ const   result=fibonacci(10)
 console.log(result)
 \`\`\`
 
-## CSS
+### CSS
 
 \`\`\`css prettier
 .container{display:flex;justify-content:center;align-items:center;gap:1rem}
 .card{border-radius:0.5rem;padding:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.12)}
 \`\`\`
 
-## TypeScript
+### TypeScript
 
 \`\`\`ts prettier
 interface User{name:string;age:number;email?:string}
 const greet=(user:User):string=>\`Hello, \${user.name}! You are \${user.age} years old.\`
 \`\`\`
 
-## Unformatted (no prettier attribute)
+### Unformatted (no prettier attribute)
 
 \`\`\`js
 const x={a:1,b:2,c:3}

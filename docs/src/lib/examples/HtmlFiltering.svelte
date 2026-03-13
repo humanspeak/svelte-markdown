@@ -6,7 +6,7 @@
     import Icon from '$lib/components/general/Icon.svelte'
     import type { IconName } from '$lib/icons'
 
-    const sampleMarkdown = `# HTML Filtering Demo
+    const sampleMarkdown = `## HTML Filtering Demo
 
 This paragraph has **bold** and *italic* markdown formatting.
 

@@ -10,7 +10,7 @@
     import { onMount } from 'svelte'
     import { RotateCw, Box, Scissors } from '@lucide/svelte'
 
-    const defaultMarkdown = `# Footnotes
+    const defaultMarkdown = `## Footnotes
 
 Footnotes let you add references without cluttering the main text.
 
@@ -18,7 +18,7 @@ Here is a statement[^1] that needs a citation. You can also use named footnotes[
 
 Multiple references[^2] can appear throughout the document, and they all link to the definitions at the bottom.
 
-## Technical Writing
+### Technical Writing
 
 When documenting APIs, footnotes[^api] help explain edge cases without breaking the flow of the main content.
 

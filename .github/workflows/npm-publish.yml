@@ -222,7 +222,7 @@ jobs:
 
             - name: Install
               run: |
-                  pnpm install --filter . --prefer-offline --frozen-lockfile --ignore-scripts
+                  pnpm install --filter . --prefer-offline --frozen-lockfile --ignore-scripts --config.engine-strict=false
 
             - name: Test
               run: |
@@ -268,7 +268,7 @@ jobs:
                   node-version: 24
 
             - name: Install dependencies
-              run: pnpm install --filter . --prefer-offline --frozen-lockfile --ignore-scripts
+              run: pnpm install --filter . --prefer-offline --frozen-lockfile --ignore-scripts --config.engine-strict=false
 
             - name: Install Playwright Browsers
               run: pnpm exec playwright install --with-deps
@@ -334,7 +334,7 @@ jobs:
                   node-version: 24
 
             - name: Install
-              run: pnpm install --filter . --prefer-offline --frozen-lockfile --ignore-scripts
+              run: pnpm install --filter . --prefer-offline --frozen-lockfile --ignore-scripts --config.engine-strict=false
 
             - name: Check Publishing Status
               id: publish-check

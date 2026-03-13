@@ -6,9 +6,9 @@
     import { onMount } from 'svelte'
     import { RotateCw, Download, Box, Scissors } from '@lucide/svelte'
 
-    const defaultMarkdown = `# Mermaid Diagrams
+    const defaultMarkdown = `## Mermaid Diagrams
 
-## Flowchart
+### Flowchart
 
 \`\`\`mermaid
 graph TD
@@ -19,7 +19,7 @@ graph TD
     D --> E
 \`\`\`
 
-## Sequence Diagram
+### Sequence Diagram
 
 \`\`\`mermaid
 sequenceDiagram
@@ -31,13 +31,13 @@ sequenceDiagram
     B->>A: Great, thanks!
 \`\`\`
 
-## Mixed Content
+### Mixed Content
 
 Regular markdown works alongside diagrams: **bold**, *italic*, and \`inline code\`.
 
 > **Tip:** Use \\\`\\\`\\\`mermaid code blocks to create diagrams.
 
-### Class Diagram
+#### Class Diagram
 
 \`\`\`mermaid
 classDiagram

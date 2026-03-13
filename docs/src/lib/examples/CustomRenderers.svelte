@@ -2,9 +2,9 @@
     import SvelteMarkdown, { allowRenderersOnly } from '@humanspeak/svelte-markdown'
     import { Check, Filter } from '@lucide/svelte'
 
-    const sampleMarkdown = `# Custom Renderers Demo
+    const sampleMarkdown = `## Custom Renderers Demo
 
-## How It Works
+### How It Works
 
 Svelte Markdown lets you **control which renderers are active**. This is useful for:
 
@@ -12,7 +12,7 @@ Svelte Markdown lets you **control which renderers are active**. This is useful 
 2. Creating simplified markdown views
 3. Building *focused* content editors
 
-### Code Example
+#### Code Example
 
 Use \`allowRenderersOnly\` to whitelist specific renderers:
 
