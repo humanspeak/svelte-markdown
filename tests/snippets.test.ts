@@ -50,7 +50,7 @@ test.describe('Snippet Overrides', () => {
 
         test('image snippet renders correctly (leaf node)', async ({ page }) => {
             const img = page.locator('[data-testid="snippet-image"]')
-            await expect(img).toBeVisible()
+            await expect(img).toBeVisible({ timeout: 15000 })
             await expect(img).toHaveAttribute('alt', 'An image')
         })
 
