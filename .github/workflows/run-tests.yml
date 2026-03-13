@@ -66,7 +66,7 @@ jobs:
                       ${{ runner.os }}-vitest-
 
             - name: Install dependencies
-              run: pnpm install --filter . --frozen-lockfile
+              run: pnpm install --filter . --frozen-lockfile --ignore-engines
 
             - name: Run unit tests
               run: |
@@ -113,7 +113,7 @@ jobs:
                   node-version: 24
 
             - name: Install dependencies
-              run: pnpm install --filter . --frozen-lockfile
+              run: pnpm install --filter . --frozen-lockfile --ignore-engines
 
             - name: Cache Playwright browsers
               uses: actions/cache@v5 # zizmor: ignore[unpinned-uses]
