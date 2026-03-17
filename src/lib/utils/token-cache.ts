@@ -37,7 +37,7 @@ import type { Token, TokensList } from '$lib/utils/markdown-parser.js'
  * console.log(hash1 !== hash2) // true - different content = different hash
  * ```
  */
-function hashString(str: string): string {
+const hashString = (str: string): string => {
     let hash = 2166136261 // FNV offset basis (32-bit)
 
     for (let i = 0; i < str.length; i++) {
@@ -79,7 +79,7 @@ function hashString(str: string): string {
 // this is safe for all internal usage paths.
 const optionsHashCache = new WeakMap<object, string>()
 
-function getCacheKey(source: string, options: SvelteMarkdownOptions): string {
+const getCacheKey = (source: string, options: SvelteMarkdownOptions): string => {
     const sourceHash = hashString(source)
 
     let optionsHash = optionsHashCache.get(options)
