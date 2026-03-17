@@ -93,9 +93,9 @@ test.describe('Snippet Overrides', () => {
 
     test.describe('Reactivity', () => {
         test('snippet overrides apply to dynamically updated content', async ({ page }) => {
-            // Use evaluate to set value + dispatch input event for reliable cross-browser
-            // binding. Playwright's fill() can cause transient unmount/remount on
-            // mobile-safari that breaks snippet bindings.
+            // Use evaluate to set value + dispatch input event directly.
+            // Playwright's fill() is intermittently flaky on mobile-safari here
+            // for unknown reasons — snippet overrides stop applying after fill().
             await page.evaluate((val) => {
                 const el = document.querySelector<HTMLTextAreaElement>(
                     '[data-testid="markdown-input"]'
