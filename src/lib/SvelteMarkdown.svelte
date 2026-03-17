@@ -174,7 +174,7 @@
             allRendererKeys
                 .filter((key) => key in rest && rest[key] != null)
                 .map((key) => [key, rest[key]])
-        )
+        ) as Record<string, (..._args: any[]) => any> // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
     )
 
     // Collect HTML snippet overrides (keys matching html_<tag>)
@@ -183,7 +183,7 @@
             Object.entries(rest)
                 .filter(([key, val]) => key.startsWith('html_') && val != null)
                 .map(([key, val]) => [key.slice(5), val])
-        )
+        ) as Record<string, (..._args: any[]) => any> // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
     )
 
     // Passthrough: everything that isn't a known snippet override
@@ -199,7 +199,7 @@
     {tokens}
     {...passThroughProps}
     options={combinedOptions}
-    slug={(val: string): string => (slugger ? slugger.slug(val) : '')}
+    slug={(val: string): string => slugger.slug(val)}
     renderers={combinedRenderers}
     {snippetOverrides}
     {htmlSnippetOverrides}

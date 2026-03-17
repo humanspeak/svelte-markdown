@@ -4,7 +4,7 @@ Renders a table cell as either `<th>` (header) or `<td>` (data), with optional
 text alignment applied as an inline `text-align` style.
 
 @prop {boolean} header - When `true`, renders a `<th>`; otherwise renders a `<td>`.
-@prop {'left'|'center'|'right'|'justify'|'char'|null|undefined} align - Column alignment.
+@prop {'left'|'center'|'right'|null} align - Column alignment.
 @prop {Snippet} [children] - Cell content.
 -->
 <script lang="ts">
@@ -12,7 +12,7 @@ text alignment applied as an inline `text-align` style.
 
     interface Props {
         header: boolean
-        align: 'left' | 'center' | 'right' | 'justify' | 'char' | null | undefined
+        align: 'left' | 'center' | 'right' | null
         children?: Snippet
     }
 

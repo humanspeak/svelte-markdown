@@ -79,7 +79,7 @@ export interface TableRowSnippetProps {
 }
 export interface TableCellSnippetProps {
     header: boolean
-    align: 'left' | 'center' | 'right' | 'justify' | 'char' | null | undefined
+    align: 'left' | 'center' | 'right' | null
     children?: Snippet
 }
 export interface EmSnippetProps {
@@ -132,8 +132,16 @@ export type SnippetOverrides = {
 
 // --- HTML snippet types ---
 
+/**
+ * Props passed to HTML snippet overrides.
+ *
+ * **Security note:** `attributes` are spread directly onto the rendered HTML element.
+ * This includes any attribute from the source markdown, such as `onclick` or `onerror`.
+ * If rendering untrusted markdown, use `allowHtmlOnly`/`excludeHtmlOnly` to restrict
+ * allowed tags, or integrate your own sanitizer to strip dangerous attributes.
+ */
 export interface HtmlSnippetProps {
-    attributes?: Record<string, any> // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
+    attributes?: Record<string, string | number | boolean | undefined>
     children?: Snippet
 }
 
