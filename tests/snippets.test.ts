@@ -94,7 +94,6 @@ test.describe('Snippet Overrides', () => {
     test.describe('Reactivity', () => {
         test('snippet overrides apply to dynamically updated content', async ({ page }) => {
             const textarea = page.getByTestId('markdown-input')
-            await textarea.clear()
             await textarea.fill('# New heading\n\nNew paragraph')
 
             await expect(page.locator('[data-testid="snippet-heading"]')).toBeVisible({
@@ -110,12 +109,10 @@ test.describe('Snippet Overrides', () => {
             const textarea = page.getByTestId('markdown-input')
 
             // Switch to list content
-            await textarea.clear()
             await textarea.fill('- Alpha\n- Beta')
             await expect(page.locator('[data-testid="snippet-listitem"]')).toHaveCount(2)
 
             // Switch to heading content
-            await textarea.clear()
             await textarea.fill('## Subtitle')
             await expect(
                 page.locator('[data-testid="snippet-heading"][data-depth="2"]')
