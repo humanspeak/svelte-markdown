@@ -152,6 +152,20 @@ export const extractAttributes = (raw: string): Record<string, string> => {
  *
  * @internal
  */
+
+/**
+ * Serializes an HTML attribute map into a string for tag construction.
+ * Escapes double quotes in values to prevent attribute injection.
+ *
+ * @param {Record<string, string>} attributes - Map of attribute names to values
+ * @returns {string} Serialized attributes string with leading spaces
+ *
+ * @example
+ * serializeAttributes({ class: 'foo', id: 'bar' })
+ * // Returns ' class="foo" id="bar"'
+ *
+ * @internal
+ */
 const serializeAttributes = (attributes: Record<string, string>): string =>
     Object.entries(attributes)
         .map(([key, value]) => ` ${key}="${value.replace(/"/g, '&quot;')}"`)

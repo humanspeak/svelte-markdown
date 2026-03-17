@@ -14,6 +14,7 @@ test.describe('Alert Tokenizer Extension', () => {
 
         const alert = page.locator('[data-markdown-test="data-markdown-test-alert"]')
         await expect(alert).toHaveCount(1)
+        await expect(alert).toBeVisible()
         await expect(alert).toHaveAttribute('data-markdown-test-level', 'warning')
         await expect(alert).toHaveText('> This is a warning message')
     })
@@ -56,6 +57,7 @@ test.describe('Alert Tokenizer Extension', () => {
 
         const alert = page.locator('[data-markdown-test="data-markdown-test-alert"]')
         await expect(alert).toHaveCount(1)
+        await expect(alert).toBeVisible()
         await expect(alert).toHaveAttribute('data-markdown-test-level', 'warning')
         await expect(alert).toHaveText(
             '> First line\n> Second line\n> Third line with **bold** text'
@@ -109,8 +111,8 @@ Regular paragraph
         await textarea.clear()
         await textarea.fill(markdown)
 
-        // Wait for the new content to render (h1 only appears in this test's markdown)
-        await expect(page.locator('h1')).toHaveText('Header')
+        // Wait for the new content to render (scoped to preview to avoid matching page chrome)
+        await expect(page.locator('.preview h1')).toHaveText('Header')
 
         // Check alerts
         const alerts = page.locator('[data-markdown-test="data-markdown-test-alert"]')
