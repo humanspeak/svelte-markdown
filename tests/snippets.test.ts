@@ -93,8 +93,16 @@ test.describe('Snippet Overrides', () => {
 
     test.describe('Reactivity', () => {
         test('snippet overrides apply to dynamically updated content', async ({ page }) => {
-            const textarea = page.getByTestId('markdown-input')
-            await textarea.fill('# New heading\n\nNew paragraph')
+            // Use evaluate to set value + dispatch input event for reliable cross-browser
+            // binding. Playwright's fill() can cause transient unmount/remount on
+            // mobile-safari that breaks snippet bindings.
+            await page.evaluate((val) => {
+                const el = document.querySelector<HTMLTextAreaElement>(
+                    '[data-testid="markdown-input"]'
+                )!
+                el.value = val
+                el.dispatchEvent(new Event('input', { bubbles: true }))
+            }, '# New heading\n\nNew paragraph')
 
             await expect(page.locator('[data-testid="snippet-heading"]')).toBeVisible({
                 timeout: 10000
