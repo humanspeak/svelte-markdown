@@ -152,6 +152,25 @@ export const extractAttributes = (raw: string): Record<string, string> => {
  *
  * @internal
  */
+
+/**
+ * Serializes an HTML attribute map into a string for tag construction.
+ * Escapes double quotes in values to prevent attribute injection.
+ *
+ * @param {Record<string, string>} attributes - Map of attribute names to values
+ * @returns {string} Serialized attributes string with leading spaces
+ *
+ * @example
+ * serializeAttributes({ class: 'foo', id: 'bar' })
+ * // Returns ' class="foo" id="bar"'
+ *
+ * @internal
+ */
+const serializeAttributes = (attributes: Record<string, string>): string =>
+    Object.entries(attributes)
+        .map(([key, value]) => ` ${key}="${value.replace(/"/g, '&quot;')}"`)
+        .join('')
+
 export const parseHtmlBlock = (html: string): Token[] => {
     const tokens: Token[] = []
     let currentText = ''
@@ -172,9 +191,7 @@ export const parseHtmlBlock = (html: string): Token[] => {
                 if (SELF_CLOSING_TAGS.test(name)) {
                     tokens.push({
                         type: 'html',
-                        raw: `<${name}${Object.entries(attributes)
-                            .map(([key, value]) => ` ${key}="${value}"`)
-                            .join('')}/>`,
+                        raw: `<${name}${serializeAttributes(attributes)}/>`,
                         tag: name,
                         attributes
                     })
@@ -182,9 +199,7 @@ export const parseHtmlBlock = (html: string): Token[] => {
                     openTags.push(name)
                     tokens.push({
                         type: 'html',
-                        raw: `<${name}${Object.entries(attributes)
-                            .map(([key, value]) => ` ${key}="${value}"`)
-                            .join('')}>`,
+                        raw: `<${name}${serializeAttributes(attributes)}>`,
                         tag: name,
                         attributes
                     })
@@ -218,8 +233,7 @@ export const parseHtmlBlock = (html: string): Token[] => {
             }
         },
         {
-            xmlMode: true,
-            // Add this to prevent automatic tag closing
+            xmlMode: false,
             recognizeSelfClosing: true
         }
     )
@@ -309,20 +323,18 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
             result.push(token)
         } else if (token.type === 'table') {
             // Process header cells
-            if (token.header) {
-                // @ts-expect-error: expected any
-                token.header = token.header.map((cell) => ({
+            const tableToken = token as Tokens.Table
+            if (tableToken.header) {
+                tableToken.header = tableToken.header.map((cell: Tokens.TableCell) => ({
                     ...cell,
                     tokens: cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
                 }))
             }
 
             // Process row cells
-            if (token.rows) {
-                // @ts-expect-error: expected any
-                token.rows = token.rows.map((row) =>
-                    // @ts-expect-error: expected any
-                    row.map((cell) => ({
+            if (tableToken.rows) {
+                tableToken.rows = tableToken.rows.map((row: Tokens.TableCell[]) =>
+                    row.map((cell: Tokens.TableCell) => ({
                         ...cell,
                         tokens: cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
                     }))
@@ -420,9 +432,9 @@ export const processHtmlTokens = (tokens: Token[]): Token[] => {
         }
     }
 
-    // If we have unclosed tags, return original tokens
+    // If we have unclosed tags, return partial result (better than discarding all work)
     if (stack.length > 0) {
-        return tokens
+        return result
     }
 
     return result

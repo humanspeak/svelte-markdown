@@ -62,6 +62,9 @@
     import { rendererKeysInternal } from '$lib/utils/rendererKeys.js'
     import { Marked } from 'marked'
 
+    // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
+    type AnySnippet = (..._args: any[]) => any
+
     const {
         source = [],
         renderers = {},
@@ -174,7 +177,7 @@
             allRendererKeys
                 .filter((key) => key in rest && rest[key] != null)
                 .map((key) => [key, rest[key]])
-        )
+        ) as Record<string, AnySnippet>
     )
 
     // Collect HTML snippet overrides (keys matching html_<tag>)
@@ -183,7 +186,7 @@
             Object.entries(rest)
                 .filter(([key, val]) => key.startsWith('html_') && val != null)
                 .map(([key, val]) => [key.slice(5), val])
-        )
+        ) as Record<string, AnySnippet>
     )
 
     // Passthrough: everything that isn't a known snippet override
@@ -199,7 +202,7 @@
     {tokens}
     {...passThroughProps}
     options={combinedOptions}
-    slug={(val: string): string => (slugger ? slugger.slug(val) : '')}
+    slug={(val: string): string => slugger.slug(val)}
     renderers={combinedRenderers}
     {snippetOverrides}
     {htmlSnippetOverrides}

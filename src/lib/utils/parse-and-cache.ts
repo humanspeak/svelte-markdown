@@ -14,9 +14,20 @@ import { shrinkHtmlTokens } from '$lib/utils/token-cleanup.js'
 import { Lexer, Marked } from 'marked'
 
 /**
- * Lex and clean tokens from markdown source. Shared by sync and async paths.
+ * Lexes markdown source and cleans the resulting tokens. Shared by sync and async paths.
+ *
+ * @param source - Raw markdown string to lex
+ * @param options - Parser options forwarded to the Marked lexer
+ * @param isInline - When true, uses inline tokenization (no block elements)
+ * @returns Cleaned token array with HTML tokens properly nested
+ *
+ * @internal
  */
-function lexAndClean(source: string, options: SvelteMarkdownOptions, isInline: boolean): Token[] {
+const lexAndClean = (
+    source: string,
+    options: SvelteMarkdownOptions,
+    isInline: boolean
+): Token[] => {
     const lexer = new Lexer(options)
     const parsedTokens = isInline ? lexer.inlineTokens(source) : lexer.lex(source)
     return shrinkHtmlTokens(parsedTokens) as Token[]
@@ -42,11 +53,11 @@ function lexAndClean(source: string, options: SvelteMarkdownOptions, isInline: b
  * const cachedTokens = parseAndCacheTokens('# Hello World', { gfm: true }, false)
  * ```
  */
-export function parseAndCacheTokens(
+export const parseAndCacheTokens = (
     source: string,
     options: SvelteMarkdownOptions,
     isInline: boolean
-): Token[] | TokensList {
+): Token[] | TokensList => {
     // Check cache first - avoids expensive parsing
     const cached = tokenCache.getTokens(source, options)
     if (cached) {
@@ -83,11 +94,11 @@ export function parseAndCacheTokens(
  * const tokens = await parseAndCacheTokensAsync('# Hello', opts, false)
  * ```
  */
-export async function parseAndCacheTokensAsync(
+export const parseAndCacheTokensAsync = async (
     source: string,
     options: SvelteMarkdownOptions,
     isInline: boolean
-): Promise<Token[] | TokensList> {
+): Promise<Token[] | TokensList> => {
     // Check cache first - avoids expensive parsing
     const cached = tokenCache.getTokens(source, options)
     if (cached) {

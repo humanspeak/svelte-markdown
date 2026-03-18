@@ -60,6 +60,7 @@ jobs:
         needs: check-if-merged
         if: needs.check-if-merged.outputs.should_run == 'true'
         runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
+        environment: ci
         steps:
             - name: Checkout
               uses: actions/checkout@v6 # zizmor: ignore[unpinned-uses]
@@ -198,6 +199,7 @@ jobs:
         needs: [check-if-merged, debug-check]
         if: needs.check-if-merged.outputs.should_run == 'true'
         runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
+        environment: ci
         strategy:
             matrix:
                 node-version: [20, 22, 24]
@@ -253,6 +255,7 @@ jobs:
         if: needs.check-if-merged.outputs.should_run == 'true'
         timeout-minutes: 60
         runs-on: blacksmith-4vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
+        environment: ci
         steps:
             - uses: actions/checkout@v6 # zizmor: ignore[unpinned-uses]
               with:
@@ -309,6 +312,7 @@ jobs:
         needs: [check-if-merged, build, playwright-tests, coverage-report]
         if: needs.check-if-merged.outputs.should_run == 'true'
         runs-on: ubuntu-latest
+        environment: production
         permissions:
             contents: write
             packages: write
@@ -489,21 +493,25 @@ jobs:
             - name: Create Release
               if: steps.publish-check.outputs.should_publish == 'true'
               id: create_release
-              uses: softprops/action-gh-release@v2 # zizmor: ignore[unpinned-uses]
-              with:
-                  tag_name: ${{ steps.version.outputs.new_version }}
-                  name: Release ${{ steps.version.outputs.new_version }}
-                  body: |
-                      Changes in this Release
-                      ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.custom_message || github.event.pull_request.title }}
-
-                      ${{ github.event_name == 'pull_request' && format('For more details, see the [Pull Request]({0})', github.event.pull_request.html_url) || '' }}
-                  draft: false
-                  prerelease: false
-                  make_latest: true
-                  generate_release_notes: false
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  NEW_VERSION: ${{ steps.version.outputs.new_version }}
+                  EVENT_NAME: ${{ github.event_name }}
+                  CUSTOM_MESSAGE: ${{ github.event.inputs.custom_message }}
+                  PR_TITLE: ${{ github.event.pull_request.title }}
+                  PR_URL: ${{ github.event.pull_request.html_url }}
+              run: |
+                  BODY="Changes in this Release
+                  ${CUSTOM_MESSAGE:-$PR_TITLE}"
+                  if [[ "$EVENT_NAME" == "pull_request" ]]; then
+                      BODY="$BODY
+
+                  For more details, see the [Pull Request]($PR_URL)"
+                  fi
+                  gh release create "$NEW_VERSION" \
+                      --title "Release $NEW_VERSION" \
+                      --notes "$BODY" \
+                      --latest
 
             - name: Publish
               if: steps.publish-check.outputs.should_publish == 'true'

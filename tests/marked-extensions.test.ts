@@ -12,8 +12,8 @@ test.describe('Alert Tokenizer Extension', () => {
         await textarea.clear()
         await textarea.fill(markdown)
 
-        await page.waitForSelector('.preview')
         const alert = page.locator('[data-markdown-test="data-markdown-test-alert"]')
+        await expect(alert).toHaveCount(1)
         await expect(alert).toBeVisible()
         await expect(alert).toHaveAttribute('data-markdown-test-level', 'warning')
         await expect(alert).toHaveText('> This is a warning message')
@@ -33,7 +33,6 @@ test.describe('Alert Tokenizer Extension', () => {
         await textarea.clear()
         await textarea.fill(markdown)
 
-        await page.waitForSelector('.preview')
         const alerts = page.locator('[data-markdown-test="data-markdown-test-alert"]')
         await expect(alerts).toHaveCount(3)
 
@@ -56,8 +55,8 @@ test.describe('Alert Tokenizer Extension', () => {
         await textarea.clear()
         await textarea.fill(markdown)
 
-        await page.waitForSelector('.preview')
         const alert = page.locator('[data-markdown-test="data-markdown-test-alert"]')
+        await expect(alert).toHaveCount(1)
         await expect(alert).toBeVisible()
         await expect(alert).toHaveAttribute('data-markdown-test-level', 'warning')
         await expect(alert).toHaveText(
@@ -82,7 +81,6 @@ test.describe('Alert Tokenizer Extension', () => {
         await textarea.clear()
         await textarea.fill(markdown)
 
-        await page.waitForSelector('.preview')
         const alerts = page.locator('[data-markdown-test="data-markdown-test-alert"]')
 
         // Only valid alerts should be rendered
@@ -113,7 +111,8 @@ Regular paragraph
         await textarea.clear()
         await textarea.fill(markdown)
 
-        await page.waitForSelector('.preview')
+        // Wait for the new content to render (scoped to preview to avoid matching page chrome)
+        await expect(page.locator('.preview h1')).toHaveText('Header')
 
         // Check alerts
         const alerts = page.locator('[data-markdown-test="data-markdown-test-alert"]')
@@ -124,7 +123,6 @@ Regular paragraph
         await expect(allAlerts[1]).toHaveAttribute('data-markdown-test-level', 'info')
 
         // Check other markdown elements
-        await expect(page.locator('h1')).toHaveText('Header')
         await expect(page.locator('p')).toHaveText('Regular paragraph')
         await expect(page.locator('li')).toHaveText('List item')
     })

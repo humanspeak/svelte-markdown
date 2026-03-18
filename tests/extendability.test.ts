@@ -11,11 +11,7 @@ test.describe('SvelteMarkdown Extendability', () => {
         // Test basic div with custom attribute
         const markdown = '<div>test content</div>'
         const textarea = page.getByTestId('markdown-input')
-        await textarea.clear()
         await textarea.fill(markdown)
-
-        // Wait for the preview to update
-        await page.waitForSelector('.preview')
 
         // Verify our custom div component is used with its test attribute
         const div = page.locator('div[data-markdown-test]')
@@ -27,11 +23,7 @@ test.describe('SvelteMarkdown Extendability', () => {
     test('should properly handle nested custom components', async ({ page }) => {
         const markdown = '<div>outer <span>inner content</span></div>'
         const textarea = page.getByTestId('markdown-input')
-        await textarea.clear()
         await textarea.fill(markdown)
-
-        // Wait for the preview to update
-        await page.waitForSelector('.preview')
 
         // Verify nested structure
         const div = page.locator('div[data-markdown-test]')
@@ -46,11 +38,7 @@ test.describe('SvelteMarkdown Extendability', () => {
     test('should handle custom components with multiple attributes', async ({ page }) => {
         const markdown = '<div class="test-class" id="test-id">content</div>'
         const textarea = page.getByTestId('markdown-input')
-        await textarea.clear()
         await textarea.fill(markdown)
-
-        // Wait for the preview to update
-        await page.waitForSelector('.preview')
 
         const div = page.locator('div[data-markdown-test]')
         await expect(div).toBeVisible()
@@ -62,11 +50,7 @@ test.describe('SvelteMarkdown Extendability', () => {
     test('should handle multiple custom components in sequence', async ({ page }) => {
         const markdown = '<div>first</div>\n<div>second</div>'
         const textarea = page.getByTestId('markdown-input')
-        await textarea.clear()
         await textarea.fill(markdown)
-
-        // Wait for the preview to update
-        await page.waitForSelector('.preview')
 
         const divs = page.locator('div[data-markdown-test]')
         await expect(divs).toHaveCount(2)
@@ -84,14 +68,10 @@ Regular paragraph
 <div>another custom div</div>`
 
         const textarea = page.getByTestId('markdown-input')
-        await textarea.clear()
         await textarea.fill(markdown)
 
-        // Wait for the preview to update
-        await page.waitForSelector('.preview')
-
-        // Check header
-        await expect(page.locator('h1')).toHaveText('Header')
+        // Check header (auto-retrying assertion waits for re-render)
+        await expect(page.locator('.preview h1')).toHaveText('Header')
 
         // Check custom divs
         const divs = page.locator('div[data-markdown-test]')
@@ -108,11 +88,7 @@ Regular paragraph
     test('should preserve custom component attributes when updating content', async ({ page }) => {
         // Initial content
         const textarea = page.getByTestId('markdown-input')
-        await textarea.clear()
         await textarea.fill('<div>initial</div>')
-
-        // Wait for the preview to update
-        await page.waitForSelector('.preview')
 
         // Verify initial state
         const div = page.locator('div[data-markdown-test]')
@@ -121,7 +97,6 @@ Regular paragraph
         await expect(div).toHaveAttribute('data-markdown-test', 'data-markdown-test-div')
 
         // Update content
-        await textarea.clear()
         await textarea.fill('<div>updated</div>')
 
         // Wait for the update
@@ -132,15 +107,10 @@ Regular paragraph
     test('should convert &nbsp; to regular space in headers', async ({ page }) => {
         const markdown = '&nbsp;Hello'
         const textarea = page.getByTestId('markdown-input')
-        await textarea.clear()
         await textarea.fill(markdown)
 
-        // Wait for the preview to update
-        await page.waitForSelector('.preview')
-
-        // Verify the header text has a regular space instead of &nbsp;
-        const header = page.locator('p')
-        await expect(header).toBeVisible()
+        // Auto-retrying assertion waits for Svelte to re-render
+        const header = page.locator('.preview p')
         await expect(header).toHaveText(' Hello')
     })
 })

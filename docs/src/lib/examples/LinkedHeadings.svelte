@@ -100,8 +100,8 @@ This is a deeply nested heading to show all levels work correctly.`
 \x3C/svelte:element>`
 
     const rendererUsageCode = `\x3Cscript>
-  import SvelteMarkdown from '@humanspeak/svelte-markdown'
-  import LinkedHeading from './LinkedHeading.svelte'
+  ${'import'} SvelteMarkdown from '@humanspeak/svelte-markdown'
+  ${'import'} LinkedHeading from './LinkedHeading.svelte'
 
   const source = '## Getting Started\\nSome intro text.'
 \x3C/script>

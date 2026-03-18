@@ -131,4 +131,32 @@ describe('processHtmlTokens', () => {
         const result = processHtmlTokens(tokens)
         expect(result).toEqual(tokens)
     })
+
+    it('should return partial result on unclosed tags instead of discarding work', () => {
+        const tokens: Token[] = [
+            { type: 'html', raw: '<section>', text: 'section' },
+            { type: 'html', raw: '<div>', text: 'div' },
+            { type: 'text', raw: 'inner', text: 'inner' },
+            { type: 'html', raw: '</div>', text: 'div' }
+            // section is never closed
+        ]
+
+        const result = processHtmlTokens(tokens)
+        // Should still get the nested div structure, even though section is unclosed
+        expect(result).toHaveLength(2)
+        expect(result[0]).toMatchObject({ type: 'html', raw: '<section>' })
+        expect((result[1] as any).tag).toBe('div')
+        expect((result[1] as any).tokens).toHaveLength(1)
+        expect((result[1] as any).tokens[0].text).toBe('inner')
+    })
+
+    it('should handle unparseable HTML tags', () => {
+        const tokens: Token[] = [
+            { type: 'html', raw: '<!-- comment -->', text: '<!-- comment -->' }
+        ]
+
+        const result = processHtmlTokens(tokens)
+        expect(result).toHaveLength(1)
+        expect(result[0]).toMatchObject({ type: 'html', raw: '<!-- comment -->' })
+    })
 })

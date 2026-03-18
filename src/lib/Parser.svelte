@@ -56,6 +56,9 @@
         RendererComponent
     } from '$lib/utils/markdown-parser.js'
 
+    // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
+    type AnySnippet = (..._args: any[]) => any
+
     interface Props<T extends Renderers = Renderers> {
         type?: string
         tokens?: Token[] | TokensList
@@ -63,8 +66,8 @@
         rows?: Tokens.TableCell[][]
         ordered?: boolean
         renderers: T
-        snippetOverrides?: Record<string, any> // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
-        htmlSnippetOverrides?: Record<string, any> // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
+        snippetOverrides?: Record<string, AnySnippet>
+        htmlSnippetOverrides?: Record<string, AnySnippet>
     }
 
     const {
@@ -121,14 +124,14 @@
                                 {#if cellSnippet}
                                     {@render cellSnippet({
                                         header: true,
-                                        align: (rest.align as string[])[i],
+                                        align: (rest.align as string[] | undefined)?.[i] ?? null,
                                         ...cellRest,
                                         children: headerCellContent
                                     })}
                                 {:else}
                                     <renderers.tablecell
                                         header={true}
-                                        align={(rest.align as string[])[i]}
+                                        align={(rest.align as string[] | undefined)?.[i] ?? null}
                                         {...cellRest}
                                     >
                                         {@render headerCellContent()}
@@ -172,7 +175,8 @@
                                     {#if cellSnippet}
                                         {@render cellSnippet({
                                             header: false,
-                                            align: (rest.align as string[])[j],
+                                            align:
+                                                (rest.align as string[] | undefined)?.[j] ?? null,
                                             ...cellRest,
                                             children: bodyCellContent
                                         })}
@@ -180,7 +184,8 @@
                                         <renderers.tablecell
                                             {...cellRest}
                                             header={false}
-                                            align={(rest.align as string[])[j]}
+                                            align={(rest.align as string[] | undefined)?.[j] ??
+                                                null}
                                         >
                                             {@render bodyCellContent()}
                                         </renderers.tablecell>

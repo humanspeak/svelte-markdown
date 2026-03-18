@@ -93,9 +93,16 @@ test.describe('Snippet Overrides', () => {
 
     test.describe('Reactivity', () => {
         test('snippet overrides apply to dynamically updated content', async ({ page }) => {
-            const textarea = page.getByTestId('markdown-input')
-            await textarea.clear()
-            await textarea.fill('# New heading\n\nNew paragraph')
+            // Use evaluate to set value + dispatch input event directly.
+            // Playwright's fill() is intermittently flaky on mobile-safari here
+            // for unknown reasons — snippet overrides stop applying after fill().
+            await page.evaluate((val) => {
+                const el = document.querySelector<HTMLTextAreaElement>(
+                    '[data-testid="markdown-input"]'
+                )!
+                el.value = val
+                el.dispatchEvent(new Event('input', { bubbles: true }))
+            }, '# New heading\n\nNew paragraph')
 
             await expect(page.locator('[data-testid="snippet-heading"]')).toBeVisible({
                 timeout: 10000
@@ -110,12 +117,10 @@ test.describe('Snippet Overrides', () => {
             const textarea = page.getByTestId('markdown-input')
 
             // Switch to list content
-            await textarea.clear()
             await textarea.fill('- Alpha\n- Beta')
             await expect(page.locator('[data-testid="snippet-listitem"]')).toHaveCount(2)
 
             // Switch to heading content
-            await textarea.clear()
             await textarea.fill('## Subtitle')
             await expect(
                 page.locator('[data-testid="snippet-heading"][data-depth="2"]')

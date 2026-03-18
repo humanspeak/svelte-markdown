@@ -1,6 +1,6 @@
 import type { Token } from 'marked'
 import { describe, expect, it } from 'vitest'
-import { isHtmlOpenTag, shrinkHtmlTokens } from './token-cleanup.js'
+import { isHtmlOpenTag, parseHtmlBlock, shrinkHtmlTokens } from './token-cleanup.js'
 
 describe('Token Cleanup Utilities', () => {
     describe('isHtmlOpenTag', () => {
@@ -30,6 +30,34 @@ describe('Token Cleanup Utilities', () => {
             expect(isHtmlOpenTag('not html')).toBeNull()
             expect(isHtmlOpenTag('<>')).toBeNull()
             expect(isHtmlOpenTag('')).toBeNull()
+        })
+    })
+
+    describe('parseHtmlBlock', () => {
+        it('should parse simple HTML into tokens', () => {
+            const result = parseHtmlBlock('<div>hello</div>')
+            expect(result).toHaveLength(3)
+            expect(result[0]).toMatchObject({ type: 'html', tag: 'div' })
+            expect(result[1]).toMatchObject({ type: 'text', text: 'hello' })
+            expect(result[2]).toMatchObject({ type: 'html', raw: '</div>' })
+        })
+
+        it('should escape double quotes in attribute values', () => {
+            const result = parseHtmlBlock('<div class="safe">text</div>')
+            expect(result[0].raw).toBe('<div class="safe">')
+            // Verify no injection is possible
+            expect(result[0].raw).not.toContain('onclick')
+        })
+
+        it('should handle self-closing tags', () => {
+            const result = parseHtmlBlock('<div>before<br/>after</div>')
+            expect(result.some((t) => t.raw.includes('br'))).toBe(true)
+        })
+
+        it('should handle text-only content', () => {
+            const result = parseHtmlBlock('just text')
+            expect(result).toHaveLength(1)
+            expect(result[0]).toMatchObject({ type: 'text', text: 'just text' })
         })
     })
 
@@ -374,6 +402,24 @@ describe('Token Cleanup Utilities', () => {
             const result = shrinkHtmlTokens(tokens)
             expect(result).toHaveLength(1)
             expect(result[0]).toMatchObject({ type: 'html', raw: '<br/>' })
+        })
+
+        it('should escape quotes in attribute values when parsing HTML blocks', () => {
+            const tokens: Token[] = [
+                {
+                    type: 'html',
+                    block: true,
+                    raw: '<div data-value="safe">content</div>',
+                    pre: false,
+                    text: '<div data-value="safe">content</div>'
+                }
+            ]
+
+            const result = shrinkHtmlTokens(tokens)
+            expect(result).toHaveLength(1)
+            expect((result[0] as any).tag).toBe('div')
+            // Attributes should be preserved
+            expect((result[0] as any).attributes).toHaveProperty('data-value', 'safe')
         })
     })
 })
