@@ -293,11 +293,7 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                             class="text-foreground text-5xl leading-tight font-semibold text-balance md:text-7xl"
                         >
                             <span class="block">Svelte</span>
-                            <span
-                                class="sheen-gradient from-foreground via-brand-500 to-foreground block bg-gradient-to-r bg-clip-text text-transparent"
-                            >
-                                Markdown
-                            </span>
+                            <span class="text-brand-500 block"> Markdown </span>
                         </h1>
                         <p
                             class="text-muted-foreground mt-6 text-base leading-7 text-pretty md:text-lg"
