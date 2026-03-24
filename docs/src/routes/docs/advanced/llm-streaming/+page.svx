@@ -1,0 +1,229 @@
+---
+title: LLM Streaming
+description: Render AI chat responses in real-time with token-by-token markdown streaming
+---
+
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'LLM Streaming | Svelte Markdown'
+        seo.description = 'Render AI chat responses in real-time with token-by-token markdown streaming. Build ChatGPT-style streaming UIs with SvelteMarkdown.'
+        seo.ogTitle = 'LLM Streaming'
+        seo.ogTagline = 'Real-time AI response rendering for Svelte apps.'
+        seo.ogFeatures = ['Token Streaming', 'SSE Support', 'Sub-10ms Renders', 'Zero Config']
+        seo.ogSlug = 'docs-advanced-llm-streaming'
+    }
+</script>
+
+# LLM Streaming
+
+`@humanspeak/svelte-markdown` handles real-time streaming from Large Language Models (LLMs) like ChatGPT, Claude, Gemini, and other AI assistants out of the box. As tokens arrive via Server-Sent Events (SSE) or WebSocket connections, simply append them to the `source` prop and the rendered markdown updates instantly.
+
+## How It Works
+
+LLM APIs stream responses token-by-token. Each token is a small chunk of text -- sometimes a word, sometimes a partial word, sometimes punctuation or whitespace. The typical integration pattern is:
+
+1. The LLM API sends tokens via Server-Sent Events (SSE) or a streaming HTTP response.
+2. Your application accumulates tokens into a growing markdown string.
+3. `SvelteMarkdown` re-parses and re-renders the full source on each update.
+4. Svelte's fine-grained reactivity ensures only the changed DOM nodes are updated.
+
+Because the component is reactive by default, there is no special "streaming mode" to enable. It just works.
+
+## Basic Usage
+
+### With the Anthropic SDK (Claude)
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import Anthropic from '@anthropic-ai/sdk'
+
+    let source = $state('')
+
+    async function streamResponse(prompt) {
+        const client = new Anthropic()
+
+        const stream = client.messages.stream({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1024,
+            messages: [{ role: 'user', content: prompt }]
+        })
+
+        for await (const event of stream) {
+            if (
+                event.type === 'content_block_delta' &&
+                event.delta.type === 'text_delta'
+            ) {
+                source += event.delta.text
+            }
+        }
+    }
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+### With the OpenAI SDK (ChatGPT)
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import OpenAI from 'openai'
+
+    let source = $state('')
+
+    async function streamResponse(prompt) {
+        const client = new OpenAI()
+
+        const stream = await client.chat.completions.create({
+            model: 'gpt-4o',
+            messages: [{ role: 'user', content: prompt }],
+            stream: true
+        })
+
+        for await (const chunk of stream) {
+            const delta = chunk.choices[0]?.delta?.content
+            if (delta) {
+                source += delta
+            }
+        }
+    }
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+### With fetch and Server-Sent Events
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    let source = $state('')
+
+    async function streamFromAPI(prompt) {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            body: JSON.stringify({ prompt }),
+            headers: { 'Content-Type': 'application/json' }
+        })
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+
+        while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            source += decoder.decode(value, { stream: true })
+        }
+    }
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+## Performance Characteristics
+
+We measured render performance across different streaming speeds and chunking strategies using the [interactive streaming demo](/examples/llm-streaming):
+
+| Streaming Speed | Chunk Mode | Avg Render | Peak Render | Dropped Frames |
+|-----------------|------------|:----------:|:-----------:|:--------------:|
+| 30 words/sec | Word | ~3ms | ~11ms | 0 |
+| 100 chars/sec | Character | ~4ms | ~21ms | 0 |
+| 50 words/sec | Word | ~3ms | ~12ms | 0 |
+
+All render times stay well under the 16.7ms frame budget (60fps), meaning the browser has time to paint every frame without jank. Even at 100 characters per second in character mode (a worst-case scenario far beyond real LLM speeds), average render time remains under 5ms.
+
+### How Render Time Scales
+
+Render time grows linearly with document length because the full markdown source is re-parsed on each update. For a typical LLM response (~2,000 characters), the overhead is negligible:
+
+- **0-500 chars:** &lt;1ms per render
+- **500-1,000 chars:** ~2-3ms per render
+- **1,000-2,000 chars:** ~5-7ms per render
+- **2,000+ chars:** ~7-10ms per render
+
+For very long documents (10,000+ characters), consider the optimization strategies below.
+
+## Best Practices
+
+### 1. Prefer Word-Level Chunking
+
+If you control the chunking strategy (e.g., in a custom SSE endpoint), emit tokens at word boundaries rather than individual characters. This reduces the total number of re-renders while producing the same visual result:
+
+```javascript
+// Server-side: buffer tokens and emit at word boundaries
+let buffer = ''
+for await (const token of llmStream) {
+    buffer += token
+    if (buffer.endsWith(' ') || buffer.endsWith('\n')) {
+        controller.enqueue(encoder.encode(buffer))
+        buffer = ''
+    }
+}
+if (buffer) controller.enqueue(encoder.encode(buffer))
+```
+
+### 2. Use Token Caching for Chat History
+
+When displaying a conversation with multiple messages, previously completed messages are re-rendered on every update. Enable [token caching](/docs/advanced/token-caching) so that completed messages skip re-parsing:
+
+```html
+<script>
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    let messages = $state([])
+</script>
+
+{#each messages as message}
+    <!-- Completed messages hit the token cache automatically -->
+    <SvelteMarkdown source={message.content} />
+{/each}
+```
+
+### 3. Debounce for Extremely Fast Streams
+
+If your LLM stream is unusually fast (100+ tokens/second) and you notice frame drops, you can batch updates using `requestAnimationFrame`:
+
+```javascript
+let pending = ''
+let rafScheduled = false
+
+function onToken(token) {
+    pending += token
+    if (!rafScheduled) {
+        rafScheduled = true
+        requestAnimationFrame(() => {
+            source += pending
+            pending = ''
+            rafScheduled = false
+        })
+    }
+}
+```
+
+This coalesces multiple tokens into a single render per frame, reducing total renders from ~100/sec to ~60/sec while maintaining smooth visual output.
+
+## Why Full Re-parse Works
+
+Unlike some markdown renderers that attempt incremental parsing, `SvelteMarkdown` re-parses the entire source on every update. This approach is simpler and actually performs well for streaming because:
+
+- **Marked's lexer is fast:** Parsing 2KB of markdown takes ~1ms.
+- **Svelte's DOM diffing is efficient:** Only changed nodes are updated in the DOM, even though the full token tree is regenerated.
+- **Token caching eliminates redundancy:** Identical source strings return cached tokens in &lt;0.1ms.
+- **No state synchronization bugs:** Incremental parsers must handle partial tokens, unclosed fences, and incomplete tables. Full re-parse handles all of these correctly by definition.
+
+The result is a renderer that handles streaming naturally without any special streaming mode or configuration.
+
+## Try It Live
+
+Experiment with different streaming speeds, jitter, and chunk modes in the [interactive LLM streaming demo](/examples/llm-streaming).
+
+## Related
+
+- [Token Caching](/docs/advanced/token-caching) -- cache parsed tokens for instant re-renders
+- [Getting Started](/docs/getting-started) -- installation and basic usage
+- [SvelteMarkdown API](/docs/api/svelte-markdown) -- full prop reference

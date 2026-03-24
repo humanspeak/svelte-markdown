@@ -92,6 +92,13 @@
             description:
                 'Add clickable anchor links to headings with snippet overrides or custom renderers for easy deep-linking.',
             icon: 'link'
+        },
+        {
+            slug: 'llm-streaming',
+            title: 'LLM Streaming',
+            description:
+                'Simulate real-time AI response streaming with adjustable speed, jitter, and chunk modes. Measure render performance live.',
+            icon: 'zap'
         }
     ]
 </script>

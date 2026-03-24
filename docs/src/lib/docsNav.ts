@@ -118,7 +118,8 @@ export const docsSections: NavSection[] = [
             { title: 'Token Caching', href: '/docs/advanced/token-caching', icon: Zap },
             { title: 'Allow/Deny', href: '/docs/advanced/allow-deny', icon: Shield },
             { title: 'Security', href: '/docs/advanced/security', icon: Lock },
-            { title: 'Marked Extensions', href: '/docs/advanced/marked-extensions', icon: Puzzle }
+            { title: 'Marked Extensions', href: '/docs/advanced/marked-extensions', icon: Puzzle },
+            { title: 'LLM Streaming', href: '/docs/advanced/llm-streaming', icon: Zap }
         ]
     },
     {
@@ -162,7 +163,8 @@ export const docsSections: NavSection[] = [
             { title: 'GitHub Alerts', href: '/examples/github-alerts', icon: TriangleAlert },
             { title: 'Footnotes', href: '/examples/footnotes', icon: Superscript },
             { title: 'Code Formatting', href: '/examples/code-formatting', icon: Code },
-            { title: 'Linked Headings', href: '/examples/linked-headings', icon: Link }
+            { title: 'Linked Headings', href: '/examples/linked-headings', icon: Link },
+            { title: 'LLM Streaming', href: '/examples/llm-streaming', icon: Zap }
         ]
     },
     {
