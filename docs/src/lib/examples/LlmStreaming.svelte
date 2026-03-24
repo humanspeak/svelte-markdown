@@ -215,12 +215,11 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
     // --- Controls ---
     const startStreaming = () => {
         if (isStreaming) return
-        if (chunkIndex >= chunks.length || chunks.length === 0) {
-            chunks = splitIntoChunks(input, chunkMode)
-            chunkIndex = 0
-            source = ''
-            resetMetrics()
-        }
+        // Always re-split from current editor content on fresh start
+        chunks = splitIntoChunks(input, chunkMode)
+        chunkIndex = 0
+        source = ''
+        resetMetrics()
         sessionId++
         isStreaming = true
         lastFrameTime = 0
