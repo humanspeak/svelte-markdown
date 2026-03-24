@@ -4,7 +4,7 @@ procs:
         autostart: true
         autorestart: false
     pkg:
-        shell: pnpm -w -r --filter @humanspeak/svelte-markdown run dev:pkg
+        shell: pnpm -w -r --filter @humanspeak/svelte-markdown run dev
     docs:
         shell: pnpm --filter docs run dev
     sitemap:
