@@ -156,16 +156,6 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
     let streamRenderCount = $state(0)
     let streamPreviewEl: HTMLDivElement | undefined = $state()
     let streamSourceEl: HTMLTextAreaElement | undefined = $state()
-    const streamProgress = $derived(
-        streamChunks.length > 0 ? Math.round((streamIndex / streamChunks.length) * 100) : 0
-    )
-
-    // Auto-start streaming demo after a short delay
-    $effect(() => {
-        if (typeof window === 'undefined') return
-        const timer = setTimeout(startStream, 1000)
-        return () => clearTimeout(timer)
-    })
 
     const startStream = () => {
         if (isStreamActive) return
@@ -218,6 +208,16 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
         streamAvgMs = 0
         streamPeakMs = 0
     }
+
+    // Auto-start streaming demo after a short delay
+    $effect(() => {
+        if (typeof window === 'undefined') return
+        const timer = setTimeout(startStream, 1000)
+        return () => {
+            clearTimeout(timer)
+            stopStream()
+        }
+    })
 
     function splitHeadingWords(root: HTMLElement) {
         const lines = root.querySelectorAll('h1 span')
