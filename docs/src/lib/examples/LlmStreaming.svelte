@@ -130,6 +130,7 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
     let chunkIndex = $state(0)
     let lastFrameTime = 0
     let rafId = 0
+    let sessionId = 0
     let previewEl: HTMLDivElement | undefined = $state()
 
     // --- Chunking ---
@@ -182,7 +183,8 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
     }
 
     // --- Streaming loop ---
-    const streamNext = async () => {
+    const streamNext = async (runId: number) => {
+        if (runId !== sessionId) return
         if (chunkIndex >= chunks.length) {
             isStreaming = false
             return
@@ -193,6 +195,7 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
         chunkIndex++
         tokenCount = chunkIndex
         await tick()
+        if (runId !== sessionId) return
         const elapsed = performance.now() - start
 
         lastRenderTime = elapsed
@@ -204,8 +207,8 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
             previewEl.scrollTop = previewEl.scrollHeight
         }
 
-        if (isStreaming) {
-            timeoutId = setTimeout(streamNext, Math.max(0, getDelay()))
+        if (isStreaming && runId === sessionId) {
+            timeoutId = setTimeout(() => streamNext(runId), Math.max(0, getDelay()))
         }
     }
 
@@ -218,14 +221,16 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
             source = ''
             resetMetrics()
         }
+        sessionId++
         isStreaming = true
         lastFrameTime = 0
         rafId = requestAnimationFrame(trackFrames)
-        streamNext()
+        streamNext(sessionId)
     }
 
     const stopStreaming = () => {
         isStreaming = false
+        sessionId++
         if (timeoutId) {
             clearTimeout(timeoutId)
             timeoutId = null
@@ -263,6 +268,11 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
         if (ms < 1) return '<1ms'
         return `${ms.toFixed(1)}ms`
     }
+
+    // --- Teardown ---
+    $effect(() => {
+        return () => stopStreaming()
+    })
 </script>
 
 <div class="mx-auto w-full max-w-7xl p-4">
