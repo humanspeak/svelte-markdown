@@ -119,8 +119,10 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
     let renderCount = $state(0)
     let droppedFrames = $state(0)
 
-    let avgRenderTime = $derived(renderCount > 0 ? totalRenderTime / renderCount : 0)
-    let progress = $derived(chunks.length > 0 ? Math.round((chunkIndex / chunks.length) * 100) : 0)
+    const avgRenderTime = $derived(renderCount > 0 ? totalRenderTime / renderCount : 0)
+    const progress = $derived(
+        chunks.length > 0 ? Math.round((chunkIndex / chunks.length) * 100) : 0
+    )
 
     // Internals
     let timeoutId: ReturnType<typeof setTimeout> | null = null
