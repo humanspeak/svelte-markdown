@@ -10,11 +10,14 @@
         Rocket,
         BookOpen,
         Play,
+        Square,
         RotateCw,
         Pen,
         Eye,
-        FlaskConical
+        FlaskConical,
+        Zap
     } from '@lucide/svelte'
+    import { tick } from 'svelte'
     import { competitors } from '$lib/compare-data'
     import type { IconName } from '$lib/icons'
 
@@ -57,10 +60,10 @@
             icon: 'javascript'
         },
         {
-            title: 'Svelte 5 Native',
+            title: 'LLM Streaming',
             description:
-                'Built for Svelte 5 with runes. Reactive, performant, and fully compatible with SvelteKit.',
-            icon: 'feather'
+                'Render ChatGPT and Claude responses in real-time. Smart token diffing keeps updates under 2ms.',
+            icon: 'zap'
         }
     ]
 
@@ -108,6 +111,96 @@ Happy coding! <span style="color: hotpink">\u{2665}</span>`
     const resetPlayground = () => {
         editorText = defaultMarkdown
         source = defaultMarkdown
+    }
+
+    // --- Streaming demo state ---
+    const streamContent = `# Understanding Reactive Systems
+
+Reactive programming is a **declarative paradigm** concerned with _data streams_ and the propagation of change.
+
+## Core Principles
+
+1. **Observables** — represent a stream of data over time
+2. **Operators** — transform, filter, and combine streams
+3. **Subscribers** — consume the final output
+
+> "The best way to predict the future is to invent it." — Alan Kay
+
+### A Simple Example
+
+\`\`\`javascript
+import { writable } from 'svelte/store'
+
+const count = writable(0)
+count.subscribe(value => {
+    console.log(\`Count: \${value}\`)
+})
+\`\`\`
+
+| Feature | Svelte | React |
+|---------|--------|-------|
+| Reactivity | Compile-time | Runtime |
+| Bundle Size | Small | Medium |
+
+The \`writable\` store notifies all subscribers when the value changes. This makes building **real-time UIs** straightforward.`
+
+    let streamSource = $state('')
+    let isStreamActive = $state(false)
+    let streamChunks: string[] = $state([])
+    let streamIndex = $state(0)
+    let streamTimerId: ReturnType<typeof setTimeout> | null = null
+    let streamSessionId = 0
+    let streamAvgMs = $state(0)
+    let streamTotalMs = 0
+    let streamRenderCount = 0
+    let streamPreviewEl: HTMLDivElement | undefined = $state()
+
+    const startStream = () => {
+        if (isStreamActive) return
+        streamChunks = streamContent.match(/\S+\s*/g) ?? []
+        streamIndex = 0
+        streamSource = ''
+        streamTotalMs = 0
+        streamRenderCount = 0
+        streamAvgMs = 0
+        streamSessionId++
+        isStreamActive = true
+        streamNextChunk(streamSessionId)
+    }
+
+    const streamNextChunk = async (sid: number) => {
+        if (sid !== streamSessionId || streamIndex >= streamChunks.length) {
+            isStreamActive = false
+            return
+        }
+        const t0 = performance.now()
+        streamSource += streamChunks[streamIndex]
+        streamIndex++
+        await tick()
+        if (sid !== streamSessionId) return
+        const elapsed = performance.now() - t0
+        streamTotalMs += elapsed
+        streamRenderCount++
+        streamAvgMs = Math.round((streamTotalMs / streamRenderCount) * 10) / 10
+        if (streamPreviewEl) streamPreviewEl.scrollTop = streamPreviewEl.scrollHeight
+        if (isStreamActive && sid === streamSessionId) {
+            streamTimerId = setTimeout(() => streamNextChunk(sid), 30)
+        }
+    }
+
+    const stopStream = () => {
+        isStreamActive = false
+        streamSessionId++
+        if (streamTimerId) {
+            clearTimeout(streamTimerId)
+            streamTimerId = null
+        }
+    }
+
+    const resetStream = () => {
+        stopStream()
+        streamSource = ''
+        streamAvgMs = 0
     }
 
     function splitHeadingWords(root: HTMLElement) {
@@ -248,6 +341,9 @@ Happy coding! <span style="color: hotpink">\u{2665}</span>`
                             <li class="border-border-muted rounded-full border px-3 py-1">
                                 69+ HTML Tags
                             </li>
+                            <li class="border-border-muted rounded-full border px-3 py-1">
+                                LLM Streaming
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -370,6 +466,130 @@ Happy coding! <span style="color: hotpink">\u{2665}</span>`
                                 class="prose prose-sm dark:prose-invert h-[400px] max-w-none overflow-y-auto p-4"
                             >
                                 <SvelteMarkdown {source} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LLM Streaming Demo Section -->
+        <section class="relative px-6 py-10">
+            <div class="container mx-auto max-w-7xl">
+                <div class="mb-8 text-center">
+                    <h2
+                        class="from-brand-500 to-brand-600 mb-4 bg-gradient-to-r bg-clip-text text-3xl font-bold text-transparent md:text-4xl"
+                    >
+                        Stream AI Responses in Real-Time
+                    </h2>
+                    <p class="text-muted-foreground mx-auto max-w-2xl">
+                        Render ChatGPT, Claude, and Gemini responses as they stream in. Smart token
+                        diffing keeps each update under 2ms.
+                    </p>
+                </div>
+                <div class="border-border overflow-hidden rounded-xl border">
+                    <!-- Toolbar -->
+                    <div
+                        class="border-border bg-card/80 flex items-center justify-between border-b px-4 py-2"
+                    >
+                        <div class="flex items-center gap-3">
+                            <div class="flex gap-1.5">
+                                <div class="h-3 w-3 rounded-full bg-red-400/60"></div>
+                                <div class="h-3 w-3 rounded-full bg-yellow-400/60"></div>
+                                <div class="h-3 w-3 rounded-full bg-green-400/60"></div>
+                            </div>
+                            <span class="text-muted-foreground text-xs font-medium"
+                                >LLM streaming demo</span
+                            >
+                        </div>
+                        <div class="flex items-center gap-3">
+                            {#if streamRenderCount > 0}
+                                <span class="text-muted-foreground font-mono text-xs">
+                                    avg: <span class="text-brand-500 font-semibold"
+                                        >{streamAvgMs}ms</span
+                                    >
+                                </span>
+                            {/if}
+                            <div class="flex items-center gap-1.5">
+                                <button
+                                    onclick={startStream}
+                                    disabled={isStreamActive}
+                                    class="text-muted-foreground hover:text-foreground inline-flex items-center text-xs transition-colors disabled:opacity-40"
+                                >
+                                    <Play class="mr-1 size-3" />
+                                    Start
+                                </button>
+                                <button
+                                    onclick={stopStream}
+                                    disabled={!isStreamActive}
+                                    class="text-muted-foreground hover:text-foreground inline-flex items-center text-xs transition-colors disabled:opacity-40"
+                                >
+                                    <Square class="mr-1 size-3" />
+                                    Stop
+                                </button>
+                                <button
+                                    onclick={resetStream}
+                                    class="text-muted-foreground hover:text-foreground inline-flex items-center text-xs transition-colors"
+                                >
+                                    <RotateCw class="mr-1 size-3" />
+                                    Reset
+                                </button>
+                            </div>
+                            <a
+                                href="/examples/llm-streaming"
+                                class="text-brand-600 hover:text-brand-700 inline-flex items-center text-xs font-medium transition-colors"
+                            >
+                                Full Demo
+                                <ArrowRight class="ml-1 size-3" />
+                            </a>
+                        </div>
+                    </div>
+                    <!-- Source + Preview -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2">
+                        <!-- Source -->
+                        <div class="border-border bg-card lg:border-r">
+                            <div
+                                class="border-border bg-muted/30 flex items-center border-b px-4 py-1.5 text-xs font-medium"
+                            >
+                                <Zap class="text-brand-500 mr-1.5 size-3" />
+                                <span class="text-muted-foreground">Streaming source</span>
+                            </div>
+                            <textarea
+                                readonly
+                                value={streamSource}
+                                class="bg-card text-foreground h-[350px] w-full resize-none p-4 font-mono text-xs leading-relaxed focus:outline-none"
+                                placeholder="Click Start to begin streaming..."
+                            ></textarea>
+                        </div>
+                        <!-- Preview -->
+                        <div class="bg-background">
+                            <div
+                                class="border-border bg-muted/30 flex items-center border-b px-4 py-1.5 text-xs font-medium"
+                            >
+                                <Eye class="text-muted-foreground mr-1.5 size-3" />
+                                <span class="text-muted-foreground">Rendered output</span>
+                                {#if isStreamActive}
+                                    <span
+                                        class="ml-2 inline-flex items-center gap-1 text-xs text-green-500"
+                                    >
+                                        <span
+                                            class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-green-500"
+                                        ></span>
+                                        streaming
+                                    </span>
+                                {/if}
+                            </div>
+                            <div
+                                bind:this={streamPreviewEl}
+                                class="prose prose-sm dark:prose-invert h-[350px] max-w-none overflow-y-auto p-4"
+                            >
+                                {#if streamSource}
+                                    <SvelteMarkdown source={streamSource} streaming={true} />
+                                {:else}
+                                    <p class="text-muted-foreground italic">
+                                        Click "Start" to stream an AI response...
+                                    </p>
+                                {/if}
                             </div>
                         </div>
                     </div>

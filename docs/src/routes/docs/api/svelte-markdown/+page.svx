@@ -139,6 +139,19 @@ This is useful when you want to embed markdown within a `<span>` or other inline
 </p>
 ```
 
+### `streaming`
+
+- **Type:** `boolean`
+- **Default:** `false`
+
+Enables optimized rendering for LLM streaming scenarios. When `true`, the component diffs parsed tokens against the previous result and only updates changed DOM nodes, keeping render cost proportional to the change rather than the full document size.
+
+```html
+<SvelteMarkdown {source} streaming={true} />
+```
+
+See [LLM Streaming](/docs/advanced/llm-streaming) for usage patterns and performance data.
+
 ### `parsed`
 
 - **Type:** `(tokens: Token[] | TokensList) => void`
