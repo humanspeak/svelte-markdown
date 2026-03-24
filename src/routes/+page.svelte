@@ -72,7 +72,7 @@
     <p class="subtitle">Test Pages</p>
 
     <div class="grid">
-        {#each tests as test}
+        {#each tests as test (test.href)}
             <a href={test.href} class="card">
                 <strong>{test.name}</strong>
                 <span>{test.description}</span>
