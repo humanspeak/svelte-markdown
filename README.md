@@ -27,6 +27,7 @@ A powerful, customizable markdown renderer for Svelte with TypeScript support. B
 - 🧪 Comprehensive test coverage (vitest and playwright)
 - 🧩 First-class marked extensions support via `extensions` prop (e.g., KaTeX math, alerts)
 - ⚡ Intelligent token caching (50-200x faster re-renders)
+- 📡 LLM streaming mode with incremental rendering (~1.6ms avg per update)
 - 🖼️ Smart image lazy loading with fade-in animation
 
 ## Installation
@@ -678,6 +679,44 @@ Images automatically lazy load using native `loading="lazy"` and IntersectionObs
 <SvelteMarkdown source={markdown} {renderers} />
 ```
 
+### LLM Streaming
+
+For real-time rendering of AI responses from ChatGPT, Claude, Gemini, and other LLMs, enable the `streaming` prop. This uses a smart diff algorithm that re-parses the full source for correctness but only updates changed DOM nodes, keeping render times constant regardless of document size.
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    let source = $state('')
+
+    async function streamResponse() {
+        const response = await fetch('/api/chat', { method: 'POST', body: '...' })
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+
+        while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            source += decoder.decode(value, { stream: true })
+        }
+    }
+</script>
+
+<SvelteMarkdown {source} streaming={true} />
+```
+
+**Performance** (measured at 100 characters/sec, character mode):
+
+| Metric         | Standard Mode | Streaming Mode |
+| -------------- | :-----------: | :------------: |
+| Average render |    ~3.6ms     |     ~1.6ms     |
+| Peak render    |     ~21ms     |     ~10ms      |
+| Dropped frames |       0       |       0        |
+
+When `streaming` is `false` (default), existing behavior is unchanged. The `streaming` prop skips cache lookups (always a miss during streaming) and uses in-place token array mutation so Svelte only re-renders components for tokens that actually changed.
+
+See the [full streaming documentation](https://markdown.svelte.page/docs/advanced/llm-streaming) and [interactive demo](https://markdown.svelte.page/examples/llm-streaming).
+
 ## Available Renderers
 
 - `text` - Text within other elements
@@ -764,6 +803,7 @@ The component emits a `parsed` event when tokens are calculated:
 | Prop       | Type                    | Description                                      |
 | ---------- | ----------------------- | ------------------------------------------------ |
 | source     | `string \| Token[]`     | Markdown content or pre-parsed tokens            |
+| streaming  | `boolean`               | Enable incremental rendering for LLM streaming   |
 | renderers  | `Partial<Renderers>`    | Custom component overrides                       |
 | options    | `SvelteMarkdownOptions` | Marked parser configuration                      |
 | isInline   | `boolean`               | Toggle inline parsing mode                       |
