@@ -160,6 +160,13 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
         streamChunks.length > 0 ? Math.round((streamIndex / streamChunks.length) * 100) : 0
     )
 
+    // Auto-start streaming demo after a short delay
+    $effect(() => {
+        if (typeof window === 'undefined') return
+        const timer = setTimeout(startStream, 1000)
+        return () => clearTimeout(timer)
+    })
+
     const startStream = () => {
         if (isStreamActive) return
         streamChunks = streamContent.match(/\S+\s*/g) ?? []
