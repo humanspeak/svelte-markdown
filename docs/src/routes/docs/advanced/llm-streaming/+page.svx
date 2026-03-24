@@ -207,16 +207,6 @@ function onToken(token) {
 
 This coalesces multiple tokens into a single render per frame, reducing total renders from ~100/sec to ~60/sec while maintaining smooth visual output.
 
-## Why Full Re-parse Works
-
-Unlike some markdown renderers that attempt incremental parsing, `SvelteMarkdown` re-parses the entire source on every update. This approach is simpler and actually performs well for streaming because:
-
-- **Marked's lexer is fast:** Parsing 2KB of markdown takes ~1ms.
-- **Svelte's DOM diffing is efficient:** Only changed nodes are updated in the DOM, even though the full token tree is regenerated.
-- **Token caching eliminates redundancy:** Identical source strings return cached tokens in &lt;0.1ms.
-- **No state synchronization bugs:** Incremental parsers must handle partial tokens, unclosed fences, and incomplete tables. Full re-parse handles all of these correctly by definition.
-
-The result is a renderer that handles streaming naturally without any special streaming mode or configuration.
 
 ## Estimating Streaming Costs
 
