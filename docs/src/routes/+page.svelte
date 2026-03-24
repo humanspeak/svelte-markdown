@@ -405,83 +405,6 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
             </div>
         </section>
 
-        <!-- Live Playground Section -->
-        <section class="relative px-6 py-10">
-            <div class="container mx-auto max-w-7xl">
-                <div class="mb-8 text-center">
-                    <h2 class="text-foreground mb-4 text-3xl font-bold">Live Playground</h2>
-                    <p class="text-muted-foreground">
-                        Edit markdown on the left, see it rendered on the right.
-                    </p>
-                </div>
-                <div class="border-border overflow-hidden rounded-xl border">
-                    <!-- Toolbar -->
-                    <div
-                        class="border-border bg-card/80 flex items-center justify-between border-b px-4 py-2"
-                    >
-                        <div class="flex items-center gap-3">
-                            <div class="flex gap-1.5">
-                                <div class="h-3 w-3 rounded-full bg-red-400/60"></div>
-                                <div class="h-3 w-3 rounded-full bg-yellow-400/60"></div>
-                                <div class="h-3 w-3 rounded-full bg-green-400/60"></div>
-                            </div>
-                            <span class="text-muted-foreground text-xs font-medium"
-                                >svelte-markdown playground</span
-                            >
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button
-                                onclick={resetPlayground}
-                                class="text-muted-foreground hover:text-foreground inline-flex items-center text-xs transition-colors"
-                            >
-                                <RotateCw class="mr-1 size-3" />
-                                Reset
-                            </button>
-                            <a
-                                href="/examples/playground"
-                                class="text-brand-600 hover:text-brand-700 inline-flex items-center text-xs font-medium transition-colors"
-                            >
-                                Full Playground
-                                <ArrowRight class="ml-1 size-3" />
-                            </a>
-                        </div>
-                    </div>
-                    <!-- Editor + Preview -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2">
-                        <!-- Editor -->
-                        <div class="border-border bg-card lg:border-r">
-                            <div
-                                class="border-border bg-muted/30 flex items-center border-b px-4 py-1.5 text-xs font-medium"
-                            >
-                                <Pen class="text-muted-foreground mr-1.5 size-3" />
-                                <span class="text-muted-foreground">Editor</span>
-                            </div>
-                            <textarea
-                                bind:value={editorText}
-                                oninput={onInput}
-                                class="bg-card text-foreground h-[400px] w-full resize-none p-4 font-mono text-sm leading-relaxed focus:outline-none"
-                                spellcheck="false"
-                            ></textarea>
-                        </div>
-                        <!-- Preview -->
-                        <div class="bg-background">
-                            <div
-                                class="border-border bg-muted/30 flex items-center border-b px-4 py-1.5 text-xs font-medium"
-                            >
-                                <Eye class="text-muted-foreground mr-1.5 size-3" />
-                                <span class="text-muted-foreground">Preview</span>
-                            </div>
-                            <div
-                                class="prose prose-sm dark:prose-invert h-[400px] max-w-none overflow-y-auto p-4"
-                            >
-                                <SvelteMarkdown {source} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
         <!-- LLM Streaming Demo Section -->
         <section class="relative px-6 py-10">
             <div class="container mx-auto max-w-7xl">
@@ -614,6 +537,83 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                                         Click "Start" to stream an AI response...
                                     </p>
                                 {/if}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Playground Section -->
+        <section class="relative px-6 py-10">
+            <div class="container mx-auto max-w-7xl">
+                <div class="mb-8 text-center">
+                    <h2 class="text-foreground mb-4 text-3xl font-bold">Live Playground</h2>
+                    <p class="text-muted-foreground">
+                        Edit markdown on the left, see it rendered on the right.
+                    </p>
+                </div>
+                <div class="border-border overflow-hidden rounded-xl border">
+                    <!-- Toolbar -->
+                    <div
+                        class="border-border bg-card/80 flex items-center justify-between border-b px-4 py-2"
+                    >
+                        <div class="flex items-center gap-3">
+                            <div class="flex gap-1.5">
+                                <div class="h-3 w-3 rounded-full bg-red-400/60"></div>
+                                <div class="h-3 w-3 rounded-full bg-yellow-400/60"></div>
+                                <div class="h-3 w-3 rounded-full bg-green-400/60"></div>
+                            </div>
+                            <span class="text-muted-foreground text-xs font-medium"
+                                >svelte-markdown playground</span
+                            >
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button
+                                onclick={resetPlayground}
+                                class="text-muted-foreground hover:text-foreground inline-flex items-center text-xs transition-colors"
+                            >
+                                <RotateCw class="mr-1 size-3" />
+                                Reset
+                            </button>
+                            <a
+                                href="/examples/playground"
+                                class="text-brand-600 hover:text-brand-700 inline-flex items-center text-xs font-medium transition-colors"
+                            >
+                                Full Playground
+                                <ArrowRight class="ml-1 size-3" />
+                            </a>
+                        </div>
+                    </div>
+                    <!-- Editor + Preview -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2">
+                        <!-- Editor -->
+                        <div class="border-border bg-card lg:border-r">
+                            <div
+                                class="border-border bg-muted/30 flex items-center border-b px-4 py-1.5 text-xs font-medium"
+                            >
+                                <Pen class="text-muted-foreground mr-1.5 size-3" />
+                                <span class="text-muted-foreground">Editor</span>
+                            </div>
+                            <textarea
+                                bind:value={editorText}
+                                oninput={onInput}
+                                class="bg-card text-foreground h-[400px] w-full resize-none p-4 font-mono text-sm leading-relaxed focus:outline-none"
+                                spellcheck="false"
+                            ></textarea>
+                        </div>
+                        <!-- Preview -->
+                        <div class="bg-background">
+                            <div
+                                class="border-border bg-muted/30 flex items-center border-b px-4 py-1.5 text-xs font-medium"
+                            >
+                                <Eye class="text-muted-foreground mr-1.5 size-3" />
+                                <span class="text-muted-foreground">Preview</span>
+                            </div>
+                            <div
+                                class="prose prose-sm dark:prose-invert h-[400px] max-w-none overflow-y-auto p-4"
+                            >
+                                <SvelteMarkdown {source} />
                             </div>
                         </div>
                     </div>
