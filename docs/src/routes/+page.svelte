@@ -355,52 +355,6 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
             </div>
         </section>
 
-        <!-- Features Section -->
-        <section class="relative px-6 py-10">
-            <div class="container mx-auto max-w-7xl">
-                <!-- Section Header -->
-                <div class="mb-16 text-center">
-                    <h2
-                        class="from-brand-500 to-brand-600 mb-4 bg-gradient-to-r bg-clip-text text-4xl font-bold text-transparent md:text-5xl"
-                    >
-                        Why Svelte Markdown
-                    </h2>
-                    <p class="text-muted-foreground mx-auto max-w-2xl text-lg">
-                        The most complete markdown renderer for Svelte 5 applications.
-                    </p>
-                </div>
-                <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {#each features as feature (feature.title)}
-                        <div
-                            class="group border-border bg-card hover:border-brand-500/50 hover:shadow-brand-500/10 relative overflow-hidden rounded-xl border p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-                        >
-                            <div
-                                class="from-brand-500/5 absolute inset-0 bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                            ></div>
-                            <div class="relative z-10">
-                                <div
-                                    class="from-brand-500 to-brand-600 mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br text-white"
-                                >
-                                    <Icon name={feature.icon} class="size-5" />
-                                </div>
-                                <h3
-                                    class="group-hover:text-brand-600 mb-2 text-xl font-semibold transition-colors"
-                                >
-                                    {feature.title}
-                                </h3>
-                                <p class="text-muted-foreground text-sm leading-relaxed">
-                                    {feature.description}
-                                </p>
-                            </div>
-                            <div
-                                class="from-brand-500/10 absolute top-0 right-0 h-20 w-20 rounded-bl-full bg-gradient-to-bl to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                            ></div>
-                        </div>
-                    {/each}
-                </div>
-            </div>
-        </section>
-
         <!-- LLM Streaming Demo Section -->
         <section class="relative px-6 py-10">
             <div class="container mx-auto max-w-7xl">
@@ -536,6 +490,52 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="relative px-6 py-10">
+            <div class="container mx-auto max-w-7xl">
+                <!-- Section Header -->
+                <div class="mb-16 text-center">
+                    <h2
+                        class="from-brand-500 to-brand-600 mb-4 bg-gradient-to-r bg-clip-text text-4xl font-bold text-transparent md:text-5xl"
+                    >
+                        Why Svelte Markdown
+                    </h2>
+                    <p class="text-muted-foreground mx-auto max-w-2xl text-lg">
+                        The most complete markdown renderer for Svelte 5 applications.
+                    </p>
+                </div>
+                <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {#each features as feature (feature.title)}
+                        <div
+                            class="group border-border bg-card hover:border-brand-500/50 hover:shadow-brand-500/10 relative overflow-hidden rounded-xl border p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                        >
+                            <div
+                                class="from-brand-500/5 absolute inset-0 bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                            ></div>
+                            <div class="relative z-10">
+                                <div
+                                    class="from-brand-500 to-brand-600 mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br text-white"
+                                >
+                                    <Icon name={feature.icon} class="size-5" />
+                                </div>
+                                <h3
+                                    class="group-hover:text-brand-600 mb-2 text-xl font-semibold transition-colors"
+                                >
+                                    {feature.title}
+                                </h3>
+                                <p class="text-muted-foreground text-sm leading-relaxed">
+                                    {feature.description}
+                                </p>
+                            </div>
+                            <div
+                                class="from-brand-500/10 absolute top-0 right-0 h-20 w-20 rounded-bl-full bg-gradient-to-bl to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                            ></div>
+                        </div>
+                    {/each}
                 </div>
             </div>
         </section>
