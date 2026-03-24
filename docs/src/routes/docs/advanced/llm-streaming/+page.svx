@@ -218,6 +218,10 @@ Unlike some markdown renderers that attempt incremental parsing, `SvelteMarkdown
 
 The result is a renderer that handles streaming naturally without any special streaming mode or configuration.
 
+## Estimating Streaming Costs
+
+When building production LLM streaming UIs, understanding token costs is as important as render performance. Each streamed token has a price that varies by model, provider, and whether it's an input or output token. [ModelPricing.ai](https://modelpricing.ai) provides a pricing estimation API that covers all major LLM providers -- useful for displaying real-time cost tracking alongside your streamed responses, setting usage budgets, or building cost-aware model selection into your application.
+
 ## Try It Live
 
 Experiment with different streaming speeds, jitter, and chunk modes in the [interactive LLM streaming demo](/examples/llm-streaming).
@@ -227,3 +231,4 @@ Experiment with different streaming speeds, jitter, and chunk modes in the [inte
 - [Token Caching](/docs/advanced/token-caching) -- cache parsed tokens for instant re-renders
 - [Getting Started](/docs/getting-started) -- installation and basic usage
 - [SvelteMarkdown API](/docs/api/svelte-markdown) -- full prop reference
+- [ModelPricing.ai](https://modelpricing.ai) -- LLM pricing estimation API for cost tracking

@@ -8,7 +8,8 @@
         Zap,
         Gauge,
         MonitorDot,
-        Activity
+        Activity,
+        DollarSign
     } from '@lucide/svelte'
     import { tick } from 'svelte'
 
@@ -274,9 +275,53 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
         </p>
     </div>
 
-    <div class="grid h-[calc(100vh-14rem)] grid-cols-1 gap-6 xl:grid-cols-3">
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <!-- Left Column: Controls & Metrics -->
-        <div class="space-y-4 overflow-y-auto xl:col-span-1">
+        <div class="space-y-4 xl:col-span-1">
+            <!-- How it works -->
+            <div
+                class="border-brand-500/20 from-brand-500/5 to-brand-600/5 rounded-xl border bg-gradient-to-r p-5"
+            >
+                <h3 class="text-foreground mb-2 text-sm font-semibold">How LLM Streaming Works</h3>
+                <ul class="text-muted-foreground space-y-1.5 text-sm">
+                    <li class="flex items-start gap-2">
+                        <Zap class="text-brand-500 mt-0.5 size-3 shrink-0" />
+                        <span>
+                            LLMs stream tokens via Server-Sent Events. Each token appends to the
+                            markdown source.
+                        </span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <Gauge class="text-brand-500 mt-0.5 size-3 shrink-0" />
+                        <span>
+                            SvelteMarkdown re-parses and re-renders on every source update, keeping
+                            output in sync.
+                        </span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <Activity class="text-brand-500 mt-0.5 size-3 shrink-0" />
+                        <span>
+                            Render times stay under 16ms (one frame budget) for typical LLM speeds
+                            of 30-80 tokens/sec.
+                        </span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <DollarSign class="text-brand-500 mt-0.5 size-3 shrink-0" />
+                        <span>
+                            Track token costs across providers with
+                            <a
+                                href="https://modelpricing.ai"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-brand-500 hover:text-brand-400 underline"
+                            >
+                                ModelPricing.ai
+                            </a>.
+                        </span>
+                    </li>
+                </ul>
+            </div>
+
             <!-- Controls -->
             <div class="border-border bg-card rounded-xl border p-5 shadow-sm">
                 <h3 class="text-foreground mb-4 text-sm font-semibold tracking-wide uppercase">
@@ -447,40 +492,10 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                     </div>
                 </div>
             </div>
-
-            <!-- How it works -->
-            <div
-                class="border-brand-500/20 from-brand-500/5 to-brand-600/5 rounded-xl border bg-gradient-to-r p-5"
-            >
-                <h3 class="text-foreground mb-2 text-sm font-semibold">How LLM Streaming Works</h3>
-                <ul class="text-muted-foreground space-y-1.5 text-sm">
-                    <li class="flex items-start gap-2">
-                        <Zap class="text-brand-500 mt-0.5 size-3 shrink-0" />
-                        <span>
-                            LLMs stream tokens via Server-Sent Events. Each token appends to the
-                            markdown source.
-                        </span>
-                    </li>
-                    <li class="flex items-start gap-2">
-                        <Gauge class="text-brand-500 mt-0.5 size-3 shrink-0" />
-                        <span>
-                            SvelteMarkdown re-parses and re-renders on every source update, keeping
-                            output in sync.
-                        </span>
-                    </li>
-                    <li class="flex items-start gap-2">
-                        <Activity class="text-brand-500 mt-0.5 size-3 shrink-0" />
-                        <span>
-                            Render times stay under 16ms (one frame budget) for typical LLM speeds
-                            of 30-80 tokens/sec.
-                        </span>
-                    </li>
-                </ul>
-            </div>
         </div>
 
         <!-- Middle Column: Markdown Source (editable) -->
-        <div class="min-h-0 overflow-hidden xl:col-span-1">
+        <div class="h-[calc(100vh-14rem)] min-h-[400px] overflow-hidden xl:col-span-1">
             <div class="border-border bg-card flex h-full flex-col rounded-xl border p-5 shadow-sm">
                 <div class="mb-3 flex items-center justify-between">
                     <h3 class="text-foreground text-sm font-semibold tracking-wide uppercase">
@@ -515,8 +530,10 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
         </div>
 
         <!-- Right Column: Rendered Output -->
-        <div class="min-h-0 overflow-hidden xl:col-span-1">
-            <div class="border-border bg-card flex h-full flex-col rounded-xl border p-5 shadow-sm">
+        <div class="h-[calc(100vh-14rem)] min-h-[400px] overflow-hidden xl:col-span-1">
+            <div
+                class="border-border bg-card flex h-full min-h-0 flex-col rounded-xl border p-5 shadow-sm"
+            >
                 <div class="mb-3 flex shrink-0 items-center justify-between">
                     <h3 class="text-foreground text-sm font-semibold tracking-wide uppercase">
                         Rendered Output
