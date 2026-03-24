@@ -23,7 +23,7 @@ import { Lexer, Marked } from 'marked'
  *
  * @internal
  */
-const lexAndClean = (
+export const lexAndClean = (
     source: string,
     options: SvelteMarkdownOptions,
     isInline: boolean

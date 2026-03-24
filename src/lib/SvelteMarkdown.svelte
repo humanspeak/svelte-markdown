@@ -51,6 +51,7 @@
 
     import Parser from '$lib/Parser.svelte'
     import { type SvelteMarkdownProps } from '$lib/types.js'
+    import { IncrementalParser } from '$lib/utils/incremental-parser.js'
     import {
         defaultOptions,
         defaultRenderers,
@@ -67,6 +68,7 @@
 
     const {
         source = [],
+        streaming = false,
         renderers = {},
         options = {},
         isInline = false,
@@ -93,9 +95,53 @@
     // Detect if any extension requires async processing
     const hasAsyncExtension = $derived(extensions.some((ext) => ext.async === true))
 
-    // Synchronous token derivation (default fast path)
+    // Streaming mode: full re-parse + smart in-place diff
+    let incrementalParser: IncrementalParser | undefined
+    let lastParserOptions: typeof combinedOptions | undefined
+    let streamTokens = $state<Token[]>([])
+
+    $effect(() => {
+        if (!streaming || hasAsyncExtension) {
+            // Clean up when streaming is disabled
+            if (incrementalParser) {
+                incrementalParser = undefined
+                lastParserOptions = undefined
+            }
+            return
+        }
+
+        // Read combinedOptions unconditionally so Svelte tracks it as a dependency
+        const currentOptions = combinedOptions
+
+        if (Array.isArray(source)) {
+            streamTokens = source as Token[]
+            return
+        }
+
+        if (source === '') {
+            if (incrementalParser) incrementalParser.reset()
+            streamTokens.length = 0
+            return
+        }
+
+        // Recreate parser if options changed
+        if (!incrementalParser || lastParserOptions !== currentOptions) {
+            incrementalParser = new IncrementalParser(currentOptions)
+            lastParserOptions = currentOptions
+        }
+        const { tokens: newTokens, divergeAt } = incrementalParser.update(source as string)
+
+        // In-place update: only touch changed/appended indices
+        for (let i = divergeAt; i < newTokens.length; i++) {
+            streamTokens[i] = newTokens[i]
+        }
+        streamTokens.length = newTokens.length
+    })
+
+    // Synchronous token derivation (default fast path — non-streaming)
     const syncTokens = $derived.by(() => {
         if (hasAsyncExtension) return undefined
+        if (streaming) return undefined
 
         // Pre-parsed tokens - skip caching and parsing
         if (Array.isArray(source)) {
@@ -107,7 +153,7 @@
             return []
         }
 
-        // Parse with caching (handles cache lookup, parsing, and storage)
+        // Standard mode - full parse with caching
         return parseAndCacheTokens(source as string, combinedOptions, isInline)
     }) satisfies Token[] | TokensList | undefined
 
@@ -149,8 +195,8 @@
             })
     })
 
-    // Unified tokens: prefer sync path, fall back to async
-    const tokens = $derived(hasAsyncExtension ? asyncTokens : syncTokens)
+    // Unified tokens: streaming > sync > async
+    const tokens = $derived(streaming ? streamTokens : hasAsyncExtension ? asyncTokens : syncTokens)
 
     $effect(() => {
         if (!tokens) return
