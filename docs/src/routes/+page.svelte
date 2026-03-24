@@ -151,9 +151,14 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
     let streamTimerId: ReturnType<typeof setTimeout> | null = null
     let streamSessionId = 0
     let streamAvgMs = $state(0)
+    let streamPeakMs = $state(0)
     let streamTotalMs = 0
-    let streamRenderCount = 0
+    let streamRenderCount = $state(0)
     let streamPreviewEl: HTMLDivElement | undefined = $state()
+    let streamSourceEl: HTMLTextAreaElement | undefined = $state()
+    const streamProgress = $derived(
+        streamChunks.length > 0 ? Math.round((streamIndex / streamChunks.length) * 100) : 0
+    )
 
     const startStream = () => {
         if (isStreamActive) return
@@ -163,6 +168,7 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
         streamTotalMs = 0
         streamRenderCount = 0
         streamAvgMs = 0
+        streamPeakMs = 0
         streamSessionId++
         isStreamActive = true
         streamNextChunk(streamSessionId)
@@ -182,7 +188,9 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
         streamTotalMs += elapsed
         streamRenderCount++
         streamAvgMs = Math.round((streamTotalMs / streamRenderCount) * 10) / 10
+        if (elapsed > streamPeakMs) streamPeakMs = Math.round(elapsed * 10) / 10
         if (streamPreviewEl) streamPreviewEl.scrollTop = streamPreviewEl.scrollHeight
+        if (streamSourceEl) streamSourceEl.scrollTop = streamSourceEl.scrollHeight
         if (isStreamActive && sid === streamSessionId) {
             streamTimerId = setTimeout(() => streamNextChunk(sid), 30)
         }
@@ -201,6 +209,7 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
         stopStream()
         streamSource = ''
         streamAvgMs = 0
+        streamPeakMs = 0
     }
 
     function splitHeadingWords(root: HTMLElement) {
@@ -504,11 +513,25 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                         </div>
                         <div class="flex items-center gap-3">
                             {#if streamRenderCount > 0}
-                                <span class="text-muted-foreground font-mono text-xs">
-                                    avg: <span class="text-brand-500 font-semibold"
-                                        >{streamAvgMs}ms</span
-                                    >
-                                </span>
+                                <div
+                                    class="text-muted-foreground hidden items-center gap-3 font-mono text-xs sm:flex"
+                                >
+                                    <span>
+                                        avg: <span class="text-brand-500 font-semibold"
+                                            >{streamAvgMs}ms</span
+                                        >
+                                    </span>
+                                    <span>
+                                        peak: <span
+                                            class="font-semibold {streamPeakMs > 16
+                                                ? 'text-amber-500'
+                                                : 'text-brand-500'}">{streamPeakMs}ms</span
+                                        >
+                                    </span>
+                                    <span>
+                                        {streamIndex}/{streamChunks.length} chunks
+                                    </span>
+                                </div>
                             {/if}
                             <div class="flex items-center gap-1.5">
                                 <button
@@ -555,6 +578,7 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                                 <span class="text-muted-foreground">Streaming source</span>
                             </div>
                             <textarea
+                                bind:this={streamSourceEl}
                                 readonly
                                 value={streamSource}
                                 class="bg-card text-foreground h-[350px] w-full resize-none p-4 font-mono text-xs leading-relaxed focus:outline-none"
