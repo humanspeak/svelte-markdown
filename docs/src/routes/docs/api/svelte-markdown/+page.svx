@@ -150,6 +150,8 @@ Enables optimized rendering for LLM streaming scenarios. When `true`, the compon
 <SvelteMarkdown {source} streaming={true} />
 ```
 
+**Note:** `streaming` is automatically disabled when async extensions are used. A console warning is logged in this case.
+
 See [LLM Streaming](/docs/advanced/llm-streaming) for usage patterns and performance data.
 
 ### `parsed`

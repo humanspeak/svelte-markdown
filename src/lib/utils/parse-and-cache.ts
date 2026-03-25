@@ -21,6 +21,13 @@ import { Lexer, Marked } from 'marked'
  * @param isInline - When true, uses inline tokenization (no block elements)
  * @returns Cleaned token array with HTML tokens properly nested
  *
+ * @example
+ * ```typescript
+ * import { lexAndClean } from './parse-and-cache.js'
+ *
+ * const tokens = lexAndClean('# Hello **world**', { gfm: true }, false)
+ * ```
+ *
  * @internal
  */
 export const lexAndClean = (

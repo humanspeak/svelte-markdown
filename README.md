@@ -715,6 +715,8 @@ For real-time rendering of AI responses from ChatGPT, Claude, Gemini, and other 
 
 When `streaming` is `false` (default), existing behavior is unchanged. The `streaming` prop skips cache lookups (always a miss during streaming) and uses in-place token array mutation so Svelte only re-renders components for tokens that actually changed.
 
+**Note:** `streaming` is automatically disabled when async extensions (e.g., `markedMermaid`) are used. A console warning is logged in this case.
+
 See the [full streaming documentation](https://markdown.svelte.page/docs/advanced/llm-streaming) and [interactive demo](https://markdown.svelte.page/examples/llm-streaming).
 
 ## Available Renderers

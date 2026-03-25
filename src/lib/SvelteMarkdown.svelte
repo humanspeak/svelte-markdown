@@ -106,6 +106,12 @@
                 incrementalParser = undefined
                 lastOptionsKey = ''
             }
+            if (streaming && hasAsyncExtension) {
+                console.warn(
+                    '[svelte-markdown] streaming prop is ignored when async extensions are used. ' +
+                        'Remove async extensions or set streaming={false} to silence this warning.'
+                )
+            }
             return
         }
 
