@@ -97,14 +97,16 @@
 
     // Streaming mode: full re-parse + smart in-place diff
     let incrementalParser: IncrementalParser | undefined
-    let lastOptionsKey = ''
+    let lastOptionsSrc: typeof options | undefined
+    let lastExtensionsSrc: typeof extensions | undefined
     let streamTokens = $state<Token[]>([])
 
     $effect(() => {
         if (!streaming || hasAsyncExtension) {
             if (incrementalParser) {
                 incrementalParser = undefined
-                lastOptionsKey = ''
+                lastOptionsSrc = undefined
+                lastExtensionsSrc = undefined
             }
             if (streaming && hasAsyncExtension) {
                 console.warn(
@@ -115,9 +117,8 @@
             return
         }
 
-        // Read combinedOptions unconditionally so Svelte tracks it as a dependency
+        // Read combinedOptions so Svelte tracks it as a dependency
         const currentOptions = combinedOptions
-        const optionsKey = JSON.stringify(currentOptions)
 
         if (Array.isArray(source)) {
             streamTokens = source as Token[]
@@ -130,10 +131,11 @@
             return
         }
 
-        // Recreate parser only when options actually change
-        if (!incrementalParser || lastOptionsKey !== optionsKey) {
+        // Recreate parser when user-facing options or extensions change
+        if (!incrementalParser || lastOptionsSrc !== options || lastExtensionsSrc !== extensions) {
             incrementalParser = new IncrementalParser(currentOptions)
-            lastOptionsKey = optionsKey
+            lastOptionsSrc = options
+            lastExtensionsSrc = extensions
         }
         const { tokens: newTokens, divergeAt } = incrementalParser.update(source as string)
 
