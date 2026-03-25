@@ -30,7 +30,9 @@ LLM APIs stream responses token-by-token. Each token is a small chunk of text --
 3. `SvelteMarkdown` re-parses and re-renders the full source on each update.
 4. Svelte's fine-grained reactivity ensures only the changed DOM nodes are updated.
 
-Because the component is reactive by default, there is no special "streaming mode" to enable. It just works.
+The component works reactively by default. For best streaming performance, pass `streaming={true}` to enable smart token diffing -- the component re-parses the full source for correctness but only updates DOM nodes for tokens that actually changed, keeping per-update cost under 2ms regardless of document size.
+
+**Note:** `streaming` is automatically disabled when async extensions (e.g., Mermaid) are used, since async `walkTokens` callbacks are incompatible with the synchronous diffing path. A console warning is logged in this case.
 
 ## Basic Usage
 
@@ -63,7 +65,7 @@ Because the component is reactive by default, there is no special "streaming mod
     }
 </script>
 
-<SvelteMarkdown {source} />
+<SvelteMarkdown {source} streaming={true} />
 ```
 
 ### With the OpenAI SDK (ChatGPT)
@@ -93,7 +95,7 @@ Because the component is reactive by default, there is no special "streaming mod
     }
 </script>
 
-<SvelteMarkdown {source} />
+<SvelteMarkdown {source} streaming={true} />
 ```
 
 ### With fetch and Server-Sent Events
@@ -128,7 +130,7 @@ Because the component is reactive by default, there is no special "streaming mod
     }
 </script>
 
-<SvelteMarkdown {source} />
+<SvelteMarkdown {source} streaming={true} />
 ```
 
 ## Performance Characteristics

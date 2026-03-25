@@ -206,6 +206,21 @@ export type SvelteMarkdownProps<T extends Renderers = Renderers> = {
     isInline?: boolean
 
     /**
+     * Enables optimized rendering for LLM streaming scenarios.
+     *
+     * When `true`, the component performs a full re-parse on each source
+     * update but diffs the resulting tokens against the previous parse.
+     * Only changed or appended tokens trigger DOM updates, keeping render
+     * cost proportional to the change rather than the full document size.
+     *
+     * Use this when appending tokens to `source` in a streaming fashion
+     * (e.g., ChatGPT/Claude SSE responses).
+     *
+     * @defaultValue `false`
+     */
+    streaming?: boolean
+
+    /**
      * Callback invoked after the source has been parsed into tokens.
      *
      * Receives the full token array before rendering begins. Useful for

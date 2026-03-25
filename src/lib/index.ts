@@ -112,6 +112,7 @@ export {
  * - `tokenCache`  — shared singleton `TokenCache` instance
  */
 export { MemoryCache } from '$lib/utils/cache.js'
+export { IncrementalParser, type IncrementalUpdateResult } from '$lib/utils/incremental-parser.js'
 export { TokenCache, tokenCache } from '$lib/utils/token-cache.js'
 
 /** Re-exported `MarkedExtension` type for the `extensions` prop. */

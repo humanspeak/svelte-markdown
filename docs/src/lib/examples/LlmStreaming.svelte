@@ -563,7 +563,7 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                         bind:this={previewEl}
                         class="prose prose-sm dark:prose-invert min-h-0 max-w-none flex-1 overflow-y-auto"
                     >
-                        <SvelteMarkdown {source} />
+                        <SvelteMarkdown {source} streaming={true} />
                     </div>
                 {:else}
                     <div

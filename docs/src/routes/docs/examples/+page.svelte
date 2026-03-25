@@ -80,6 +80,13 @@
                         'Render Mermaid diagrams with a custom marked extension and async component renderers.',
                     href: '/examples/mermaid',
                     icon: 'workflow'
+                },
+                {
+                    title: 'LLM Streaming',
+                    description:
+                        'Simulate real-time AI response streaming with adjustable speed, jitter, and chunk modes.',
+                    href: '/examples/llm-streaming',
+                    icon: 'zap'
                 }
             ]
         }

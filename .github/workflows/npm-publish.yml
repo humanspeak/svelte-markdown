@@ -44,17 +44,21 @@ jobs:
         runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         outputs:
             should_run: ${{ steps.check.outputs.should_run }}
+            has_skip_label: ${{ steps.check.outputs.has_skip_label }}
         steps:
             - id: check
               env:
                   EVENT_NAME: ${{ github.event_name }}
                   PR_MERGED: ${{ github.event.pull_request.merged }}
+                  HAS_SKIP_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'skip-publish') }}
               run: |
                   if [[ "$EVENT_NAME" == "pull_request" && "$PR_MERGED" != "true" ]]; then
                       echo "should_run=false" >> $GITHUB_OUTPUT
                   else
                       echo "should_run=true" >> $GITHUB_OUTPUT
                   fi
+
+                  echo "has_skip_label=$HAS_SKIP_LABEL" >> $GITHUB_OUTPUT
 
     debug-check:
         needs: check-if-merged
@@ -252,7 +256,7 @@ jobs:
 
     playwright-tests:
         needs: [check-if-merged, debug-check]
-        if: needs.check-if-merged.outputs.should_run == 'true'
+        if: needs.check-if-merged.outputs.should_run == 'true' && needs.check-if-merged.outputs.has_skip_label != 'true'
         timeout-minutes: 60
         runs-on: blacksmith-4vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         environment: ci
@@ -297,7 +301,11 @@ jobs:
     # 4. Coverage reporting (depends on tests)
     coverage-report:
         needs: [check-if-merged, build, playwright-tests]
-        if: needs.check-if-merged.outputs.should_run == 'true'
+        if: |
+            always() &&
+            needs.check-if-merged.outputs.should_run == 'true' &&
+            needs.build.result == 'success' &&
+            (needs.playwright-tests.result == 'success' || needs.playwright-tests.result == 'skipped')
         runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         steps:
             - name: Coveralls Finished
@@ -310,7 +318,12 @@ jobs:
     # 5. Publishing job (main deployment logic)
     publish-github-packages:
         needs: [check-if-merged, build, playwright-tests, coverage-report]
-        if: needs.check-if-merged.outputs.should_run == 'true'
+        if: |
+            always() &&
+            needs.check-if-merged.outputs.should_run == 'true' &&
+            needs.build.result == 'success' &&
+            (needs.playwright-tests.result == 'success' || needs.playwright-tests.result == 'skipped') &&
+            (needs.coverage-report.result == 'success' || needs.coverage-report.result == 'skipped')
         runs-on: ubuntu-latest
         environment: production
         permissions:

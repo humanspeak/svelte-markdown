@@ -98,6 +98,7 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
     let tokensPerSecond = $state(30)
     let jitterPercent = $state(50)
     let chunkMode: 'character' | 'word' | 'sentence' = $state('word')
+    let useStreaming = $state(true)
 
     // Metrics
     let tokenCount = $state(0)
@@ -318,6 +319,13 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
             >
         </div>
 
+        <div class="chunk-selector">
+            <label
+                ><input type="checkbox" bind:checked={useStreaming} disabled={isStreaming} /> Streaming
+                mode (incremental parse)</label
+            >
+        </div>
+
         <div class="metrics" data-testid="metrics">
             <h3>Metrics</h3>
             <div class="metric-grid">
@@ -365,7 +373,7 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
     </div>
 
     <div class="preview" data-testid="preview" bind:this={previewEl}>
-        <SvelteMarkdown {source} />
+        <SvelteMarkdown {source} streaming={useStreaming} />
     </div>
 </div>
 
