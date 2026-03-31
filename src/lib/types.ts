@@ -149,6 +149,13 @@ export type HtmlSnippetOverrides = {
     [K in HtmlKey as `html_${K}`]?: Snippet<[HtmlSnippetProps]>
 }
 
+export interface StreamingOffsetChunk {
+    value: string
+    offset: number
+}
+
+export type StreamingChunk = string | StreamingOffsetChunk
+
 export type SvelteMarkdownProps<T extends Renderers = Renderers> = {
     /**
      * Markdown content to render.

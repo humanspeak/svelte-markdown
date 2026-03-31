@@ -683,11 +683,19 @@ Images automatically lazy load using native `loading="lazy"` and IntersectionObs
 
 For real-time rendering of AI responses from ChatGPT, Claude, Gemini, and other LLMs, enable the `streaming` prop. This uses a smart diff algorithm that re-parses the full source for correctness but only updates changed DOM nodes, keeping render times constant regardless of document size.
 
+The preferred API is now imperative: bind the component instance and call `writeChunk()` as chunks arrive. This avoids prop reactivity edge cases like identical consecutive string chunks being coalesced.
+
 ```svelte
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { StreamingChunk } from '@humanspeak/svelte-markdown'
 
-    let source = $state('')
+    let markdown:
+        | {
+              writeChunk: (chunk: StreamingChunk) => void
+              resetStream: (nextSource?: string) => void
+          }
+        | undefined
 
     async function streamResponse() {
         const response = await fetch('/api/chat', { method: 'POST', body: '...' })
@@ -697,8 +705,46 @@ For real-time rendering of AI responses from ChatGPT, Claude, Gemini, and other 
         while (true) {
             const { done, value } = await reader.read()
             if (done) break
-            source += decoder.decode(value, { stream: true })
+            markdown?.writeChunk(decoder.decode(value, { stream: true }))
         }
+    }
+</script>
+
+<SvelteMarkdown bind:this={markdown} source="" streaming={true} />
+```
+
+For websocket-style offset patches, pass an object chunk instead:
+
+```ts
+markdown?.writeChunk({ value: 'world', offset: 6 })
+```
+
+Object chunks overwrite the internal buffer at `offset`. If `offset` skips ahead, missing positions are padded with spaces.
+
+You can reset the internal streaming buffer at any time:
+
+```ts
+markdown?.resetStream('')
+markdown?.resetStream('# Seeded response')
+```
+
+The first successful write after a reset locks the stream into one input mode:
+
+- `string` chunks: append mode
+- `{ value, offset }` chunks: offset mode
+
+Switching modes before `resetStream()` or a `source` prop reset logs a warning and drops the chunk.
+
+Appending directly to `source` is still supported:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    let source = $state('')
+
+    function onChunk(chunk: string) {
+        source += chunk
     }
 </script>
 

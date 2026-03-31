@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom'
-import { render, screen } from '@testing-library/svelte'
+import { act, render, screen } from '@testing-library/svelte'
+import type { MarkedExtension } from 'marked'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
 import type { SvelteMarkdownProps } from './types.js'
@@ -41,6 +42,249 @@ describe('testing initialization', () => {
         expect(element).toBeInTheDocument()
         expect(element?.textContent).toBe('example')
         expect(element?.nodeName).toBe('STRONG')
+    })
+})
+
+describe('imperative streaming API', () => {
+    test('exposes writeChunk and resetStream via component exports', async () => {
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        expect(component.writeChunk).toBeTypeOf('function')
+        expect(component.resetStream).toBeTypeOf('function')
+
+        await act(() => component.writeChunk('# Hello'))
+
+        expect(container.querySelector('h1')?.textContent).toBe('Hello')
+    })
+
+    test('appends consecutive identical string chunks', async () => {
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        await act(() => {
+            component.writeChunk('Hello')
+            component.writeChunk(' ')
+            component.writeChunk(' ')
+            component.writeChunk('World')
+        })
+
+        expect(container.querySelector('p')?.textContent).toBe('Hello  World')
+    })
+
+    test('applies offset chunks at exact positions', async () => {
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        await act(() => {
+            component.writeChunk({ value: 'Hello', offset: 0 })
+            component.writeChunk({ value: ' World', offset: 5 })
+        })
+
+        expect(container.querySelector('p')?.textContent).toBe('Hello World')
+    })
+
+    test('pads gaps with spaces for offset chunks', async () => {
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        await act(() => {
+            component.writeChunk({ value: 'ab', offset: 0 })
+            component.writeChunk({ value: 'XY', offset: 4 })
+        })
+
+        expect(container.querySelector('p')?.textContent).toBe('ab  XY')
+    })
+
+    test('overwrites existing characters instead of inserting in offset mode', async () => {
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        await act(() => {
+            component.writeChunk({ value: 'abcdef', offset: 0 })
+            component.writeChunk({ value: 'Z', offset: 2 })
+        })
+
+        expect(container.querySelector('p')?.textContent).toBe('abZdef')
+    })
+
+    test('drops append-to-offset mode switches with a warning', async () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        await act(() => {
+            component.writeChunk('Hello')
+            component.writeChunk({ value: 'World', offset: 0 })
+        })
+
+        expect(container.querySelector('p')?.textContent).toBe('Hello')
+        expect(warnSpy).toHaveBeenCalledWith(
+            expect.stringContaining('append mode active, offset chunk dropped')
+        )
+
+        warnSpy.mockRestore()
+    })
+
+    test('drops offset-to-append mode switches with a warning', async () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        await act(() => {
+            component.writeChunk({ value: 'Hello', offset: 0 })
+            component.writeChunk(' World')
+        })
+
+        expect(container.querySelector('p')?.textContent).toBe('Hello')
+        expect(warnSpy).toHaveBeenCalledWith(
+            expect.stringContaining('offset mode active, string chunk dropped')
+        )
+
+        warnSpy.mockRestore()
+    })
+
+    test('resetStream clears DOM and can seed a new baseline', async () => {
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        await act(() => component.writeChunk('# Hello'))
+        expect(container.querySelector('h1')?.textContent).toBe('Hello')
+
+        await act(() => component.resetStream())
+        expect(container.textContent?.trim()).toBe('')
+
+        await act(() => component.resetStream('# Seed'))
+        expect(container.querySelector('h1')?.textContent).toBe('Seed')
+    })
+
+    test('changing source prop resets the internal streaming buffer', async () => {
+        const { component, container, rerender } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        await act(() => component.writeChunk('# Chunk Title'))
+        expect(container.querySelector('h1')?.textContent).toBe('Chunk Title')
+
+        await rerender({ source: '# Prop Title', streaming: true })
+        expect(container.querySelector('h1')?.textContent).toBe('Prop Title')
+
+        await act(() => component.writeChunk('\n\nTail'))
+        expect(container.textContent).toContain('Tail')
+    })
+
+    test('writeChunk warns when streaming is false', async () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '' }
+        })
+
+        await act(() => component.writeChunk('Hello'))
+
+        expect(container.textContent?.trim()).toBe('')
+        expect(warnSpy).toHaveBeenCalledWith(
+            expect.stringContaining('writeChunk() is only available when streaming={true}')
+        )
+
+        warnSpy.mockRestore()
+    })
+
+    test('writeChunk warns when source is a token array', async () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const { component, container } = render(SvelteMarkdown, {
+            props: {
+                source: [
+                    {
+                        type: 'paragraph',
+                        raw: 'seed',
+                        text: 'seed',
+                        tokens: [{ type: 'text', raw: 'seed', text: 'seed' }]
+                    }
+                ],
+                streaming: true
+            }
+        })
+
+        await act(() => component.writeChunk('more'))
+
+        expect(container.textContent).toContain('seed')
+        expect(warnSpy).toHaveBeenCalledWith(
+            expect.stringContaining('writeChunk() requires a string-backed source')
+        )
+
+        warnSpy.mockRestore()
+    })
+
+    test('writeChunk warns on invalid offset chunks', async () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        await act(() =>
+            component.writeChunk({
+                value: 'bad',
+                offset: -1
+            })
+        )
+
+        expect(container.textContent?.trim()).toBe('')
+        expect(warnSpy).toHaveBeenCalledWith(
+            expect.stringContaining('offset must be a non-negative safe integer')
+        )
+
+        warnSpy.mockRestore()
+    })
+
+    test('parsed callback receives updated tokens after imperative writes', async () => {
+        const parsed = vi.fn()
+        const { component } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true, parsed }
+        })
+
+        await act(() => component.writeChunk('# Hello'))
+
+        expect(parsed).toHaveBeenLastCalledWith(
+            expect.arrayContaining([expect.objectContaining({ type: 'heading', text: 'Hello' })])
+        )
+    })
+
+    test('writeChunk warns and does nothing when async extensions disable streaming', async () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const asyncExtension: MarkedExtension = {
+            async: true,
+            async walkTokens() {
+                return Promise.resolve()
+            }
+        }
+
+        const { component, container } = render(SvelteMarkdown, {
+            props: {
+                source: '',
+                streaming: true,
+                extensions: [asyncExtension]
+            }
+        })
+
+        await vi.runAllTimersAsync()
+        warnSpy.mockClear()
+
+        await act(() => component.writeChunk('# Hello'))
+
+        expect(container.textContent?.trim()).toBe('')
+        expect(warnSpy).toHaveBeenCalledWith(
+            expect.stringContaining('writeChunk() is unavailable when async extensions are used')
+        )
+
+        warnSpy.mockRestore()
     })
 })
 

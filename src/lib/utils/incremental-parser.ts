@@ -85,11 +85,4 @@ export class IncrementalParser {
         this.prevTokens = newTokens
         return { tokens: newTokens, divergeAt }
     }
-
-    /**
-     * Resets the parser state. Call this when starting a new stream.
-     */
-    reset = () => {
-        this.prevTokens = []
-    }
 }

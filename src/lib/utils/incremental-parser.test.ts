@@ -118,25 +118,6 @@ describe('IncrementalParser', () => {
         })
     })
 
-    describe('Reset', () => {
-        it('should treat next update as fresh after reset', () => {
-            const parser = new IncrementalParser(defaultOptions)
-            parser.update('# Hello')
-            parser.reset()
-            const result = parser.update('# Hello')
-
-            expect(result.divergeAt).toBe(0)
-        })
-
-        it('should clear previous tokens on reset', () => {
-            const parser = new IncrementalParser(defaultOptions)
-            parser.update('# Hello\n\nWorld')
-            parser.reset()
-
-            expect(parser['prevTokens']).toEqual([])
-        })
-    })
-
     describe('walkTokens Support', () => {
         it('should call walkTokens on parsed tokens', () => {
             const walked: string[] = []
