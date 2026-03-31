@@ -21,6 +21,11 @@
     import { competitors } from '$lib/compare-data'
     import type { IconName } from '$lib/icons'
 
+    interface StreamingMarkdownHandle {
+        writeChunk: (chunk: string) => void
+        resetStream: (nextSource?: string) => void
+    }
+
     let headingContainer: HTMLDivElement | null = $state(null)
     const breadcrumbContext = getBreadcrumbContext()
 
@@ -156,12 +161,14 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
     let streamRenderCount = $state(0)
     let streamPreviewEl: HTMLDivElement | undefined = $state()
     let streamSourceEl: HTMLTextAreaElement | undefined = $state()
+    let streamMarkdown: StreamingMarkdownHandle | undefined = $state()
 
     const startStream = () => {
         if (isStreamActive) return
         streamChunks = streamContent.match(/\S+\s*/g) ?? []
         streamIndex = 0
         streamSource = ''
+        streamMarkdown?.resetStream('')
         streamTotalMs = 0
         streamRenderCount = 0
         streamAvgMs = 0
@@ -177,7 +184,9 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
             return
         }
         const t0 = performance.now()
-        streamSource += streamChunks[streamIndex]
+        const chunk = streamChunks[streamIndex]
+        streamSource += chunk
+        streamMarkdown?.writeChunk(chunk)
         streamIndex++
         await tick()
         if (sid !== streamSessionId) return
@@ -205,6 +214,7 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
     const resetStream = () => {
         stopStream()
         streamSource = ''
+        streamMarkdown?.resetStream('')
         streamAvgMs = 0
         streamPeakMs = 0
     }
@@ -327,6 +337,15 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                             >
                                 API Reference
                                 <BookOpen class="ml-2 size-3" />
+                            </motion.a>
+                            <motion.a
+                                href="/examples"
+                                class="border-border bg-card text-foreground hover:border-brand-500/50 hover:text-brand-700 focus-visible:ring-brand-600/20 inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
+                                whileTap={{ scale: 0.96 }}
+                                whileHover={{ scale: 1.03 }}
+                            >
+                                Examples
+                                <FlaskConical class="ml-2 size-3" />
                             </motion.a>
                             <motion.a
                                 href="/examples/playground"
@@ -487,9 +506,12 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                                 bind:this={streamPreviewEl}
                                 class="prose prose-sm dark:prose-invert h-[350px] max-w-none overflow-y-auto p-4"
                             >
-                                {#if streamSource}
-                                    <SvelteMarkdown source={streamSource} streaming={true} />
-                                {:else}
+                                <SvelteMarkdown
+                                    bind:this={streamMarkdown}
+                                    source=""
+                                    streaming={true}
+                                />
+                                {#if !streamSource}
                                     <p class="text-muted-foreground italic">
                                         Click "Start" to stream an AI response...
                                     </p>
