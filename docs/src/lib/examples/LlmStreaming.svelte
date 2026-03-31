@@ -6,10 +6,10 @@
         RotateCw,
         RotateCcw,
         Zap,
-        Gauge,
         MonitorDot,
         Activity,
-        DollarSign
+        DollarSign,
+        Lightbulb
     } from '@lucide/svelte'
     import { tick } from 'svelte'
 
@@ -110,6 +110,15 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
     let tokensPerSecond = $state(30)
     let jitterPercent = $state(50)
     let chunkMode: 'character' | 'word' | 'sentence' = $state('word')
+    let streamMode: 'chunked' | 'concat' = $state('chunked')
+
+    // Component ref for imperative API
+    let markdown:
+        | {
+              writeChunk: (chunk: string) => void
+              resetStream: (nextSource?: string) => void
+          }
+        | undefined = $state()
 
     // Metrics
     let tokenCount = $state(0)
@@ -191,7 +200,11 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
         }
 
         const start = performance.now()
-        source += chunks[chunkIndex]
+        if (streamMode === 'chunked') {
+            markdown?.writeChunk(chunks[chunkIndex])
+        } else {
+            source += chunks[chunkIndex]
+        }
         chunkIndex++
         tokenCount = chunkIndex
         await tick()
@@ -213,12 +226,19 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
     }
 
     // --- Controls ---
+    const clearOutput = () => {
+        source = ''
+        if (streamMode === 'chunked') {
+            markdown?.resetStream('')
+        }
+    }
+
     const startStreaming = () => {
         if (isStreaming) return
         // Always re-split from current editor content on fresh start
         chunks = splitIntoChunks(input, chunkMode)
         chunkIndex = 0
-        source = ''
+        clearOutput()
         resetMetrics()
         sessionId++
         isStreaming = true
@@ -242,7 +262,7 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
 
     const resetStreaming = () => {
         stopStreaming()
-        source = ''
+        clearOutput()
         chunks = []
         chunkIndex = 0
         resetMetrics()
@@ -288,7 +308,7 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
 
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <!-- Left Column: Controls & Metrics -->
-        <div class="space-y-4 xl:col-span-1">
+        <div class="h-[calc(100vh-14rem)] min-h-[400px] space-y-4 overflow-y-auto xl:col-span-1">
             <!-- How it works -->
             <div
                 class="border-brand-500/20 from-brand-500/5 to-brand-600/5 rounded-xl border bg-gradient-to-r p-5"
@@ -298,15 +318,8 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                     <li class="flex items-start gap-2">
                         <Zap class="text-brand-500 mt-0.5 size-3 shrink-0" />
                         <span>
-                            LLMs stream tokens via Server-Sent Events. Each token appends to the
-                            markdown source.
-                        </span>
-                    </li>
-                    <li class="flex items-start gap-2">
-                        <Gauge class="text-brand-500 mt-0.5 size-3 shrink-0" />
-                        <span>
-                            SvelteMarkdown re-parses and re-renders on every source update, keeping
-                            output in sync.
+                            LLMs stream tokens via SSE. SvelteMarkdown re-parses and re-renders on
+                            each update, keeping output in sync.
                         </span>
                     </li>
                     <li class="flex items-start gap-2">
@@ -328,6 +341,21 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                             >
                                 ModelPricing.ai
                             </a>.
+                        </span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <Lightbulb class="mt-0.5 size-3 shrink-0 text-amber-500" />
+                        <span>
+                            Building a chat UI? Pair with
+                            <a
+                                href="https://virtuallist.svelte.page"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-brand-500 hover:text-brand-400 underline"
+                            >
+                                @humanspeak/svelte-virtual-list
+                            </a>
+                            for smooth virtual scrolling.
                         </span>
                     </li>
                 </ul>
@@ -411,18 +439,44 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                     <div>
                         <span class="text-muted-foreground mb-2 block text-sm">Chunk mode</span>
                         <div class="flex gap-3">
-                            {#each ['character', 'word', 'sentence'] as mode}
+                            {#each ['character', 'word', 'sentence'] as m}
                                 <label class="flex items-center gap-1.5 text-sm">
                                     <input
                                         type="radio"
                                         bind:group={chunkMode}
-                                        value={mode}
+                                        value={m}
                                         disabled={isStreaming}
                                         class="accent-[var(--brand-500,#ec4899)]"
                                     />
-                                    <span class="text-foreground capitalize">{mode}</span>
+                                    <span class="text-foreground capitalize">{m}</span>
                                 </label>
                             {/each}
+                        </div>
+                    </div>
+                    <div class="border-border border-t"></div>
+                    <div>
+                        <span class="text-muted-foreground mb-2 block text-sm">Stream mode</span>
+                        <div class="flex gap-3">
+                            <label class="flex items-center gap-1.5 text-sm">
+                                <input
+                                    type="radio"
+                                    bind:group={streamMode}
+                                    value="chunked"
+                                    disabled={isStreaming}
+                                    class="accent-[var(--brand-500,#ec4899)]"
+                                />
+                                <span class="text-foreground">Chunked (writeChunk)</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 text-sm">
+                                <input
+                                    type="radio"
+                                    bind:group={streamMode}
+                                    value="concat"
+                                    disabled={isStreaming}
+                                    class="accent-[var(--brand-500,#ec4899)]"
+                                />
+                                <span class="text-foreground">Concat (source +=)</span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -558,12 +612,12 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                         <span class="text-muted-foreground text-xs">Complete</span>
                     {/if}
                 </div>
-                {#if source}
+                {#if source || streamMode === 'chunked'}
                     <div
                         bind:this={previewEl}
                         class="prose prose-sm dark:prose-invert min-h-0 max-w-none flex-1 overflow-y-auto"
                     >
-                        <SvelteMarkdown {source} streaming={true} />
+                        <SvelteMarkdown bind:this={markdown} {source} streaming={true} />
                     </div>
                 {:else}
                     <div
