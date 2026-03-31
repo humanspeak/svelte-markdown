@@ -29,6 +29,7 @@ const shared = {
         'Svelte 5 runes-native — no legacy compatibility layers',
         'TypeScript-first with full type safety',
         'Built-in token caching (50-200x faster re-renders)',
+        'Built-in LLM streaming mode with incremental updates',
         '24 markdown renderers + 69+ HTML tag renderers',
         'Allow/deny utilities for fine-grained control',
         'Drop-in component — works anywhere in your Svelte app'
@@ -64,6 +65,12 @@ export const competitors: Competitor[] = [
                 us: true,
                 them: false,
                 note: 'Not needed — parsed at build time'
+            },
+            {
+                name: 'LLM Streaming Mode',
+                us: true,
+                them: false,
+                note: 'MDsveX is build-time only, so there is no runtime markdown streaming mode.'
             },
             {
                 name: 'HTML Tag Control',
@@ -143,6 +150,12 @@ export const competitors: Competitor[] = [
             },
             { name: 'Custom Renderers', us: true, them: 'Via node views' },
             { name: 'Token Caching', us: true, them: false },
+            {
+                name: 'LLM Streaming Mode',
+                us: true,
+                them: false,
+                note: 'Tiptap can update editor state live, but it does not document a dedicated markdown streaming renderer mode.'
+            },
             { name: 'HTML Tag Control', us: '69+ tags with allow/deny', them: 'Via schema' },
             { name: 'Collaborative Editing', us: false, them: true },
             { name: 'Toolbar/Menus', us: false, them: 'Headless (build your own)' },
@@ -207,6 +220,12 @@ export const competitors: Competitor[] = [
                 name: 'HTML Safety',
                 us: 'Allow/deny per tag',
                 them: 'Manual (use with {@html})'
+            },
+            {
+                name: 'LLM Streaming Mode',
+                us: true,
+                them: false,
+                note: 'markdown-it is a parser, not a streaming UI layer.'
             },
             { name: 'Plugin Ecosystem', us: 'Via marked extensions', them: '200+ plugins' },
             {
@@ -273,6 +292,12 @@ export const competitors: Competitor[] = [
             { name: 'Token Caching', us: 'Built-in LRU cache', them: 'Manual implementation' },
             { name: 'HTML Safety', us: 'Allow/deny per tag', them: 'Manual sanitization' },
             {
+                name: 'LLM Streaming Mode',
+                us: true,
+                them: false,
+                note: 'marked is the parsing engine only; incremental streaming behavior must be built manually on top.'
+            },
+            {
                 name: 'Extensions',
                 us: 'Full marked extensions support',
                 them: 'Full extensions API'
@@ -336,6 +361,12 @@ export const competitors: Competitor[] = [
             { name: 'Bundle Size', us: 'Lightweight (~15KB)', them: 'Heavy (~150KB+)' },
             { name: 'Custom Renderers', us: true, them: 'Via ProseMirror nodes' },
             { name: 'Token Caching', us: true, them: false },
+            {
+                name: 'LLM Streaming Mode',
+                us: true,
+                them: false,
+                note: 'Milkdown updates live as an editor, but it does not document a dedicated markdown streaming renderer mode.'
+            },
             { name: 'Collaborative Editing', us: false, them: 'Via Y.js plugin' },
             { name: 'Slash Commands', us: false, them: true },
             { name: 'Setup Complexity', us: 'One component', them: 'Plugin assembly required' },
@@ -385,6 +416,12 @@ export const competitors: Competitor[] = [
                 name: 'HTML Tag Control',
                 us: '69+ tags with allow/deny',
                 them: 'Via rehype plugins'
+            },
+            {
+                name: 'LLM Streaming Mode',
+                us: true,
+                them: false,
+                note: 'svelte-exmarkdown is a runtime renderer, but its upstream docs do not describe a streaming-specific incremental mode.'
             },
             { name: 'Plugin System', us: 'Marked extensions', them: 'Remark/rehype plugins' },
             { name: 'Snippet Overrides', us: true, them: false },
@@ -446,6 +483,12 @@ export const competitors: Competitor[] = [
                 us: '69+ tags with allow/deny',
                 them: 'Via rehype-sanitize'
             },
+            {
+                name: 'LLM Streaming Mode',
+                us: true,
+                them: false,
+                note: 'Carta offers live preview for editing, but its docs do not describe a dedicated markdown streaming renderer mode.'
+            },
             { name: 'Syntax Highlighting', us: 'Via extensions', them: 'Built-in plugin' },
             { name: 'Math (KaTeX)', us: 'Via extensions', them: 'Built-in plugin' },
             { name: 'Split-Pane UI', us: false, them: true },
@@ -496,6 +539,12 @@ export const competitors: Competitor[] = [
                 name: 'HTML Tag Control',
                 us: '69+ tags with allow/deny',
                 them: 'Via sanitize schema'
+            },
+            {
+                name: 'LLM Streaming Mode',
+                us: true,
+                them: false,
+                note: 'ByteMD is an editor with live preview, but its upstream docs do not describe a dedicated markdown streaming renderer mode.'
             },
             {
                 name: 'Plugin Ecosystem',
@@ -560,6 +609,12 @@ export const competitors: Competitor[] = [
                 us: 'Marked extensions',
                 them: '200+ remark/rehype plugins'
             },
+            {
+                name: 'LLM Streaming Mode',
+                us: true,
+                them: 'Via unified-stream',
+                note: 'The unified ecosystem has a separate unified-stream package, but not a built-in Svelte markdown streaming mode.'
+            },
             { name: 'AST Access', us: false, them: true },
             { name: 'Learning Curve', us: 'Minimal', them: 'Steep (AST concepts)' },
             { name: 'Bundle Size', us: '~15KB', them: '~30KB+ (unified + remark + rehype)' },
@@ -621,6 +676,12 @@ export const competitors: Competitor[] = [
             { name: 'WYSIWYG Editing', us: false, them: true },
             { name: 'Custom Renderers', us: 'Svelte components', them: 'Node views (complex)' },
             { name: 'Token Caching', us: true, them: false },
+            {
+                name: 'LLM Streaming Mode',
+                us: true,
+                them: false,
+                note: 'ProseMirror updates editor state live, but it does not document a dedicated markdown streaming renderer mode.'
+            },
             { name: 'Bundle Size', us: '~15KB', them: '~80KB+ (core + markdown + view)' },
             { name: 'Learning Curve', us: 'Minimal', them: 'Very steep' },
             { name: 'Collaborative Editing', us: false, them: true },
