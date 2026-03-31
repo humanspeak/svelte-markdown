@@ -13,10 +13,15 @@ else
 
 	# Format files without force‑adding unrelated changes
 	echo "✨ Formatting code..."
-	if ! "${TRUNK_BIN}" fmt >/dev/null 2>&1; then
-		echo "❌ Code formatting failed. Run 'trunk fmt' to see details."
-		exit 1
-	fi
+	"${TRUNK_BIN}" fmt >/dev/null 2>&1 || {
+		EXIT_CODE=$?
+		# trunk fmt returns 1 when it formats files (makes changes), which is success
+		# Only fail on exit codes > 1 (actual errors)
+		if [ "${EXIT_CODE}" -gt 1 ]; then
+			echo "❌ Code formatting failed with exit code ${EXIT_CODE}. Run 'trunk fmt' to see details."
+			exit 1
+		fi
+	}
 	if [ -n "${INITIAL_STAGED}" ]; then
 		echo "Restaging originally staged files after formatting..."
 		for f in ${INITIAL_STAGED}; do
