@@ -74,8 +74,18 @@ export class IncrementalParser {
      */
     constructor(options: SvelteMarkdownOptions) {
         this.options = options
+
+        const exts = (options as Record<string, unknown>).extensions as
+            | { block?: unknown[]; inline?: unknown[] }
+            | undefined
+        const hasExtensionTokenizers =
+            (exts?.block != null && exts.block.length > 0) ||
+            (exts?.inline != null && exts.inline.length > 0)
+
         this.tailWindowDisabled =
-            typeof options.walkTokens === 'function' || options.tokenizer != null
+            typeof options.walkTokens === 'function' ||
+            options.tokenizer != null ||
+            hasExtensionTokenizers
     }
 
     private getTailWindowBoundary = (): TailWindowBoundary => {
@@ -164,12 +174,20 @@ export class IncrementalParser {
             newTokens.forEach(this.options.walkTokens)
         }
 
+        // Reference definitions can change inline children without changing raw,
+        // so force a full rerender when reference syntax is present
+        const referenceSensitive =
+            this.hasAppendSensitiveReferenceSyntax(this.prevSource) ||
+            this.hasAppendSensitiveReferenceSyntax(source)
+
         // Find first divergence point by comparing raw strings
         let divergeAt = 0
-        const minLen = Math.min(this.prevTokens.length, newTokens.length)
-        while (divergeAt < minLen) {
-            if (this.prevTokens[divergeAt].raw !== newTokens[divergeAt].raw) break
-            divergeAt++
+        if (!referenceSensitive) {
+            const minLen = Math.min(this.prevTokens.length, newTokens.length)
+            while (divergeAt < minLen) {
+                if (this.prevTokens[divergeAt].raw !== newTokens[divergeAt].raw) break
+                divergeAt++
+            }
         }
 
         this.prevSource = source

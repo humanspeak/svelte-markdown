@@ -198,9 +198,10 @@ describe('IncrementalParser', () => {
             const appended = `${source}\n\n[foo]: /docs`
 
             parser.update(source)
-            parser.update(appended)
+            const result = parser.update(appended)
 
             expect(lexSpy.mock.calls[1]?.[0]).toBe(appended)
+            expect(result.divergeAt).toBe(0)
         })
 
         it('falls back to a full re-lex when walkTokens is configured', () => {
