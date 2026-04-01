@@ -12,6 +12,13 @@ export interface StreamBenchmarkResult {
     parseDurationsMs: number[]
 }
 
+/**
+ * Calculates the p-th percentile of a numeric array.
+ *
+ * @param values - Array of numeric values
+ * @param p - Percentile to calculate (0-1, e.g., 0.95 for 95th percentile)
+ * @returns The value at the specified percentile, or 0 if array is empty
+ */
 const percentile = (values: number[], p: number): number => {
     if (values.length === 0) return 0
 
@@ -21,6 +28,20 @@ const percentile = (values: number[], p: number): number => {
     return sorted[index]
 }
 
+/**
+ * Benchmarks incremental parsing performance by simulating streaming chunk appends.
+ *
+ * @param chunks - Array of string chunks to append sequentially
+ * @param options - SvelteMarkdown parser options forwarded to IncrementalParser
+ * @returns Benchmark results including per-chunk timing, peak, and p95 parse durations
+ *
+ * @example
+ * ```ts
+ * const chunks = ['# Hello ', 'world, ', 'this is a test.']
+ * const result = benchmarkAppendStream(chunks, { gfm: true })
+ * console.log(result.p95ParseMs, result.peakParseMs)
+ * ```
+ */
 export const benchmarkAppendStream = (
     chunks: string[],
     options: SvelteMarkdownOptions

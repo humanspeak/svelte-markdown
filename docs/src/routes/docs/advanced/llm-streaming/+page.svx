@@ -54,6 +54,7 @@ The component works reactively by default. For best streaming performance, pass 
 
     async function streamFromAPI() {
         const response = await fetch('/api/chat', { method: 'POST', body: '...' })
+        if (!response.body) throw new Error('No response body')
         const reader = response.body.getReader()
         const decoder = new TextDecoder()
 
