@@ -7,7 +7,7 @@
     if (seo) {
         seo.title = 'Compare | Svelte Markdown vs Alternatives'
         seo.description =
-            'See how @humanspeak/svelte-markdown compares to MDsveX, Tiptap, markdown-it, marked, Milkdown, and more. Honest feature comparisons for every Svelte markdown library.'
+            'See how @humanspeak/svelte-markdown compares to MDsveX, Tiptap, markdown-it, marked, Milkdown, and more across caching, HTML control, and LLM streaming. Honest feature comparisons for every Svelte markdown library.'
         seo.ogTitle = 'Svelte Markdown vs Alternatives'
         seo.ogTagline = 'Honest comparisons with every major option.'
         seo.ogFeatures = ['10 Comparisons', 'Feature Tables', 'Honest Pros/Cons', 'Use Case Guides']
@@ -21,7 +21,7 @@
             '@type': 'CollectionPage',
             name: 'Compare | Svelte Markdown vs Alternatives',
             description:
-                'See how @humanspeak/svelte-markdown compares to MDsveX, Tiptap, markdown-it, marked, Milkdown, and more. Honest feature comparisons for every Svelte markdown library.',
+                'See how @humanspeak/svelte-markdown compares to MDsveX, Tiptap, markdown-it, marked, Milkdown, and more across caching, HTML control, and LLM streaming. Honest feature comparisons for every Svelte markdown library.',
             url: 'https://markdown.svelte.page/compare',
             mainEntity: {
                 '@type': 'ItemList',
@@ -62,7 +62,8 @@
         </h1>
         <p class="text-muted-foreground mx-auto max-w-2xl text-lg">
             Honest, detailed comparisons with every major Svelte markdown library and editor. We
-            show where we shine and where alternatives might be a better fit.
+            show where we shine on runtime rendering, caching, and LLM streaming, and where
+            alternatives might be a better fit.
         </p>
     </div>
 

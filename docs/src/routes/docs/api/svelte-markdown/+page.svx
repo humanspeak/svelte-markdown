@@ -40,6 +40,8 @@ The markdown content to render. Can be either a raw markdown string or an array 
 
 When a string is provided, it is parsed using Marked's lexer (with built-in token caching for performance). When pre-parsed tokens are provided, parsing is skipped entirely.
 
+When using the imperative streaming API (`bind:this` + `writeChunk()`), `source` must be a string. Token-array sources remain read-only.
+
 ```html
 <!-- String source -->
 <SvelteMarkdown source="**Bold** and *italic*" />
@@ -150,9 +152,65 @@ Enables optimized rendering for LLM streaming scenarios. When `true`, the compon
 <SvelteMarkdown {source} streaming={true} />
 ```
 
+`streaming` also enables the component instance methods described below.
+
 **Note:** `streaming` is automatically disabled when async extensions are used. A console warning is logged in this case.
 
 See [LLM Streaming](/docs/advanced/llm-streaming) for usage patterns and performance data.
+
+## Instance Methods
+
+When you bind the component instance, `SvelteMarkdown` exposes imperative helpers for streaming writers:
+
+### `writeChunk(chunk)`
+
+- **Type:** `(chunk: StreamingChunk) => void`
+
+Accepts either a string append chunk or an offset patch object:
+
+```html
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { StreamingChunk } from '@humanspeak/svelte-markdown'
+
+    let markdown:
+        | {
+              writeChunk: (chunk: StreamingChunk) => void
+              resetStream: (nextSource?: string) => void
+          }
+        | undefined
+
+    function onChunk(chunk: StreamingChunk) {
+        markdown?.writeChunk(chunk)
+    }
+</script>
+
+<SvelteMarkdown bind:this={markdown} source="" streaming={true} />
+```
+
+Rules:
+
+- String chunks append to the internal buffer.
+- Object chunks use `{ value, offset }` overwrite semantics, not insert semantics.
+- Offset writes preserve trailing content after the overwritten span.
+- If `offset` skips ahead, the gap is padded with spaces.
+- Offset mode does not support delete or truncate semantics.
+- The first successful write locks the stream into append mode or offset mode until reset.
+- Offset chunks require a non-negative safe integer `offset`.
+- Calls are ignored with a warning when `streaming={false}`, async extensions are active, or `source` is a token array.
+
+### `resetStream(nextSource?)`
+
+- **Type:** `(nextSource?: string) => void`
+
+Clears the internal streaming buffer and resets mode locking. Pass a string to seed the next stream:
+
+```ts
+markdown?.resetStream()
+markdown?.resetStream('# Seed')
+```
+
+Changing the `source` prop also resets the imperative buffer and becomes the new baseline.
 
 ### `parsed`
 

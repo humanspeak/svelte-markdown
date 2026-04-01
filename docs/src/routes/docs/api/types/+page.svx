@@ -42,9 +42,30 @@ type SvelteMarkdownProps<T extends Renderers = Renderers> = {
     source: Token[] | string
     renderers?: Partial<T>
     options?: Partial<SvelteMarkdownOptions>
+    extensions?: MarkedExtension[]
     isInline?: boolean
+    streaming?: boolean
     parsed?: (tokens: Token[] | TokensList) => void
 }
+```
+
+### `StreamingOffsetChunk`
+
+Offset patch payload for imperative streaming writes.
+
+```typescript
+interface StreamingOffsetChunk {
+    value: string
+    offset: number
+}
+```
+
+### `StreamingChunk`
+
+Union accepted by `writeChunk()`.
+
+```typescript
+type StreamingChunk = string | StreamingOffsetChunk
 ```
 
 ### `SvelteMarkdownOptions`
@@ -419,6 +440,8 @@ import type {
     HtmlRenderers,
     RendererComponent,
     Renderers,
+    StreamingChunk,
+    StreamingOffsetChunk,
     SvelteMarkdownOptions,
     SvelteMarkdownProps,
     Token,

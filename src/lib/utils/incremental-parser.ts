@@ -13,6 +13,16 @@ import type { SvelteMarkdownOptions } from '$lib/types.js'
 import type { Token } from '$lib/utils/markdown-parser.js'
 import { lexAndClean } from '$lib/utils/parse-and-cache.js'
 
+interface TailWindowBoundary {
+    prefixCount: number
+    reparseOffset: number
+}
+
+const CLOSED_FENCE_RE = /^ {0,3}(`{3,}|~{3,}).*\n[\s\S]*\n {0,3}\1[ \t]*\n*$/
+const LINK_REFERENCE_RE = /\[[^\]\n]+\]\[[^\]\n]*\]/
+const SHORTCUT_REFERENCE_RE = /\[[^\]\n]+\](?![[(])/ // Excludes inline links/images and full refs
+const REFERENCE_DEFINITION_RE = /^\s{0,3}\[[^\]\n]+\]:/m
+
 /**
  * Result of an incremental parse update.
  */
@@ -48,8 +58,14 @@ export class IncrementalParser {
     /** Previous parse result for diffing */
     private prevTokens: Token[] = []
 
+    /** Previous full source string for append-only tail reparsing */
+    private prevSource = ''
+
     /** Parser options passed to the Marked lexer */
     private options: SvelteMarkdownOptions
+
+    /** Whether caller-supplied parser hooks make tail-window reparsing unsafe */
+    private tailWindowDisabled: boolean
 
     /**
      * Creates a new incremental parser instance.
@@ -58,6 +74,89 @@ export class IncrementalParser {
      */
     constructor(options: SvelteMarkdownOptions) {
         this.options = options
+
+        const exts = (options as Record<string, unknown>).extensions as
+            | { block?: unknown[]; inline?: unknown[] }
+            | undefined
+        const hasExtensionTokenizers =
+            (exts?.block != null && exts.block.length > 0) ||
+            (exts?.inline != null && exts.inline.length > 0)
+
+        this.tailWindowDisabled =
+            typeof options.walkTokens === 'function' ||
+            options.tokenizer != null ||
+            hasExtensionTokenizers
+    }
+
+    private getTailWindowBoundary = (): TailWindowBoundary => {
+        if (this.prevTokens.length === 0) {
+            return { prefixCount: 0, reparseOffset: 0 }
+        }
+
+        let offset = 0
+        for (let i = 0; i < this.prevTokens.length - 1; i++) {
+            offset += this.prevTokens[i].raw.length
+        }
+
+        const lastToken = this.prevTokens[this.prevTokens.length - 1]
+
+        if (this.isStableAtSourceEnd(lastToken)) {
+            return {
+                prefixCount: this.prevTokens.length,
+                reparseOffset: this.prevSource.length
+            }
+        }
+
+        return {
+            prefixCount: this.prevTokens.length - 1,
+            reparseOffset: offset
+        }
+    }
+
+    private isStableAtSourceEnd = (token: Token): boolean => {
+        if (token.type === 'space') return false
+        if (token.raw.endsWith('\n\n')) return true
+
+        switch (token.type) {
+            case 'heading':
+            case 'hr':
+                return token.raw.endsWith('\n')
+            case 'code':
+                return CLOSED_FENCE_RE.test(token.raw)
+            default:
+                return false
+        }
+    }
+
+    private hasAppendSensitiveReferenceSyntax = (source: string): boolean => {
+        if (!source.includes('[') || !source.includes(']')) return false
+
+        return (
+            LINK_REFERENCE_RE.test(source) ||
+            SHORTCUT_REFERENCE_RE.test(source) ||
+            REFERENCE_DEFINITION_RE.test(source)
+        )
+    }
+
+    private canUseTailWindow = (source: string, boundary: TailWindowBoundary): boolean => {
+        if (this.tailWindowDisabled) return false
+        if (this.prevSource === '' || this.prevTokens.length === 0) return false
+        if (!source.startsWith(this.prevSource)) return false
+        if (boundary.reparseOffset <= 0) return false
+
+        const stablePrefix = this.prevSource.slice(0, boundary.reparseOffset)
+        if (this.hasAppendSensitiveReferenceSyntax(stablePrefix)) return false
+
+        return true
+    }
+
+    private parseSource = (source: string, boundary: TailWindowBoundary): Token[] => {
+        if (!this.canUseTailWindow(source, boundary)) {
+            return lexAndClean(source, this.options, false)
+        }
+
+        const tailTokens = lexAndClean(source.slice(boundary.reparseOffset), this.options, false)
+        return [...this.prevTokens.slice(0, boundary.prefixCount), ...tailTokens]
     }
 
     /**
@@ -67,29 +166,32 @@ export class IncrementalParser {
      * @returns The new tokens and the index where they diverge from the previous parse
      */
     update = (source: string): IncrementalUpdateResult => {
-        const newTokens = lexAndClean(source, this.options, false)
+        const boundary = this.getTailWindowBoundary()
+        const newTokens = this.parseSource(source, boundary)
 
         // Apply walkTokens if configured
         if (typeof this.options.walkTokens === 'function') {
             newTokens.forEach(this.options.walkTokens)
         }
 
+        // Reference definitions can change inline children without changing raw,
+        // so force a full rerender when reference syntax is present
+        const referenceSensitive =
+            this.hasAppendSensitiveReferenceSyntax(this.prevSource) ||
+            this.hasAppendSensitiveReferenceSyntax(source)
+
         // Find first divergence point by comparing raw strings
         let divergeAt = 0
-        const minLen = Math.min(this.prevTokens.length, newTokens.length)
-        while (divergeAt < minLen) {
-            if (this.prevTokens[divergeAt].raw !== newTokens[divergeAt].raw) break
-            divergeAt++
+        if (!referenceSensitive) {
+            const minLen = Math.min(this.prevTokens.length, newTokens.length)
+            while (divergeAt < minLen) {
+                if (this.prevTokens[divergeAt].raw !== newTokens[divergeAt].raw) break
+                divergeAt++
+            }
         }
 
+        this.prevSource = source
         this.prevTokens = newTokens
         return { tokens: newTokens, divergeAt }
-    }
-
-    /**
-     * Resets the parser state. Call this when starting a new stream.
-     */
-    reset = () => {
-        this.prevTokens = []
     }
 }

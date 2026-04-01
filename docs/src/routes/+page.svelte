@@ -4,7 +4,7 @@
     import favicon from '$lib/assets/logo.svg'
     import Icon from '$lib/components/general/Icon.svelte'
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
-    import { motion } from '@humanspeak/svelte-motion'
+    import { MotionA } from '@humanspeak/svelte-motion'
     import {
         ArrowRight,
         Rocket,
@@ -20,6 +20,11 @@
     import { tick } from 'svelte'
     import { competitors } from '$lib/compare-data'
     import type { IconName } from '$lib/icons'
+
+    interface StreamingMarkdownHandle {
+        writeChunk: (chunk: string) => void
+        resetStream: (nextSource?: string) => void
+    }
 
     let headingContainer: HTMLDivElement | null = $state(null)
     const breadcrumbContext = getBreadcrumbContext()
@@ -156,12 +161,14 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
     let streamRenderCount = $state(0)
     let streamPreviewEl: HTMLDivElement | undefined = $state()
     let streamSourceEl: HTMLTextAreaElement | undefined = $state()
+    let streamMarkdown: StreamingMarkdownHandle | undefined = $state()
 
     const startStream = () => {
         if (isStreamActive) return
         streamChunks = streamContent.match(/\S+\s*/g) ?? []
         streamIndex = 0
         streamSource = ''
+        streamMarkdown?.resetStream('')
         streamTotalMs = 0
         streamRenderCount = 0
         streamAvgMs = 0
@@ -177,7 +184,9 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
             return
         }
         const t0 = performance.now()
-        streamSource += streamChunks[streamIndex]
+        const chunk = streamChunks[streamIndex]
+        streamSource += chunk
+        streamMarkdown?.writeChunk(chunk)
         streamIndex++
         await tick()
         if (sid !== streamSessionId) return
@@ -205,6 +214,7 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
     const resetStream = () => {
         stopStream()
         streamSource = ''
+        streamMarkdown?.resetStream('')
         streamAvgMs = 0
         streamPeakMs = 0
     }
@@ -310,7 +320,7 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                             with full TypeScript support.
                         </p>
                         <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-                            <motion.a
+                            <MotionA
                                 href="/docs/getting-started"
                                 class="bg-brand-600 hover:bg-brand-700 focus-visible:ring-brand-600/30 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-white shadow transition-colors focus:outline-none focus-visible:ring-2"
                                 whileTap={{ scale: 0.96 }}
@@ -318,8 +328,8 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                             >
                                 Get Started
                                 <Rocket class="ml-2 size-3" />
-                            </motion.a>
-                            <motion.a
+                            </MotionA>
+                            <MotionA
                                 href="/docs/api/svelte-markdown"
                                 class="border-border bg-card text-foreground hover:border-brand-500/50 hover:text-brand-700 focus-visible:ring-brand-600/20 inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
                                 whileTap={{ scale: 0.96 }}
@@ -327,8 +337,17 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                             >
                                 API Reference
                                 <BookOpen class="ml-2 size-3" />
-                            </motion.a>
-                            <motion.a
+                            </MotionA>
+                            <MotionA
+                                href="/examples"
+                                class="border-border bg-card text-foreground hover:border-brand-500/50 hover:text-brand-700 focus-visible:ring-brand-600/20 inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
+                                whileTap={{ scale: 0.96 }}
+                                whileHover={{ scale: 1.03 }}
+                            >
+                                Examples
+                                <FlaskConical class="ml-2 size-3" />
+                            </MotionA>
+                            <MotionA
                                 href="/examples/playground"
                                 class="border-border bg-card text-foreground hover:border-brand-500/50 hover:text-brand-700 focus-visible:ring-brand-600/20 inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
                                 whileTap={{ scale: 0.96 }}
@@ -336,7 +355,7 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                             >
                                 Playground
                                 <Play class="ml-2 size-3" />
-                            </motion.a>
+                            </MotionA>
                         </div>
                         <ul
                             class="text-muted-foreground mt-10 flex flex-wrap justify-center gap-2 text-xs"
@@ -487,9 +506,12 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                                 bind:this={streamPreviewEl}
                                 class="prose prose-sm dark:prose-invert h-[350px] max-w-none overflow-y-auto p-4"
                             >
-                                {#if streamSource}
-                                    <SvelteMarkdown source={streamSource} streaming={true} />
-                                {:else}
+                                <SvelteMarkdown
+                                    bind:this={streamMarkdown}
+                                    source=""
+                                    streaming={true}
+                                />
+                                {#if !streamSource}
                                     <p class="text-muted-foreground italic">
                                         Click "Start" to stream an AI response...
                                     </p>
@@ -646,7 +668,7 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                             See custom renderers, HTML filtering, marked extensions, Mermaid
                             diagrams, code formatting, and more — all with live editors.
                         </p>
-                        <motion.a
+                        <MotionA
                             href="/examples"
                             class="from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 inline-flex items-center rounded-lg bg-gradient-to-r px-5 py-2.5 font-medium text-white transition-all duration-200"
                             whileTap={{ scale: 0.96 }}
@@ -654,7 +676,7 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                         >
                             Browse Examples
                             <ArrowRight class="ml-2 size-4" />
-                        </motion.a>
+                        </MotionA>
                     </div>
                 </div>
             </div>

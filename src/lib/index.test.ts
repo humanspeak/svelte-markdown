@@ -13,6 +13,8 @@ import SvelteMarkdown, {
     excludeRenderersOnly,
     htmlRendererKeys,
     rendererKeys,
+    type StreamingChunk,
+    type StreamingOffsetChunk,
     type SvelteMarkdownOptions,
     type SvelteMarkdownProps,
     type Token,
@@ -60,6 +62,18 @@ describe('index.ts exports', () => {
         }
         expect(dummyProps).toBeDefined()
         expect(dummyProps.source).toBe('# Test')
+    })
+
+    it('should export imperative streaming chunk types', () => {
+        const offsetChunk: StreamingOffsetChunk = {
+            value: 'hello',
+            offset: 4
+        }
+        const chunk: StreamingChunk = offsetChunk
+        const appendChunk: StreamingChunk = ' world'
+
+        expect(chunk).toEqual(offsetChunk)
+        expect(appendChunk).toBe(' world')
     })
 
     it('should export defaultRenderers map and rendererKeys', () => {
