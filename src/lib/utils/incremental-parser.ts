@@ -20,7 +20,7 @@ interface TailWindowBoundary {
 
 const CLOSED_FENCE_RE = /^ {0,3}(`{3,}|~{3,}).*\n[\s\S]*\n {0,3}\1[ \t]*\n*$/
 const LINK_REFERENCE_RE = /\[[^\]\n]+\]\[[^\]\n]*\]/
-const SHORTCUT_REFERENCE_RE = /\[[^\]\n]+\](?![\[(])/ // Excludes inline links/images and full refs
+const SHORTCUT_REFERENCE_RE = /\[[^\]\n]+\](?![[(])/ // Excludes inline links/images and full refs
 const REFERENCE_DEFINITION_RE = /^\s{0,3}\[[^\]\n]+\]:/m
 
 /**
