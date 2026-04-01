@@ -69,6 +69,13 @@
 
     // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
     type AnySnippet = (..._args: any[]) => any
+    type StreamFlushHandle =
+        | { kind: 'raf'; id: number }
+        | { kind: 'timeout'; id: ReturnType<typeof setTimeout> }
+        | null
+
+    const STREAM_BATCH_FALLBACK_MS = 16
+    const STREAM_BATCH_MAX_CHARS = 256
 
     const {
         source = [],
@@ -105,6 +112,8 @@
     let lastExtensionsSrc: typeof extensions | undefined
     let lastSourceProp: typeof source | undefined
     let streamSourceBuffer = ''
+    let pendingStreamAppendBuffer = ''
+    let streamFlushHandle: StreamFlushHandle = null
     let streamInputMode: 'append' | 'offset' | null = null
     let streamTokens = $state<Token[]>([])
 
@@ -116,6 +125,18 @@
         incrementalParser = undefined
         lastOptionsSrc = undefined
         lastExtensionsSrc = undefined
+    }
+
+    const cancelScheduledAppendFlush = () => {
+        if (!streamFlushHandle) return
+
+        if (streamFlushHandle.kind === 'raf' && typeof cancelAnimationFrame === 'function') {
+            cancelAnimationFrame(streamFlushHandle.id)
+        } else if (streamFlushHandle.kind === 'timeout') {
+            clearTimeout(streamFlushHandle.id)
+        }
+
+        streamFlushHandle = null
     }
 
     const hasStreamingParserConfigChanged = () =>
@@ -139,7 +160,45 @@
         streamTokens.length = newTokens.length
     }
 
+    const commitPendingAppendBuffer = () => {
+        if (pendingStreamAppendBuffer === '') return false
+
+        streamSourceBuffer += pendingStreamAppendBuffer
+        pendingStreamAppendBuffer = ''
+
+        return true
+    }
+
+    const flushPendingAppendChunks = (forceNewParser = false) => {
+        cancelScheduledAppendFlush()
+
+        if (!commitPendingAppendBuffer()) return
+
+        applyStreamingSource(streamSourceBuffer, forceNewParser)
+    }
+
+    const scheduleAppendFlush = () => {
+        if (streamFlushHandle || pendingStreamAppendBuffer === '') return
+
+        if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+            const id = window.requestAnimationFrame(() => {
+                streamFlushHandle = null
+                flushPendingAppendChunks()
+            })
+            streamFlushHandle = { kind: 'raf', id }
+            return
+        }
+
+        const id = setTimeout(() => {
+            streamFlushHandle = null
+            flushPendingAppendChunks()
+        }, STREAM_BATCH_FALLBACK_MS)
+        streamFlushHandle = { kind: 'timeout', id }
+    }
+
     const resetStreamingState = (nextSource = '') => {
+        cancelScheduledAppendFlush()
+        pendingStreamAppendBuffer = ''
         streamInputMode = null
         streamSourceBuffer = nextSource
 
@@ -157,6 +216,8 @@
         streamInputMode = null
 
         if (Array.isArray(nextSource)) {
+            cancelScheduledAppendFlush()
+            pendingStreamAppendBuffer = ''
             streamSourceBuffer = ''
             clearStreamingParser()
             streamTokens = [...(nextSource as Token[])]
@@ -190,11 +251,19 @@
     }
 
     const applyAppendChunk = (value: string) => {
-        streamSourceBuffer += value
-        applyStreamingSource(streamSourceBuffer)
+        pendingStreamAppendBuffer += value
+
+        if (pendingStreamAppendBuffer.length >= STREAM_BATCH_MAX_CHARS) {
+            flushPendingAppendChunks()
+            return
+        }
+
+        scheduleAppendFlush()
     }
 
     const applyOffsetChunk = ({ value, offset }: StreamingOffsetChunk) => {
+        flushPendingAppendChunks()
+
         const padded =
             offset > streamSourceBuffer.length
                 ? streamSourceBuffer + ' '.repeat(offset - streamSourceBuffer.length)
@@ -263,7 +332,15 @@
     }
 
     $effect(() => {
+        return () => {
+            cancelScheduledAppendFlush()
+        }
+    })
+
+    $effect(() => {
         if (!streaming || hasAsyncExtension) {
+            cancelScheduledAppendFlush()
+            pendingStreamAppendBuffer = ''
             if (incrementalParser) clearStreamingParser()
             lastSourceProp = source
             streamInputMode = null
@@ -287,6 +364,11 @@
         }
 
         if (hasStreamingParserConfigChanged()) {
+            if (pendingStreamAppendBuffer !== '') {
+                flushPendingAppendChunks(true)
+                return
+            }
+
             if (streamSourceBuffer === '') {
                 clearStreamingParser()
                 streamTokens.length = 0

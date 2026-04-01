@@ -1,9 +1,10 @@
 import '@testing-library/jest-dom'
 import { act, render, screen } from '@testing-library/svelte'
 import type { MarkedExtension } from 'marked'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
 import type { SvelteMarkdownProps } from './types.js'
+import * as parseAndCacheModule from './utils/parse-and-cache.js'
 import { tokenCache } from './utils/token-cache.js'
 
 // Clear token cache before each test to avoid cross-test pollution
@@ -46,6 +47,27 @@ describe('testing initialization', () => {
 })
 
 describe('imperative streaming API', () => {
+    const flushStreamingBatch = async () => {
+        await act(async () => {
+            await vi.advanceTimersByTimeAsync(20)
+        })
+    }
+
+    beforeEach(() => {
+        vi.useFakeTimers()
+        vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+            return setTimeout(() => callback(performance.now()), 16) as unknown as number
+        })
+        vi.stubGlobal('cancelAnimationFrame', (id: number) => {
+            clearTimeout(id)
+        })
+    })
+
+    afterEach(() => {
+        vi.unstubAllGlobals()
+        vi.useRealTimers()
+    })
+
     test('exposes writeChunk and resetStream via component exports', async () => {
         const { component, container } = render(SvelteMarkdown, {
             props: { source: '', streaming: true }
@@ -55,6 +77,7 @@ describe('imperative streaming API', () => {
         expect(component.resetStream).toBeTypeOf('function')
 
         await act(() => component.writeChunk('# Hello'))
+        await flushStreamingBatch()
 
         expect(container.querySelector('h1')?.textContent).toBe('Hello')
     })
@@ -70,8 +93,51 @@ describe('imperative streaming API', () => {
             component.writeChunk(' ')
             component.writeChunk('World')
         })
+        await flushStreamingBatch()
 
         expect(container.querySelector('p')?.textContent).toBe('Hello  World')
+    })
+
+    test('batches append chunks into a single parser update per frame', async () => {
+        const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        await act(() => {
+            component.writeChunk('Hello')
+            component.writeChunk(' ')
+            component.writeChunk('World')
+        })
+
+        expect(lexSpy).toHaveBeenCalledTimes(0)
+
+        await flushStreamingBatch()
+
+        expect(lexSpy).toHaveBeenCalledTimes(1)
+        expect(container.querySelector('p')?.textContent).toBe('Hello World')
+
+        lexSpy.mockRestore()
+    })
+
+    test('flushes append chunks immediately when the batch size threshold is exceeded', async () => {
+        const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        const chunk = 'a'.repeat(300)
+
+        await act(() => component.writeChunk(chunk))
+
+        expect(lexSpy).toHaveBeenCalledTimes(1)
+        expect(container.querySelector('p')?.textContent).toBe(chunk)
+
+        await flushStreamingBatch()
+
+        expect(lexSpy).toHaveBeenCalledTimes(1)
+
+        lexSpy.mockRestore()
     })
 
     test('applies offset chunks at exact positions', async () => {
@@ -123,6 +189,7 @@ describe('imperative streaming API', () => {
             component.writeChunk('Hello')
             component.writeChunk({ value: 'World', offset: 0 })
         })
+        await flushStreamingBatch()
 
         expect(container.querySelector('p')?.textContent).toBe('Hello')
         expect(warnSpy).toHaveBeenCalledWith(
@@ -157,6 +224,7 @@ describe('imperative streaming API', () => {
         })
 
         await act(() => component.writeChunk('# Hello'))
+        await flushStreamingBatch()
         expect(container.querySelector('h1')?.textContent).toBe('Hello')
 
         await act(() => component.resetStream())
@@ -172,12 +240,14 @@ describe('imperative streaming API', () => {
         })
 
         await act(() => component.writeChunk('# Chunk Title'))
+        await flushStreamingBatch()
         expect(container.querySelector('h1')?.textContent).toBe('Chunk Title')
 
         await rerender({ source: '# Prop Title', streaming: true })
         expect(container.querySelector('h1')?.textContent).toBe('Prop Title')
 
         await act(() => component.writeChunk('\n\nTail'))
+        await flushStreamingBatch()
         expect(container.textContent).toContain('Tail')
     })
 
@@ -251,10 +321,30 @@ describe('imperative streaming API', () => {
         })
 
         await act(() => component.writeChunk('# Hello'))
+        await flushStreamingBatch()
 
         expect(parsed).toHaveBeenLastCalledWith(
             expect.arrayContaining([expect.objectContaining({ type: 'heading', text: 'Hello' })])
         )
+    })
+
+    test('resetStream cancels pending append flushes', async () => {
+        const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        await act(() => {
+            component.writeChunk('Hello')
+            component.resetStream()
+        })
+
+        await flushStreamingBatch()
+
+        expect(lexSpy).toHaveBeenCalledTimes(0)
+        expect(container.textContent?.trim()).toBe('')
+
+        lexSpy.mockRestore()
     })
 
     test('writeChunk warns and does nothing when async extensions disable streaming', async () => {
