@@ -78,8 +78,6 @@ export class IncrementalParser {
             typeof options.walkTokens === 'function' || options.tokenizer != null
     }
 
-    private isTailWindowDisabled = (): boolean => this.tailWindowDisabled
-
     private getTailWindowBoundary = (): TailWindowBoundary => {
         if (this.prevTokens.length === 0) {
             return { prefixCount: 0, reparseOffset: 0 }
@@ -131,7 +129,7 @@ export class IncrementalParser {
     }
 
     private canUseTailWindow = (source: string, boundary: TailWindowBoundary): boolean => {
-        if (this.isTailWindowDisabled()) return false
+        if (this.tailWindowDisabled) return false
         if (this.prevSource === '' || this.prevTokens.length === 0) return false
         if (!source.startsWith(this.prevSource)) return false
         if (boundary.reparseOffset <= 0) return false

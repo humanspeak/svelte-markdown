@@ -196,10 +196,15 @@
         streamFlushHandle = { kind: 'timeout', id }
     }
 
-    const resetStreamingState = (nextSource = '') => {
+    const teardownStreamingBuffers = () => {
         cancelScheduledAppendFlush()
         pendingStreamAppendBuffer = ''
         streamInputMode = null
+        streamSourceBuffer = ''
+    }
+
+    const resetStreamingState = (nextSource = '') => {
+        teardownStreamingBuffers()
         streamSourceBuffer = nextSource
 
         if (nextSource === '') {
@@ -213,12 +218,9 @@
 
     const syncStreamingSourceFromProp = (nextSource: typeof source) => {
         lastSourceProp = nextSource
-        streamInputMode = null
 
         if (Array.isArray(nextSource)) {
-            cancelScheduledAppendFlush()
-            pendingStreamAppendBuffer = ''
-            streamSourceBuffer = ''
+            teardownStreamingBuffers()
             clearStreamingParser()
             streamTokens = [...(nextSource as Token[])]
             return
@@ -262,8 +264,6 @@
     }
 
     const applyOffsetChunk = ({ value, offset }: StreamingOffsetChunk) => {
-        flushPendingAppendChunks()
-
         const padded =
             offset > streamSourceBuffer.length
                 ? streamSourceBuffer + ' '.repeat(offset - streamSourceBuffer.length)
@@ -339,12 +339,9 @@
 
     $effect(() => {
         if (!streaming || hasAsyncExtension) {
-            cancelScheduledAppendFlush()
-            pendingStreamAppendBuffer = ''
+            teardownStreamingBuffers()
             if (incrementalParser) clearStreamingParser()
             lastSourceProp = source
-            streamInputMode = null
-            streamSourceBuffer = ''
             if (streaming && hasAsyncExtension) {
                 warnStreaming(
                     'streaming prop is ignored when async extensions are used. ' +
