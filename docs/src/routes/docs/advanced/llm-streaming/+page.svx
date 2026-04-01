@@ -85,6 +85,19 @@ markdown?.writeChunk({ value: 'lo', offset: 3 })
 markdown?.writeChunk({ value: ' world', offset: 5 })
 ```
 
+Offset chunks use overwrite semantics, not insert semantics. Each patch writes `value` starting at `offset`, preserves any trailing content after the overwritten span, and pads skipped gaps with spaces.
+
+This means out-of-order websocket delivery is fine:
+
+```ts
+markdown?.writeChunk({ value: ' world', offset: 5 })
+markdown?.writeChunk({ value: 'Hello', offset: 0 })
+```
+
+There is no delete or truncate behavior in offset mode, and offsets must be non-negative safe integers.
+
+Like append mode, the first successful write locks the stream shape until `resetStream()` or a `source` prop reset.
+
 ### SDK Examples
 
 Choose between **chunked** mode (imperative `writeChunk()` API) and **concat** mode (reactive `source += chunk` pattern):
@@ -405,7 +418,7 @@ When building production LLM streaming UIs, understanding token costs is as impo
 
 ## Try It Live
 
-Experiment with different streaming speeds, jitter, and chunk modes in the [interactive LLM streaming demo](/examples/llm-streaming).
+Experiment with different streaming speeds, jitter, chunk modes, and websocket-style offset patch simulation in the [interactive LLM streaming demo](/examples/llm-streaming).
 
 ## Related
 

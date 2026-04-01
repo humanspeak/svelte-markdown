@@ -719,7 +719,18 @@ For websocket-style offset patches, pass an object chunk instead:
 markdown?.writeChunk({ value: 'world', offset: 6 })
 ```
 
-Object chunks overwrite the internal buffer at `offset`. If `offset` skips ahead, missing positions are padded with spaces.
+Object chunks overwrite the internal buffer at `offset`. This is overwrite semantics, not insert semantics: the chunk replaces characters starting at that index and preserves any trailing content after the overwritten span.
+
+If `offset` skips ahead, missing positions are padded with spaces. There is no delete or truncate behavior in offset mode.
+
+Typical websocket-style usage can arrive out of order:
+
+```ts
+markdown?.writeChunk({ value: ' world', offset: 5 })
+markdown?.writeChunk({ value: 'Hello', offset: 0 })
+```
+
+The internal buffer converges as later patches fill earlier gaps.
 
 You can reset the internal streaming buffer at any time:
 
@@ -733,7 +744,9 @@ The first successful write after a reset locks the stream into one input mode:
 - `string` chunks: append mode
 - `{ value, offset }` chunks: offset mode
 
-Switching modes before `resetStream()` or a `source` prop reset logs a warning and drops the chunk.
+Switching modes before `resetStream()` or a `source` prop reset logs a warning and drops the chunk. Offset chunks must use a non-negative safe integer `offset`.
+
+Changing the `source` prop also resets the imperative buffer, seeds a new baseline value, and unlocks the input mode.
 
 Appending directly to `source` is still supported:
 

@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { StreamingChunk, StreamingOffsetChunk } from '@humanspeak/svelte-markdown'
     import {
         Play,
         Square,
@@ -110,12 +111,13 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
     let tokensPerSecond = $state(30)
     let jitterPercent = $state(50)
     let chunkMode: 'character' | 'word' | 'sentence' = $state('word')
-    let streamMode: 'chunked' | 'concat' = $state('chunked')
+    let streamMode: 'chunked' | 'concat' | 'offset' = $state('chunked')
+    let jumbleOffsetChunks = $state(true)
 
     // Component ref for imperative API
     let markdown:
         | {
-              writeChunk: (chunk: string) => void
+              writeChunk: (chunk: StreamingChunk) => void
               resetStream: (nextSource?: string) => void
           }
         | undefined = $state()
@@ -132,10 +134,11 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
     const progress = $derived(
         chunks.length > 0 ? Math.round((chunkIndex / chunks.length) * 100) : 0
     )
+    const chunkedStreamActive = $derived(streamMode === 'chunked' || streamMode === 'offset')
 
     // Internals
     let timeoutId: ReturnType<typeof setTimeout> | null = null
-    let chunks: string[] = $state([])
+    let chunks: StreamingChunk[] = $state([])
     let chunkIndex = $state(0)
     let lastFrameTime = 0
     let rafId = 0
@@ -169,6 +172,29 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
         return result
     }
 
+    const buildOffsetChunks = (
+        text: string,
+        mode: typeof chunkMode,
+        shouldJumble: boolean
+    ): StreamingOffsetChunk[] => {
+        const values = splitIntoChunks(text, mode)
+        let offset = 0
+        const offsetChunks = values.map((value) => {
+            const chunk = { value, offset }
+            offset += value.length
+            return chunk
+        })
+
+        if (!shouldJumble || offsetChunks.length < 3) {
+            return offsetChunks
+        }
+
+        const oddIndexed = offsetChunks.filter((_, index) => index % 2 === 1)
+        const evenIndexed = offsetChunks.filter((_, index) => index % 2 === 0)
+
+        return [...oddIndexed, ...evenIndexed]
+    }
+
     // --- Jittered delay ---
     const getDelay = (): number => {
         const baseDelay = 1000 / tokensPerSecond
@@ -200,10 +226,12 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
         }
 
         const start = performance.now()
-        if (streamMode === 'chunked') {
-            markdown?.writeChunk(chunks[chunkIndex])
-        } else {
-            source += chunks[chunkIndex]
+        const chunk = chunks[chunkIndex]
+
+        if (streamMode === 'chunked' || streamMode === 'offset') {
+            markdown?.writeChunk(chunk)
+        } else if (typeof chunk === 'string') {
+            source += chunk
         }
         chunkIndex++
         tokenCount = chunkIndex
@@ -228,15 +256,16 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
     // --- Controls ---
     const clearOutput = () => {
         source = ''
-        if (streamMode === 'chunked') {
-            markdown?.resetStream('')
-        }
+        markdown?.resetStream('')
     }
 
     const startStreaming = () => {
         if (isStreaming) return
         // Always re-split from current editor content on fresh start
-        chunks = splitIntoChunks(input, chunkMode)
+        chunks =
+            streamMode === 'offset'
+                ? buildOffsetChunks(input, chunkMode, jumbleOffsetChunks)
+                : splitIntoChunks(input, chunkMode)
         chunkIndex = 0
         clearOutput()
         resetMetrics()
@@ -306,9 +335,93 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
         </p>
     </div>
 
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
+    <div class="border-border bg-card mb-6 rounded-xl border p-5 shadow-sm">
+        <div class="mb-4 flex items-center justify-between gap-4">
+            <div>
+                <h3 class="text-foreground text-sm font-semibold tracking-wide uppercase">
+                    Live Metrics
+                </h3>
+                <p class="text-muted-foreground mt-1 text-xs">
+                    Watch chunk throughput and render cost live while switching between append,
+                    concat, and offset patch simulation.
+                </p>
+            </div>
+            {#if isStreaming || tokenCount > 0}
+                <span class="text-muted-foreground shrink-0 font-mono text-xs font-semibold">
+                    {tokenCount} / {chunks.length || 0} chunks
+                </span>
+            {/if}
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <div class="bg-muted/40 rounded-lg p-3">
+                <div class="text-muted-foreground text-xs uppercase">Progress</div>
+                <div class="text-foreground mt-1 font-mono text-lg font-semibold">{progress}%</div>
+                <div class="bg-muted mt-3 h-1.5 w-full overflow-hidden rounded-full">
+                    <div
+                        class="from-brand-500 to-brand-600 h-full rounded-full bg-gradient-to-r transition-all duration-150"
+                        style="width: {progress}%"
+                    ></div>
+                </div>
+            </div>
+
+            <div class="bg-muted/40 rounded-lg p-3">
+                <div class="text-muted-foreground text-xs uppercase">Last Render</div>
+                <div
+                    class="mt-1 font-mono text-lg font-semibold {lastRenderTime > 50
+                        ? 'text-red-500'
+                        : lastRenderTime > 16
+                          ? 'text-amber-500'
+                          : 'text-foreground'}"
+                >
+                    {formatMs(lastRenderTime)}
+                </div>
+            </div>
+
+            <div class="bg-muted/40 rounded-lg p-3">
+                <div class="text-muted-foreground text-xs uppercase">Average Render</div>
+                <div
+                    class="mt-1 font-mono text-lg font-semibold {avgRenderTime > 50
+                        ? 'text-red-500'
+                        : avgRenderTime > 16
+                          ? 'text-amber-500'
+                          : 'text-foreground'}"
+                >
+                    {formatMs(avgRenderTime)}
+                </div>
+            </div>
+
+            <div class="bg-muted/40 rounded-lg p-3">
+                <div class="text-muted-foreground text-xs uppercase">Peak Render</div>
+                <div
+                    class="mt-1 font-mono text-lg font-semibold {peakRenderTime > 50
+                        ? 'text-red-500'
+                        : peakRenderTime > 16
+                          ? 'text-amber-500'
+                          : 'text-foreground'}"
+                >
+                    {formatMs(peakRenderTime)}
+                </div>
+            </div>
+
+            <div class="bg-muted/40 rounded-lg p-3">
+                <div class="text-muted-foreground text-xs uppercase">Dropped Frames</div>
+                <div
+                    class="mt-1 font-mono text-lg font-semibold {droppedFrames > 0
+                        ? 'text-red-500'
+                        : 'text-foreground'}"
+                >
+                    {droppedFrames}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div
+        class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(19rem,0.95fr)_minmax(0,0.85fr)_minmax(0,0.85fr)]"
+    >
         <!-- Left Column: Controls & Metrics -->
-        <div class="h-[calc(100vh-14rem)] min-h-[400px] space-y-4 overflow-y-auto xl:col-span-1">
+        <div class="h-[calc(100vh-21rem)] min-h-[360px] space-y-4 overflow-y-auto xl:col-span-1">
             <!-- How it works -->
             <div
                 class="border-brand-500/20 from-brand-500/5 to-brand-600/5 rounded-xl border bg-gradient-to-r p-5"
@@ -456,7 +569,7 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                     <div class="border-border border-t"></div>
                     <div>
                         <span class="text-muted-foreground mb-2 block text-sm">Stream mode</span>
-                        <div class="flex gap-3">
+                        <div class="flex flex-wrap gap-3">
                             <label class="flex items-center gap-1.5 text-sm">
                                 <input
                                     type="radio"
@@ -477,90 +590,45 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                                 />
                                 <span class="text-foreground">Concat (source +=)</span>
                             </label>
+                            <label class="flex items-center gap-1.5 text-sm">
+                                <input
+                                    type="radio"
+                                    bind:group={streamMode}
+                                    value="offset"
+                                    disabled={isStreaming}
+                                    class="accent-[var(--brand-500,#ec4899)]"
+                                />
+                                <span class="text-foreground">Offset patches</span>
+                            </label>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Live Metrics -->
-            <div class="border-border bg-card rounded-xl border p-5 shadow-sm">
-                <h3 class="text-foreground mb-4 text-sm font-semibold tracking-wide uppercase">
-                    Live Metrics
-                </h3>
-                <div class="space-y-3">
-                    {#if isStreaming || tokenCount > 0}
-                        <!-- Progress bar -->
-                        <div>
-                            <div class="mb-1 flex items-center justify-between">
-                                <span class="text-muted-foreground text-xs">Progress</span>
-                                <span class="text-foreground font-mono text-xs font-semibold">
-                                    {tokenCount} / {chunks.length}
-                                </span>
+                        {#if streamMode === 'offset'}
+                            <div class="mt-3 space-y-3">
+                                <label class="flex items-center gap-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        bind:checked={jumbleOffsetChunks}
+                                        disabled={isStreaming}
+                                        class="accent-[var(--brand-500,#ec4899)]"
+                                    />
+                                    <span class="text-foreground">Jumble delivery order</span>
+                                </label>
+                                <p class="text-muted-foreground text-xs leading-relaxed">
+                                    Replays websocket-style
+                                    <code class="bg-muted rounded px-1 py-0.5 text-[11px]">
+                                        &#123; value, offset &#125;
+                                    </code>
+                                    chunks. With jumbling enabled, later patches can arrive before earlier
+                                    ones so you can watch the renderer converge.
+                                </p>
                             </div>
-                            <div class="bg-muted h-1.5 w-full overflow-hidden rounded-full">
-                                <div
-                                    class="from-brand-500 to-brand-600 h-full rounded-full bg-gradient-to-r transition-all duration-150"
-                                    style="width: {progress}%"
-                                ></div>
-                            </div>
-                        </div>
-                        <div class="border-border border-t"></div>
-                    {/if}
-                    <div class="flex items-center justify-between">
-                        <span class="text-muted-foreground text-sm">Last render</span>
-                        <span
-                            class="font-mono text-sm font-semibold {lastRenderTime > 50
-                                ? 'text-red-500'
-                                : lastRenderTime > 16
-                                  ? 'text-amber-500'
-                                  : 'text-foreground'}"
-                        >
-                            {formatMs(lastRenderTime)}
-                        </span>
-                    </div>
-                    <div class="border-border border-t"></div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-muted-foreground text-sm">Average render</span>
-                        <span
-                            class="font-mono text-sm font-semibold {avgRenderTime > 50
-                                ? 'text-red-500'
-                                : avgRenderTime > 16
-                                  ? 'text-amber-500'
-                                  : 'text-foreground'}"
-                        >
-                            {formatMs(avgRenderTime)}
-                        </span>
-                    </div>
-                    <div class="border-border border-t"></div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-muted-foreground text-sm">Peak render</span>
-                        <span
-                            class="font-mono text-sm font-semibold {peakRenderTime > 50
-                                ? 'text-red-500'
-                                : peakRenderTime > 16
-                                  ? 'text-amber-500'
-                                  : 'text-foreground'}"
-                        >
-                            {formatMs(peakRenderTime)}
-                        </span>
-                    </div>
-                    <div class="border-border border-t"></div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-muted-foreground text-sm">Dropped frames</span>
-                        <span
-                            class="font-mono text-sm font-semibold {droppedFrames > 0
-                                ? 'text-red-500'
-                                : 'text-foreground'}"
-                        >
-                            {droppedFrames}
-                        </span>
+                        {/if}
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Middle Column: Markdown Source (editable) -->
-        <div class="h-[calc(100vh-14rem)] min-h-[400px] overflow-hidden xl:col-span-1">
+        <div class="h-[calc(100vh-21rem)] min-h-[320px] overflow-hidden xl:col-span-1">
             <div class="border-border bg-card flex h-full flex-col rounded-xl border p-5 shadow-sm">
                 <div class="mb-3 flex items-center justify-between">
                     <h3 class="text-foreground text-sm font-semibold tracking-wide uppercase">
@@ -595,7 +663,7 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
         </div>
 
         <!-- Right Column: Rendered Output -->
-        <div class="h-[calc(100vh-14rem)] min-h-[400px] overflow-hidden xl:col-span-1">
+        <div class="h-[calc(100vh-21rem)] min-h-[320px] overflow-hidden xl:col-span-1">
             <div
                 class="border-border bg-card flex h-full min-h-0 flex-col rounded-xl border p-5 shadow-sm"
             >
@@ -612,7 +680,7 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                         <span class="text-muted-foreground text-xs">Complete</span>
                     {/if}
                 </div>
-                {#if source || streamMode === 'chunked'}
+                {#if source || chunkedStreamActive}
                     <div
                         bind:this={previewEl}
                         class="prose prose-sm dark:prose-invert min-h-0 max-w-none flex-1 overflow-y-auto"

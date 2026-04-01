@@ -191,9 +191,12 @@ Accepts either a string append chunk or an offset patch object:
 Rules:
 
 - String chunks append to the internal buffer.
-- Object chunks use `{ value, offset }` overwrite semantics.
+- Object chunks use `{ value, offset }` overwrite semantics, not insert semantics.
+- Offset writes preserve trailing content after the overwritten span.
 - If `offset` skips ahead, the gap is padded with spaces.
+- Offset mode does not support delete or truncate semantics.
 - The first successful write locks the stream into append mode or offset mode until reset.
+- Offset chunks require a non-negative safe integer `offset`.
 - Calls are ignored with a warning when `streaming={false}`, async extensions are active, or `source` is a token array.
 
 ### `resetStream(nextSource?)`
