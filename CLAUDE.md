@@ -131,7 +131,7 @@ buildUnsupportedRenderers() // Block all markdown renderers
 
 ## Non-Goals (Do Not Implement)
 
-Per PRD.md, the following are explicitly out of scope:
+The following are explicitly out of scope:
 
 - Built-in HTML sanitization (provide hooks instead)
 - Remote fetching of markdown documents
@@ -143,8 +143,7 @@ Per PRD.md, the following are explicitly out of scope:
 2. **`src/lib/SvelteMarkdown.svelte`** - Main component implementation
 3. **`src/lib/utils/markdown-parser.js`** - Token parsing logic
 4. **`src/lib/renderers/`** - Individual renderer components
-5. **`PRD.md`** - Product requirements and roadmap
-6. **`README.md`** - Usage documentation
+5. **`README.md`** - Usage documentation
 
 ## PR and Commit Guidelines
 
