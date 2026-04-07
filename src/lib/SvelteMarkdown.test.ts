@@ -971,13 +971,13 @@ describe('URL sanitization (Issue #272)', () => {
         expect(link).not.toHaveAttribute('href')
     })
 
-    test('blocks javascript: in image src — omits href entirely', () => {
+    test('blocks javascript: in image src — omits src entirely', () => {
         const { container } = render(SvelteMarkdown, {
             source: '![alt](javascript:alert("XSS"))'
         })
         const img = container.querySelector('img')
         expect(img).toBeInTheDocument()
-        expect(img).not.toHaveAttribute('href')
+        expect(img).not.toHaveAttribute('src')
     })
 
     test('allows safe https links', () => {

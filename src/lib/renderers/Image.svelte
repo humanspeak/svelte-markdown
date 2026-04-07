@@ -24,7 +24,13 @@ is displayed with reduced opacity and a grayscale filter.
         fadeIn?: boolean // Enable fade-in effect (default: true)
     }
 
-    const { href = '', title = undefined, text = '', lazy = true, fadeIn = true }: Props = $props()
+    const {
+        href = undefined,
+        title = undefined,
+        text = '',
+        lazy = true,
+        fadeIn = true
+    }: Props = $props()
 
     let img: HTMLImageElement
     let loaded = $state(false)

@@ -18,6 +18,30 @@ test.describe('Issue 272: Markdown-native XSS vectors bypass input-level HTML sa
         }
     })
 
+    test('should not render data: URI links', async ({ page }) => {
+        const preview = page.locator('[data-testid="preview"]')
+        const links = preview.locator('a')
+        const count = await links.count()
+
+        for (let i = 0; i < count; i++) {
+            const href = await links.nth(i).getAttribute('href')
+            expect(href).not.toMatch(/^data:/i)
+        }
+    })
+
+    test('should not render javascript: protocol in image src', async ({ page }) => {
+        const preview = page.locator('[data-testid="preview"]')
+        const images = preview.locator('img')
+        const count = await images.count()
+
+        for (let i = 0; i < count; i++) {
+            const src = await images.nth(i).getAttribute('src')
+            if (src) {
+                expect(src).not.toMatch(/^javascript:/i)
+            }
+        }
+    })
+
     test('should render safe https links normally', async ({ page }) => {
         const preview = page.locator('[data-testid="preview"]')
         const safeLink = preview.locator('a').filter({ hasText: 'Safe link' })

@@ -114,7 +114,6 @@ async function updateExamplesPageTs(examples) {
             )
             //trunk-ignore-begin(eslint)
             .replace(/: "([^"]*)"/g, ": '$1'")
-            .replace(/: null/g, ': null')
         //trunk-ignore-end(eslint)
         const newExamplesObject = `const examples = ${jsObject.replace(/^/gm, '    ').trim()}`
 
