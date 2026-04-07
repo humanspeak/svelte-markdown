@@ -22,6 +22,7 @@ import type { MarkedExtension, Token, TokensList } from 'marked'
 import type { Snippet } from 'svelte'
 import type { MarkedOptions, Renderers } from './utils/markdown-parser.js'
 import type { HtmlKey } from './utils/rendererKeys.js'
+import type { SanitizeAttributesFn, SanitizeUrlFn } from './utils/sanitize.js'
 
 // --- Markdown snippet prop types ---
 
@@ -135,10 +136,10 @@ export type SnippetOverrides = {
 /**
  * Props passed to HTML snippet overrides.
  *
- * **Security note:** `attributes` are spread directly onto the rendered HTML element.
- * This includes any attribute from the source markdown, such as `onclick` or `onerror`.
- * If rendering untrusted markdown, use `allowHtmlOnly`/`excludeHtmlOnly` to restrict
- * allowed tags, or integrate your own sanitizer to strip dangerous attributes.
+ * **Security note:** By default, `attributes` are sanitized in the Parser before
+ * reaching any renderer or snippet — event handlers (`on*`) are stripped and
+ * URL attributes are validated against a protocol allowlist. To customize this
+ * behavior, pass a `sanitizeUrl` prop to `SvelteMarkdown`.
  */
 export interface HtmlSnippetProps {
     attributes?: Record<string, string | number | boolean | undefined>
@@ -236,6 +237,32 @@ export type SvelteMarkdownProps<T extends Renderers = Renderers> = {
      * @param tokens - The parsed token array or `TokensList`.
      */
     parsed?: (tokens: Token[] | TokensList) => void // trunk-ignore(eslint/no-unused-vars)
+
+    /**
+     * Custom URL sanitizer applied in the Parser before tokens reach any
+     * renderer component or snippet. Receives a URL string and must return
+     * a sanitized URL (or `''` to strip it).
+     *
+     * The default allowlists `http:`, `https:`, `mailto:`, `tel:`, and
+     * relative URLs. Override to implement a custom policy.
+     *
+     * @defaultValue {@link defaultSanitizeUrl}
+     */
+    sanitizeUrl?: SanitizeUrlFn
+
+    /**
+     * Custom HTML attribute sanitizer applied in the Parser before tokens
+     * reach any renderer component or snippet. Receives the attribute map,
+     * a {@link SanitizeContext} with token type and HTML tag name, and the
+     * active `sanitizeUrl` function.
+     *
+     * The default strips all `on*` event handlers and runs URL-bearing
+     * attributes (`href`, `src`, `action`, etc.) through `sanitizeUrl`.
+     * Override to add custom attribute rules per tag.
+     *
+     * @defaultValue {@link defaultSanitizeAttributes}
+     */
+    sanitizeAttributes?: SanitizeAttributesFn
 } & Partial<SnippetOverrides> &
     Partial<HtmlSnippetOverrides>
 

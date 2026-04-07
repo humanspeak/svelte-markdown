@@ -56,6 +56,7 @@ import {
     type Token,
     type TokensList
 } from '$lib/utils/markdown-parser.js'
+import type { SanitizeAttributesFn, SanitizeUrlFn } from '$lib/utils/sanitize.js'
 
 /** The primary markdown rendering component. */
 export default SvelteMarkdown
@@ -115,6 +116,21 @@ export {
  */
 export { MemoryCache } from '$lib/utils/cache.js'
 export { IncrementalParser, type IncrementalUpdateResult } from '$lib/utils/incremental-parser.js'
+
+/**
+ * URL sanitization utilities for XSS prevention.
+ *
+ * - `defaultSanitizeUrl`        — protocol allowlist (http, https, mailto, tel, relative)
+ * - `defaultSanitizeAttributes` — strips event handlers and sanitizes URL attributes
+ * - `unsanitizedUrl`            — passthrough (allows all URLs)
+ * - `unsanitizedAttributes`     — passthrough (allows all attributes)
+ */
+export {
+    defaultSanitizeAttributes,
+    defaultSanitizeUrl,
+    unsanitizedAttributes,
+    unsanitizedUrl
+} from '$lib/utils/sanitize.js'
 export { TokenCache, tokenCache } from '$lib/utils/token-cache.js'
 
 /** Re-exported `MarkedExtension` type for the `extensions` prop. */
@@ -142,6 +158,8 @@ export type {
     RawTextSnippetProps,
     RendererComponent,
     Renderers,
+    SanitizeAttributesFn,
+    SanitizeUrlFn,
     SnippetOverrides,
     StreamingChunk,
     StreamingOffsetChunk,
