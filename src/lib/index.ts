@@ -56,7 +56,7 @@ import {
     type Token,
     type TokensList
 } from '$lib/utils/markdown-parser.js'
-import type { SanitizeAttributesFn, SanitizeUrlFn } from '$lib/utils/sanitize.js'
+import type { SanitizeAttributesFn, SanitizeContext, SanitizeUrlFn } from '$lib/utils/sanitize.js'
 
 /** The primary markdown rendering component. */
 export default SvelteMarkdown
@@ -159,6 +159,7 @@ export type {
     RendererComponent,
     Renderers,
     SanitizeAttributesFn,
+    SanitizeContext,
     SanitizeUrlFn,
     SnippetOverrides,
     StreamingChunk,

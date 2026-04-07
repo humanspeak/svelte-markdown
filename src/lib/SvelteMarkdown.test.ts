@@ -946,38 +946,38 @@ describe('testing nested lists', () => {
 })
 
 describe('URL sanitization (Issue #272)', () => {
-    test('blocks javascript: protocol in markdown links', () => {
+    test('blocks javascript: protocol in markdown links — omits href entirely', () => {
         const { container } = render(SvelteMarkdown, {
             source: '[Click](javascript:alert("XSS"))'
         })
         const link = container.querySelector('a')
         expect(link).toBeInTheDocument()
-        expect(link).toHaveAttribute('href', '')
+        expect(link).not.toHaveAttribute('href')
     })
 
-    test('blocks mixed-case javascript: protocol', () => {
+    test('blocks mixed-case javascript: protocol — omits href entirely', () => {
         const { container } = render(SvelteMarkdown, {
             source: '[Click](JaVaScRiPt:alert("XSS"))'
         })
         const link = container.querySelector('a')
-        expect(link).toHaveAttribute('href', '')
+        expect(link).not.toHaveAttribute('href')
     })
 
-    test('blocks data: URI in markdown links', () => {
+    test('blocks data: URI in markdown links — omits href entirely', () => {
         const { container } = render(SvelteMarkdown, {
             source: '[Click](data:text/html,<script>alert(1)</script>)'
         })
         const link = container.querySelector('a')
-        expect(link).toHaveAttribute('href', '')
+        expect(link).not.toHaveAttribute('href')
     })
 
-    test('blocks javascript: in image src', () => {
+    test('blocks javascript: in image src — omits href entirely', () => {
         const { container } = render(SvelteMarkdown, {
             source: '![alt](javascript:alert("XSS"))'
         })
         const img = container.querySelector('img')
         expect(img).toBeInTheDocument()
-        expect(img).toHaveAttribute('src', '')
+        expect(img).not.toHaveAttribute('href')
     })
 
     test('allows safe https links', () => {

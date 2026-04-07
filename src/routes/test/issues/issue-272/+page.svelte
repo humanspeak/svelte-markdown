@@ -28,7 +28,7 @@ Markdown-native constructs pass through untouched, then Marked parses them into 
 [Safe link](https://example.com)
 `)
 
-    const parsed = async (parsedTokens: Token[] | TokensList) => {
+    const parsed = (parsedTokens: Token[] | TokensList) => {
         console.log('displaying tokens', parsedTokens)
     }
 </script>

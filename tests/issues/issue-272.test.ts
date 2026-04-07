@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test.describe('Issue 272: Markdown-native XSS vectors bypass input-level HTML sanitization', () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto('/test/issues/issue-272', { waitUntil: 'networkidle' })
+        await page.goto('/test/issues/issue-272', { waitUntil: 'domcontentloaded' })
     })
 
     test('should not render javascript: protocol links', async ({ page }) => {

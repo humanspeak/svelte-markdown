@@ -211,6 +211,26 @@ describe('defaultSanitizeAttributes', () => {
         expect(input).toEqual({ onclick: 'alert(1)', class: 'btn' })
     })
 
+    it('strips srcdoc attribute from iframes', () => {
+        const iframeCtx: SanitizeContext = { type: 'html', tag: 'iframe' }
+        const result = defaultSanitizeAttributes(
+            { src: 'https://example.com', srcdoc: '<script>alert(1)</script>', width: '100' },
+            iframeCtx,
+            defaultSanitizeUrl
+        )
+        expect(result).toEqual({ src: 'https://example.com', width: '100' })
+    })
+
+    it('strips srcdoc regardless of case', () => {
+        const iframeCtx: SanitizeContext = { type: 'html', tag: 'iframe' }
+        const result = defaultSanitizeAttributes(
+            { SRCDOC: '<script>alert(1)</script>', class: 'frame' },
+            iframeCtx,
+            defaultSanitizeUrl
+        )
+        expect(result).toEqual({ class: 'frame' })
+    })
+
     it('passes context through to sanitizeUrl', () => {
         const captured: SanitizeContext[] = []
         const spy = (url: string, ctx: SanitizeContext) => {

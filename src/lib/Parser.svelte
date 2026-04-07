@@ -99,7 +99,8 @@
     const sanitizedRest = $derived.by(() => {
         if ((type === 'link' || type === 'image') && typeof rest.href === 'string') {
             const tag = type === 'link' ? 'a' : 'img'
-            return { ...rest, href: sanitizeUrl(rest.href, { type, tag }) }
+            const sanitized = sanitizeUrl(rest.href, { type, tag })
+            return { ...rest, href: sanitized || undefined }
         }
         if (type === 'html' && rest.attributes) {
             const tag = (rest.tag as string) ?? ''

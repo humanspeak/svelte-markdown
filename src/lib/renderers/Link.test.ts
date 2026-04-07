@@ -23,10 +23,10 @@ describe('Link (markdown)', () => {
         expect(a?.hasAttribute('title')).toBe(false)
     })
 
-    it('renders anchor with empty href when not provided', () => {
+    it('renders anchor without href attribute when not provided', () => {
         const { container } = render(Link, { props: {} })
         const a = container.querySelector('a')
-        expect(a?.getAttribute('href')).toBe('')
+        expect(a?.getAttribute('href')).toBeNull()
     })
 
     it('handles relative URLs', () => {

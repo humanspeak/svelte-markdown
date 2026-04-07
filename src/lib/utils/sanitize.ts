@@ -123,7 +123,8 @@ export const defaultSanitizeAttributes: SanitizeAttributesFn = (
         const lower = key.toLowerCase()
 
         // Strip event handlers (onclick, onerror, onload, etc.)
-        if (lower.startsWith('on')) continue
+        // Strip srcdoc — allows arbitrary HTML/script execution in iframes
+        if (lower.startsWith('on') || lower === 'srcdoc') continue
 
         // Sanitize URL-bearing attributes
         if (URL_ATTRIBUTES.has(lower)) {
