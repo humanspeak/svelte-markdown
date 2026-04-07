@@ -43,6 +43,8 @@ const URL_ATTRIBUTES = new Set(['href', 'src', 'action', 'formaction', 'cite', '
 
 /** Fast-path: most URLs are http/https — avoid `new URL()` for these. */
 const SAFE_PREFIX_RE = /^https?:/i
+const LEADING_WS_RE = /^\s+/
+const RELATIVE_RE = /^[#/?.]/
 
 /**
  * Sanitizes a URL against a protocol allowlist.
@@ -59,10 +61,10 @@ const SAFE_PREFIX_RE = /^https?:/i
 export const defaultSanitizeUrl = (url: string, _context: SanitizeContext): string => {
     if (!url) return ''
 
-    const trimmed = url.replace(/^\s+/, '')
+    const trimmed = url.replace(LEADING_WS_RE, '')
 
     // Relative URLs are safe: #anchor, /path, ?query, ./relative, ../parent
-    if (/^[#/?.]/.test(trimmed)) return trimmed
+    if (RELATIVE_RE.test(trimmed)) return trimmed
 
     // No colon means no protocol — safe relative URL
     if (!trimmed.includes(':')) return trimmed

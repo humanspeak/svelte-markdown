@@ -14,7 +14,10 @@ test.describe('Issue 272: Markdown-native XSS vectors bypass input-level HTML sa
 
         for (let i = 0; i < count; i++) {
             const href = await links.nth(i).getAttribute('href')
-            expect(href).not.toMatch(/^javascript:/i)
+            // null means href was omitted (blocked) — that's safe
+            if (href) {
+                expect(href).not.toMatch(/^javascript:/i)
+            }
         }
     })
 
@@ -25,7 +28,9 @@ test.describe('Issue 272: Markdown-native XSS vectors bypass input-level HTML sa
 
         for (let i = 0; i < count; i++) {
             const href = await links.nth(i).getAttribute('href')
-            expect(href).not.toMatch(/^data:/i)
+            if (href) {
+                expect(href).not.toMatch(/^data:/i)
+            }
         }
     })
 
