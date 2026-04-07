@@ -23,6 +23,8 @@ test.describe('Issue 272: Markdown-native XSS vectors bypass input-level HTML sa
 
     test('should not render data: URI links', async ({ page }) => {
         const preview = page.locator('[data-testid="preview"]')
+        await expect(preview).toBeVisible()
+
         const links = preview.locator('a')
         const count = await links.count()
 
@@ -36,6 +38,8 @@ test.describe('Issue 272: Markdown-native XSS vectors bypass input-level HTML sa
 
     test('should not render javascript: protocol in image src', async ({ page }) => {
         const preview = page.locator('[data-testid="preview"]')
+        await expect(preview).toBeVisible()
+
         const images = preview.locator('img')
         const count = await images.count()
 
