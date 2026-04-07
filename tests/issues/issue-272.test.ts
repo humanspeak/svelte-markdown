@@ -53,6 +53,8 @@ test.describe('Issue 272: Markdown-native XSS vectors bypass input-level HTML sa
 
     test('should render safe https links normally', async ({ page }) => {
         const preview = page.locator('[data-testid="preview"]')
+        await expect(preview).toBeVisible()
+
         const safeLink = preview.locator('a').filter({ hasText: 'Safe link' })
         await expect(safeLink).toHaveAttribute('href', 'https://example.com')
     })
