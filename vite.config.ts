@@ -44,6 +44,6 @@ export default defineConfig({
         port: 8233
     },
     build: {
-        sourcemap: true
+        sourcemap: false
     }
 })
