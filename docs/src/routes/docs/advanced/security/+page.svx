@@ -35,7 +35,7 @@ By default, all `href` values on markdown links and images are validated against
 
 Dangerous protocols like `javascript:`, `data:`, `vbscript:`, and `blob:` are blocked automatically.
 
-```markdown
+```text
 <!-- This link will have its href stripped -->
 [Click me](javascript:alert('XSS'))
 
@@ -50,7 +50,7 @@ For raw HTML within markdown, the default sanitizer:
 1. **Strips all event handler attributes** (`onclick`, `onerror`, `onload`, etc.)
 2. **Validates URL-bearing attributes** (`href`, `src`, `action`, `formaction`, `cite`, `data`, `poster`) against the same protocol allowlist
 
-```markdown
+```text
 <!-- onclick is stripped, javascript: href is blocked -->
 <a href="javascript:alert('XSS')" onclick="alert('XSS')">Click</a>
 
