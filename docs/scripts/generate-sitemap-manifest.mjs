@@ -112,8 +112,10 @@ async function updateExamplesPageTs(examples) {
             .replace(/"([^"]+)":/g, (_, key) =>
                 /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? `${key}:` : `'${key}':`
             )
+            //trunk-ignore-begin(eslint)
             .replace(/: "([^"]*)"/g, ": '$1'")
             .replace(/: null/g, ': null')
+        //trunk-ignore-end(eslint)
         const newExamplesObject = `const examples = ${jsObject.replace(/^/gm, '    ').trim()}`
 
         if (examplesObjectRegex.test(content)) {
