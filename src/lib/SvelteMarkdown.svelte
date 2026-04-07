@@ -65,6 +65,7 @@
     } from '$lib/utils/markdown-parser.js'
     import { parseAndCacheTokens, parseAndCacheTokensAsync } from '$lib/utils/parse-and-cache.js'
     import { rendererKeysInternal } from '$lib/utils/rendererKeys.js'
+    import { defaultSanitizeAttributes, defaultSanitizeUrl } from '$lib/utils/sanitize.js'
     import { Marked } from 'marked'
 
     // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
@@ -85,6 +86,8 @@
         isInline = false,
         parsed = () => {},
         extensions = [],
+        sanitizeUrl = defaultSanitizeUrl,
+        sanitizeAttributes = defaultSanitizeAttributes,
         ...rest
     }: SvelteMarkdownProps & {
         [key: string]: unknown
@@ -496,4 +499,6 @@
     renderers={combinedRenderers}
     {snippetOverrides}
     {htmlSnippetOverrides}
+    {sanitizeUrl}
+    {sanitizeAttributes}
 />

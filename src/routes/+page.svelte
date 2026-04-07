@@ -32,7 +32,36 @@
             name: 'Extendability',
             description: 'Custom renderer components'
         },
-        { href: '/test/issues', name: 'Issues', description: 'GitHub issue reproductions' },
+        {
+            href: '/test/issues/issue-192',
+            name: 'Issue 192',
+            description: 'Issues: Custom list renderer props'
+        },
+        {
+            href: '/test/issues/issue-195',
+            name: 'Issue 195',
+            description: 'Issues: Custom list component handling'
+        },
+        {
+            href: '/test/issues/issue-206',
+            name: 'Issue 206',
+            description: 'Issues: HTML token parsing edge cases'
+        },
+        {
+            href: '/test/issues/issue-210',
+            name: 'Issue 210',
+            description: 'Issues: BR/SUP rendering in table cells'
+        },
+        {
+            href: '/test/issues/issue-214',
+            name: 'Issue 214',
+            description: 'Issues: Nested HTML element handling'
+        },
+        {
+            href: '/test/issues/issue-272',
+            name: 'Issue 272',
+            description: 'Issues: XSS sanitization bypass'
+        },
         { href: '/test/katex', name: 'KaTeX', description: 'Math rendering with KaTeX extension' },
         {
             href: '/test/katex-snippets',
@@ -63,6 +92,7 @@
             name: 'Snippets Precedence',
             description: 'Snippet vs component renderer priority'
         },
+        { href: '/test/security', name: 'Security', description: 'XSS vector demonstrations' },
         { href: '/test/streaming', name: 'Streaming', description: 'Simulated LLM token streaming' }
     ]
 </script>

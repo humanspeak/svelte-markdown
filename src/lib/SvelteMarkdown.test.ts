@@ -944,3 +944,102 @@ describe('testing nested lists', () => {
         expect(firstThirdLevelList?.parentElement?.textContent).toContain('Level 2 Item A1')
     })
 })
+
+describe('URL sanitization (Issue #272)', () => {
+    test('blocks javascript: protocol in markdown links — omits href entirely', () => {
+        const { container } = render(SvelteMarkdown, {
+            source: '[Click](javascript:alert("XSS"))'
+        })
+        const link = container.querySelector('a')
+        expect(link).toBeInTheDocument()
+        expect(link).not.toHaveAttribute('href')
+    })
+
+    test('blocks mixed-case javascript: protocol — omits href entirely', () => {
+        const { container } = render(SvelteMarkdown, {
+            source: '[Click](JaVaScRiPt:alert("XSS"))'
+        })
+        const link = container.querySelector('a')
+        expect(link).not.toHaveAttribute('href')
+    })
+
+    test('blocks data: URI in markdown links — omits href entirely', () => {
+        const { container } = render(SvelteMarkdown, {
+            source: '[Click](data:text/html,<script>alert(1)</script>)'
+        })
+        const link = container.querySelector('a')
+        expect(link).not.toHaveAttribute('href')
+    })
+
+    test('blocks javascript: in image src — omits src entirely', () => {
+        const { container } = render(SvelteMarkdown, {
+            source: '![alt](javascript:alert("XSS"))'
+        })
+        const img = container.querySelector('img')
+        expect(img).toBeInTheDocument()
+        expect(img).not.toHaveAttribute('src')
+    })
+
+    test('allows safe https links', () => {
+        const { container } = render(SvelteMarkdown, {
+            source: '[Safe](https://example.com)'
+        })
+        const link = container.querySelector('a')
+        expect(link).toHaveAttribute('href', 'https://example.com')
+    })
+
+    test('allows relative links', () => {
+        const { container } = render(SvelteMarkdown, {
+            source: '[Relative](/path/to/page)'
+        })
+        const link = container.querySelector('a')
+        expect(link).toHaveAttribute('href', '/path/to/page')
+    })
+
+    test('strips onclick from HTML <a> tags', () => {
+        const { container } = render(SvelteMarkdown, {
+            source: '<a href="https://example.com" onclick="alert(1)">Click</a>'
+        })
+        const link = container.querySelector('a')
+        expect(link).toHaveAttribute('href', 'https://example.com')
+        expect(link).not.toHaveAttribute('onclick')
+    })
+
+    test('strips onclick from HTML <div> tags', () => {
+        const { container } = render(SvelteMarkdown, {
+            source: '<div onclick="alert(1)">Content</div>'
+        })
+        const div = container.querySelector('div div')
+        expect(div).toBeInTheDocument()
+        expect(div).not.toHaveAttribute('onclick')
+    })
+
+    test('sanitizes javascript: href in HTML <a> tags', () => {
+        const { container } = render(SvelteMarkdown, {
+            source: '<a href="javascript:alert(1)">Click</a>'
+        })
+        const link = container.querySelector('a')
+        expect(link).not.toHaveAttribute('href')
+    })
+
+    test('allows custom sanitizeUrl to override default', () => {
+        const allowAll = (url: string) => url
+        const { container } = render(SvelteMarkdown, {
+            source: '[Click](javascript:alert("XSS"))',
+            sanitizeUrl: allowAll
+        })
+        const link = container.querySelector('a')
+        expect(link).toHaveAttribute('href', 'javascript:alert("XSS")')
+    })
+
+    test('allows custom sanitizeAttributes to override default', () => {
+        const keepAll = (attrs: Record<string, string>) => attrs
+        const { container } = render(SvelteMarkdown, {
+            source: '<a href="javascript:alert(1)">Click</a>',
+            sanitizeAttributes: keepAll
+        })
+        const link = container.querySelector('a')
+        // Custom sanitizeAttributes bypasses URL sanitization too
+        expect(link).toHaveAttribute('href', 'javascript:alert(1)')
+    })
+})

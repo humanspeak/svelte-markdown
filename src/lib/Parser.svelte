@@ -55,6 +55,12 @@
         Tokens,
         RendererComponent
     } from '$lib/utils/markdown-parser.js'
+    import {
+        defaultSanitizeAttributes,
+        defaultSanitizeUrl,
+        type SanitizeAttributesFn,
+        type SanitizeUrlFn
+    } from '$lib/utils/sanitize.js'
 
     // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
     type AnySnippet = (..._args: any[]) => any
@@ -68,6 +74,8 @@
         renderers: T
         snippetOverrides?: Record<string, AnySnippet>
         htmlSnippetOverrides?: Record<string, AnySnippet>
+        sanitizeUrl?: SanitizeUrlFn
+        sanitizeAttributes?: SanitizeAttributesFn
     }
 
     const {
@@ -79,10 +87,34 @@
         renderers,
         snippetOverrides = {},
         htmlSnippetOverrides = {},
+        sanitizeUrl = defaultSanitizeUrl,
+        sanitizeAttributes = defaultSanitizeAttributes,
         ...rest
     }: Props & {
         [key: string]: unknown
     } = $props()
+
+    // Sanitize rest props before they reach any renderer or snippet.
+    // This is the single enforcement point — custom renderers cannot bypass it.
+    const sanitizedRest = $derived.by(() => {
+        if ((type === 'link' || type === 'image') && typeof rest.href === 'string') {
+            const tag = type === 'link' ? 'a' : 'img'
+            const sanitized = sanitizeUrl(rest.href, { type, tag })
+            return { ...rest, href: sanitized || undefined }
+        }
+        if (type === 'html' && rest.attributes) {
+            const tag = (rest.tag as string) ?? ''
+            return {
+                ...rest,
+                attributes: sanitizeAttributes(
+                    rest.attributes as Record<string, string>,
+                    { type, tag },
+                    sanitizeUrl
+                )
+            }
+        }
+        return rest
+    })
 </script>
 
 {#if !type}
@@ -95,6 +127,8 @@
                 {renderers}
                 {snippetOverrides}
                 {htmlSnippetOverrides}
+                {sanitizeUrl}
+                {sanitizeAttributes}
             />
         {/each}
     {/if}
@@ -112,26 +146,31 @@
                     {#snippet theadContent()}
                         {#snippet headerRowContent()}
                             {#each header ?? [] as headerItem, i (i)}
-                                {@const { align: _align, ...cellRest } = rest}
+                                {@const { align: _align, ...cellRest } = sanitizedRest}
                                 {#snippet headerCellContent()}
                                     <Parser
                                         tokens={headerItem.tokens}
                                         {renderers}
                                         {snippetOverrides}
                                         {htmlSnippetOverrides}
+                                        {sanitizeUrl}
+                                        {sanitizeAttributes}
                                     />
                                 {/snippet}
                                 {#if cellSnippet}
                                     {@render cellSnippet({
                                         header: true,
-                                        align: (rest.align as string[] | undefined)?.[i] ?? null,
+                                        align:
+                                            (sanitizedRest.align as string[] | undefined)?.[i] ??
+                                            null,
                                         ...cellRest,
                                         children: headerCellContent
                                     })}
                                 {:else}
                                     <renderers.tablecell
                                         header={true}
-                                        align={(rest.align as string[] | undefined)?.[i] ?? null}
+                                        align={(sanitizedRest.align as string[] | undefined)?.[i] ??
+                                            null}
                                         {...cellRest}
                                     >
                                         {@render headerCellContent()}
@@ -140,17 +179,17 @@
                             {/each}
                         {/snippet}
                         {#if rowSnippet}
-                            {@render rowSnippet({ ...rest, children: headerRowContent })}
+                            {@render rowSnippet({ ...sanitizedRest, children: headerRowContent })}
                         {:else}
-                            <renderers.tablerow {...rest}>
+                            <renderers.tablerow {...sanitizedRest}>
                                 {@render headerRowContent()}
                             </renderers.tablerow>
                         {/if}
                     {/snippet}
                     {#if theadSnippet}
-                        {@render theadSnippet({ ...rest, children: theadContent })}
+                        {@render theadSnippet({ ...sanitizedRest, children: theadContent })}
                     {:else}
-                        <renderers.tablehead {...rest}>
+                        <renderers.tablehead {...sanitizedRest}>
                             {@render theadContent()}
                         </renderers.tablehead>
                     {/if}
@@ -160,7 +199,7 @@
                         {#each rows ?? [] as row, i (i)}
                             {#snippet bodyRowContent()}
                                 {#each row ?? [] as cells, j (j)}
-                                    {@const { align: _align, ...cellRest } = rest}
+                                    {@const { align: _align, ...cellRest } = sanitizedRest}
                                     {#snippet bodyCellContent()}
                                         {#each cells.tokens ?? [] as cellToken, index (index)}
                                             <Parser
@@ -169,6 +208,8 @@
                                                 {renderers}
                                                 {snippetOverrides}
                                                 {htmlSnippetOverrides}
+                                                {sanitizeUrl}
+                                                {sanitizeAttributes}
                                             />
                                         {/each}
                                     {/snippet}
@@ -176,7 +217,9 @@
                                         {@render cellSnippet({
                                             header: false,
                                             align:
-                                                (rest.align as string[] | undefined)?.[j] ?? null,
+                                                (sanitizedRest.align as string[] | undefined)?.[
+                                                    j
+                                                ] ?? null,
                                             ...cellRest,
                                             children: bodyCellContent
                                         })}
@@ -184,8 +227,9 @@
                                         <renderers.tablecell
                                             {...cellRest}
                                             header={false}
-                                            align={(rest.align as string[] | undefined)?.[j] ??
-                                                null}
+                                            align={(sanitizedRest.align as string[] | undefined)?.[
+                                                j
+                                            ] ?? null}
                                         >
                                             {@render bodyCellContent()}
                                         </renderers.tablecell>
@@ -193,18 +237,18 @@
                                 {/each}
                             {/snippet}
                             {#if rowSnippet}
-                                {@render rowSnippet({ ...rest, children: bodyRowContent })}
+                                {@render rowSnippet({ ...sanitizedRest, children: bodyRowContent })}
                             {:else}
-                                <renderers.tablerow {...rest}>
+                                <renderers.tablerow {...sanitizedRest}>
                                     {@render bodyRowContent()}
                                 </renderers.tablerow>
                             {/if}
                         {/each}
                     {/snippet}
                     {#if tbodySnippet}
-                        {@render tbodySnippet({ ...rest, children: tbodyContent })}
+                        {@render tbodySnippet({ ...sanitizedRest, children: tbodyContent })}
                     {:else}
-                        <renderers.tablebody {...rest}>
+                        <renderers.tablebody {...sanitizedRest}>
                             {@render tbodyContent()}
                         </renderers.tablebody>
                     {/if}
@@ -212,9 +256,9 @@
             {/snippet}
 
             {#if tableSnippet}
-                {@render tableSnippet({ ...rest, children: tableContent })}
+                {@render tableSnippet({ ...sanitizedRest, children: tableContent })}
             {:else}
-                <renderers.table {...rest}>
+                <renderers.table {...sanitizedRest}>
                     {@render tableContent()}
                 </renderers.table>
             {/if}
@@ -224,7 +268,7 @@
 
         {#if ordered}
             {#snippet orderedListContent()}
-                {@const { items: _items, ...parserRest } = rest}
+                {@const { items: _items, ...parserRest } = sanitizedRest}
                 {@const items = (_items as Props[] | undefined) ?? []}
                 {#each items as item, index (index)}
                     {@const OrderedListComponent = renderers.orderedlistitem || renderers.listitem}
@@ -237,6 +281,8 @@
                             {renderers}
                             {snippetOverrides}
                             {htmlSnippetOverrides}
+                            {sanitizeUrl}
+                            {sanitizeAttributes}
                         />
                     {/snippet}
                     {#if orderedItemSnippet}
@@ -249,15 +295,15 @@
                 {/each}
             {/snippet}
             {#if listSnippet}
-                {@render listSnippet({ ordered, ...rest, children: orderedListContent })}
+                {@render listSnippet({ ordered, ...sanitizedRest, children: orderedListContent })}
             {:else}
-                <renderers.list {ordered} {...rest}>
+                <renderers.list {ordered} {...sanitizedRest}>
                     {@render orderedListContent()}
                 </renderers.list>
             {/if}
         {:else}
             {#snippet unorderedListContent()}
-                {@const { items: _items, ...parserRest } = rest}
+                {@const { items: _items, ...parserRest } = sanitizedRest}
                 {@const items = (_items as Props[] | undefined) ?? []}
                 {#each items as item, index (index)}
                     {@const UnorderedListComponent =
@@ -271,6 +317,8 @@
                             {renderers}
                             {snippetOverrides}
                             {htmlSnippetOverrides}
+                            {sanitizeUrl}
+                            {sanitizeAttributes}
                         />
                     {/snippet}
                     {#if unorderedItemSnippet}
@@ -283,16 +331,16 @@
                 {/each}
             {/snippet}
             {#if listSnippet}
-                {@render listSnippet({ ordered, ...rest, children: unorderedListContent })}
+                {@render listSnippet({ ordered, ...sanitizedRest, children: unorderedListContent })}
             {:else}
-                <renderers.list {ordered} {...rest}>
+                <renderers.list {ordered} {...sanitizedRest}>
                     {@render unorderedListContent()}
                 </renderers.list>
             {/if}
         {/if}
     {:else if type === 'html'}
-        {@const { tag, ...localRest } = rest}
-        {@const htmlTag = rest.tag as keyof typeof Html}
+        {@const { tag, ...localRest } = sanitizedRest}
+        {@const htmlTag = sanitizedRest.tag as keyof typeof Html}
         {@const htmlSnippet = htmlSnippetOverrides[htmlTag as string]}
         {#if htmlSnippet}
             {#snippet htmlSnippetChildren()}
@@ -302,31 +350,38 @@
                         {renderers}
                         {snippetOverrides}
                         {htmlSnippetOverrides}
+                        {sanitizeUrl}
+                        {sanitizeAttributes}
                         {...Object.fromEntries(
                             Object.entries(localRest).filter(([key]) => key !== 'attributes')
                         )}
                     />
                 {:else}
-                    <renderers.rawtext text={rest.raw} {...rest} />
+                    <renderers.rawtext text={sanitizedRest.raw} {...sanitizedRest} />
                 {/if}
             {/snippet}
-            {@render htmlSnippet({ attributes: rest.attributes, children: htmlSnippetChildren })}
+            {@render htmlSnippet({
+                attributes: sanitizedRest.attributes,
+                children: htmlSnippetChildren
+            })}
         {:else if renderers.html && htmlTag in renderers.html}
             {@const HtmlComponent = renderers.html[htmlTag as keyof typeof renderers.html]}
             {#if HtmlComponent}
-                <HtmlComponent {...rest}>
+                <HtmlComponent {...sanitizedRest}>
                     {#if tokens && (tokens as Token[]).length}
                         <Parser
                             tokens={tokens as Token[]}
                             {renderers}
                             {snippetOverrides}
                             {htmlSnippetOverrides}
+                            {sanitizeUrl}
+                            {sanitizeAttributes}
                             {...Object.fromEntries(
                                 Object.entries(localRest).filter(([key]) => key !== 'attributes')
                             )}
                         />
                     {:else}
-                        <renderers.rawtext text={rest.raw} {...rest} />
+                        <renderers.rawtext text={sanitizedRest.raw} {...sanitizedRest} />
                     {/if}
                 </HtmlComponent>
             {/if}
@@ -336,6 +391,8 @@
                 {renderers}
                 {snippetOverrides}
                 {htmlSnippetOverrides}
+                {sanitizeUrl}
+                {sanitizeAttributes}
                 {...Object.fromEntries(
                     Object.entries(localRest).filter(([key]) => key !== 'tokens')
                 )}
@@ -347,23 +404,25 @@
 
         {#snippet renderChildren()}
             {#if tokens}
-                {@const { text: _text, raw: _raw, ...parserRest } = rest}
+                {@const { text: _text, raw: _raw, ...parserRest } = sanitizedRest}
                 <Parser
                     {...parserRest}
                     {tokens}
                     {renderers}
                     {snippetOverrides}
                     {htmlSnippetOverrides}
+                    {sanitizeUrl}
+                    {sanitizeAttributes}
                 />
             {:else}
-                <renderers.rawtext text={rest.raw} {...rest} />
+                <renderers.rawtext text={sanitizedRest.raw} {...sanitizedRest} />
             {/if}
         {/snippet}
 
         {#if typeSnippet}
-            {@render typeSnippet({ ...rest, children: renderChildren })}
+            {@render typeSnippet({ ...sanitizedRest, children: renderChildren })}
         {:else if GeneralComponent}
-            <GeneralComponent {...rest}>
+            <GeneralComponent {...sanitizedRest}>
                 {@render renderChildren()}
             </GeneralComponent>
         {/if}

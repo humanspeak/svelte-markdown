@@ -68,7 +68,8 @@ describe('IncrementalParser', () => {
             parser.update('# Hello\n\nSome text')
             const result = parser.update('# Hello\n\nSome text with more')
 
-            expect(result.divergeAt).toBe(1)
+            // heading + space are unchanged; paragraph diverges at index 2
+            expect(result.divergeAt).toBe(2)
             expect(result.tokens[0].type).toBe('heading')
         })
 
@@ -89,7 +90,8 @@ describe('IncrementalParser', () => {
 
             const r2 = parser.update('# Title\n\nFirst paragraph with more text')
             expect(r2.tokens[0].raw).toBe(headingRaw)
-            expect(r2.divergeAt).toBe(1)
+            // heading + space are unchanged; paragraph diverges at index 2
+            expect(r2.divergeAt).toBe(2)
         })
     })
 
@@ -156,7 +158,8 @@ describe('IncrementalParser', () => {
             }
             const boundary = internalParser.getTailWindowBoundary()
 
-            expect(boundary).toEqual({ prefixCount: 1, reparseOffset: 9 })
+            // heading + space are stable prefix (2 tokens), reparse from offset 9
+            expect(boundary).toEqual({ prefixCount: 2, reparseOffset: 9 })
             expect(internalParser.prevSource).toBe('# Title\n\nFirst paragraph')
             expect(
                 '# Title\n\nFirst paragraph\n\nSecond paragraph'.startsWith(
@@ -187,8 +190,11 @@ describe('IncrementalParser', () => {
             const result = parser.update('# Title\n\nParagraph')
 
             expect(result.tokens[0].type).toBe('heading')
-            expect(result.tokens[1].type).toBe('paragraph')
-            expect(lexSpy.mock.calls[1]?.[0]).toBe('Paragraph')
+            // marked now emits a space token between heading and paragraph
+            expect(result.tokens[1].type).toBe('space')
+            expect(result.tokens[2].type).toBe('paragraph')
+            // Tail window reparses from after the heading, including the space
+            expect(lexSpy.mock.calls[1]?.[0]).toBe('\n\nParagraph')
         })
 
         it('falls back to a full re-lex when reference-style syntax could change the prefix', () => {
