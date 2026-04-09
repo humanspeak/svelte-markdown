@@ -1,4 +1,4 @@
-name: Cloudflare Pages - Deploy
+name: Cloudflare Workers - Deploy
 
 permissions:
     contents: read
@@ -8,7 +8,7 @@ on:
         types: [closed]
         paths:
             - docs/**
-            - .github/workflows/cloudflare-pages.yml
+            - .github/workflows/cloudflare-deploy.yml
         branches:
             - main
     workflow_dispatch:
@@ -17,6 +17,7 @@ on:
 
 jobs:
     deploy:
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true }}
         runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         name: Deploy
         steps:
