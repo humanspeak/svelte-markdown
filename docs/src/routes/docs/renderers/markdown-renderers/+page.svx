@@ -58,6 +58,8 @@ Renders paragraph elements.
 
 | Prop | Type | Description |
 |------|------|-------------|
+| `raw` | `string \| undefined` | Raw markdown source |
+| `text` | `string \| undefined` | Plain text content |
 | `children` | `Snippet` | Rendered child content |
 
 **Default output:** `<p>`
@@ -70,6 +72,8 @@ Renders blockquote elements.
 
 | Prop | Type | Description |
 |------|------|-------------|
+| `raw` | `string \| undefined` | Raw markdown source |
+| `text` | `string \| undefined` | Plain text content |
 | `children` | `Snippet` | Rendered child content |
 
 **Default output:** `<blockquote>`
@@ -84,6 +88,8 @@ Renders fenced code blocks with a language class for syntax highlighting.
 |------|------|-------------|
 | `lang` | `string` | Language identifier (e.g., `"javascript"`, `"python"`) |
 | `text` | `string` | Code content |
+| `codeBlockStyle` | `'indented' \| undefined` | Style of code block (indented vs fenced) |
+| `escaped` | `boolean \| undefined` | Whether the text was HTML-escaped |
 
 **Default output:** `<pre class="{lang}"><code>{text}</code></pre>`
 
@@ -105,6 +111,7 @@ Renders ordered and unordered lists.
 |------|------|-------------|
 | `ordered` | `boolean` | `true` for ordered lists, `false` for unordered |
 | `start` | `number` | Starting number for ordered lists (default: `1`) |
+| `loose` | `boolean \| undefined` | Whether the list has loose spacing |
 | `children` | `Snippet` | Rendered child content (list items) |
 
 **Default output:** `<ol start="...">` or `<ul>`
@@ -117,6 +124,10 @@ Renders individual list items.
 
 | Prop | Type | Description |
 |------|------|-------------|
+| `text` | `string \| undefined` | Raw text content of the list item |
+| `task` | `boolean \| undefined` | Whether this is a task/checkbox list item |
+| `checked` | `boolean \| undefined` | Checkbox state (only meaningful when `task` is `true`) |
+| `loose` | `boolean \| undefined` | Whether the item has loose spacing |
 | `children` | `Snippet` | Rendered child content |
 | `listItemIndex` | `number \| undefined` | Index of this item within the list |
 
@@ -208,6 +219,8 @@ Renders inline text content. This is a passthrough renderer that renders its chi
 
 | Prop | Type | Description |
 |------|------|-------------|
+| `raw` | `string \| undefined` | Raw markdown source |
+| `text` | `string \| undefined` | Plain text content |
 | `children` | `Snippet` | Rendered child content |
 
 **Default output:** (no wrapper -- renders children directly)
@@ -222,6 +235,8 @@ Renders anchor links.
 |------|------|-------------|
 | `href` | `string` | Link URL |
 | `title` | `string \| undefined` | Link title attribute |
+| `raw` | `string \| undefined` | Raw markdown source |
+| `text` | `string \| undefined` | Plain text content of the link |
 | `children` | `Snippet` | Rendered child content (link text) |
 
 **Default output:** `<a href="..." title="...">`
@@ -237,6 +252,7 @@ Renders images with built-in lazy loading and fade-in support via IntersectionOb
 | `href` | `string` | Image source URL |
 | `title` | `string \| undefined` | Image title attribute |
 | `text` | `string` | Alt text for the image |
+| `raw` | `string \| undefined` | Raw markdown source |
 | `lazy` | `boolean` | Enable lazy loading (default: `true`) |
 | `fadeIn` | `boolean` | Enable fade-in animation on load (default: `true`) |
 
@@ -252,6 +268,8 @@ Renders emphasized (italic) text.
 
 | Prop | Type | Description |
 |------|------|-------------|
+| `raw` | `string \| undefined` | Raw markdown source |
+| `text` | `string \| undefined` | Plain text content |
 | `children` | `Snippet` | Rendered child content |
 
 **Default output:** `<em>`
@@ -264,6 +282,8 @@ Renders strong (bold) text.
 
 | Prop | Type | Description |
 |------|------|-------------|
+| `raw` | `string \| undefined` | Raw markdown source |
+| `text` | `string \| undefined` | Plain text content |
 | `children` | `Snippet` | Rendered child content |
 
 **Default output:** `<strong>`
@@ -276,7 +296,8 @@ Renders inline code spans.
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `raw` | `string` | Raw code text (backticks are stripped) |
+| `raw` | `string` | Raw code text including backticks |
+| `text` | `string \| undefined` | Decoded text content (backticks stripped) |
 
 **Default output:** `<code>`
 
@@ -288,6 +309,8 @@ Renders strikethrough text (requires GFM to be enabled).
 
 | Prop | Type | Description |
 |------|------|-------------|
+| `raw` | `string \| undefined` | Raw markdown source |
+| `text` | `string \| undefined` | Plain text content |
 | `children` | `Snippet` | Rendered child content |
 
 **Default output:** `<del>`
@@ -315,6 +338,7 @@ Renders escaped characters (e.g., `\*` renders as `*`).
 | Prop | Type | Description |
 |------|------|-------------|
 | `text` | `string` | The escaped character |
+| `raw` | `string \| undefined` | Raw markdown source (e.g., `\*`) |
 
 **Default output:** plain text (no wrapper)
 

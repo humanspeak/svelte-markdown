@@ -27,6 +27,8 @@ import type { SanitizeAttributesFn, SanitizeUrlFn } from './utils/sanitize.js'
 // --- Markdown snippet prop types ---
 
 export interface ParagraphSnippetProps {
+    raw?: string
+    text?: string
     children?: Snippet
 }
 export interface HeadingSnippetProps {
@@ -40,29 +42,42 @@ export interface HeadingSnippetProps {
 export interface LinkSnippetProps {
     href?: string
     title?: string
+    raw?: string
+    text?: string
     children?: Snippet
 }
 export interface ImageSnippetProps {
     href?: string
     title?: string
     text?: string
+    raw?: string
 }
 export interface CodeSnippetProps {
     lang: string
     text: string
+    codeBlockStyle?: 'indented'
+    escaped?: boolean
 }
 export interface CodespanSnippetProps {
     raw: string
+    text?: string
 }
 export interface BlockquoteSnippetProps {
+    raw?: string
+    text?: string
     children?: Snippet
 }
 export interface ListSnippetProps {
     ordered?: boolean
     start?: number
+    loose?: boolean
     children?: Snippet
 }
 export interface ListItemSnippetProps {
+    text?: string
+    task?: boolean
+    checked?: boolean
+    loose?: boolean
     children?: Snippet
     listItemIndex?: number
 }
@@ -84,17 +99,25 @@ export interface TableCellSnippetProps {
     children?: Snippet
 }
 export interface EmSnippetProps {
+    raw?: string
+    text?: string
     children?: Snippet
 }
 export interface StrongSnippetProps {
+    raw?: string
+    text?: string
     children?: Snippet
 }
 export interface DelSnippetProps {
+    raw?: string
+    text?: string
     children?: Snippet
 }
 export type HrSnippetProps = Record<string, never>
 export type BrSnippetProps = Record<string, never>
 export interface TextSnippetProps {
+    raw?: string
+    text?: string
     children?: Snippet
 }
 export interface RawTextSnippetProps {
@@ -102,6 +125,7 @@ export interface RawTextSnippetProps {
 }
 export interface EscapeSnippetProps {
     text: string
+    raw?: string
 }
 
 export type SnippetOverrides = {
