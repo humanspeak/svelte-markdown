@@ -61,21 +61,21 @@ These receive a `children` snippet that renders their inner content. You **must*
 
 | Renderer | Key Props |
 |----------|-----------|
-| `paragraph` | `children` |
+| `paragraph` | `raw`, `text`, `children` |
 | `heading` | `depth`, `raw`, `text`, `options`, `slug`, `children` |
-| `link` | `href`, `title`, `children` |
-| `blockquote` | `children` |
-| `list` | `ordered`, `start`, `children` |
-| `listitem` | `children` |
+| `link` | `href`, `title`, `raw`, `text`, `children` |
+| `blockquote` | `raw`, `text`, `children` |
+| `list` | `ordered`, `start`, `loose`, `children` |
+| `listitem` | `text`, `task`, `checked`, `loose`, `listItemIndex`, `children` |
 | `table` | `children` |
 | `tablehead` | `children` |
 | `tablebody` | `children` |
 | `tablerow` | `children` |
 | `tablecell` | `header`, `align`, `children` |
-| `em` | `children` |
-| `strong` | `children` |
-| `del` | `children` |
-| `text` | `children` |
+| `em` | `raw`, `text`, `children` |
+| `strong` | `raw`, `text`, `children` |
+| `del` | `raw`, `text`, `children` |
+| `text` | `raw`, `text`, `children` |
 
 ### Leaf Renderers
 
@@ -83,13 +83,13 @@ These render terminal content and do **not** receive `children`:
 
 | Renderer | Key Props |
 |----------|-----------|
-| `code` | `lang`, `text` |
-| `codespan` | `raw` |
-| `image` | `href`, `title`, `text` |
+| `code` | `lang`, `text`, `codeBlockStyle`, `escaped` |
+| `codespan` | `raw`, `text` |
+| `image` | `href`, `title`, `text`, `raw` |
 | `hr` | *(none)* |
 | `br` | *(none)* |
 | `rawtext` | `text` |
-| `escape` | `text` |
+| `escape` | `text`, `raw` |
 
 ## Examples
 
@@ -182,6 +182,27 @@ Since `code` is a leaf renderer, it receives data props but no `children`:
         <li class="custom-item">
             <span class="marker">→</span>
             {@render children?.()}
+        </li>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+### Task List with Custom Checkboxes
+
+The `listitem` snippet receives `task` and `checked` props, making it easy to customize task list rendering:
+
+```html
+<SvelteMarkdown source="- [x] Done\n- [ ] Todo\n- Regular item">
+    {#snippet listitem({ text, task, checked, children })}
+        <li class:task>
+            {#if task}
+                <label>
+                    <input type="checkbox" {checked} disabled />
+                    <span class:done={checked}>{@render children?.()}</span>
+                </label>
+            {:else}
+                {@render children?.()}
+            {/if}
         </li>
     {/snippet}
 </SvelteMarkdown>
