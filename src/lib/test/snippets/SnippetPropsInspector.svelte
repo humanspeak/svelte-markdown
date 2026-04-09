@@ -52,8 +52,7 @@
             data-testid="props-code"
             data-lang={props.lang}
             data-text={props.text}
-            data-code-block-style={props.codeBlockStyle}
-            data-escaped={props.escaped}><code>{props.text}</code></pre>
+            data-code-block-style={props.codeBlockStyle}><code>{props.text}</code></pre>
     {/snippet}
 
     {#snippet codespan(props)}

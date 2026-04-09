@@ -119,7 +119,7 @@ describe('Snippet Props Completeness', () => {
     })
 
     describe('Code props', () => {
-        it('passes lang, text, and escaped for fenced code blocks', () => {
+        it('passes lang and text for fenced code blocks', () => {
             const { container } = render(SnippetPropsInspector, {
                 props: { source: '```js\nconsole.log("hi")\n```' }
             })

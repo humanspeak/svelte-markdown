@@ -56,7 +56,6 @@ export interface CodeSnippetProps {
     lang: string
     text: string
     codeBlockStyle?: 'indented'
-    escaped?: boolean
 }
 export interface CodespanSnippetProps {
     raw: string

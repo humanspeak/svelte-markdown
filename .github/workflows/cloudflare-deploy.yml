@@ -17,6 +17,7 @@ on:
 
 jobs:
     deploy:
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true }}
         runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
         name: Deploy
         steps:

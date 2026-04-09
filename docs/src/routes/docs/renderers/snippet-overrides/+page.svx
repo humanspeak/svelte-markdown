@@ -83,7 +83,7 @@ These render terminal content and do **not** receive `children`:
 
 | Renderer | Key Props |
 |----------|-----------|
-| `code` | `lang`, `text`, `codeBlockStyle`, `escaped` |
+| `code` | `lang`, `text`, `codeBlockStyle` |
 | `codespan` | `raw`, `text` |
 | `image` | `href`, `title`, `text`, `raw` |
 | `hr` | *(none)* |

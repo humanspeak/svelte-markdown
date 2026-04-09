@@ -89,7 +89,6 @@ Renders fenced code blocks with a language class for syntax highlighting.
 | `lang` | `string` | Language identifier (e.g., `"javascript"`, `"python"`) |
 | `text` | `string` | Code content |
 | `codeBlockStyle` | `'indented' \| undefined` | Style of code block (indented vs fenced) |
-| `escaped` | `boolean \| undefined` | Whether the text was HTML-escaped |
 
 **Default output:** `<pre class="{lang}"><code>{text}</code></pre>`
 
