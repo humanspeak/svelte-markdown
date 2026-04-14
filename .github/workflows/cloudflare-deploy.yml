@@ -8,6 +8,12 @@ on:
         types: [closed]
         paths:
             - docs/**
+            - src/**
+            - static/**
+            - package.json
+            - pnpm-lock.yaml
+            - svelte.config.js
+            - vite.config.ts
             - .github/workflows/cloudflare-deploy.yml
         branches:
             - main
@@ -19,6 +25,7 @@ jobs:
     deploy:
         if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true }}
         runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
+        environment: docs
         name: Deploy
         steps:
             - name: Checkout
@@ -34,12 +41,17 @@ jobs:
               uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
               with:
                   node-version: 24
+                  cache: pnpm
 
             - name: Install Root Dependencies
               run: pnpm install --frozen-lockfile
 
             - name: Build Package
               run: pnpm run build
+
+            - name: Generate sitemap manifest
+              working-directory: docs
+              run: pnpm run sitemap:manifest
 
             - name: Deploy Docs
               working-directory: docs
