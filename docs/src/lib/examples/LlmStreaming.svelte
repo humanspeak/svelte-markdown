@@ -461,14 +461,14 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                         <span>
                             Building a chat UI? Pair with
                             <a
-                                href="https://virtuallist.svelte.page"
+                                href="https://virtualchat.svelte.page"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 class="text-brand-500 hover:text-brand-400 underline"
                             >
-                                @humanspeak/svelte-virtual-list
+                                @humanspeak/svelte-virtual-chat
                             </a>
-                            for smooth virtual scrolling.
+                            for a high-performance virtualized chat viewport purpose-built for LLM conversations.
                         </span>
                     </li>
                 </ul>
