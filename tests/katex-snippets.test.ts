@@ -66,8 +66,10 @@ $$`
         await expect(katexDisplay).toHaveCount(1)
     })
 
-    test('does not render $...$ as math by default (singleDollarInline off)', async ({ page }) => {
-        const markdown = 'Budget: $5,000 across $42 line items'
+    test('does not render balanced $...$ as math by default (singleDollarInline off)', async ({
+        page
+    }) => {
+        const markdown = 'Inline: $E = mc^2$'
         const textarea = page.getByTestId('markdown-input')
         await textarea.clear()
         await textarea.fill(markdown)
