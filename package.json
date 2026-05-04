@@ -122,7 +122,6 @@
         "husky": "^9.1.7",
         "jsdom": "^29.0.2",
         "katex": "^0.16.45",
-        "marked-katex-extension": "^5.1.8",
         "mermaid": "^11.14.0",
         "mprocs": "^0.9.2",
         "prettier": "^3.8.2",
@@ -138,10 +137,14 @@
         "vitest": "^4.1.4"
     },
     "peerDependencies": {
+        "katex": ">=0.16.0",
         "mermaid": ">=10.0.0",
         "svelte": "^5.0.0"
     },
     "peerDependenciesMeta": {
+        "katex": {
+            "optional": true
+        },
         "mermaid": {
             "optional": true
         }

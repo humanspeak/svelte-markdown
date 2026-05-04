@@ -356,13 +356,26 @@ Both approaches work for any tag name. Snippet overrides take precedence over co
 
 ## Marked Extensions
 
-Use third-party [marked extensions](https://marked.js.org/using_advanced#extensions) via the `extensions` prop. The component handles registering tokenizers internally — you just provide renderers for the custom token types.
+Use [marked extensions](https://marked.js.org/using_advanced#extensions) via the `extensions` prop. SvelteMarkdown ships first-class extensions for KaTeX, Mermaid, GitHub-style alerts, and footnotes from the `@humanspeak/svelte-markdown/extensions` subpath — no third-party packages required. Third-party extensions still work too; the component handles registering tokenizers internally and you just provide renderers for the custom token types.
 
 ### KaTeX Math Rendering
 
+The package includes built-in `markedKatex` and `KatexRenderer` helpers. Install `katex` as an optional peer dependency and load its CSS:
+
 ```bash
-npm install marked-katex-extension katex
+npm install katex
 ```
+
+**Default delimiter set** (mirrors KaTeX's own [`auto-render`](https://katex.org/docs/autorender.html) defaults):
+
+| Delimiter pair                                                 | Level  | `displayMode` |
+| -------------------------------------------------------------- | ------ | ------------- |
+| `\(...\)`                                                      | inline | `false`       |
+| `\[...\]` (own-line)                                           | block  | `true`        |
+| `$$...$$` (own-line)                                           | block  | `true`        |
+| `\begin{equation}...\end{equation}` and other AMS environments | block  | `true`        |
+
+Single-dollar inline (`$x^2$`) is **off** by default — KaTeX itself excludes it from auto-render to avoid currency-string clashes like `$5,000`. Pass `{ singleDollarInline: true }` to enable it; it uses a whitespace-bounded rule so currency strings still won't match.
 
 **Component renderer approach:**
 
@@ -370,8 +383,7 @@ npm install marked-katex-extension katex
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
-    import markedKatex from 'marked-katex-extension'
-    import KatexRenderer from './KatexRenderer.svelte'
+    import { markedKatex, KatexRenderer } from '@humanspeak/svelte-markdown/extensions'
 
     interface KatexRenderers extends Renderers {
         inlineKatex: RendererComponent
@@ -385,56 +397,45 @@ npm install marked-katex-extension katex
 </script>
 
 <svelte:head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css" crossorigin="anonymous" />
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+        crossorigin="anonymous"
+    />
 </svelte:head>
 
 <SvelteMarkdown
-    source="Euler's identity: $e^{{i\pi}} + 1 = 0$"
-    extensions={[markedKatex({ throwOnError: false })]}
+    source={`Euler's identity: \\(e^{i\\pi} + 1 = 0\\)`}
+    extensions={[markedKatex()]}
     {renderers}
 />
 ```
 
-Where `KatexRenderer.svelte` is:
-
-```svelte
-<script lang="ts">
-    import katex from 'katex'
-
-    interface Props {
-        text: string
-        displayMode?: boolean
-    }
-    const { text, displayMode = false }: Props = $props()
-
-    const html = $derived(katex.renderToString(text, { throwOnError: false, displayMode }))
-</script>
-
-{@html html}
-```
+`KatexRenderer` hardcodes `throwOnError: false` so a single malformed expression renders as a tinted error span instead of throwing — if you need stricter behavior, supply your own component for the `inlineKatex` / `blockKatex` keys.
 
 **Snippet override approach** (no separate component file needed):
 
 ```svelte
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { markedKatex } from '@humanspeak/svelte-markdown/extensions'
     import katex from 'katex'
-    import markedKatex from 'marked-katex-extension'
 </script>
 
 <svelte:head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css" crossorigin="anonymous" />
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+        crossorigin="anonymous"
+    />
 </svelte:head>
 
-<SvelteMarkdown
-    source="Euler's identity: $e^{{i\pi}} + 1 = 0$"
-    extensions={[markedKatex({ throwOnError: false })]}
->
+<SvelteMarkdown source={`Euler's identity: \\(e^{i\\pi} + 1 = 0\\)`} extensions={[markedKatex()]}>
     {#snippet inlineKatex(props)}
-        {@html katex.renderToString(props.text, { displayMode: false })}
+        {@html katex.renderToString(props.text, { throwOnError: false, displayMode: false })}
     {/snippet}
     {#snippet blockKatex(props)}
-        {@html katex.renderToString(props.text, { displayMode: true })}
+        {@html katex.renderToString(props.text, { throwOnError: false, displayMode: true })}
     {/snippet}
 </SvelteMarkdown>
 ```
@@ -575,7 +576,7 @@ Marked extensions define custom token types with a `name` property (e.g., `inlin
 To find the token type names for any extension, check its source or documentation for the `name` field in its `extensions` array:
 
 ```js
-// Example: marked-katex-extension registers tokens named "inlineKatex" and "blockKatex"
+// Example: markedKatex (built-in) registers tokens named "inlineKatex" and "blockKatex"
 // → use renderers={{ inlineKatex: ..., blockKatex: ... }}
 // → or {#snippet inlineKatex(props)} and {#snippet blockKatex(props)}
 
