@@ -97,7 +97,10 @@ $$`
         })
 
         test('still does not match $5,000-style currency strings', async ({ page }) => {
-            const markdown = 'Budget: $5,000 line item'
+            // Two currency amounts so the regex has the opportunity to cross-
+            // capture (e.g., pair `$5,000 across $`) if the whitespace-bounded
+            // inline rule ever regresses.
+            const markdown = 'Budget: $5,000 across $42 line items'
             const textarea = page.getByTestId('markdown-input')
             await textarea.clear()
             await textarea.fill(markdown)
