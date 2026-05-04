@@ -1,49 +1,68 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { KatexRenderer, markedKatex } from '@humanspeak/svelte-markdown/extensions'
     import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
     import katex from 'katex'
-    import markedKatex from 'marked-katex-extension'
-    import { createHighlighter } from 'shiki'
+    import type { createHighlighter as createHighlighterType } from 'shiki'
     import { onMount } from 'svelte'
-    import KatexRenderer from './KatexRenderer.svelte'
-    import { RotateCw, Box, Scissors } from '@lucide/svelte'
+    import { Box, DollarSign, RotateCw, Scissors } from '@lucide/svelte'
+
+    type Highlighter = Awaited<ReturnType<typeof createHighlighterType>>
 
     const defaultMarkdown = `## Euler's Identity
 
-The equation $e^{i\\pi} + 1 = 0$ unites five fundamental constants.
+The equation \\(e^{i\\pi} + 1 = 0\\) unites five fundamental constants.
 
 ### Quadratic Formula
 
-Every quadratic $ax^2 + bx + c = 0$ has solutions:
+Every quadratic \\(ax^2 + bx + c = 0\\) has solutions:
 
-$$
+\\[
 x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
-$$
+\\]
 
 ### Mixed Content
 
-Markdown works alongside math: **bold**, *italic*, and inline $\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}$.
+Markdown works alongside math: **bold**, *italic*, and inline \\(\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}\\).
 
 #### Gaussian Integral
 
-$$
+\\[
 \\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}
-$$
+\\]
 
-> **Tip:** Use \`$...$\` for inline math and \`$$...$$\` for block math.
+> **Tip:** Use \`\\(...\\)\` for inline math and \`\\[...\\]\` (or \`$$...$$\`) for block math. AMS environments work too.
+
+#### AMS environment
+
+\\begin{equation}
+\\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6}
+\\end{equation}
 
 #### Matrix Example
 
 $$
 \\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix} \\begin{pmatrix} x \\\\ y \\end{pmatrix} = \\begin{pmatrix} ax + by \\\\ cx + dy \\end{pmatrix}
-$$`
+$$
+
+#### Single-dollar inline (gated by \`singleDollarInline\`)
+
+Toggle the **$ inline** switch above to see how \`$...$\` behaves.
+
+Einstein's mass-energy equivalence is $E = mc^2$, and the area of a
+circle is $A = \\pi r^2$. With the option **off** (default) these
+render as plain text; with it **on**, they render as math.
+
+Currency strings stay as text either way — a price like $5,000 or
+"the cost is $5" never matches the math rule.`
 
     let mode: 'component' | 'snippet' = $state('component')
+    let singleDollarInline = $state(false)
     let input = $state(defaultMarkdown)
     let source = $state(defaultMarkdown)
     let debounceTimer = $state<ReturnType<typeof setTimeout> | undefined>(undefined)
 
-    const extensions = [markedKatex({ throwOnError: false })]
+    const extensions = $derived([markedKatex({ singleDollarInline })])
 
     interface KatexRenderers extends Renderers {
         inlineKatex: RendererComponent
@@ -71,17 +90,17 @@ $$`
     function reset() {
         input = defaultMarkdown
         source = defaultMarkdown
+        singleDollarInline = false
         if (debounceTimer) {
             clearTimeout(debounceTimer)
         }
     }
 
-    const componentCode = `\x3Cscript lang="ts">
+    const componentCodeBase = `\x3Cscript lang="ts">
   import SvelteMarkdown from '@humanspeak/svelte-markdown'
-  import markedKatex from 'marked-katex-extension'
-  import KatexRenderer from './KatexRenderer.svelte'
+  import { markedKatex, KatexRenderer } from '@humanspeak/svelte-markdown/extensions'
 
-  const source = 'Euler: $e^{i\\\\pi} + 1 = 0$'
+  const source = "Euler: \\\\(e^{i\\\\pi} + 1 = 0\\\\)"
   const renderers = {
     inlineKatex: KatexRenderer,
     blockKatex: KatexRenderer
@@ -90,17 +109,23 @@ $$`
 
 \x3Csvelte:head>
   \x3Clink rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+    href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
     crossorigin="anonymous" />
-\x3C/svelte:head>
+\x3C/svelte:head>`
+
+    const componentCode = $derived(
+        `${componentCodeBase}
 
 \x3CSvelteMarkdown
   {source}
-  extensions={[markedKatex({ throwOnError: false })]}
+  extensions={[markedKatex(${singleDollarInline ? '{ singleDollarInline: true }' : ''})]}
   {renderers}
 />`
+    )
 
-    const rendererCode = `\x3C!-- KatexRenderer.svelte -->
+    const rendererCode = `// Built-in component re-exported as a convenience —
+// equivalent to writing your own KatexRenderer.svelte:
+
 \x3Cscript lang="ts">
   import katex from 'katex'
 
@@ -118,58 +143,73 @@ $$`
 
 {@html html}`
 
-    const snippetCode = `\x3Cscript lang="ts">
+    const snippetCodeBase = `\x3Cscript lang="ts">
   import SvelteMarkdown from '@humanspeak/svelte-markdown'
+  import { markedKatex } from '@humanspeak/svelte-markdown/extensions'
   import katex from 'katex'
-  import markedKatex from 'marked-katex-extension'
 
-  const source = 'Euler: $e^{i\\\\pi} + 1 = 0$'
+  const source = "Euler: \\\\(e^{i\\\\pi} + 1 = 0\\\\)"
 \x3C/script>
 
 \x3Csvelte:head>
   \x3Clink rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+    href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
     crossorigin="anonymous" />
-\x3C/svelte:head>
+\x3C/svelte:head>`
+
+    const snippetCode = $derived(
+        `${snippetCodeBase}
 
 \x3CSvelteMarkdown
   {source}
-  extensions={[markedKatex({ throwOnError: false })]}
+  extensions={[markedKatex(${singleDollarInline ? '{ singleDollarInline: true }' : ''})]}
 >
   {#snippet inlineKatex(props)}
-    {@html katex.renderToString(props.text, { displayMode: false })}
+    {@html katex.renderToString(props.text, { throwOnError: false, displayMode: false })}
   {/snippet}
   {#snippet blockKatex(props)}
-    {@html katex.renderToString(props.text, { displayMode: true })}
+    {@html katex.renderToString(props.text, { throwOnError: false, displayMode: true })}
   {/snippet}
 \x3C/SvelteMarkdown>`
+    )
 
-    let highlightedComponent = $state('')
-    let highlightedRenderer = $state('')
-    let highlightedSnippet = $state('')
+    let highlighter = $state<Highlighter | null>(null)
 
     onMount(async () => {
-        const highlighter = await createHighlighter({
+        // Dynamic import keeps shiki (~200KB) out of the initial bundle —
+        // it only ships when this docs example actually mounts.
+        const { createHighlighter } = await import('shiki')
+        highlighter = await createHighlighter({
             themes: ['github-light', 'one-dark-pro'],
             langs: ['svelte']
         })
-
-        function highlight(code: string): string {
-            const light = highlighter.codeToHtml(code, { lang: 'svelte', theme: 'github-light' })
-            const dark = highlighter.codeToHtml(code, { lang: 'svelte', theme: 'one-dark-pro' })
-            return `<div class="shiki-light">${light}</div><div class="shiki-dark">${dark}</div>`
-        }
-
-        highlightedComponent = highlight(componentCode)
-        highlightedRenderer = highlight(rendererCode)
-        highlightedSnippet = highlight(snippetCode)
     })
+
+    // Shiki dual-theme highlighting is ~100ms per call; cache by code string
+    // so the toggle only pays the cost once per (code, option) combination.
+    // trunk-ignore(eslint/svelte/prefer-svelte-reactivity): plain memo cache, no reactivity needed
+    const highlightCache = new Map<string, string>()
+
+    function highlight(code: string): string {
+        if (!highlighter) return ''
+        const hit = highlightCache.get(code)
+        if (hit !== undefined) return hit
+        const light = highlighter.codeToHtml(code, { lang: 'svelte', theme: 'github-light' })
+        const dark = highlighter.codeToHtml(code, { lang: 'svelte', theme: 'one-dark-pro' })
+        const result = `<div class="shiki-light">${light}</div><div class="shiki-dark">${dark}</div>`
+        highlightCache.set(code, result)
+        return result
+    }
+
+    const highlightedComponent = $derived(highlight(componentCode))
+    const highlightedRenderer = $derived(highlight(rendererCode))
+    const highlightedSnippet = $derived(highlight(snippetCode))
 </script>
 
 <svelte:head>
     <link
         rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
         crossorigin="anonymous"
     />
 </svelte:head>
@@ -194,8 +234,8 @@ $$`
         </button>
     </div>
 
-    <!-- Mode Toggle -->
-    <div class="mb-6 flex items-center gap-3">
+    <!-- Mode Toggle + singleDollarInline -->
+    <div class="mb-6 flex flex-wrap items-center gap-3">
         <button
             onclick={() => (mode = 'component')}
             class="rounded-lg px-4 py-2 text-sm font-medium transition-colors {mode === 'component'
@@ -212,6 +252,15 @@ $$`
         >
             Snippet Overrides
         </button>
+        <label
+            class="border-border bg-card text-muted-foreground hover:text-foreground inline-flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
+        >
+            <input type="checkbox" bind:checked={singleDollarInline} class="cursor-pointer" />
+            <DollarSign class="size-3" />
+            <code class="bg-muted rounded px-1 py-0.5 text-xs"
+                >singleDollarInline: {singleDollarInline}</code
+            >
+        </label>
     </div>
 
     <!-- Info Banner -->
@@ -226,8 +275,12 @@ $$`
                 <div>
                     <p class="text-foreground text-sm font-medium">Component Renderers</p>
                     <p class="text-muted-foreground mt-0.5 text-xs">
-                        A reusable <code class="bg-muted rounded px-1">KatexRenderer.svelte</code>
-                        component handles both inline and block math via the
+                        The built-in <code class="bg-muted rounded px-1">KatexRenderer</code>
+                        from
+                        <code class="bg-muted rounded px-1"
+                            >@humanspeak/svelte-markdown/extensions</code
+                        >
+                        handles both inline and block math via the
                         <code class="bg-muted rounded px-1">renderers</code> prop. Best for reusable,
                         testable rendering logic.
                     </p>
@@ -267,9 +320,9 @@ $$`
             <textarea
                 value={input}
                 oninput={handleInput}
-                class="border-border bg-background text-foreground focus:ring-brand-500/50 min-h-[500px] w-full flex-1 resize-y rounded-lg border p-4 font-mono text-sm focus:ring-2 focus:outline-none"
+                class="border-border bg-background text-foreground focus:ring-brand-500/50 focus-visible:outline-brand-500 min-h-[500px] w-full flex-1 resize-y rounded-lg border p-4 font-mono text-sm focus:ring-2 focus:outline-hidden focus-visible:outline-2"
                 spellcheck="false"
-                placeholder="Type markdown with $math$ here..."
+                placeholder="Type markdown with \(math\) here..."
             ></textarea>
         </div>
 
@@ -334,7 +387,7 @@ $$`
                         <p
                             class="text-muted-foreground not-prose mb-2 text-xs font-medium uppercase"
                         >
-                            KatexRenderer.svelte
+                            Built-in KatexRenderer
                         </p>
                         {#if highlightedRenderer}
                             <div class="shiki-container">

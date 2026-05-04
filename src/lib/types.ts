@@ -219,9 +219,13 @@ export type SvelteMarkdownProps<T extends Renderers = Renderers> = {
      *
      * @example
      * ```svelte
+     * <script lang="ts">
+     *   import { markedKatex, KatexRenderer } from '@humanspeak/svelte-markdown/extensions'
+     * </script>
+     *
      * <SvelteMarkdown
      *   source={markdown}
-     *   extensions={[markedKatex({ throwOnError: false })]}
+     *   extensions={[markedKatex()]}
      *   renderers={{ inlineKatex: KatexRenderer, blockKatex: KatexRenderer }}
      * />
      * ```

@@ -158,17 +158,18 @@ Customize rendering inline without creating separate component files:
 
 ### Marked Extensions
 
-Use any marked extension directly:
+Use the built-in extensions, or any third-party marked extension:
 
 ```html
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
-    import markedKatex from 'marked-katex-extension'
+    import { markedKatex, KatexRenderer } from '@humanspeak/svelte-markdown/extensions'
 
-    const extensions = [markedKatex({ throwOnError: false })]
+    const extensions = [markedKatex()]
+    const renderers = { inlineKatex: KatexRenderer, blockKatex: KatexRenderer }
 </script>
 
-<SvelteMarkdown source="Euler's identity: $e^{'{'}i\\pi{'}'} + 1 = 0$" {extensions} />
+<SvelteMarkdown source={`Euler's identity: \\(e^{i\\pi} + 1 = 0\\)`} {extensions} {renderers} />
 ```
 
 ## API Compatibility
