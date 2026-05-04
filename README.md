@@ -399,7 +399,7 @@ Single-dollar inline (`$x^2$`) is **off** by default — KaTeX itself excludes i
 <svelte:head>
     <link
         rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
         crossorigin="anonymous"
     />
 </svelte:head>
@@ -425,7 +425,7 @@ Single-dollar inline (`$x^2$`) is **off** by default — KaTeX itself excludes i
 <svelte:head>
     <link
         rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
         crossorigin="anonymous"
     />
 </svelte:head>

@@ -116,7 +116,7 @@ Instead of component renderers, you can use snippet overrides for inline renderi
 <svelte:head>
     <link
         rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
         crossorigin="anonymous"
     />
 </svelte:head>
@@ -142,7 +142,7 @@ KaTeX requires its stylesheet for proper math formatting:
 <svelte:head>
     <link
         rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
         crossorigin="anonymous"
     />
 </svelte:head>
@@ -182,7 +182,7 @@ e^{i\\pi} + 1 = 0
 <svelte:head>
     <link
         rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
         crossorigin="anonymous"
     />
 </svelte:head>

@@ -102,12 +102,15 @@ describe('markedKatex', () => {
             }
         })
 
-        it('matches starred AMS variants like equation*', () => {
+        it('matches all five starred AMS variants', () => {
             const def = getBlockDef()
-            const src = '\\begin{equation*}\nx\n\\end{equation*}'
-            const token = def.tokenizer.call({} as never, src, [])
-            expect(token).toBeDefined()
-            expect(token!.text).toContain('\\begin{equation*}')
+            const envs = ['equation*', 'align*', 'alignat*', 'gather*', 'CD*']
+            for (const env of envs) {
+                const src = `\\begin{${env}}\nx\n\\end{${env}}`
+                const token = def.tokenizer.call({} as never, src, [])
+                expect(token, `expected match for ${env}`).toBeDefined()
+                expect(token!.text).toContain(`\\begin{${env}}`)
+            }
         })
 
         it('handles multi-line content inside \\[ \\]', () => {

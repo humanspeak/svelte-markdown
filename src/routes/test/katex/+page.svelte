@@ -68,7 +68,7 @@ $5" must render as plain text either way.
 <svelte:head>
     <link
         rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
         crossorigin="anonymous"
     />
 </svelte:head>

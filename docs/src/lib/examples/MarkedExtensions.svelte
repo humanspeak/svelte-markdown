@@ -3,9 +3,11 @@
     import { KatexRenderer, markedKatex } from '@humanspeak/svelte-markdown/extensions'
     import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
     import katex from 'katex'
-    import { createHighlighter } from 'shiki'
+    import type { createHighlighter as createHighlighterType } from 'shiki'
     import { onMount } from 'svelte'
     import { Box, DollarSign, RotateCw, Scissors } from '@lucide/svelte'
+
+    type Highlighter = Awaited<ReturnType<typeof createHighlighterType>>
 
     const defaultMarkdown = `## Euler's Identity
 
@@ -107,7 +109,7 @@ Currency strings stay as text either way — a price like $5,000 or
 
 \x3Csvelte:head>
   \x3Clink rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+    href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
     crossorigin="anonymous" />
 \x3C/svelte:head>`
 
@@ -151,7 +153,7 @@ Currency strings stay as text either way — a price like $5,000 or
 
 \x3Csvelte:head>
   \x3Clink rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+    href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
     crossorigin="anonymous" />
 \x3C/svelte:head>`
 
@@ -171,9 +173,12 @@ Currency strings stay as text either way — a price like $5,000 or
 \x3C/SvelteMarkdown>`
     )
 
-    let highlighter = $state<Awaited<ReturnType<typeof createHighlighter>> | null>(null)
+    let highlighter = $state<Highlighter | null>(null)
 
     onMount(async () => {
+        // Dynamic import keeps shiki (~200KB) out of the initial bundle —
+        // it only ships when this docs example actually mounts.
+        const { createHighlighter } = await import('shiki')
         highlighter = await createHighlighter({
             themes: ['github-light', 'one-dark-pro'],
             langs: ['svelte']
@@ -204,7 +209,7 @@ Currency strings stay as text either way — a price like $5,000 or
 <svelte:head>
     <link
         rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
         crossorigin="anonymous"
     />
 </svelte:head>
@@ -315,7 +320,7 @@ Currency strings stay as text either way — a price like $5,000 or
             <textarea
                 value={input}
                 oninput={handleInput}
-                class="border-border bg-background text-foreground focus:ring-brand-500/50 min-h-[500px] w-full flex-1 resize-y rounded-lg border p-4 font-mono text-sm focus:ring-2 focus:outline-none"
+                class="border-border bg-background text-foreground focus:ring-brand-500/50 focus-visible:outline-brand-500 min-h-[500px] w-full flex-1 resize-y rounded-lg border p-4 font-mono text-sm focus:ring-2 focus:outline-hidden focus-visible:outline-2"
                 spellcheck="false"
                 placeholder="Type markdown with \(math\) here..."
             ></textarea>

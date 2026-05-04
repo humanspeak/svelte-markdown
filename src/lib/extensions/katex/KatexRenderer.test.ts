@@ -33,13 +33,12 @@ describe('KatexRenderer', () => {
     })
 
     it('renders a malformed expression as an error span instead of throwing', () => {
-        // throwOnError is hardcoded to false in the renderer; KaTeX falls back
-        // to a tinted source span for malformed input.
         const { container } = render(KatexRenderer, {
             props: { text: '\\unknownmacro{x}' }
         })
-        // Should not have thrown — we still got DOM output
-        expect(container.innerHTML.length).toBeGreaterThan(0)
+        // With throwOnError: false (hardcoded in the renderer) KaTeX wraps the
+        // bad source in its default errorColor (#cc0000) instead of throwing.
+        expect(container.innerHTML).toContain('#cc0000')
     })
 
     it('renders empty input safely', () => {
