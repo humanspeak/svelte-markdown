@@ -33,17 +33,23 @@ const AMS_ENVIRONMENTS = ['equation', 'align', 'alignat', 'gather', 'CD'] as con
 // match `\begin{equation*}`.
 const AMS_NAMES = AMS_ENVIRONMENTS.flatMap((n) => [n, `${n}\\*`]).join('|')
 
-const blockBracketRule = /^\\\[[ \t]*\n([\s\S]+?)\n[ \t]*\\\](?:\n|$)/
-const blockDollarRule = /^\$\$[ \t]*\n([\s\S]+?)\n[ \t]*\$\$(?:\n|$)/
+// `\s*` (instead of `[ \t]*\n`) lets these rules match both the canonical
+// own-line form (`$$\nx\n$$`) and the single-line form (`$$x$$`) that LLMs
+// emit constantly. Without this, `$$x = \frac{...}{2a}$$` survives as
+// paragraph text because the inline tokenizer also rejects `$$` openers.
+const blockBracketRule = /^\\\[\s*([\s\S]+?)\s*\\\](?:\n|$)/
+const blockDollarRule = /^\$\$\s*([\s\S]+?)\s*\$\$(?:\n|$)/
 const blockAmsRule = new RegExp(
     `^\\\\begin\\{(${AMS_NAMES})\\}[\\s\\S]+?\\\\end\\{\\1\\}(?:\\n|$)?`
 )
 
 const inlineParenRule = /^\\\(([\s\S]+?)\\\)/
-// Mirrors the "standard" rule from upstream marked-katex-extension: requires a
-// whitespace, end-of-string, or punctuation boundary after the closing `$` so
-// strings like `$5,000` do not match.
-const inlineDollarRule = /^\$(?!\$)((?:\\.|[^\\\n$])+?)\$(?=[\s?!.,:？！。，：]|$)/
+// Mirrors the "standard" rule from upstream marked-katex-extension but
+// extends the boundary class with `)`, `]`, `}` so expressions like
+// `$0$)`, `$x$]`, `$x$}` (closing math right before a closing bracket)
+// still match. Currency strings like `$5,000 across $42` remain unmatched
+// because digits after the closing `$` aren't in any boundary class.
+const inlineDollarRule = /^\$(?!\$)((?:\\.|[^\\\n$])+?)\$(?=[\s?!.,:)\]}？！。，：]|$)/
 
 const earliestIndex = (src: string, needles: string[]): number | undefined => {
     let best = -1
@@ -63,9 +69,14 @@ const earliestIndex = (src: string, needles: string[]): number | undefined => {
  * | Delimiter pair | Level | `displayMode` |
  * |---|---|---|
  * | `\(...\)` | inline | `false` |
- * | `\[...\]` (own-line) | block | `true` |
- * | `$$...$$` (own-line) | block | `true` |
+ * | `\[...\]` (own-line **or** single-line) | block | `true` |
+ * | `$$...$$` (own-line **or** single-line) | block | `true` |
  * | `\begin{equation}...\end{equation}` and other AMS envs | block | `true` |
+ *
+ * Both `\[x\]` and `\[\nx\n\]` parse as block math; same for `$$x$$` and the
+ * own-line `$$\nx\n$$` form. LLMs overwhelmingly emit the single-line form,
+ * so accepting both keeps the extension drop-in compatible with their output
+ * without losing the canonical own-line shape.
  *
  * Supported AMS environments: `equation`, `align`, `alignat`, `gather`, `CD`,
  * plus their starred variants (e.g. `equation*`).

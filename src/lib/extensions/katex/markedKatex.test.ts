@@ -121,6 +121,28 @@ describe('markedKatex', () => {
             expect(token!.text).toBe('x = 1 \\\\\ny = 2')
         })
 
+        // LLM output frequently uses single-line $$x$$ instead of the
+        // own-line form. Keep both shapes parseable as block math.
+        it('matches single-line $$x$$ as block', () => {
+            const def = getBlockDef()
+            const src = '$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$'
+            const token = def.tokenizer.call({} as never, src, [])
+            expect(token).toBeDefined()
+            expect(token!.type).toBe('blockKatex')
+            expect(token!.text).toBe('x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}')
+            expect((token as unknown as { displayMode: boolean }).displayMode).toBe(true)
+        })
+
+        it('matches single-line \\[x\\] as block', () => {
+            const def = getBlockDef()
+            const src = '\\[e^{i\\pi} + 1 = 0\\]'
+            const token = def.tokenizer.call({} as never, src, [])
+            expect(token).toBeDefined()
+            expect(token!.type).toBe('blockKatex')
+            expect(token!.text).toBe('e^{i\\pi} + 1 = 0')
+            expect((token as unknown as { displayMode: boolean }).displayMode).toBe(true)
+        })
+
         it('returns undefined for unclosed \\[ block', () => {
             const def = getBlockDef()
             expect(def.tokenizer.call({} as never, '\\[\nx', [])).toBeUndefined()
@@ -191,6 +213,41 @@ describe('markedKatex', () => {
         it('only matches from the start of the string', () => {
             const def = getInlineDef()
             expect(def.tokenizer.call({} as never, 'prefix \\(x\\)', [])).toBeUndefined()
+        })
+
+        // Boundary expansion: closing math followed by a closing
+        // bracket / paren / brace should match. Upstream marked-katex-extension
+        // omits these from the lookahead, which broke `($e$, $i$, $\pi$, $1$, $0$)`
+        // (the trailing `$0$)` failed). We add `)`, `]`, `}` to the boundary class.
+        it('matches $...$ followed by ) as boundary', () => {
+            const def = getInlineDef({ singleDollarInline: true })
+            const token = def.tokenizer.call({} as never, '$0$)', [])
+            expect(token).toBeDefined()
+            expect(token!.type).toBe('inlineKatex')
+            expect(token!.text).toBe('0')
+        })
+
+        it('matches $...$ followed by ] as boundary', () => {
+            const def = getInlineDef({ singleDollarInline: true })
+            const token = def.tokenizer.call({} as never, '$x$]', [])
+            expect(token).toBeDefined()
+            expect(token!.text).toBe('x')
+        })
+
+        it('matches $...$ followed by } as boundary', () => {
+            const def = getInlineDef({ singleDollarInline: true })
+            const token = def.tokenizer.call({} as never, '$x$}', [])
+            expect(token).toBeDefined()
+            expect(token!.text).toBe('x')
+        })
+
+        // Negative complement to the boundary expansion above: digits and
+        // letters after the closing $ must still NOT match. Locks in the
+        // currency guard so a future boundary-class edit can't quietly
+        // regress `$5,000$` / `$0$42` style content into math.
+        it('does not match when a digit follows the closing $', () => {
+            const def = getInlineDef({ singleDollarInline: true })
+            expect(def.tokenizer.call({} as never, '$0$42', [])).toBeUndefined()
         })
     })
 

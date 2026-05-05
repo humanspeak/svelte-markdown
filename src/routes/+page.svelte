@@ -64,6 +64,11 @@
         },
         { href: '/test/katex', name: 'KaTeX', description: 'Math rendering with KaTeX extension' },
         {
+            href: '/test/katex-issue',
+            name: 'KaTeX Issue',
+            description: 'Dataverse transcript boundary regression playground'
+        },
+        {
             href: '/test/katex-snippets',
             name: 'KaTeX Snippets',
             description: 'KaTeX with Svelte 5 snippets'
