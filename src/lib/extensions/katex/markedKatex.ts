@@ -69,9 +69,14 @@ const earliestIndex = (src: string, needles: string[]): number | undefined => {
  * | Delimiter pair | Level | `displayMode` |
  * |---|---|---|
  * | `\(...\)` | inline | `false` |
- * | `\[...\]` (own-line) | block | `true` |
- * | `$$...$$` (own-line) | block | `true` |
+ * | `\[...\]` (own-line **or** single-line) | block | `true` |
+ * | `$$...$$` (own-line **or** single-line) | block | `true` |
  * | `\begin{equation}...\end{equation}` and other AMS envs | block | `true` |
+ *
+ * Both `\[x\]` and `\[\nx\n\]` parse as block math; same for `$$x$$` and the
+ * own-line `$$\nx\n$$` form. LLMs overwhelmingly emit the single-line form,
+ * so accepting both keeps the extension drop-in compatible with their output
+ * without losing the canonical own-line shape.
  *
  * Supported AMS environments: `equation`, `align`, `alignat`, `gather`, `CD`,
  * plus their starred variants (e.g. `equation*`).

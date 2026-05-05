@@ -240,6 +240,15 @@ describe('markedKatex', () => {
             expect(token).toBeDefined()
             expect(token!.text).toBe('x')
         })
+
+        // Negative complement to the boundary expansion above: digits and
+        // letters after the closing $ must still NOT match. Locks in the
+        // currency guard so a future boundary-class edit can't quietly
+        // regress `$5,000$` / `$0$42` style content into math.
+        it('does not match when a digit follows the closing $', () => {
+            const def = getInlineDef({ singleDollarInline: true })
+            expect(def.tokenizer.call({} as never, '$0$42', [])).toBeUndefined()
+        })
     })
 
     describe('factory', () => {
