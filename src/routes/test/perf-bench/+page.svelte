@@ -249,8 +249,8 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         domNodes: 0,
         charsPerSec: 0,
         // Parser-instance allocation count (dev-only window counter,
-        // captured per scenario from `__svm_parserCount` /
-        // `__svm_parserByType` in Parser.svelte). Tracks render-cost
+        // captured per scenario from `__svmParserCount` /
+        // `__svmParserByType` in Parser.svelte). Tracks render-cost
         // drivers that wall-clock alone misses.
         parserInstances: 0,
         // Per-scenario observer snapshots: filtered to the scenario's
@@ -376,8 +376,8 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         if (typeof window === 'undefined') return
         // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
         const w = window as any
-        w.__svm_parserCount = 0
-        w.__svm_parserByType = {}
+        w.__svmParserCount = 0
+        w.__svmParserByType = {}
     }
 
     const readParserCounter = (): { total: number; byType: Record<string, number> } => {
@@ -385,8 +385,8 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
         const w = window as any
         return {
-            total: w.__svm_parserCount ?? 0,
-            byType: w.__svm_parserByType ?? {}
+            total: w.__svmParserCount ?? 0,
+            byType: w.__svmParserByType ?? {}
         }
     }
 
