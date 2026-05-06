@@ -709,7 +709,11 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
                 idx++
                 await tick()
                 renderDurations.push(performance.now() - t0)
-                const gap = chunkDelays[idx] ?? 0
+                // Read the delay associated with the chunk we just emitted
+                // (now at idx-1 after the increment), not the next chunk's
+                // delay — the latter would skip chunkDelays[0] entirely and
+                // leave the final iteration's gap as 0.
+                const gap = chunkDelays[idx - 1] ?? 0
                 gapDurations.push(gap)
                 streamHandle = setTimeout(step, gap)
             }

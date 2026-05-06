@@ -1,3 +1,28 @@
+<script module lang="ts">
+    /**
+     * Self-closing HTML tags that must not receive children — `<br>content</br>`
+     * is invalid and `<svelte:element>` would emit it anyway. Module-scoped so
+     * the Set is allocated once per module load, not once per Parser instance.
+     */
+    const SELF_CLOSING_HTML = new Set([
+        'br',
+        'hr',
+        'img',
+        'input',
+        'link',
+        'meta',
+        'area',
+        'base',
+        'col',
+        'embed',
+        'keygen',
+        'param',
+        'source',
+        'track',
+        'wbr'
+    ])
+</script>
+
 <script lang="ts">
     /**
      * @component Parser
@@ -132,26 +157,6 @@
         // has been added by the user.
         !(renderers as Record<string, unknown>).space && !snippetOverrides.space
     )
-
-    // Self-closing HTML tags must not receive children — `<br>content</br>`
-    // is invalid and `<svelte:element>` would emit it anyway.
-    const SELF_CLOSING_HTML = new Set([
-        'br',
-        'hr',
-        'img',
-        'input',
-        'link',
-        'meta',
-        'area',
-        'base',
-        'col',
-        'embed',
-        'keygen',
-        'param',
-        'source',
-        'track',
-        'wbr'
-    ])
 
     // Sanitize rest props before they reach any renderer or snippet.
     // This is the single enforcement point — custom renderers cannot bypass it.
