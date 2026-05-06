@@ -94,6 +94,27 @@
         [key: string]: unknown
     } = $props()
 
+    /**
+     * Dev-only Parser-instance counter. Exposed via `window.__svm_parserCount`
+     * and `window.__svm_parserByType` so the perf-bench harness can attribute
+     * render cost to component allocations without a Chrome profile. The
+     * `import.meta.env.DEV` guard is resolved at build time by Vite, so
+     * production bundles drop this block entirely (zero overhead). Reset by
+     * the perf-bench page at scenario start.
+     *
+     * `type` is read once at script init — Parser instances are remounted
+     * (not re-keyed) when their type changes, so the initial value is the
+     * effective lifetime value for counting purposes.
+     */
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+        // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
+        const w = window as any
+        const initialType: string = type ?? '<root>'
+        w.__svm_parserCount = (w.__svm_parserCount ?? 0) + 1
+        const byType = (w.__svm_parserByType = w.__svm_parserByType ?? {})
+        byType[initialType] = (byType[initialType] ?? 0) + 1
+    }
+
     // Sanitize rest props before they reach any renderer or snippet.
     // This is the single enforcement point — custom renderers cannot bypass it.
     const sanitizedRest = $derived.by(() => {

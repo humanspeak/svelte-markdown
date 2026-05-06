@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
+    import type { HtmlSnippetProps, ParagraphSnippetProps, TextSnippetProps } from '$lib/types.js'
     import { parseAndCacheTokens } from '$lib/utils/parse-and-cache.js'
     import { benchmarkAppendStream } from '$lib/utils/stream-benchmark.js'
     import { hashString, tokenCache } from '$lib/utils/token-cache.js'
@@ -71,6 +72,94 @@ const x: number = 42
                     `<footer><small>id=${i}</small><br/></footer></div>\n`
             )
         }
+        return out.join('\n')
+    }
+
+    /**
+     * Realistic-mix corpus generator. Unlike `generateLarge` which emits
+     * the same heading + paragraph + list + code shape per section
+     * (over-rewards optimizations that win on text/space tokens),
+     * `generateRealistic` cycles through a varied set of element shapes
+     * roughly matching what a polished README or technical-blog post
+     * looks like — varying paragraph length, occasional inline code,
+     * mixed lists, code blocks of multiple languages, the occasional
+     * table, and the occasional inline `<span>` / `<kbd>` HTML.
+     *
+     * Sized to land near the 50KB target with `sections=120`.
+     */
+    const generateRealistic = (sections: number): string => {
+        const out: string[] = ['# Realistic Mix Corpus\n']
+        out.push(
+            'This corpus is intentionally varied to defeat optimizations that only win on highly-repetitive shapes. It mixes paragraph lengths, list types, code blocks, the occasional table, and inline raw HTML.\n'
+        )
+
+        const inlineSamples = [
+            'For more, see the [official guide](https://example.com/guide).',
+            'Run `pnpm install` first, then `pnpm dev`.',
+            'Press <kbd>Ctrl</kbd>+<kbd>K</kbd> to open the search.',
+            'The result is _significantly_ faster — roughly **3-5×** depending on input.',
+            'A note: <span class="warn">order matters</span> when chaining filters.'
+        ]
+        const paragraphSamples = [
+            'A short follow-up paragraph that reinforces the point above. It mostly contains plain prose.',
+            'Sometimes the prose stretches across multiple sentences. There is a `code reference` here, an *italicized* phrase, and a [hyperlink](https://example.com) — three different inline shapes packed into one paragraph for variety.',
+            'Longer paragraphs are also common in technical writing. They might explain a concept, walk through an example, or compare alternatives. The renderer must dispatch one component per inline child token, so paragraph density is a useful stress factor.',
+            'A trailing one-liner.'
+        ]
+
+        for (let i = 0; i < sections; i++) {
+            // Heading — alternate between ## and ### so depth varies
+            const depth = i % 4 === 0 ? '##' : '###'
+            out.push(
+                `${depth} Section ${i}: ${inlineSamples[i % inlineSamples.length].slice(0, 30)}`
+            )
+
+            // 1–3 paragraphs
+            const pCount = 1 + (i % 3)
+            for (let p = 0; p < pCount; p++) {
+                out.push(paragraphSamples[(i + p) % paragraphSamples.length])
+            }
+            out.push(inlineSamples[i % inlineSamples.length])
+
+            // Every 3rd: a list (alternating ordered/unordered)
+            if (i % 3 === 0) {
+                const ordered = i % 6 === 0
+                for (let li = 0; li < 4; li++) {
+                    const prefix = ordered ? `${li + 1}.` : '-'
+                    out.push(`${prefix} List item ${li} with **bold** and \`code\` flair`)
+                }
+                out.push('')
+            }
+
+            // Every 4th: a code block (vary languages)
+            if (i % 4 === 0) {
+                const langs = ['ts', 'js', 'python', 'bash']
+                const lang = langs[((i / 4) % langs.length) | 0]
+                out.push(`\`\`\`${lang}`)
+                out.push(`// example ${i}`)
+                out.push(`const result = compute(${i});`)
+                out.push(`console.log(result);`)
+                out.push('```')
+                out.push('')
+            }
+
+            // Every 7th: a small table
+            if (i % 7 === 0) {
+                out.push('| Field | Value | Notes |')
+                out.push('|-------|-------|-------|')
+                out.push(`| name | example-${i} | section ${i} |`)
+                out.push(`| size | ${i * 32}B | computed |`)
+                out.push(`| flag | \`true\` | enabled |`)
+                out.push('')
+            }
+
+            // Every 11th: a blockquote
+            if (i % 11 === 0) {
+                out.push(`> Quote from section ${i}: a brief aside that wraps the explanation.`)
+                out.push('')
+            }
+        }
+
         return out.join('\n')
     }
 
@@ -153,8 +242,24 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         cleanupMs: 0,
         hashMs: 0,
         firstPaintMs: 0,
+        // First-class render-attribution column. `firstPaintMs - parseColdMs`
+        // — the same formula the issue report computed manually. Surfaces
+        // parse-side wins that pure firstPaintMs hides when render dominates.
+        renderOnlyMs: 0,
         domNodes: 0,
         charsPerSec: 0,
+        // Parser-instance allocation count (dev-only window counter,
+        // captured per scenario from `__svm_parserCount` /
+        // `__svm_parserByType` in Parser.svelte). Tracks render-cost
+        // drivers that wall-clock alone misses.
+        parserInstances: 0,
+        // Per-scenario observer snapshots: filtered to the scenario's
+        // time window, not the rolling-10s window. Catch the
+        // longest-task / mutation / LoAF count attributable to *this*
+        // scenario without relying on cross-scenario correlation.
+        scenarioLongestTaskMs: 0,
+        scenarioMutations: 0,
+        scenarioLoafScriptMaxMs: 0,
         // cache scenario
         cacheIters: 0,
         cacheTotalMs: 0,
@@ -171,7 +276,12 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         // streaming-only pure-parse percentiles (independent of wall-clock pacing)
         parseChunkAvgMs: 0,
         parseChunkP95Ms: 0,
-        parseChunkPeakMs: 0
+        parseChunkPeakMs: 0,
+        // streaming jitter shape (only populated by the bursty stream
+        // scenario): wall-clock distribution of inter-chunk gaps.
+        streamGapAvgMs: 0,
+        streamGapP95Ms: 0,
+        streamGapPeakMs: 0
     })
 
     // ---- Rolling-10s observer state ------------------------------------------
@@ -195,6 +305,15 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
 
     let isStreaming = $state(false)
     let streamHandle: ReturnType<typeof setTimeout> | null = null
+
+    // When true, the live preview mounts with custom markdown + html
+    // snippet overrides plus a custom html.div renderer. Drives the
+    // `parse-50kb-overridden` scenario so the slow dispatch path
+    // (the one that fires whenever a user actually customizes anything)
+    // is measured alongside the default fast paths. Without this, an
+    // optimization to the fast path could silently regress the
+    // override path and never show up in the bench.
+    let useOverrides = $state(false)
 
     // ---- Helpers --------------------------------------------------------------
 
@@ -220,8 +339,13 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             cleanupMs: 0,
             hashMs: 0,
             firstPaintMs: 0,
+            renderOnlyMs: 0,
             domNodes: 0,
             charsPerSec: 0,
+            parserInstances: 0,
+            scenarioLongestTaskMs: 0,
+            scenarioMutations: 0,
+            scenarioLoafScriptMaxMs: 0,
             cacheIters: 0,
             cacheTotalMs: 0,
             cacheAvgMs: 0,
@@ -235,7 +359,64 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             chunksPerSec: 0,
             parseChunkAvgMs: 0,
             parseChunkP95Ms: 0,
-            parseChunkPeakMs: 0
+            parseChunkPeakMs: 0,
+            streamGapAvgMs: 0,
+            streamGapP95Ms: 0,
+            streamGapPeakMs: 0
+        }
+    }
+
+    /**
+     * Resets the dev-mode Parser-instance counter so a fresh scenario gets
+     * a clean total. The window globals are populated by the dev-only
+     * block at the top of `Parser.svelte` and stay 0/empty in production
+     * builds (Vite drops the block).
+     */
+    const resetParserCounter = () => {
+        if (typeof window === 'undefined') return
+        // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
+        const w = window as any
+        w.__svm_parserCount = 0
+        w.__svm_parserByType = {}
+    }
+
+    const readParserCounter = (): { total: number; byType: Record<string, number> } => {
+        if (typeof window === 'undefined') return { total: 0, byType: {} }
+        // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
+        const w = window as any
+        return {
+            total: w.__svm_parserCount ?? 0,
+            byType: w.__svm_parserByType ?? {}
+        }
+    }
+
+    /**
+     * Filters the observer entry buffers to the [start, end] window the
+     * scenario actually ran in, then computes scenario-scoped aggregates.
+     * Replaces the earlier "rolling-10s" attribution which leaked across
+     * scenarios and forced manual correlation.
+     */
+    const snapshotScenarioObservers = (start: number, end: number) => {
+        let longestTaskMs = 0
+        for (const e of longTaskEntries) {
+            if (e.time >= start && e.time <= end && e.duration > longestTaskMs) {
+                longestTaskMs = e.duration
+            }
+        }
+        let mutations = 0
+        for (const e of mutationEvents) {
+            if (e.time >= start && e.time <= end) mutations += e.count
+        }
+        let loafScriptMaxMs = 0
+        for (const e of loafEntries) {
+            if (e.time >= start && e.time <= end && e.scriptMs > loafScriptMaxMs) {
+                loafScriptMaxMs = e.scriptMs
+            }
+        }
+        return {
+            longestTaskMs: Math.round(longestTaskMs),
+            mutations,
+            loafScriptMaxMs: Math.round(loafScriptMaxMs)
         }
     }
 
@@ -262,10 +443,15 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
      * Runs the full per-document timing suite for a given corpus.
      * Updates `stat` with parse/lex/cleanup/hash + first-paint metrics
      * and assigns `source` so the live preview re-renders.
+     *
+     * @param overridden When true, the live preview is mounted with a
+     * set of custom renderers + snippet overrides — exercises the slow
+     * dispatch path that's otherwise silently regressable.
      */
-    const runDocScenario = async (label: string, corpus: string) => {
+    const runDocScenario = async (label: string, corpus: string, overridden = false) => {
         scenario = label
         resetStat()
+        useOverrides = overridden
 
         // Direct timings (synchronous, no render in loop)
         tokenCache.clearAllTokens()
@@ -296,6 +482,11 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         tokenCache.clearAllTokens()
         source = ''
         await tick()
+        // Let any pending unmount mutations from `source = ''` settle so
+        // they aren't attributed to *this* scenario's window.
+        await tick()
+        resetParserCounter()
+        const scenarioStart = performance.now()
         const paintPromise = waitForPaint()
         const tPaint0 = performance.now()
         source = corpus
@@ -303,7 +494,10 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         const firstPaintMs = paintAt - tPaint0
 
         await tick()
+        const scenarioEnd = performance.now()
         const domNodes = previewEl ? previewEl.querySelectorAll('*').length : 0
+        const parserCounter = readParserCounter()
+        const observerSnap = snapshotScenarioObservers(scenarioStart, scenarioEnd)
 
         const srcKb = round(corpus.length / 1024, 1)
         const charsPerSec = parseColdMs > 0 ? Math.round((corpus.length / parseColdMs) * 1000) : 0
@@ -318,8 +512,13 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             cleanupMs: round(cleanupMs),
             hashMs: round(hashMs, 3),
             firstPaintMs: round(firstPaintMs),
+            renderOnlyMs: round(Math.max(0, firstPaintMs - parseColdMs)),
             domNodes,
-            charsPerSec
+            charsPerSec,
+            parserInstances: parserCounter.total,
+            scenarioLongestTaskMs: observerSnap.longestTaskMs,
+            scenarioMutations: observerSnap.mutations,
+            scenarioLoafScriptMaxMs: observerSnap.loafScriptMaxMs
         }
 
         scenario = `${label}-done`
@@ -432,15 +631,129 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         scenario = 'stream-30tps-done'
     }
 
+    /**
+     * Bursty streaming variant. Real LLM token streams are not steady
+     * — they arrive in 1–10 token bursts separated by 0–200ms pauses,
+     * occasionally with a 50+ token slug landing in one chunk after a
+     * long stall. This replays the same corpus as `runStreaming` but
+     * with jittered chunk sizes and inter-chunk delays so the rAF
+     * batching window in `SvelteMarkdown.svelte` is actually
+     * exercised. Pacing is seeded so runs are reproducible.
+     */
+    const runStreamingBursty = async (seed = 1) => {
+        if (isStreaming) return
+        scenario = 'stream-bursty'
+        resetStat()
+        source = ''
+        tokenCache.clearAllTokens()
+        await tick()
+
+        // Cheap seeded PRNG (mulberry32) — good enough for jitter
+        // distributions and lets the bench reproduce across runs.
+        let s = seed >>> 0
+        const rand = () => {
+            s = (s + 0x6d2b79f5) | 0
+            let t = s
+            t = Math.imul(t ^ (t >>> 15), t | 1)
+            t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+        }
+
+        // Word-tokenize the corpus, then assemble bursts of 1–10 tokens
+        // (occasionally up to 50) into chunks. Each chunk gets a
+        // delay drawn from {short: [5,30], medium: [30,80], long: [80,200]}
+        // weighted toward short (so the average is realistic).
+        const words: string[] = []
+        const re = /\S+\s*/g
+        let match
+        while ((match = re.exec(STREAM_CORPUS)) !== null) words.push(match[0])
+
+        const chunks: string[] = []
+        const chunkDelays: number[] = []
+        let i = 0
+        while (i < words.length) {
+            const r = rand()
+            const burst = r < 0.05 ? 30 + Math.floor(rand() * 20) : 1 + Math.floor(rand() * 9)
+            const slice = words.slice(i, i + burst).join('')
+            chunks.push(slice)
+            i += burst
+            const dr = rand()
+            // Bias delays toward "short" so the stream finishes in
+            // reasonable wall-clock time. Long pauses are rare but
+            // present.
+            const delay =
+                dr < 0.7
+                    ? 5 + rand() * 25 // 5–30ms (typical)
+                    : dr < 0.95
+                      ? 30 + rand() * 50 // 30–80ms (medium)
+                      : 80 + rand() * 120 // 80–200ms (rare long pause)
+            chunkDelays.push(delay)
+        }
+
+        const opts = { gfm: true, breaks: false, headerIds: true, headerPrefix: '' }
+        const bench = benchmarkAppendStream(chunks, opts)
+
+        const renderDurations: number[] = []
+        const gapDurations: number[] = []
+        let idx = 0
+        isStreaming = true
+        const startWall = performance.now()
+        await new Promise<void>((resolve) => {
+            const step = async () => {
+                if (idx >= chunks.length) {
+                    resolve()
+                    return
+                }
+                const t0 = performance.now()
+                source += chunks[idx]
+                idx++
+                await tick()
+                renderDurations.push(performance.now() - t0)
+                const gap = chunkDelays[idx] ?? 0
+                gapDurations.push(gap)
+                streamHandle = setTimeout(step, gap)
+            }
+            void step()
+        })
+        const wallMs = performance.now() - startWall
+        isStreaming = false
+        if (streamHandle !== null) {
+            clearTimeout(streamHandle)
+            streamHandle = null
+        }
+
+        const renderTotal = renderDurations.reduce((s, d) => s + d, 0)
+        const gapTotal = gapDurations.reduce((s, d) => s + d, 0)
+        stat = {
+            ...stat,
+            srcKb: round(STREAM_CORPUS.length / 1024, 1),
+            streamChunks: chunks.length,
+            streamTotalMs: round(renderTotal),
+            streamAvgMs: round(renderTotal / chunks.length, 3),
+            streamP95Ms: round(percentile(renderDurations, 0.95), 3),
+            streamPeakMs: round(Math.max(...renderDurations), 3),
+            chunksPerSec: round((chunks.length / wallMs) * 1000, 1),
+            parseChunkAvgMs: round(bench.totalParseMs / bench.chunkCount, 3),
+            parseChunkP95Ms: round(bench.p95ParseMs, 3),
+            parseChunkPeakMs: round(bench.peakParseMs, 3),
+            streamGapAvgMs: round(gapTotal / gapDurations.length, 3),
+            streamGapP95Ms: round(percentile(gapDurations, 0.95), 3),
+            streamGapPeakMs: round(Math.max(...gapDurations), 3)
+        }
+        scenario = 'stream-bursty-done'
+    }
+
     const clear = () => {
         if (streamHandle !== null) {
             clearTimeout(streamHandle)
             streamHandle = null
         }
         isStreaming = false
+        useOverrides = false
         source = ''
         tokenCache.clearAllTokens()
         resetStat()
+        resetParserCounter()
         longTaskEntries = []
         rafIntervals = []
         mutationEvents = []
@@ -629,9 +942,28 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         >
             Parse table-heavy
         </button>
+        <button
+            data-testid="parse-realistic"
+            onclick={() => runDocScenario('parse-realistic', generateRealistic(120))}
+        >
+            Parse realistic
+        </button>
+        <button
+            data-testid="parse-50kb-overridden"
+            onclick={() => runDocScenario('parse-50kb-overridden', generateLarge(16, 10), true)}
+        >
+            Parse 50KB (overrides)
+        </button>
         <button data-testid="cache-warm" onclick={() => runCacheWarm(100)}>Cache warm ×100</button>
         <button data-testid="stream-30tps" onclick={() => runStreaming(30)} disabled={isStreaming}>
             {isStreaming ? 'Streaming…' : 'Stream 30/s'}
+        </button>
+        <button
+            data-testid="stream-bursty"
+            onclick={() => runStreamingBursty()}
+            disabled={isStreaming}
+        >
+            {isStreaming ? 'Streaming…' : 'Stream bursty'}
         </button>
         <button data-testid="clear" onclick={clear}>Clear</button>
     </div>
@@ -639,12 +971,15 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
     <div class="stats" data-testid="perf-stats">
         scenario={scenario} srcKb={stat.srcKb} tokenCount={stat.tokenCount} parseColdMs={stat.parseColdMs}
         parseWarmMs={stat.parseWarmMs} lexMs={stat.lexMs} cleanupMs={stat.cleanupMs} hashMs={stat.hashMs}
-        firstPaintMs={stat.firstPaintMs} domNodes={stat.domNodes} charsPerSec={stat.charsPerSec} · cacheIters={stat.cacheIters}
-        cacheTotalMs={stat.cacheTotalMs} cacheAvgMs={stat.cacheAvgMs}
-        cacheP95Ms={stat.cacheP95Ms} cachePeakMs={stat.cachePeakMs} · streamChunks={stat.streamChunks}
-        streamTotalMs={stat.streamTotalMs} streamAvgMs={stat.streamAvgMs} streamP95Ms={stat.streamP95Ms}
-        streamPeakMs={stat.streamPeakMs} chunksPerSec={stat.chunksPerSec} parseChunkAvgMs={stat.parseChunkAvgMs}
-        parseChunkP95Ms={stat.parseChunkP95Ms} parseChunkPeakMs={stat.parseChunkPeakMs} · longestTaskMs={longTaskSupported
+        firstPaintMs={stat.firstPaintMs} renderOnlyMs={stat.renderOnlyMs} domNodes={stat.domNodes}
+        charsPerSec={stat.charsPerSec} parserInstances={stat.parserInstances} scenarioLongestTaskMs={stat.scenarioLongestTaskMs}
+        scenarioMutations={stat.scenarioMutations} scenarioLoafScriptMaxMs={stat.scenarioLoafScriptMaxMs}
+        · cacheIters={stat.cacheIters} cacheTotalMs={stat.cacheTotalMs} cacheAvgMs={stat.cacheAvgMs} cacheP95Ms={stat.cacheP95Ms}
+        cachePeakMs={stat.cachePeakMs} · streamChunks={stat.streamChunks} streamTotalMs={stat.streamTotalMs}
+        streamAvgMs={stat.streamAvgMs} streamP95Ms={stat.streamP95Ms} streamPeakMs={stat.streamPeakMs}
+        chunksPerSec={stat.chunksPerSec} parseChunkAvgMs={stat.parseChunkAvgMs} parseChunkP95Ms={stat.parseChunkP95Ms}
+        parseChunkPeakMs={stat.parseChunkPeakMs} streamGapAvgMs={stat.streamGapAvgMs} streamGapP95Ms={stat.streamGapP95Ms}
+        streamGapPeakMs={stat.streamGapPeakMs} · longestTaskMs={longTaskSupported
             ? displayLongestTaskMs
             : 'n/a'}
         longTasks10s={longTaskSupported ? displayLongTaskCount : 'n/a'} rafP95Ms={displayRafP95Ms}
@@ -654,8 +989,39 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             : 'n/a'}
     </div>
 
+    {#snippet overrideParagraphSnippet(props: ParagraphSnippetProps)}
+        <p data-overridden="paragraph" class="overridden-p">
+            {@render props.children?.()}
+        </p>
+    {/snippet}
+    {#snippet overrideTextSnippet(props: TextSnippetProps)}
+        <span data-overridden="text">{props.text ?? ''}</span>
+    {/snippet}
+    {#snippet overrideHtmlDivSnippet(props: HtmlSnippetProps)}
+        <div data-overridden="html_div" {...props.attributes ?? {}}>
+            {@render props.children?.()}
+        </div>
+    {/snippet}
+
     <div class="preview" data-testid="perf-preview" bind:this={previewEl}>
-        <SvelteMarkdown {source} streaming={isStreaming} />
+        {#if useOverrides}
+            <!--
+                Slow-path scenario: pass markdown + html snippet overrides
+                so the dispatch in Parser.svelte goes through the
+                snippet-call branches rather than the inlined fast paths.
+                Catches regressions in the override path that pure
+                fast-path benchmarks would miss.
+            -->
+            <SvelteMarkdown
+                {source}
+                streaming={isStreaming}
+                paragraph={overrideParagraphSnippet}
+                text={overrideTextSnippet}
+                html_div={overrideHtmlDivSnippet}
+            />
+        {:else}
+            <SvelteMarkdown {source} streaming={isStreaming} />
+        {/if}
     </div>
 </div>
 
