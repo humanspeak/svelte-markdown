@@ -229,7 +229,29 @@
             return
         }
 
-        resetStreamingState(nextSource as string)
+        const nextStr = nextSource as string
+        // Reuse the existing IncrementalParser when the new source extends
+        // the buffered source. Without this, prop-driven streaming (the
+        // common LLM-token-by-token case) drops the parser's prevTokens
+        // cache on every chunk, forcing divergeAt=0 and re-rendering the
+        // full token tree. Imperative writeChunk() already preserves the
+        // parser; this brings prop-source parity.
+        const isAppendOnly =
+            incrementalParser !== undefined &&
+            streamSourceBuffer !== '' &&
+            nextStr !== '' &&
+            nextStr.startsWith(streamSourceBuffer)
+
+        teardownStreamingBuffers()
+
+        if (nextStr === '') {
+            clearStreamingParser()
+            streamTokens.length = 0
+            return
+        }
+
+        streamSourceBuffer = nextStr
+        applyStreamingSource(nextStr, !isAppendOnly)
     }
 
     const canUseImperativeStreaming = (methodName: 'writeChunk' | 'resetStream'): boolean => {
