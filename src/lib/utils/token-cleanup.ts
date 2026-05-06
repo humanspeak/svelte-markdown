@@ -283,6 +283,197 @@ export const containsMultipleTags = (html: string): boolean => {
 }
 
 /**
+ * Fast scan used by `expandHtmlToken` to decide whether the htmlparser2
+ * expansion path is worth invoking. Returns true when the input contains
+ * at least two `<` characters separated by a `>` — i.e. the cheapest
+ * possible witness that more than one tag is present.
+ *
+ * Cheaper than `containsMultipleTags` (two `indexOf` calls vs a global
+ * regex sweep) and good enough for the perf gate: false positives just
+ * route through htmlparser2 (correct, slightly slower); false negatives
+ * cannot occur for any input that contains two tags.
+ *
+ * @internal
+ */
+const hasMultipleTags = (html: string): boolean => {
+    const firstClose = html.indexOf('>')
+    if (firstClose === -1) return false
+    return html.indexOf('<', firstClose + 1) !== -1
+}
+
+/**
+ * Single-pass expansion of one html token's raw string into nested
+ * tokens. Combines what `parseHtmlBlock` (flat tokenization) and the
+ * subsequent `processHtmlTokens` walk (stack-based nesting) used to do
+ * separately into a single htmlparser2 traversal: opening tags push a
+ * fresh child array onto the stack, closing tags pop it and attach the
+ * collected children to the opening token via `tokens`.
+ *
+ * Behavior is matched to the legacy two-pass pipeline:
+ *   - Self-closing tags (`<br>` etc.) are emitted with `<.../>` form.
+ *   - Auto-closes injected by htmlparser2 at end-of-input (when the
+ *     source did not literally contain `</tag>`) keep the children flat
+ *     under the opening tag rather than nesting them — this preserves
+ *     the legacy "partial result on unclosed tags" output.
+ *   - Whitespace-only text between tags is dropped.
+ *
+ * @internal
+ */
+const expandHtmlBlockNested = (html: string): Token[] => {
+    const root: Token[] = []
+    const stack: Token[][] = [root]
+    const opens: { tag: string; opening: Token; childTokens: Token[] }[] = []
+    let currentText = ''
+
+    const flushText = () => {
+        if (currentText.length === 0) return
+        if (currentText.trim()) {
+            stack[stack.length - 1].push({
+                type: 'text',
+                raw: currentText,
+                text: currentText
+            } as Token)
+        }
+        currentText = ''
+    }
+
+    const parser = new htmlparser2.Parser(
+        {
+            onopentag: (name, attributes) => {
+                flushText()
+                if (SELF_CLOSING_TAGS.test(name)) {
+                    stack[stack.length - 1].push({
+                        type: 'html',
+                        raw: `<${name}${serializeAttributes(attributes)}/>`,
+                        tag: name,
+                        attributes
+                    } as Token)
+                    return
+                }
+                const childTokens: Token[] = []
+                const opening: Token = {
+                    type: 'html',
+                    raw: `<${name}${serializeAttributes(attributes)}>`,
+                    tag: name,
+                    attributes
+                } as Token
+                stack[stack.length - 1].push(opening)
+                stack.push(childTokens)
+                opens.push({ tag: name, opening, childTokens })
+            },
+            ontext: (text) => {
+                currentText += text
+            },
+            onclosetag: (name) => {
+                flushText()
+                if (opens.length === 0) return
+                const top = opens[opens.length - 1]
+                if (top.tag !== name) return
+                opens.pop()
+                stack.pop()
+                if (html.includes(`</${name}>`)) {
+                    ;(top.opening as Token & { tokens?: Token[] }).tokens = top.childTokens
+                } else {
+                    // Auto-closed by htmlparser2 at end-of-input — flatten
+                    // children under the opening to match legacy parseHtmlBlock
+                    // + processHtmlTokens partial-result behavior.
+                    const parent = stack[stack.length - 1]
+                    for (const child of top.childTokens) parent.push(child)
+                }
+            }
+        },
+        {
+            xmlMode: false,
+            recognizeSelfClosing: true
+        }
+    )
+
+    parser.write(html)
+    parser.end()
+    flushText()
+
+    return root
+}
+
+/**
+ * Expands a single html token. Single-tag inputs (the dominant inline
+ * shape — opening tag alone, closing tag alone, self-closing) skip
+ * htmlparser2 entirely and go through the cheap `formatSelfClosingHtmlToken`
+ * path. Anything with two or more tags routes through
+ * `expandHtmlBlockNested` for inline nesting.
+ *
+ * @internal
+ */
+const expandHtmlToken = (token: Token): Token[] => {
+    if (!hasMultipleTags(token.raw)) {
+        return [formatSelfClosingHtmlToken(token)]
+    }
+    return expandHtmlBlockNested(token.raw)
+}
+
+/**
+ * Pair-matches flat html opens/closes that span across separate marked
+ * tokens (e.g. marked emits `<details>` and `</details>` as two
+ * top-level html tokens with markdown blocks between them). Tokens that
+ * `expandHtmlToken` already nested (recognizable by the populated
+ * `tokens` array on an html token) are passed through opaquely — no
+ * recursion, no re-walk. This is the key delta from the legacy
+ * `processHtmlTokens` walk, which re-traversed every nested descendant
+ * for each html token in the result.
+ *
+ * @internal
+ */
+const pairFlatHtmlTokens = (tokens: Token[]): Token[] => {
+    const result: Token[] = []
+    const stack: { tag: string; startIndex: number }[] = []
+
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i]
+
+        if (token.type !== 'html') {
+            result.push(token)
+            continue
+        }
+
+        // Already-nested html tokens (from expandHtmlToken) are opaque —
+        // their internal structure is fully resolved.
+        if ('tokens' in token && Array.isArray((token as Token & { tokens?: Token[] }).tokens)) {
+            result.push(token)
+            continue
+        }
+
+        const tagInfo = isHtmlOpenTag(token.raw)
+        if (!tagInfo) {
+            result.push(token)
+            continue
+        }
+
+        if (tagInfo.isOpening) {
+            stack.push({ tag: tagInfo.tag, startIndex: result.length })
+            result.push(token)
+        } else {
+            const lastOpen = stack.pop()
+            if (!lastOpen || lastOpen.tag !== tagInfo.tag) {
+                result.push(token)
+                continue
+            }
+            const startIndex = lastOpen.startIndex
+            const innerTokens = result.splice(startIndex + 1, result.length - startIndex - 1)
+            const openingToken = result.pop()!
+            result.push({
+                type: 'html',
+                raw: openingToken.raw,
+                tag: tagInfo.tag,
+                tokens: innerTokens,
+                attributes: extractAttributes(openingToken.raw)
+            } as Token)
+        }
+    }
+
+    return result
+}
+
+/**
  * Primary entry point for HTML token processing. Transforms flat token arrays
  * into properly nested structures while preserving HTML semantics.
  *
@@ -308,21 +499,24 @@ export const containsMultipleTags = (html: string): boolean => {
  * @public
  */
 export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
-    const result: Token[] = []
+    const expanded: Token[] = []
     for (const token of tokens) {
-        if ('tokens' in token && Array.isArray((token as Token & { tokens: Token[] }).tokens)) {
+        if (
+            token.type !== 'html' &&
+            'tokens' in token &&
+            Array.isArray((token as Token & { tokens: Token[] }).tokens)
+        ) {
             const t = token as Token & { tokens: Token[] }
             t.tokens = shrinkHtmlTokens(t.tokens)
-            result.push(token)
+            expanded.push(token)
         } else if (token.type === 'list') {
             token.items = token.items.map((item: Tokens.ListItem, index: number) => ({
                 ...item,
                 listItemIndex: index,
                 tokens: item.tokens ? shrinkHtmlTokens(item.tokens) : []
             }))
-            result.push(token)
+            expanded.push(token)
         } else if (token.type === 'table') {
-            // Process header cells
             const tableToken = token as Tokens.Table
             if (tableToken.header) {
                 tableToken.header = tableToken.header.map((cell: Tokens.TableCell) => ({
@@ -330,8 +524,6 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
                     tokens: cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
                 }))
             }
-
-            // Process row cells
             if (tableToken.rows) {
                 tableToken.rows = tableToken.rows.map((row: Tokens.TableCell[]) =>
                     row.map((cell: Tokens.TableCell) => ({
@@ -340,21 +532,16 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
                     }))
                 )
             }
-            result.push(token)
-        } else if (token.type === 'html' && containsMultipleTags(token.raw)) {
-            // Parse HTML with multiple tags into separate tokens
-            result.push(...parseHtmlBlock(token.raw))
+            expanded.push(token)
         } else if (token.type === 'html') {
-            // Format self-closing tags properly (e.g., <br> -> <br/>)
-            const formattedToken = formatSelfClosingHtmlToken(token)
-            result.push(formattedToken)
+            const expansion = expandHtmlToken(token)
+            for (const t of expansion) expanded.push(t)
         } else {
-            result.push(token)
+            expanded.push(token)
         }
     }
 
-    // Then process the tokens as before
-    return processHtmlTokens(result)
+    return pairFlatHtmlTokens(expanded)
 }
 
 /**
