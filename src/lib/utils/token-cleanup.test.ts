@@ -421,5 +421,62 @@ describe('Token Cleanup Utilities', () => {
             // Attributes should be preserved
             expect((result[0] as any).attributes).toHaveProperty('data-value', 'safe')
         })
+
+        // Pins the single-pass shape (issue #284). A multi-tag html token
+        // arriving in a single marked emit must come out fully nested
+        // *without* re-traversal — i.e. the inner descendants are reachable
+        // strictly via the outer token's `tokens` field, not as siblings
+        // in a flat result. Future refactors that regress to the old
+        // three-pass shape (containsMultipleTags + parseHtmlBlock + a
+        // separate processHtmlTokens walk) would put the children in
+        // multiple result entries instead of nesting them inline.
+        it('should produce a single nested token from a multi-tag html block in one pass', () => {
+            const tokens: Token[] = [
+                {
+                    type: 'html',
+                    block: true,
+                    raw: '<div class="card"><header><h3>Card</h3></header><p>Body <strong>bold</strong> tail</p><footer><small>id=1</small><br/></footer></div>',
+                    pre: false,
+                    text: '<div class="card"><header><h3>Card</h3></header><p>Body <strong>bold</strong> tail</p><footer><small>id=1</small><br/></footer></div>'
+                }
+            ]
+
+            const result = shrinkHtmlTokens(tokens)
+
+            // One nested root, not 8+ flat siblings
+            expect(result).toHaveLength(1)
+            const root = result[0] as Token & {
+                tag: string
+                tokens: Token[]
+                attributes: Record<string, string>
+            }
+            expect(root.type).toBe('html')
+            expect(root.tag).toBe('div')
+            expect(root.attributes).toEqual({ class: 'card' })
+
+            // Children are reached via root.tokens (single-pass nesting),
+            // not present as additional top-level tokens
+            const headerTok = root.tokens[0] as Token & { tag: string; tokens: Token[] }
+            expect(headerTok.tag).toBe('header')
+            const h3 = headerTok.tokens[0] as Token & { tag: string; tokens: Token[] }
+            expect(h3.tag).toBe('h3')
+            expect(h3.tokens[0]).toMatchObject({ type: 'text', text: 'Card' })
+
+            const p = root.tokens[1] as Token & { tag: string; tokens: Token[] }
+            expect(p.tag).toBe('p')
+            // <strong>bold</strong> nested inside the <p>, with surrounding text
+            expect(p.tokens.map((t) => (t as any).tag ?? (t as any).type)).toEqual([
+                'text',
+                'strong',
+                'text'
+            ])
+
+            const footer = root.tokens[2] as Token & { tag: string; tokens: Token[] }
+            expect(footer.tag).toBe('footer')
+            // <br/> survives as a self-closing token inside the footer
+            const br = footer.tokens[1] as Token & { tag: string; raw: string }
+            expect(br.tag).toBe('br')
+            expect(br.raw).toBe('<br/>')
+        })
     })
 })
