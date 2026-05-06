@@ -251,6 +251,44 @@ describe('imperative streaming API', () => {
         expect(container.textContent).toContain('Tail')
     })
 
+    test('reuses the IncrementalParser across append-only source prop updates', async () => {
+        // When the source prop grows by appending (the typical LLM
+        // token-by-token case), the parser's prevTokens cache must
+        // survive — otherwise divergeAt collapses to 0 and the entire
+        // token tree re-renders on every chunk. Pinned by spying on
+        // lexAndClean: the second parse should only lex the appended
+        // tail thanks to IncrementalParser's tail-window optimization.
+        const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+        const initialSource = '# Heading\n\nParagraph one\n\n'
+        const { container, rerender } = render(SvelteMarkdown, {
+            props: { source: initialSource, streaming: true }
+        })
+        await flushStreamingBatch()
+
+        expect(lexSpy).toHaveBeenCalledTimes(1)
+        expect(lexSpy.mock.calls[0][0]).toBe(initialSource)
+
+        const appendedTail = 'Paragraph two\n\n'
+        const nextSource = initialSource + appendedTail
+        await rerender({ source: nextSource, streaming: true })
+        await flushStreamingBatch()
+
+        expect(lexSpy).toHaveBeenCalledTimes(2)
+        // Tail-window kicks in: the second lex call sees only the tail,
+        // not the full nextSource. If the parser had been reset, the
+        // full nextSource would have been re-lexed.
+        expect(lexSpy.mock.calls[1][0].length).toBeLessThan(nextSource.length)
+        expect(lexSpy.mock.calls[1][0]).toContain('Paragraph two')
+
+        // Correctness: both paragraphs render
+        const paragraphs = container.querySelectorAll('p')
+        expect(paragraphs.length).toBe(2)
+        expect(paragraphs[0].textContent).toBe('Paragraph one')
+        expect(paragraphs[1].textContent).toBe('Paragraph two')
+
+        lexSpy.mockRestore()
+    })
+
     test('writeChunk warns when streaming is false', async () => {
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
         const { component, container } = render(SvelteMarkdown, {
