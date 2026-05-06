@@ -48,12 +48,13 @@
 
     import Parser from '$lib/Parser.svelte'
     import Html from '$lib/renderers/html/index.js'
-    import type {
-        Renderers,
-        Token,
-        TokensList,
-        Tokens,
-        RendererComponent
+    import {
+        defaultRenderers,
+        type Renderers,
+        type Token,
+        type TokensList,
+        type Tokens,
+        type RendererComponent
     } from '$lib/utils/markdown-parser.js'
     import {
         defaultSanitizeAttributes,
@@ -115,6 +116,43 @@
         byType[initialType] = (byType[initialType] ?? 0) + 1
     }
 
+    // Inline-render eligibility flags (issue #286): leaf text, space, and
+    // default-renderer html tokens are by far the most common token
+    // shapes. Their default render path is a no-op wrapper chain (Parser
+    // → Text/RawText/HtmlComponent → `{text}` or `<tag>...</tag>`). For
+    // space tokens it's even worse: Parser is instantiated, hits no
+    // branch, and renders nothing. Detect once whether the user has kept
+    // the default renderers / has no snippet override so we can render
+    // these inline at the call site without spawning a Parser.
+    const inlineTextOk = $derived(
+        renderers.text === defaultRenderers.text && !snippetOverrides.text
+    )
+    const inlineSpaceOk = $derived(
+        // No default renderer for `space`; only safe to skip when nothing
+        // has been added by the user.
+        !(renderers as Record<string, unknown>).space && !snippetOverrides.space
+    )
+
+    // Self-closing HTML tags must not receive children — `<br>content</br>`
+    // is invalid and `<svelte:element>` would emit it anyway.
+    const SELF_CLOSING_HTML = new Set([
+        'br',
+        'hr',
+        'img',
+        'input',
+        'link',
+        'meta',
+        'area',
+        'base',
+        'col',
+        'embed',
+        'keygen',
+        'param',
+        'source',
+        'track',
+        'wbr'
+    ])
+
     // Sanitize rest props before they reach any renderer or snippet.
     // This is the single enforcement point — custom renderers cannot bypass it.
     const sanitizedRest = $derived.by(() => {
@@ -138,19 +176,56 @@
     })
 </script>
 
+{#snippet dispatch(token: Token, restProps: Record<string, unknown>)}
+    {#if token.type === 'space' && inlineSpaceOk}
+        <!-- inlined: space tokens render nothing -->
+    {:else if token.type === 'text' && inlineTextOk && !(token as Tokens.Text).tokens}
+        {(token as Tokens.Text).text ?? token.raw}
+    {:else if token.type === 'html' && renderers.html && (token as any).tag && renderers.html[(token as any).tag] === Html[(token as any).tag] && !htmlSnippetOverrides[(token as any).tag]}
+        // trunk-ignore(eslint/@typescript-eslint/no-explicit-any) //
+        trunk-ignore(eslint/@typescript-eslint/no-explicit-any) //
+        trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
+        {@const htmlTok = token as Token & {
+            tag: string
+            attributes?: Record<string, string>
+            tokens?: Token[]
+        }}
+        {@const sanitizedAttrs = htmlTok.attributes
+            ? sanitizeAttributes(
+                  htmlTok.attributes,
+                  { type: 'html', tag: htmlTok.tag },
+                  sanitizeUrl
+              )
+            : undefined}
+        {#if SELF_CLOSING_HTML.has(htmlTok.tag)}
+            <svelte:element this={htmlTok.tag} {...sanitizedAttrs} />
+        {:else}
+            <svelte:element this={htmlTok.tag} {...sanitizedAttrs}>
+                {#if htmlTok.tokens && htmlTok.tokens.length}
+                    {#each htmlTok.tokens as childToken, i (i)}
+                        {@render dispatch(childToken, restProps)}
+                    {/each}
+                {/if}
+            </svelte:element>
+        {/if}
+    {:else}
+        <Parser
+            {...restProps}
+            {...token}
+            {renderers}
+            {snippetOverrides}
+            {htmlSnippetOverrides}
+            {sanitizeUrl}
+            {sanitizeAttributes}
+        />
+    {/if}
+{/snippet}
+
 {#if !type}
     {#if tokens}
+        {@const { text: _text, raw: _raw, tokens: _tokens, ...parserRest } = rest}
         {#each tokens as token, index (index)}
-            {@const { text: _text, raw: _raw, tokens: _tokens, ...parserRest } = rest}
-            <Parser
-                {...parserRest}
-                {...token}
-                {renderers}
-                {snippetOverrides}
-                {htmlSnippetOverrides}
-                {sanitizeUrl}
-                {sanitizeAttributes}
-            />
+            {@render dispatch(token, parserRest)}
         {/each}
     {/if}
 {:else if type in renderers || type in snippetOverrides}
@@ -169,14 +244,9 @@
                             {#each header ?? [] as headerItem, i (i)}
                                 {@const { align: _align, ...cellRest } = sanitizedRest}
                                 {#snippet headerCellContent()}
-                                    <Parser
-                                        tokens={headerItem.tokens}
-                                        {renderers}
-                                        {snippetOverrides}
-                                        {htmlSnippetOverrides}
-                                        {sanitizeUrl}
-                                        {sanitizeAttributes}
-                                    />
+                                    {#each headerItem.tokens ?? [] as headerCellToken, k (k)}
+                                        {@render dispatch(headerCellToken, {})}
+                                    {/each}
                                 {/snippet}
                                 {#if cellSnippet}
                                     {@render cellSnippet({
@@ -223,15 +293,7 @@
                                     {@const { align: _align, ...cellRest } = sanitizedRest}
                                     {#snippet bodyCellContent()}
                                         {#each cells.tokens ?? [] as cellToken, index (index)}
-                                            <Parser
-                                                {...cellRest}
-                                                {...cellToken}
-                                                {renderers}
-                                                {snippetOverrides}
-                                                {htmlSnippetOverrides}
-                                                {sanitizeUrl}
-                                                {sanitizeAttributes}
-                                            />
+                                            {@render dispatch(cellToken, cellRest)}
                                         {/each}
                                     {/snippet}
                                     {#if cellSnippet}
@@ -296,15 +358,9 @@
                     {@const orderedItemSnippet =
                         snippetOverrides['orderedlistitem'] || snippetOverrides['listitem']}
                     {#snippet orderedItemContent()}
-                        <Parser
-                            {...parserRest}
-                            tokens={item.tokens}
-                            {renderers}
-                            {snippetOverrides}
-                            {htmlSnippetOverrides}
-                            {sanitizeUrl}
-                            {sanitizeAttributes}
-                        />
+                        {#each item.tokens ?? [] as itemToken, k (k)}
+                            {@render dispatch(itemToken, parserRest)}
+                        {/each}
                     {/snippet}
                     {#if orderedItemSnippet}
                         {@render orderedItemSnippet({ ...item, children: orderedItemContent })}
@@ -332,15 +388,9 @@
                     {@const unorderedItemSnippet =
                         snippetOverrides['unorderedlistitem'] || snippetOverrides['listitem']}
                     {#snippet unorderedItemContent()}
-                        <Parser
-                            {...parserRest}
-                            tokens={item.tokens}
-                            {renderers}
-                            {snippetOverrides}
-                            {htmlSnippetOverrides}
-                            {sanitizeUrl}
-                            {sanitizeAttributes}
-                        />
+                        {#each item.tokens ?? [] as itemToken, k (k)}
+                            {@render dispatch(itemToken, parserRest)}
+                        {/each}
                     {/snippet}
                     {#if unorderedItemSnippet}
                         {@render unorderedItemSnippet({ ...item, children: unorderedItemContent })}
@@ -363,20 +413,15 @@
         {@const { tag, ...localRest } = sanitizedRest}
         {@const htmlTag = sanitizedRest.tag as keyof typeof Html}
         {@const htmlSnippet = htmlSnippetOverrides[htmlTag as string]}
+        {@const localRestForChildren = Object.fromEntries(
+            Object.entries(localRest).filter(([key]) => key !== 'attributes')
+        )}
         {#if htmlSnippet}
             {#snippet htmlSnippetChildren()}
                 {#if tokens && (tokens as Token[]).length}
-                    <Parser
-                        tokens={tokens as Token[]}
-                        {renderers}
-                        {snippetOverrides}
-                        {htmlSnippetOverrides}
-                        {sanitizeUrl}
-                        {sanitizeAttributes}
-                        {...Object.fromEntries(
-                            Object.entries(localRest).filter(([key]) => key !== 'attributes')
-                        )}
-                    />
+                    {#each tokens as childToken, index (index)}
+                        {@render dispatch(childToken, localRestForChildren)}
+                    {/each}
                 {:else}
                     <renderers.rawtext text={sanitizedRest.raw} {...sanitizedRest} />
                 {/if}
@@ -390,34 +435,22 @@
             {#if HtmlComponent}
                 <HtmlComponent {...sanitizedRest}>
                     {#if tokens && (tokens as Token[]).length}
-                        <Parser
-                            tokens={tokens as Token[]}
-                            {renderers}
-                            {snippetOverrides}
-                            {htmlSnippetOverrides}
-                            {sanitizeUrl}
-                            {sanitizeAttributes}
-                            {...Object.fromEntries(
-                                Object.entries(localRest).filter(([key]) => key !== 'attributes')
-                            )}
-                        />
+                        {#each tokens as childToken, index (index)}
+                            {@render dispatch(childToken, localRestForChildren)}
+                        {/each}
                     {:else}
                         <renderers.rawtext text={sanitizedRest.raw} {...sanitizedRest} />
                     {/if}
                 </HtmlComponent>
             {/if}
         {:else}
-            <Parser
-                tokens={(tokens as Token[]) ?? ([] as Token[])}
-                {renderers}
-                {snippetOverrides}
-                {htmlSnippetOverrides}
-                {sanitizeUrl}
-                {sanitizeAttributes}
-                {...Object.fromEntries(
-                    Object.entries(localRest).filter(([key]) => key !== 'tokens')
-                )}
-            />
+            {@const fallbackRest = Object.fromEntries(
+                Object.entries(localRest).filter(([key]) => key !== 'tokens')
+            )}
+            {@const fallbackTokens = (tokens as Token[]) ?? ([] as Token[])}
+            {#each fallbackTokens as fallbackToken, index (index)}
+                {@render dispatch(fallbackToken, fallbackRest)}
+            {/each}
         {/if}
     {:else}
         {@const GeneralComponent = renderers[type as keyof typeof renderers] as RendererComponent}
@@ -426,15 +459,9 @@
         {#snippet renderChildren()}
             {#if tokens}
                 {@const { text: _text, raw: _raw, ...parserRest } = sanitizedRest}
-                <Parser
-                    {...parserRest}
-                    {tokens}
-                    {renderers}
-                    {snippetOverrides}
-                    {htmlSnippetOverrides}
-                    {sanitizeUrl}
-                    {sanitizeAttributes}
-                />
+                {#each tokens as childToken, index (index)}
+                    {@render dispatch(childToken, parserRest)}
+                {/each}
             {:else}
                 <renderers.rawtext text={sanitizedRest.raw} {...sanitizedRest} />
             {/if}
