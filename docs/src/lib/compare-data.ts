@@ -26,12 +26,14 @@ export interface Competitor {
 
 const shared = {
     prosUs: [
-        'Svelte 5 runes-native — no legacy compatibility layers',
+        'Svelte 5 runes-native — built for runes, not retrofitted',
         'TypeScript-first with full type safety',
-        'Built-in token caching (50-200x faster re-renders)',
-        'Built-in LLM streaming mode with incremental updates',
-        '24 markdown renderers + 69+ HTML tag renderers',
-        'Allow/deny utilities for fine-grained control',
+        'Built-in token caching (50-200x faster re-renders on repeated content)',
+        'LLM streaming with imperative writeChunk() / resetStream() API',
+        '23 markdown renderers + 84 HTML tag renderers — every override is a Svelte snippet',
+        'First-class extensions: KaTeX math, Mermaid diagrams, GitHub alerts, footnotes',
+        'Built-in XSS protection — protocol allowlist, event-handler stripping, attribute sanitization',
+        'Allow/deny utilities (allowHtmlOnly, excludeRenderersOnly, etc.) for fine-grained control',
         'Drop-in component — works anywhere in your Svelte app'
     ],
     consUs: ['Smaller community (newer project)', 'Runtime-only (no build-time optimization)']
@@ -68,13 +70,13 @@ export const competitors: Competitor[] = [
             },
             {
                 name: 'LLM Streaming Mode',
-                us: true,
+                us: 'writeChunk() / resetStream()',
                 them: false,
                 note: 'MDsveX is build-time only, so there is no runtime markdown streaming mode.'
             },
             {
                 name: 'HTML Tag Control',
-                us: '69+ tags with allow/deny',
+                us: '84 tags with allow/deny',
                 them: 'Via rehype plugins'
             },
             { name: 'Markdown in Components', us: true, them: true },
@@ -84,6 +86,21 @@ export const competitors: Competitor[] = [
                 us: false,
                 them: true,
                 note: 'MDsveX has built-in frontmatter parsing'
+            },
+            {
+                name: 'Math (KaTeX)',
+                us: 'Built-in extension (markedKatex)',
+                them: 'Via remark-math + rehype-katex'
+            },
+            {
+                name: 'Diagrams (Mermaid)',
+                us: 'Built-in extension (markedMermaid)',
+                them: 'Via rehype-mermaid'
+            },
+            {
+                name: 'GitHub Alerts',
+                us: 'Built-in extension (markedAlert)',
+                them: 'Via remark-github-alerts'
             },
             {
                 name: 'Code Highlighting',
@@ -96,10 +113,11 @@ export const competitors: Competitor[] = [
             ...shared.prosUs,
             'Renders dynamic/user-supplied markdown at runtime',
             'No build step required — works with any markdown string',
+            'Math, Mermaid, alerts, and footnotes ship as first-class extensions — no remark/rehype pipeline required',
             'Simpler mental model — just pass a string, get rendered output'
         ],
         prosThem: [
-            'Largest Svelte markdown ecosystem (~2,600 GitHub stars)',
+            'Largest Svelte markdown ecosystem (~3,000 GitHub stars)',
             'Build-time optimization — zero runtime parsing cost',
             'Use Svelte components directly inside markdown files',
             'Rich plugin ecosystem via unified/remark/rehype',
@@ -109,7 +127,8 @@ export const competitors: Competitor[] = [
         consUs: [
             ...shared.consUs,
             'Cannot embed Svelte components inside markdown content',
-            'No frontmatter support (parse separately if needed)'
+            'No frontmatter support (parse separately if needed)',
+            'No built-in code syntax highlighting (use a marked extension)'
         ],
         consThem: [
             'Cannot render dynamic/user-supplied markdown',
@@ -152,11 +171,11 @@ export const competitors: Competitor[] = [
             { name: 'Token Caching', us: true, them: false },
             {
                 name: 'LLM Streaming Mode',
-                us: true,
+                us: 'writeChunk() / resetStream()',
                 them: false,
                 note: 'Tiptap can update editor state live, but it does not document a dedicated markdown streaming renderer mode.'
             },
-            { name: 'HTML Tag Control', us: '69+ tags with allow/deny', them: 'Via schema' },
+            { name: 'HTML Tag Control', us: '84 tags with allow/deny', them: 'Via schema' },
             { name: 'Collaborative Editing', us: false, them: true },
             { name: 'Toolbar/Menus', us: false, them: 'Headless (build your own)' },
             {
@@ -173,7 +192,7 @@ export const competitors: Competitor[] = [
         ],
         prosThem: [
             'Full WYSIWYG rich text editing experience',
-            'Massive ecosystem (~35,500 GitHub stars)',
+            'Massive ecosystem (~36,500 GitHub stars)',
             'Collaborative editing support (Y.js)',
             'Extensible with 100+ official extensions',
             'Framework-agnostic — works beyond Svelte'
@@ -223,7 +242,7 @@ export const competitors: Competitor[] = [
             },
             {
                 name: 'LLM Streaming Mode',
-                us: true,
+                us: 'writeChunk() / resetStream()',
                 them: false,
                 note: 'markdown-it is a parser, not a streaming UI layer.'
             },
@@ -235,8 +254,23 @@ export const competitors: Competitor[] = [
             },
             {
                 name: 'XSS Protection',
-                us: 'Built-in tag control',
+                us: 'Built-in (URL allowlist + attr sanitization)',
                 them: 'Manual sanitization required'
+            },
+            {
+                name: 'Math (KaTeX)',
+                us: 'Built-in extension (markedKatex)',
+                them: 'Via markdown-it-katex plugin'
+            },
+            {
+                name: 'GitHub Alerts',
+                us: 'Built-in extension (markedAlert)',
+                them: 'Via plugin'
+            },
+            {
+                name: 'Footnotes',
+                us: 'Built-in extension (markedFootnote)',
+                them: 'Via markdown-it-footnote plugin'
             },
             {
                 name: 'Framework Integration',
@@ -247,11 +281,10 @@ export const competitors: Competitor[] = [
         prosUs: [
             ...shared.prosUs,
             'Renders as Svelte components — not raw HTML injection',
-            'No need for {@html} and manual sanitization',
-            'Built-in XSS protection via allow/deny controls'
+            'No need for {@html} and manual sanitization'
         ],
         prosThem: [
-            'Massive ecosystem (13M+ weekly npm downloads)',
+            'Massive ecosystem (21M+ weekly npm downloads)',
             '100% CommonMark compliant with spec test suite',
             '200+ community plugins available',
             'Framework-agnostic — use anywhere',
@@ -293,7 +326,7 @@ export const competitors: Competitor[] = [
             { name: 'HTML Safety', us: 'Allow/deny per tag', them: 'Manual sanitization' },
             {
                 name: 'LLM Streaming Mode',
-                us: true,
+                us: 'writeChunk() / resetStream()',
                 them: false,
                 note: 'marked is the parsing engine only; incremental streaming behavior must be built manually on top.'
             },
@@ -301,6 +334,26 @@ export const competitors: Competitor[] = [
                 name: 'Extensions',
                 us: 'Full marked extensions support',
                 them: 'Full extensions API'
+            },
+            {
+                name: 'Math (KaTeX)',
+                us: 'Built-in extension (markedKatex)',
+                them: 'Via marked-katex-extension'
+            },
+            {
+                name: 'Diagrams (Mermaid)',
+                us: 'Built-in extension (markedMermaid)',
+                them: 'Via marked-mermaid'
+            },
+            {
+                name: 'GitHub Alerts',
+                us: 'Built-in extension (markedAlert)',
+                them: 'Via marked-alert'
+            },
+            {
+                name: 'Footnotes',
+                us: 'Built-in extension (markedFootnote)',
+                them: 'Via marked-footnote'
             },
             { name: 'GFM Support', us: true, them: true },
             {
@@ -317,7 +370,7 @@ export const competitors: Competitor[] = [
             'No {@html} needed — renders as safe Svelte components'
         ],
         prosThem: [
-            'Most popular JS markdown parser (21M+ weekly npm downloads)',
+            'Most popular JS markdown parser (38M+ weekly npm downloads)',
             'Smaller bundle (parser only, no rendering layer)',
             'Framework-agnostic — use anywhere',
             'Maximum flexibility with token/renderer hooks',
@@ -363,9 +416,24 @@ export const competitors: Competitor[] = [
             { name: 'Token Caching', us: true, them: false },
             {
                 name: 'LLM Streaming Mode',
-                us: true,
+                us: 'writeChunk() / resetStream()',
                 them: false,
                 note: 'Milkdown updates live as an editor, but it does not document a dedicated markdown streaming renderer mode.'
+            },
+            {
+                name: 'HTML Tag Control',
+                us: '84 tags with allow/deny',
+                them: 'Via ProseMirror schema'
+            },
+            {
+                name: 'Math (KaTeX)',
+                us: 'Built-in extension (markedKatex)',
+                them: 'Via @milkdown/plugin-math'
+            },
+            {
+                name: 'Diagrams (Mermaid)',
+                us: 'Built-in extension (markedMermaid)',
+                them: 'Via @milkdown/plugin-diagram'
             },
             { name: 'Collaborative Editing', us: false, them: 'Via Y.js plugin' },
             { name: 'Slash Commands', us: false, them: true },
@@ -385,7 +453,12 @@ export const competitors: Competitor[] = [
             'Slash commands, toolbar, and more',
             'Headless — fully customizable appearance'
         ],
-        consUs: [...shared.consUs, 'No editing capabilities', 'No collaborative features'],
+        consUs: [
+            ...shared.consUs,
+            'No editing capabilities',
+            'No collaborative features',
+            'No built-in code syntax highlighting (use a marked extension)'
+        ],
         consThem: [
             'Heavy bundle for display-only use cases',
             'Svelte support is via adapter, not first-party',
@@ -414,12 +487,12 @@ export const competitors: Competitor[] = [
             { name: 'Token Caching', us: 'Built-in LRU cache', them: false },
             {
                 name: 'HTML Tag Control',
-                us: '69+ tags with allow/deny',
+                us: '84 tags with allow/deny',
                 them: 'Via rehype plugins'
             },
             {
                 name: 'LLM Streaming Mode',
-                us: true,
+                us: 'writeChunk() / resetStream()',
                 them: false,
                 note: 'svelte-exmarkdown is a runtime renderer, but its upstream docs do not describe a streaming-specific incremental mode.'
             },
@@ -427,8 +500,18 @@ export const competitors: Competitor[] = [
             { name: 'Snippet Overrides', us: true, them: false },
             {
                 name: 'HTML Renderers',
-                us: '69+ dedicated components',
+                us: '84 dedicated components',
                 them: 'Generic element handling'
+            },
+            {
+                name: 'Math (KaTeX)',
+                us: 'Built-in extension (markedKatex)',
+                them: 'Via remark-math + rehype-katex'
+            },
+            {
+                name: 'Diagrams (Mermaid)',
+                us: 'Built-in extension (markedMermaid)',
+                them: 'Via rehype-mermaid'
             },
             { name: 'Bundle Size', us: '~15KB', them: '~25KB+ (unified stack)' },
             { name: 'Marked Extensions', us: true, them: false }
@@ -436,7 +519,7 @@ export const competitors: Competitor[] = [
         prosUs: [
             ...shared.prosUs,
             'Svelte 5 snippet overrides — customize rendering inline',
-            '69+ dedicated HTML tag renderers (not generic)',
+            '84 dedicated HTML tag renderers (not generic)',
             'Smaller bundle — marked is lighter than unified stack'
         ],
         prosThem: [
@@ -480,24 +563,33 @@ export const competitors: Competitor[] = [
             { name: 'Token Caching', us: true, them: false },
             {
                 name: 'HTML Tag Control',
-                us: '69+ tags with allow/deny',
+                us: '84 tags with allow/deny',
                 them: 'Via rehype-sanitize'
             },
             {
                 name: 'LLM Streaming Mode',
-                us: true,
+                us: 'writeChunk() / resetStream()',
                 them: false,
                 note: 'Carta offers live preview for editing, but its docs do not describe a dedicated markdown streaming renderer mode.'
             },
-            { name: 'Syntax Highlighting', us: 'Via extensions', them: 'Built-in plugin' },
-            { name: 'Math (KaTeX)', us: 'Via extensions', them: 'Built-in plugin' },
+            { name: 'Syntax Highlighting', us: 'Via marked extensions', them: 'Built-in plugin' },
+            {
+                name: 'Math (KaTeX)',
+                us: 'Built-in extension (markedKatex)',
+                them: 'Built-in plugin'
+            },
+            {
+                name: 'Diagrams (Mermaid)',
+                us: 'Built-in extension (markedMermaid)',
+                them: 'Built-in plugin'
+            },
             { name: 'Split-Pane UI', us: false, them: true },
             { name: 'Keyboard Shortcuts', us: false, them: true }
         ],
         prosUs: [
             ...shared.prosUs,
             'Simpler API — one component, one prop',
-            'More granular HTML control (69+ individual tag renderers)',
+            'More granular HTML control (84 individual tag renderers)',
             'Snippet overrides for inline customization'
         ],
         prosThem: [
@@ -507,7 +599,12 @@ export const competitors: Competitor[] = [
             'Plugin system for syntax highlighting, math, etc.',
             'Keyboard shortcuts and toolbar'
         ],
-        consUs: [...shared.consUs, 'No editing capabilities', 'No split-pane UI'],
+        consUs: [
+            ...shared.consUs,
+            'No editing capabilities',
+            'No split-pane UI',
+            'No built-in code syntax highlighting (use a marked extension)'
+        ],
         consThem: [
             'Bundled editor code even if you only need rendering',
             'Smaller community than established editors',
@@ -537,12 +634,12 @@ export const competitors: Competitor[] = [
             { name: 'Token Caching', us: true, them: false },
             {
                 name: 'HTML Tag Control',
-                us: '69+ tags with allow/deny',
+                us: '84 tags with allow/deny',
                 them: 'Via sanitize schema'
             },
             {
                 name: 'LLM Streaming Mode',
-                us: true,
+                us: 'writeChunk() / resetStream()',
                 them: false,
                 note: 'ByteMD is an editor with live preview, but its upstream docs do not describe a dedicated markdown streaming renderer mode.'
             },
@@ -551,12 +648,22 @@ export const competitors: Competitor[] = [
                 us: 'Marked extensions',
                 them: 'Official plugins (math, mermaid, etc.)'
             },
+            {
+                name: 'Math (KaTeX)',
+                us: 'Built-in extension (markedKatex)',
+                them: 'Via @bytemd/plugin-math'
+            },
+            {
+                name: 'Diagrams (Mermaid)',
+                us: 'Built-in extension (markedMermaid)',
+                them: 'Via @bytemd/plugin-mermaid'
+            },
             { name: 'XSS Protection', us: 'Built-in', them: 'Built-in (sanitize-html)' },
             { name: 'Framework Support', us: 'Svelte 5', them: 'Svelte, React, Vue, vanilla' },
             {
                 name: 'Maintenance',
                 us: 'Active',
-                them: 'Slowed (~4k stars but fewer recent updates)'
+                them: 'Slowed (~1.3k stars, fewer recent updates)'
             }
         ],
         prosUs: [
@@ -570,9 +677,13 @@ export const competitors: Competitor[] = [
             'Framework-agnostic — works in React, Vue, vanilla JS',
             'Official plugins for math, mermaid, syntax highlighting',
             'XSS-safe by default',
-            'Large community (~4,000 GitHub stars)'
+            'Established community (~1,300 GitHub stars)'
         ],
-        consUs: [...shared.consUs, 'No editing capabilities'],
+        consUs: [
+            ...shared.consUs,
+            'No editing capabilities',
+            'No built-in code syntax highlighting (use a marked extension)'
+        ],
         consThem: [
             'Built on Svelte 3/4 — not updated for Svelte 5 runes',
             'Development has slowed significantly',
@@ -611,9 +722,14 @@ export const competitors: Competitor[] = [
             },
             {
                 name: 'LLM Streaming Mode',
-                us: true,
+                us: 'writeChunk() / resetStream()',
                 them: 'Via unified-stream',
                 note: 'The unified ecosystem has a separate unified-stream package, but not a built-in Svelte markdown streaming mode.'
+            },
+            {
+                name: 'Math (KaTeX)',
+                us: 'Built-in extension (markedKatex)',
+                them: 'Via remark-math + rehype-katex'
             },
             { name: 'AST Access', us: false, them: true },
             { name: 'Learning Curve', us: 'Minimal', them: 'Steep (AST concepts)' },
@@ -678,7 +794,7 @@ export const competitors: Competitor[] = [
             { name: 'Token Caching', us: true, them: false },
             {
                 name: 'LLM Streaming Mode',
-                us: true,
+                us: 'writeChunk() / resetStream()',
                 them: false,
                 note: 'ProseMirror updates editor state live, but it does not document a dedicated markdown streaming renderer mode.'
             },
@@ -696,7 +812,7 @@ export const competitors: Competitor[] = [
         ],
         prosThem: [
             'Build any kind of editor imaginable',
-            'Industry standard for rich text editing (~7k stars)',
+            'Industry standard for rich text editing (~8,700 stars)',
             'Powers Google Docs-like editing experiences',
             'Collaborative editing support',
             'Maximum control over every aspect'
