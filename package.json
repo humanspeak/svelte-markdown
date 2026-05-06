@@ -73,6 +73,7 @@
         "lint": "prettier --check . && eslint .",
         "lint:fix": "npm run format && eslint . --fix",
         "package": "svelte-kit sync && svelte-package && publint",
+        "perf:bench": "node scripts/perf-bench.mjs",
         "prepare": "husky",
         "prepublishOnly": "npm run package",
         "preview": "vite preview",

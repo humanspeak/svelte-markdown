@@ -90,6 +90,11 @@
             description: 'Mermaid with Svelte 5 snippets'
         },
         { href: '/test/performance', name: 'Performance', description: 'Large document rendering' },
+        {
+            href: '/test/perf-bench',
+            name: 'Perf Bench',
+            description: 'Parse/render gauges + rolling-10s observers (headless harness target)'
+        },
         { href: '/test/reactivity', name: 'Reactivity', description: 'Reactive source updates' },
         { href: '/test/snippets', name: 'Snippets', description: 'Svelte 5 snippet renderers' },
         {
