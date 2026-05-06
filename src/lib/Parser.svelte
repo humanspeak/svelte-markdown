@@ -177,19 +177,22 @@
 </script>
 
 {#snippet dispatch(token: Token, restProps: Record<string, unknown>)}
+    {@const htmlTok = token as Token & {
+        tag?: string
+        attributes?: Record<string, string>
+        tokens?: Token[]
+    }}
+    {@const inlineHtmlOk =
+        token.type === 'html' &&
+        !!htmlTok.tag &&
+        !!renderers.html &&
+        renderers.html[htmlTok.tag] === Html[htmlTok.tag] &&
+        !htmlSnippetOverrides[htmlTok.tag]}
     {#if token.type === 'space' && inlineSpaceOk}
         <!-- inlined: space tokens render nothing -->
     {:else if token.type === 'text' && inlineTextOk && !(token as Tokens.Text).tokens}
         {(token as Tokens.Text).text ?? token.raw}
-    {:else if token.type === 'html' && renderers.html && (token as any).tag && renderers.html[(token as any).tag] === Html[(token as any).tag] && !htmlSnippetOverrides[(token as any).tag]}
-        // trunk-ignore(eslint/@typescript-eslint/no-explicit-any) //
-        trunk-ignore(eslint/@typescript-eslint/no-explicit-any) //
-        trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
-        {@const htmlTok = token as Token & {
-            tag: string
-            attributes?: Record<string, string>
-            tokens?: Token[]
-        }}
+    {:else if inlineHtmlOk && htmlTok.tag}
         {@const sanitizedAttrs = htmlTok.attributes
             ? sanitizeAttributes(
                   htmlTok.attributes,
