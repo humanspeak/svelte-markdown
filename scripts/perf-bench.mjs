@@ -44,8 +44,20 @@ function parseStats(s) {
         cleanupMs: num(grab('cleanupMs')),
         hashMs: num(grab('hashMs')),
         firstPaintMs: num(grab('firstPaintMs')),
+        // Render-attribution column: firstPaintMs minus parseColdMs.
+        // Surfaces parse-side wins that pure firstPaint would hide
+        // when render dominates.
+        renderOnlyMs: num(grab('renderOnlyMs')),
         domNodes: num(grab('domNodes')),
         charsPerSec: num(grab('charsPerSec')),
+        // Dev-mode Parser-instance counter — the non-wall-clock signal
+        // that cracked open the original render investigation.
+        parserInstances: num(grab('parserInstances')),
+        // Per-scenario observer snapshots (filtered to the scenario's
+        // [start, end] window — not the rolling-10s aggregate below).
+        scenarioLongestTaskMs: num(grab('scenarioLongestTaskMs')),
+        scenarioMutations: num(grab('scenarioMutations')),
+        scenarioLoafScriptMaxMs: num(grab('scenarioLoafScriptMaxMs')),
         cacheIters: num(grab('cacheIters')),
         cacheTotalMs: num(grab('cacheTotalMs')),
         cacheAvgMs: num(grab('cacheAvgMs')),
@@ -60,6 +72,10 @@ function parseStats(s) {
         parseChunkAvgMs: num(grab('parseChunkAvgMs')),
         parseChunkP95Ms: num(grab('parseChunkP95Ms')),
         parseChunkPeakMs: num(grab('parseChunkPeakMs')),
+        // Bursty-stream-only: inter-chunk gap distribution.
+        streamGapAvgMs: num(grab('streamGapAvgMs')),
+        streamGapP95Ms: num(grab('streamGapP95Ms')),
+        streamGapPeakMs: num(grab('streamGapPeakMs')),
         longestTaskMs: grab('longestTaskMs'),
         longTasks10s: grab('longTasks10s'),
         rafP95Ms: num(grab('rafP95Ms')),
@@ -111,6 +127,13 @@ async function runStreaming(page) {
     return runDocScenario(page, 'stream-30tps', { timeout: 60_000 })
 }
 
+async function runStreamingBursty(page) {
+    // Bursty variant: jittered chunk sizes (1–10 typical, occasional
+    // 30–50 burst) with delays in [5,30]/[30,80]/[80,200]ms buckets.
+    // Wall-clock varies more than steady 30tps, so widen the timeout.
+    return runDocScenario(page, 'stream-bursty', { timeout: 120_000 })
+}
+
 async function runAll(label, page) {
     console.log(`\n=== ${label} run ===`)
     const out = {}
@@ -120,7 +143,14 @@ async function runAll(label, page) {
         ['parse50kb', 'parse-50kb', { timeout: 60_000 }],
         ['parse500kb', 'parse-500kb', { timeout: 180_000 }],
         ['parseHtmlHeavy', 'parse-html-heavy', { timeout: 60_000 }],
-        ['parseTableHeavy', 'parse-table-heavy', { timeout: 60_000 }]
+        ['parseTableHeavy', 'parse-table-heavy', { timeout: 60_000 }],
+        // Mixed-shape corpus that defeats optimizations only winning on
+        // the highly-repetitive `generateLarge` shapes.
+        ['parseRealistic', 'parse-realistic', { timeout: 90_000 }],
+        // Same 50KB body as `parse50kb` but mounted with custom
+        // markdown + html snippet overrides — drives the slow dispatch
+        // path so override-path regressions can't slip through.
+        ['parse50kbOverridden', 'parse-50kb-overridden', { timeout: 90_000 }]
     ]
 
     for (const [key, testId, opts] of scenarios) {
@@ -136,6 +166,10 @@ async function runAll(label, page) {
     console.log('  → stream-30tps…')
     out.stream30tps = await runStreaming(page)
     console.log('   ', JSON.stringify(out.stream30tps))
+
+    console.log('  → stream-bursty…')
+    out.streamBursty = await runStreamingBursty(page)
+    console.log('   ', JSON.stringify(out.streamBursty))
 
     return out
 }
