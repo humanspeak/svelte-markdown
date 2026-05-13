@@ -34,12 +34,12 @@ Here is a quick review of the changes in \`Parser.svelte\` and \`sanitize.ts\`.
 The new sanitizer applies **defense-in-depth** at the Parser layer. Custom renderers and snippets cannot bypass it.
 
 <div style="background: #1e293b; color: #e2e8f0; padding: 16px; border-radius: 8px; border-left: 4px solid #3dbba0">
-    <strong>Verdict:</strong> ship it
-    <ul>
-        <li>URL allowlist covers all dangerous protocols</li>
-        <li>Event handlers stripped before render</li>
-        <li>Streaming-aware — sanitizes per token, not per document</li>
-    </ul>
+<strong>Verdict:</strong> ship it
+<ul>
+<li>URL allowlist covers all dangerous protocols</li>
+<li>Event handlers stripped before render</li>
+<li>Streaming-aware — sanitizes per token, not per document</li>
+</ul>
 </div>
 
 ### Findings
@@ -66,7 +66,7 @@ Look at the sanitization log on the right as these render:
 <a href="vbscript:msgbox(1)" onclick="window.location='https://evil.example/'">Mixed-case ATTACK</a>
 
 <form action="javascript:steal()" onsubmit="exfil()">
-    <input type="text" name="data" />
+<input type="text" name="data" />
 </form>
 
 </details>
@@ -82,6 +82,24 @@ That is everything — the renderer kept the safe content and dropped the rest.`
     let markdown: StreamingMarkdownHandle | undefined = $state()
     let sanitizationLog: SanitizationEvent[] = $state([])
     let logContainer: HTMLDivElement | undefined = $state()
+    let sourceContainer: HTMLPreElement | undefined = $state()
+
+    // The Parser invokes these from inside a $derived. Mutating $state
+    // during derived evaluation throws state_unsafe_mutation in Svelte 5,
+    // so we buffer events and flush them in a microtask.
+    const pendingEvents: SanitizationEvent[] = []
+    let flushScheduled = false
+
+    const scheduleFlush = () => {
+        if (flushScheduled) return
+        flushScheduled = true
+        queueMicrotask(() => {
+            flushScheduled = false
+            if (pendingEvents.length === 0) return
+            sanitizationLog = [...sanitizationLog, ...pendingEvents]
+            pendingEvents.length = 0
+        })
+    }
 
     // Wrap the defaults: log anything that gets blocked or rewritten,
     // then delegate to the real sanitizers. This is exactly how a
@@ -89,15 +107,13 @@ That is everything — the renderer kept the safe content and dropped the rest.`
     const sanitizeUrl: SanitizeUrlFn = (url, context) => {
         const result = defaultSanitizeUrl(url, context)
         if (result !== url) {
-            sanitizationLog = [
-                ...sanitizationLog,
-                {
-                    kind: 'url',
-                    tag: context.tag,
-                    detail: url,
-                    replacement: result || '(stripped)'
-                }
-            ]
+            pendingEvents.push({
+                kind: 'url',
+                tag: context.tag,
+                detail: url,
+                replacement: result || '(stripped)'
+            })
+            scheduleFlush()
         }
         return result
     }
@@ -111,14 +127,12 @@ That is everything — the renderer kept the safe content and dropped the rest.`
             }
         }
         if (blocked.length > 0) {
-            sanitizationLog = [
-                ...sanitizationLog,
-                {
-                    kind: 'attribute',
-                    tag: context.tag,
-                    detail: blocked.join(' ')
-                }
-            ]
+            pendingEvents.push({
+                kind: 'attribute',
+                tag: context.tag,
+                detail: blocked.join(' ')
+            })
+            scheduleFlush()
         }
         return result
     }
@@ -129,6 +143,7 @@ That is everything — the renderer kept the safe content and dropped the rest.`
         chunkIndex = 0
         streamSource = ''
         sanitizationLog = []
+        pendingEvents.length = 0
         markdown?.resetStream('')
         sessionId++
         isActive = true
@@ -144,11 +159,10 @@ That is everything — the renderer kept the safe content and dropped the rest.`
         streamSource += chunk
         markdown?.writeChunk(chunk)
         chunkIndex++
-        if (logContainer) {
-            requestAnimationFrame(() => {
-                if (logContainer) logContainer.scrollTop = logContainer.scrollHeight
-            })
-        }
+        requestAnimationFrame(() => {
+            if (logContainer) logContainer.scrollTop = logContainer.scrollHeight
+            if (sourceContainer) sourceContainer.scrollTop = sourceContainer.scrollHeight
+        })
         if (sid === sessionId) {
             timerId = setTimeout(() => next(sid), 25)
         }
@@ -163,6 +177,7 @@ That is everything — the renderer kept the safe content and dropped the rest.`
         }
         streamSource = ''
         sanitizationLog = []
+        pendingEvents.length = 0
         markdown?.resetStream('')
     }
 
@@ -177,6 +192,17 @@ That is everything — the renderer kept the safe content and dropped the rest.`
 </script>
 
 <div class="agent-output-demo">
+    <p class="intro">
+        A simulated agent streams a PR-review response. The payload mixes legitimate rich HTML (a
+        styled verdict box, a findings table, a real link) with deliberate XSS attempts inside a <code
+            >&lt;details&gt;</code
+        >
+        block (<code>javascript:</code> URLs,
+        <code>onerror</code>/<code>onclick</code>/<code>onsubmit</code> handlers, a
+        <code>vbscript:</code> protocol, a form posting to <code>javascript:</code>). Watch all
+        three panes simultaneously: raw source → rendered HTML → audit log of what got blocked.
+    </p>
+
     <div class="controls">
         <button class="btn btn-primary" disabled={isActive} onclick={start}>
             <Play class="size-4" />
@@ -205,10 +231,10 @@ That is everything — the renderer kept the safe content and dropped the rest.`
     </div>
 
     <div class="panes">
-        <section class="pane">
+        <section class="pane pane--rendered">
             <header class="pane-header">
                 <span>Rendered output</span>
-                <span class="pane-hint">streaming agent response</span>
+                <span class="pane-hint">SvelteMarkdown render</span>
             </header>
             <div class="pane-body prose prose-sm dark:prose-invert max-w-none">
                 <SvelteMarkdown
@@ -232,7 +258,7 @@ That is everything — the renderer kept the safe content and dropped the rest.`
                     <ShieldOff class="size-4" />
                     Sanitization log
                 </span>
-                <span class="pane-hint">live — wraps defaultSanitize*</span>
+                <span class="pane-hint">wraps defaultSanitize*</span>
             </header>
             <div bind:this={logContainer} class="pane-body log-body">
                 {#if sanitizationLog.length === 0}
@@ -258,12 +284,23 @@ That is everything — the renderer kept the safe content and dropped the rest.`
                 {/if}
             </div>
         </section>
+
+        <section class="pane">
+            <header class="pane-header">
+                <span>Source (agent stream)</span>
+                <span class="pane-hint">raw text in</span>
+            </header>
+            <pre bind:this={sourceContainer} class="pane-body source-body">{streamSource ||
+                    '// Click "Start streaming" — the agent response will arrive here word by word.'}</pre>
+        </section>
     </div>
 
     <p class="caption">
-        The "agent response" is hard-coded for the demo. Sanitization wraps
+        The "agent response" is hard-coded for this demo (see the <code>AGENT_RESPONSE</code>
+        constant in the source). Sanitization wraps
         <code>defaultSanitizeUrl</code> and <code>defaultSanitizeAttributes</code> with a logger so you
-        can see every blocked URL and stripped attribute as it streams in.
+        can see every blocked URL and stripped attribute as it streams in — in production you would use
+        the defaults directly.
     </p>
 </div>
 
@@ -346,6 +383,25 @@ That is everything — the renderer kept the safe content and dropped the rest.`
         }
     }
 
+    .intro {
+        font-size: 0.875rem;
+        line-height: 1.55;
+        color: var(--color-foreground);
+        margin: 0;
+        padding: 0.875rem 1rem;
+        background-color: var(--color-muted, rgba(61, 187, 160, 0.06));
+        border: 1px solid var(--color-border);
+        border-left: 3px solid var(--color-brand-500, #3dbba0);
+        border-radius: 0.5rem;
+    }
+
+    .intro code {
+        font-size: 0.8125rem;
+        padding: 0.0625rem 0.3125rem;
+        border-radius: 0.1875rem;
+        background-color: rgba(0, 0, 0, 0.08);
+    }
+
     .panes {
         display: grid;
         grid-template-columns: 1fr;
@@ -356,6 +412,21 @@ That is everything — the renderer kept the safe content and dropped the rest.`
         .panes {
             grid-template-columns: 1fr 1fr;
         }
+
+        .pane--rendered {
+            grid-column: 1 / -1;
+        }
+    }
+
+    .source-body {
+        font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+        font-size: 0.75rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+        margin: 0;
+        background-color: var(--color-card);
+        color: var(--color-foreground);
     }
 
     .pane {
