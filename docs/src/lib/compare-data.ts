@@ -75,6 +75,12 @@ export const competitors: Competitor[] = [
                 note: 'MDsveX is build-time only, so there is no runtime markdown streaming mode.'
             },
             {
+                name: 'Streaming HTML Output',
+                us: 'Partial blocks reconcile when </tag> arrives',
+                them: false,
+                note: 'MDsveX compiles at build time — there is no runtime stream that could resolve partial HTML blocks across chunks.'
+            },
+            {
                 name: 'HTML Tag Control',
                 us: '84 tags with allow/deny',
                 them: 'Via rehype plugins'
@@ -175,6 +181,12 @@ export const competitors: Competitor[] = [
                 them: false,
                 note: 'Tiptap can update editor state live, but it does not document a dedicated markdown streaming renderer mode.'
             },
+            {
+                name: 'Streaming HTML Output',
+                us: 'Partial blocks reconcile when </tag> arrives',
+                them: false,
+                note: 'Tiptap is a content editor — rendering agent-streamed HTML where partial <div>...</div> blocks resolve mid-stream is outside its model.'
+            },
             { name: 'HTML Tag Control', us: '84 tags with allow/deny', them: 'Via schema' },
             { name: 'Collaborative Editing', us: false, them: true },
             { name: 'Toolbar/Menus', us: false, them: 'Headless (build your own)' },
@@ -245,6 +257,12 @@ export const competitors: Competitor[] = [
                 us: 'writeChunk() / resetStream()',
                 them: false,
                 note: 'markdown-it is a parser, not a streaming UI layer.'
+            },
+            {
+                name: 'Streaming HTML Output',
+                us: 'Partial blocks reconcile when </tag> arrives',
+                them: false,
+                note: 'Each parse returns a full HTML string — reconciling partial <tag>...</tag> structures across chunks is the caller’s responsibility.'
             },
             { name: 'Plugin Ecosystem', us: 'Via marked extensions', them: '200+ plugins' },
             {
@@ -329,6 +347,12 @@ export const competitors: Competitor[] = [
                 us: 'writeChunk() / resetStream()',
                 them: false,
                 note: 'marked is the parsing engine only; incremental streaming behavior must be built manually on top.'
+            },
+            {
+                name: 'Streaming HTML Output',
+                us: 'Partial blocks reconcile when </tag> arrives',
+                them: false,
+                note: 'marked parses to tokens or HTML strings per call; streaming reconciliation of nested HTML across chunks is left to the consumer.'
             },
             {
                 name: 'Extensions',
@@ -421,6 +445,12 @@ export const competitors: Competitor[] = [
                 note: 'Milkdown updates live as an editor, but it does not document a dedicated markdown streaming renderer mode.'
             },
             {
+                name: 'Streaming HTML Output',
+                us: 'Partial blocks reconcile when </tag> arrives',
+                them: false,
+                note: 'Milkdown is a ProseMirror-based editor — not designed to render agent-streamed HTML where blocks resolve mid-stream.'
+            },
+            {
                 name: 'HTML Tag Control',
                 us: '84 tags with allow/deny',
                 them: 'Via ProseMirror schema'
@@ -495,6 +525,12 @@ export const competitors: Competitor[] = [
                 us: 'writeChunk() / resetStream()',
                 them: false,
                 note: 'svelte-exmarkdown is a runtime renderer, but its upstream docs do not describe a streaming-specific incremental mode.'
+            },
+            {
+                name: 'Streaming HTML Output',
+                us: 'Partial blocks reconcile when </tag> arrives',
+                them: false,
+                note: 'No documented streaming pipeline; partial HTML blocks during streaming aren’t reconciled into nested structures.'
             },
             { name: 'Plugin System', us: 'Marked extensions', them: 'Remark/rehype plugins' },
             { name: 'Snippet Overrides', us: true, them: false },
@@ -572,6 +608,12 @@ export const competitors: Competitor[] = [
                 them: false,
                 note: 'Carta offers live preview for editing, but its docs do not describe a dedicated markdown streaming renderer mode.'
             },
+            {
+                name: 'Streaming HTML Output',
+                us: 'Partial blocks reconcile when </tag> arrives',
+                them: false,
+                note: 'Carta is an authoring editor with live preview, not a renderer for streaming agent output with nested HTML.'
+            },
             { name: 'Syntax Highlighting', us: 'Via marked extensions', them: 'Built-in plugin' },
             {
                 name: 'Math (KaTeX)',
@@ -642,6 +684,12 @@ export const competitors: Competitor[] = [
                 us: 'writeChunk() / resetStream()',
                 them: false,
                 note: 'ByteMD is an editor with live preview, but its upstream docs do not describe a dedicated markdown streaming renderer mode.'
+            },
+            {
+                name: 'Streaming HTML Output',
+                us: 'Partial blocks reconcile when </tag> arrives',
+                them: false,
+                note: 'ByteMD targets the editor + live-preview workflow; agent-streamed HTML output where nested blocks resolve mid-stream is not the use case.'
             },
             {
                 name: 'Plugin Ecosystem',
@@ -727,6 +775,12 @@ export const competitors: Competitor[] = [
                 note: 'The unified ecosystem has a separate unified-stream package, but not a built-in Svelte markdown streaming mode.'
             },
             {
+                name: 'Streaming HTML Output',
+                us: 'Partial blocks reconcile when </tag> arrives',
+                them: false,
+                note: 'unified-stream chunks string-mode markdown but does not reconcile partial nested HTML blocks across chunks — that piece is left to the application.'
+            },
+            {
                 name: 'Math (KaTeX)',
                 us: 'Built-in extension (markedKatex)',
                 them: 'Via remark-math + rehype-katex'
@@ -797,6 +851,12 @@ export const competitors: Competitor[] = [
                 us: 'writeChunk() / resetStream()',
                 them: false,
                 note: 'ProseMirror updates editor state live, but it does not document a dedicated markdown streaming renderer mode.'
+            },
+            {
+                name: 'Streaming HTML Output',
+                us: 'Partial blocks reconcile when </tag> arrives',
+                them: false,
+                note: 'ProseMirror is an editor toolkit, not a markdown renderer — rendering agent-streamed HTML where nested blocks resolve mid-stream is outside its scope.'
             },
             { name: 'Bundle Size', us: '~15KB', them: '~80KB+ (core + markdown + view)' },
             { name: 'Learning Curve', us: 'Minimal', them: 'Very steep' },
