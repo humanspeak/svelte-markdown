@@ -131,6 +131,48 @@ describe('SvelteMarkdown streaming — nested HTML (regression #291)', () => {
         }
     })
 
+    describe('details with blank-line-separated children (#291 follow-up)', () => {
+        const DETAILS_WITH_PAYLOADS = `<details>
+<summary>Show payloads</summary>
+
+Look at this:
+
+<a href="https://example.com">Real link</a>
+
+<img src="x" alt="img"/>
+
+<form><input type="text"/></form>
+
+</details>`
+
+        test('streamed <details> contains <summary> as a child, not as a sibling', async () => {
+            const container = await renderStreamed(DETAILS_WITH_PAYLOADS)
+            const details = container.querySelector('details')
+            expect(details).not.toBeNull()
+            expect(details!.querySelector('summary')).not.toBeNull()
+            const orphanSummaries = Array.from(container.querySelectorAll('summary')).filter(
+                (s) => s.closest('details') === null
+            )
+            expect(orphanSummaries).toEqual([])
+        })
+
+        test('streamed <details> swallows all inter-content as descendants', async () => {
+            const container = await renderStreamed(DETAILS_WITH_PAYLOADS)
+            const details = container.querySelector('details')
+            expect(details!.querySelector('a')).not.toBeNull()
+            expect(details!.querySelector('img')).not.toBeNull()
+            expect(details!.querySelector('form')).not.toBeNull()
+        })
+
+        test('streamed DOM matches non-streamed DOM for details + payloads', async () => {
+            const staticContainer = await renderStatic(DETAILS_WITH_PAYLOADS)
+            const streamedContainer = await renderStreamed(DETAILS_WITH_PAYLOADS)
+            expect(normalizeHtml(streamedContainer.innerHTML)).toBe(
+                normalizeHtml(staticContainer.innerHTML)
+            )
+        })
+    })
+
     describe('structural invariants on the rendered DOM for the primary reproducer', () => {
         test('streamed <div> is not empty — has at least one child element', async () => {
             const container = await renderStreamed(NESTED)

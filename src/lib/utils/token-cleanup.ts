@@ -57,18 +57,17 @@ const formatSelfClosingHtmlToken = (token: Token): Token => {
     const tagName = tagMatch[1]
     if (!SELF_CLOSING_TAGS.test(tagName)) return token
 
-    // If it's a self-closing tag and doesn't already end with />, format it properly
-    if (!token.raw.endsWith('/>')) {
-        const formattedRaw = token.raw.replace(/\s*>$/, '/>')
-        return {
-            ...token,
-            raw: formattedRaw,
-            tag: tagName,
-            attributes: extractAttributes(token.raw)
-        }
+    // Self-closing tags get `.tag` and `.attributes` set so downstream
+    // code (pairing, dispatch, sanitization) has structured access. If
+    // the source already used the `<.../>` form we keep raw as-is;
+    // otherwise we normalize the `>` to `/>`.
+    const formattedRaw = token.raw.endsWith('/>') ? token.raw : token.raw.replace(/\s*>$/, '/>')
+    return {
+        ...token,
+        raw: formattedRaw,
+        tag: tagName,
+        attributes: extractAttributes(token.raw)
     }
-
-    return token
 }
 
 /**
@@ -454,6 +453,14 @@ const pairFlatHtmlTokens = (tokens: Token[]): Token[] => {
 
         const tagInfo = isHtmlOpenTag(token.raw)
         if (!tagInfo) {
+            result.push(token)
+            continue
+        }
+
+        // Self-closing tags (e.g. <img src="x"/>) don't participate in
+        // open/close pairing — pushing them onto the stack would block
+        // a later `</tag>` from finding its real opening.
+        if (token.raw.endsWith('/>')) {
             result.push(token)
             continue
         }
