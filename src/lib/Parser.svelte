@@ -150,7 +150,15 @@
     // the default renderers / has no snippet override so we can render
     // these inline at the call site without spawning a Parser.
     const inlineTextOk = $derived(
-        renderers.text === defaultRenderers.text && !snippetOverrides.text
+        renderers.text === defaultRenderers.text &&
+            !snippetOverrides.text &&
+            // The inline path skips the leaf-text `rawtext` fallback that
+            // the general-branch dispatch uses, so we must also keep the
+            // optimization off when the user has provided their own
+            // `rawtext` renderer or snippet — otherwise their override is
+            // silently bypassed for plain text inside paragraphs/headings.
+            renderers.rawtext === defaultRenderers.rawtext &&
+            !snippetOverrides.rawtext
     )
     const inlineSpaceOk = $derived(
         // No default renderer for `space`; only safe to skip when nothing
