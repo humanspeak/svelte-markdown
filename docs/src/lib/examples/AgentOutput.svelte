@@ -33,7 +33,7 @@ Here is a quick review of the changes in \`Parser.svelte\` and \`sanitize.ts\`.
 
 The new sanitizer applies **defense-in-depth** at the Parser layer. Custom renderers and snippets cannot bypass it.
 
-<div style="background: #1e293b; color: #e2e8f0; padding: 16px; border-radius: 8px; border-left: 4px solid #3dbba0">
+<div style="background: rgba(61, 187, 160, 0.08); color: #e2e8f0; color: light-dark(#0f172a, #e2e8f0); padding: 16px; border-radius: 8px; border-left: 4px solid #3dbba0">
 <strong>Verdict:</strong> ship it
 <ul>
 <li>URL allowlist covers all dangerous protocols</li>
