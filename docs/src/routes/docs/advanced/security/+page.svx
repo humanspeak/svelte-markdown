@@ -35,7 +35,7 @@ By default, all `href` values on markdown links and images are validated against
 
 Dangerous protocols like `javascript:`, `data:`, `vbscript:`, and `blob:` are blocked automatically.
 
-```text
+```markdown
 <!-- This link will have its href stripped -->
 [Click me](javascript:alert('XSS'))
 
@@ -50,7 +50,7 @@ For raw HTML within markdown, the default sanitizer:
 1. **Strips all event handler attributes** (`onclick`, `onerror`, `onload`, etc.)
 2. **Validates URL-bearing attributes** (`href`, `src`, `action`, `formaction`, `cite`, `data`, `poster`) against the same protocol allowlist
 
-```text
+```html
 <!-- onclick is stripped, javascript: href is blocked -->
 <a href="javascript:alert('XSS')" onclick="alert('XSS')">Click</a>
 
@@ -62,7 +62,7 @@ For raw HTML within markdown, the default sanitizer:
 
 Both sanitization functions receive a context object with the token `type` and HTML `tag` name, so you can implement per-element policies:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { defaultSanitizeUrl } from '@humanspeak/svelte-markdown'
 
@@ -80,7 +80,7 @@ Both sanitization functions receive a context object with the token `type` and H
 
 Override `sanitizeAttributes` to apply per-tag attribute rules:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, {
         defaultSanitizeAttributes,
@@ -104,7 +104,7 @@ Override `sanitizeAttributes` to apply per-tag attribute rules:
 
 If you fully trust your markdown source and need to allow all URLs and attributes, use the passthrough functions:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, {
         unsanitizedUrl,
@@ -150,7 +150,7 @@ For additional defense, you can block HTML tags entirely using the [allow/deny f
 
 ### Block All HTML
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { buildUnsupportedHTML } from '@humanspeak/svelte-markdown'
 
@@ -166,7 +166,7 @@ This replaces every HTML tag renderer with `UnsupportedHTML`, which renders noth
 
 ### Allow Only Safe Tags
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { allowHtmlOnly } from '@humanspeak/svelte-markdown'
 
@@ -184,7 +184,7 @@ This replaces every HTML tag renderer with `UnsupportedHTML`, which renders noth
 
 ### Block Specific Dangerous Tags
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { excludeHtmlOnly } from '@humanspeak/svelte-markdown'
 
@@ -202,7 +202,7 @@ This replaces every HTML tag renderer with `UnsupportedHTML`, which renders noth
 
 You can also restrict which markdown elements are rendered:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, {
         allowRenderersOnly,
@@ -228,7 +228,7 @@ For applications that require additional protection, you can sanitize the markdo
 
 ### Using DOMPurify (Combined with Built-in Sanitization)
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import DOMPurify from 'dompurify'
@@ -249,7 +249,7 @@ For applications that require additional protection, you can sanitize the markdo
 
 You can inspect and filter tokens after parsing:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 

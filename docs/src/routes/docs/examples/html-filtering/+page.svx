@@ -25,7 +25,7 @@ These examples demonstrate how to use the allow/deny filtering utilities to cont
 
 The safest option for user-generated content -- block all raw HTML while preserving markdown syntax:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { buildUnsupportedHTML } from '@humanspeak/svelte-markdown'
 
@@ -55,7 +55,7 @@ More **markdown** continues here.
 
 Allow only a curated set of safe HTML tags:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { allowHtmlOnly } from '@humanspeak/svelte-markdown'
 
@@ -83,7 +83,7 @@ Text with <strong>bold HTML</strong> and <em>italic HTML</em>.
 
 Block only the tags you consider dangerous, allowing everything else:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { excludeHtmlOnly } from '@humanspeak/svelte-markdown'
 
@@ -120,7 +120,7 @@ Block only the tags you consider dangerous, allowing everything else:
 
 Use the tuple syntax to allow specific tags and render them with custom Svelte components:
 
-```html
+```svelte
 <!-- SafeLink.svelte -->
 <script lang="ts">
     import type { Snippet } from 'svelte'
@@ -138,7 +138,7 @@ Use the tuple syntax to allow specific tags and render them with custom Svelte c
 </a>
 ```
 
-```html
+```svelte
 <!-- Usage -->
 <script>
     import SvelteMarkdown, { allowHtmlOnly } from '@humanspeak/svelte-markdown'
@@ -171,7 +171,7 @@ Use the tuple syntax to allow specific tags and render them with custom Svelte c
 
 Restrict both HTML tags and markdown renderers for maximum control:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, {
         allowHtmlOnly,
@@ -215,7 +215,7 @@ Code blocks are blocked.
 
 Block specific tags while providing custom components for others:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { excludeHtmlOnly } from '@humanspeak/svelte-markdown'
     import SafeLink from './SafeLink.svelte'

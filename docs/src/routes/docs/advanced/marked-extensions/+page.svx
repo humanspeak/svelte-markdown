@@ -35,7 +35,7 @@ Each snippet or component receives the token's own properties as props. For exam
 
 To discover the snippet/renderer names for any extension, check the `name` field in its `extensions` array:
 
-```js
+```javascript
 // Built-in markedKatex → tokens named "inlineKatex" and "blockKatex"
 // → {#snippet inlineKatex(props)} and {#snippet blockKatex(props)}
 // → or renderers={{ inlineKatex: ..., blockKatex: ... }}
@@ -47,7 +47,7 @@ To discover the snippet/renderer names for any extension, check the `name` field
 
 You can also inspect the tokens at runtime using the `parsed` callback:
 
-```html
+```svelte
 <SvelteMarkdown {source} {extensions} parsed={(tokens) => console.log(tokens)} />
 ```
 
@@ -76,7 +76,7 @@ npm install katex
 
 Pass the extension via the `extensions` prop and map token types to `KatexRenderer`:
 
-```html
+```svelte
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
@@ -106,7 +106,7 @@ Pass the extension via the `extensions` prop and map token types to `KatexRender
 
 Instead of component renderers, you can use snippet overrides for inline rendering:
 
-```html
+```svelte
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import { markedKatex } from '@humanspeak/svelte-markdown/extensions'
@@ -138,7 +138,7 @@ Instead of component renderers, you can use snippet overrides for inline renderi
 
 KaTeX requires its stylesheet for proper math formatting:
 
-```html
+```svelte
 <svelte:head>
     <link
         rel="stylesheet"
@@ -152,7 +152,7 @@ KaTeX requires its stylesheet for proper math formatting:
 
 Putting it all together with component renderers:
 
-```html
+```svelte
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
@@ -210,7 +210,7 @@ npm install mermaid
 
 The package exports `markedMermaid()` (a zero-dep tokenizer for ` ```mermaid ` code blocks) and `MermaidRenderer` (a Svelte component that lazy-loads mermaid and renders SVG diagrams with dark mode support):
 
-```html
+```svelte
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
@@ -252,7 +252,7 @@ The built-in `MermaidRenderer` handles:
 
 You can also use snippet overrides to wrap `MermaidRenderer` with custom markup — extra classes, wrapper divs, or surrounding content:
 
-```html
+```svelte
 <SvelteMarkdown source={markdown} extensions={[markedMermaid()]}>
     {#snippet mermaid(props)}
         <div class="my-diagram-wrapper">

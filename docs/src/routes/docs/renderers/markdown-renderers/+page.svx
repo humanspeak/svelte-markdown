@@ -357,7 +357,7 @@ Renders raw text content that is not part of any other token.
 
 To override any renderer, create a Svelte component that accepts the same props and pass it via the `renderers` prop:
 
-```html
+```svelte
 <!-- CustomHeading.svelte -->
 <script lang="ts">
     import type { Snippet } from 'svelte'
@@ -377,7 +377,7 @@ To override any renderer, create a Svelte component that accepts the same props 
 </div>
 ```
 
-```html
+```svelte
 <!-- App.svelte -->
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'

@@ -31,7 +31,7 @@ These functions return `HtmlRenderers` objects that you pass to `renderers.html`
 
 Creates an HTML renderer map where only the specified tags use their default components. All other tags are replaced with `UnsupportedHTML` (which renders nothing).
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { allowHtmlOnly } from '@humanspeak/svelte-markdown'
 
@@ -64,7 +64,7 @@ function allowHtmlOnly(
 
 Creates an HTML renderer map where the specified tags are blocked (set to `UnsupportedHTML`). All other tags use their default components.
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { excludeHtmlOnly } from '@humanspeak/svelte-markdown'
 
@@ -100,7 +100,7 @@ function excludeHtmlOnly(
 
 Creates an HTML renderer map where every tag is set to `UnsupportedHTML`. This blocks all raw HTML rendering.
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { buildUnsupportedHTML } from '@humanspeak/svelte-markdown'
 
@@ -125,7 +125,7 @@ These functions return partial `Renderers` objects (excluding the `html` key) th
 
 Creates a renderer map where only the specified markdown renderers use their default components. All other renderers are set to `Unsupported` (which renders nothing).
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { allowRenderersOnly } from '@humanspeak/svelte-markdown'
 
@@ -161,7 +161,7 @@ function allowRenderersOnly(
 
 Creates a renderer map where the specified keys are set to `Unsupported`. All other keys use their defaults.
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { excludeRenderersOnly } from '@humanspeak/svelte-markdown'
 
@@ -219,7 +219,7 @@ function buildUnsupportedRenderers(): Omit<Renderers, 'html'>
 
 You can combine both HTML and markdown filtering in a single configuration:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, {
         allowHtmlOnly,

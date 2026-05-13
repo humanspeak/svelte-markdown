@@ -42,7 +42,7 @@ The component works reactively by default. For best streaming performance, pass 
 
 ### Preferred: imperative chunk writes
 
-```html
+```svelte
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import type { StreamingChunk } from '@humanspeak/svelte-markdown'
@@ -82,7 +82,7 @@ The first successful write locks the stream into one mode until `resetStream()` 
 
 ### With websocket-style offset chunks
 
-```ts
+```typescript
 markdown?.writeChunk({ value: 'Hel', offset: 0 })
 markdown?.writeChunk({ value: 'lo', offset: 3 })
 markdown?.writeChunk({ value: ' world', offset: 5 })
@@ -92,7 +92,7 @@ Offset chunks use overwrite semantics, not insert semantics. Each patch writes `
 
 This means out-of-order websocket delivery is fine:
 
-```ts
+```typescript
 markdown?.writeChunk({ value: ' world', offset: 5 })
 markdown?.writeChunk({ value: 'Hello', offset: 0 })
 ```
@@ -124,7 +124,7 @@ Choose between **chunked** mode (imperative `writeChunk()` API) and **concat** m
 
 {#if mode === 'chunked'}
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import Anthropic from '@anthropic-ai/sdk'
@@ -158,7 +158,7 @@ Choose between **chunked** mode (imperative `writeChunk()` API) and **concat** m
 
 {:else}
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import Anthropic from '@anthropic-ai/sdk'
@@ -194,7 +194,7 @@ Choose between **chunked** mode (imperative `writeChunk()` API) and **concat** m
 
 {#if mode === 'chunked'}
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import OpenAI from 'openai'
@@ -226,7 +226,7 @@ Choose between **chunked** mode (imperative `writeChunk()` API) and **concat** m
 
 {:else}
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import OpenAI from 'openai'
@@ -260,7 +260,7 @@ Choose between **chunked** mode (imperative `writeChunk()` API) and **concat** m
 
 {#if mode === 'chunked'}
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -297,7 +297,7 @@ Choose between **chunked** mode (imperative `writeChunk()` API) and **concat** m
 
 {:else}
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -378,7 +378,7 @@ if (buffer) controller.enqueue(encoder.encode(buffer))
 
 When displaying a conversation with multiple messages, previously completed messages are re-rendered on every update. Enable [token caching](/docs/advanced/token-caching) so that completed messages skip re-parsing:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 

@@ -79,7 +79,7 @@ If you have custom renderer components, update them to use Svelte 5 runes:
 
 **Before (Svelte 4):**
 
-```html
+```svelte
 <script>
     export let href = ''
     export let title = ''
@@ -92,7 +92,7 @@ If you have custom renderer components, update them to use Svelte 5 runes:
 
 **After (Svelte 5):**
 
-```html
+```svelte
 <script>
     const { href = '', title = '', children } = $props()
 </script>
@@ -106,7 +106,7 @@ If you have custom renderer components, update them to use Svelte 5 runes:
 
 The core API is the same. The `source`, `renderers`, `options`, `isInline`, and `parsed` props work identically:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     const source = '# Hello World'
@@ -124,7 +124,7 @@ Once migrated, you can immediately use these new capabilities:
 
 Automatic LRU caching for parsed markdown tokens -- no code changes needed:
 
-```html
+```svelte
 <!-- Caching is enabled by default -->
 <SvelteMarkdown {source} />
 ```
@@ -133,7 +133,7 @@ Automatic LRU caching for parsed markdown tokens -- no code changes needed:
 
 Control exactly which elements are rendered:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { allowHtmlOnly, excludeRenderersOnly } from '@humanspeak/svelte-markdown'
 
@@ -148,7 +148,7 @@ Control exactly which elements are rendered:
 
 Customize rendering inline without creating separate component files:
 
-```html
+```svelte
 <SvelteMarkdown {source}>
     {#snippet heading(props)}
         <h1 class="custom-heading">{@render props.children?.()}</h1>
@@ -160,7 +160,7 @@ Customize rendering inline without creating separate component files:
 
 Use the built-in extensions, or any third-party marked extension:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import { markedKatex, KatexRenderer } from '@humanspeak/svelte-markdown/extensions'

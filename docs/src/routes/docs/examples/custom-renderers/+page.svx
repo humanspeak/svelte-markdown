@@ -25,7 +25,7 @@ These examples demonstrate how to create custom renderers to change the way spec
 
 Create a link renderer that opens external links in a new tab:
 
-```html
+```svelte
 <!-- ExternalLink.svelte -->
 <script lang="ts">
     import type { Snippet } from 'svelte'
@@ -55,7 +55,7 @@ Create a link renderer that opens external links in a new tab:
 {/if}
 ```
 
-```html
+```svelte
 <!-- Usage -->
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
@@ -74,7 +74,7 @@ Create a link renderer that opens external links in a new tab:
 
 Integrate a syntax highlighter (e.g., Prism or Highlight.js) into a custom code renderer:
 
-```html
+```svelte
 <!-- HighlightedCode.svelte -->
 <script lang="ts">
     import { onMount } from 'svelte'
@@ -113,7 +113,7 @@ Integrate a syntax highlighter (e.g., Prism or Highlight.js) into a custom code 
 </div>
 ```
 
-```html
+```svelte
 <!-- Usage -->
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
@@ -130,7 +130,7 @@ Integrate a syntax highlighter (e.g., Prism or Highlight.js) into a custom code 
 
 Add clickable anchor links to headings for easy sharing:
 
-```html
+```svelte
 <!-- AnchorHeading.svelte -->
 <script lang="ts">
     import type { Snippet } from 'svelte'
@@ -166,7 +166,7 @@ Add clickable anchor links to headings for easy sharing:
 
 Transform blockquotes into styled callout boxes:
 
-```html
+```svelte
 <!-- Callout.svelte -->
 <script lang="ts">
     import type { Snippet } from 'svelte'
@@ -204,7 +204,7 @@ Transform blockquotes into styled callout boxes:
 </style>
 ```
 
-```html
+```svelte
 <SvelteMarkdown
     source={"> Important information here"}
     renderers={{ blockquote: Callout }}
@@ -215,7 +215,7 @@ Transform blockquotes into styled callout boxes:
 
 Wrap tables in a scrollable container:
 
-```html
+```svelte
 <!-- ScrollableTable.svelte -->
 <script lang="ts">
     import type { Snippet } from 'svelte'
@@ -251,7 +251,7 @@ Wrap tables in a scrollable container:
 
 Pass multiple custom renderers at once:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import ExternalLink from './ExternalLink.svelte'

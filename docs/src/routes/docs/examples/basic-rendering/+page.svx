@@ -25,7 +25,7 @@ These examples demonstrate common usage patterns for rendering markdown with `@h
 
 The most basic usage -- pass a markdown string to the `source` prop:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -47,7 +47,7 @@ This is a paragraph with **bold**, *italic*, and ~~strikethrough~~ text.
 
 Bind the `source` prop to a reactive variable so the rendered output updates automatically:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -62,7 +62,7 @@ Bind the `source` prop to a reactive variable so the rendered output updates aut
 
 By default, headings receive auto-generated `id` attributes (via [github-slugger](https://github.com/Flet/github-slugger)):
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -81,7 +81,7 @@ By default, headings receive auto-generated `id` attributes (via [github-slugger
 
 Add a prefix to all heading IDs:
 
-```html
+```svelte
 <SvelteMarkdown
     {source}
     options={{ headerIds: true, headerPrefix: 'doc-' }}
@@ -91,7 +91,7 @@ Add a prefix to all heading IDs:
 
 Disable heading IDs entirely:
 
-```html
+```svelte
 <SvelteMarkdown {source} options={{ headerIds: false }} />
 ```
 
@@ -99,7 +99,7 @@ Disable heading IDs entirely:
 
 Markdown links render as `<a>` elements:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -115,7 +115,7 @@ Visit [Svelte](https://svelte.dev) and [GitHub](https://github.com "GitHub Homep
 
 Images are rendered with lazy loading and fade-in effects by default:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -131,7 +131,7 @@ Images are rendered with lazy loading and fade-in effects by default:
 
 Fenced code blocks include the language as a CSS class for syntax highlighting integration:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -146,7 +146,7 @@ Fenced code blocks include the language as a CSS class for syntax highlighting i
 
 Inline code renders within `<code>` elements:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -160,7 +160,7 @@ Inline code renders within `<code>` elements:
 
 GitHub Flavored Markdown tables are supported when `gfm` is enabled (the default):
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -178,7 +178,7 @@ GitHub Flavored Markdown tables are supported when `gfm` is enabled (the default
 
 Tables support column alignment:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -195,7 +195,7 @@ Tables support column alignment:
 
 ## Blockquotes
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -211,7 +211,7 @@ Tables support column alignment:
 
 ## Ordered and Unordered Lists
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -238,7 +238,7 @@ Ordered list:
 
 Enable `breaks` to convert single newlines to `<br>` elements:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -256,7 +256,7 @@ Line three`
 
 ## Horizontal Rules
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -276,7 +276,7 @@ Section two
 
 A complete example combining multiple markdown features:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
