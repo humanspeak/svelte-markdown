@@ -23,6 +23,8 @@ description: Render AI chat responses in real-time with token-by-token markdown 
 
 `@humanspeak/svelte-markdown` handles real-time streaming from Large Language Models (LLMs) like ChatGPT, Claude, Gemini, and other AI assistants out of the box. As tokens arrive via Server-Sent Events (SSE) or WebSocket connections, you can write them directly to the component instance with `writeChunk()` and the rendered markdown updates instantly.
 
+This is also the path for rendering streaming agent output that mixes markdown with rich HTML (designs, dashboards, interactive artifacts). Built-in sanitization runs per token as it is emitted, so a partial `<script>` or `<a href="javascript:...">` arriving mid-stream is sanitized before render. Half-open tags buffer until the parser sees enough to emit a well-formed token, so progressive HTML renders without flicker.
+
 ## How It Works
 
 LLM APIs stream responses token-by-token. Each token is a small chunk of text -- sometimes a word, sometimes a partial word, sometimes punctuation or whitespace. The typical integration pattern is:
@@ -423,6 +425,7 @@ Experiment with different streaming speeds, jitter, chunk modes, and websocket-s
 
 ## Related
 
+- [Security](/docs/advanced/security) -- XSS defaults applied per token during streaming
 - [Token Caching](/docs/advanced/token-caching) -- cache parsed tokens for instant re-renders
 - [Getting Started](/docs/getting-started) -- installation and basic usage
 - [SvelteMarkdown API](/docs/api/svelte-markdown) -- full prop reference

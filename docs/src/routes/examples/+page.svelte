@@ -8,10 +8,10 @@
     if (seo) {
         seo.title = 'Interactive Examples | Svelte Markdown'
         seo.description =
-            'Explore interactive examples of @humanspeak/svelte-markdown featuring a live playground, custom renderers, HTML filtering, and caching performance demos.'
+            'Live demos of @humanspeak/svelte-markdown: agent / LLM streaming, HTML filtering, custom renderers, token caching, KaTeX math, Mermaid diagrams, and more.'
         seo.ogTitle = 'Interactive Examples'
-        seo.ogTagline = 'Live demos of markdown rendering features.'
-        seo.ogFeatures = ['Live Editors', '8 Demos', 'Source Code', 'Try It Now']
+        seo.ogTagline = 'Live demos including agent / LLM streaming output.'
+        seo.ogFeatures = ['Agent Streaming', 'Live Editors', 'HTML Filtering', 'Source Code']
         seo.ogSlug = 'examples'
     }
 
@@ -95,9 +95,9 @@
         },
         {
             slug: 'llm-streaming',
-            title: 'LLM Streaming',
+            title: 'AI Agent / LLM Streaming',
             description:
-                'Simulate real-time AI response streaming with adjustable speed, jitter, and chunk modes. Measure render performance live.',
+                'Stream markdown and rich HTML from AI agents in real time. Adjustable speed, jitter, and chunk modes with live render performance — XSS-safe by default.',
             icon: 'zap'
         }
     ]
