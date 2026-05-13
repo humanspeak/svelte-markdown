@@ -61,7 +61,7 @@ Look at the sanitization log on the right as these render:
 
 <a href="javascript:alert('XSS')">Click for surprise</a>
 
-<img src="x" onerror="alert('boom')" alt="broken image"/>
+<img src="https://placehold.co/80x40/3dbba0/0f172a?text=sample" onerror="alert('boom')" alt="sample image"/>
 
 <a href="vbscript:msgbox(1)" onclick="window.location='https://evil.example/'">Mixed-case ATTACK</a>
 
