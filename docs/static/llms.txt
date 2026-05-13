@@ -1,14 +1,14 @@
 # Svelte Markdown
 
-> A powerful, customizable markdown renderer for Svelte 5 with TypeScript support. Built on Marked and HTMLParser2 with 24 markdown renderers, 69+ HTML tag renderers, LRU token caching, and allow/deny filtering utilities.
+> A powerful, customizable markdown and HTML renderer for Svelte 5 — built for rendering streaming AI agent output from Claude Code, ChatGPT, and agentic workflows. Built on Marked and HTMLParser2 with 24 markdown renderers, 69+ HTML tag renderers, LRU token caching, allow/deny filtering, and XSS-safe defaults.
 
 ## Overview
 
 - Package: `@humanspeak/svelte-markdown`
-- Version: 8.x (latest)
 - License: MIT
 - Requires: Svelte 5
 - Maintained by: [Humanspeak, Inc.](https://humanspeak.com)
+- Current version: see https://www.npmjs.com/package/@humanspeak/svelte-markdown
 
 ## Installation
 
@@ -29,17 +29,19 @@ npm install @humanspeak/svelte-markdown
 
 ## Key Features
 
-- Svelte 5 runes compatibility ($props, $derived)
-- Full TypeScript support with complete type definitions
+- AI agent / LLM output rendering — stream mixed markdown and HTML from Claude Code, ChatGPT, Gemini, and agentic workflows
+- LLM streaming mode with smart token diffing (sub-2ms updates regardless of document size)
+- Streaming-aware sanitization — XSS defaults applied per token as chunks arrive, half-open tags buffer until well-formed
+- XSS-safe defaults — URL protocol allowlist (blocks `javascript:`, `data:`, `vbscript:`, `blob:`); strips `on*` event handlers and `srcdoc`
 - 24 built-in markdown renderers (heading, paragraph, link, code, table, etc.)
 - 69+ HTML tag renderers for raw HTML within markdown
+- Svelte 5 runes compatibility ($props, $derived) with full TypeScript types
 - LRU token caching (50-200x faster re-renders)
-- Allow/deny filtering for HTML tags and markdown renderers
-- Custom renderer components for full output control
-- Svelte 5 snippet overrides for inline customization
-- Marked extensions support (KaTeX, Mermaid, etc.)
+- Allow/deny filtering for HTML tags and markdown renderers (`allowHtmlOnly`, `excludeHtmlOnly`, `buildUnsupportedHTML`)
+- Custom renderer components and Svelte 5 snippet overrides for inline customization
+- Marked extensions support (KaTeX, Mermaid, alerts, footnotes)
 - Async markdown parsing support
-- Secure HTML parsing via HTMLParser2
+- Secure HTML parsing via HTMLParser2 (no `innerHTML`)
 
 ## Documentation
 

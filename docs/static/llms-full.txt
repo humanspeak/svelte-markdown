@@ -1,11 +1,10 @@
 # Svelte Markdown - Complete Reference
 
-> A powerful, customizable markdown renderer for Svelte 5 with TypeScript support. Built on Marked and HTMLParser2 with 24 markdown renderers, 69+ HTML tag renderers, LRU token caching, and allow/deny filtering utilities.
+> A powerful, customizable markdown and HTML renderer for Svelte 5 — built for rendering streaming AI agent output from Claude Code, ChatGPT, and agentic workflows. Built on Marked and HTMLParser2 with 24 markdown renderers, 69+ HTML tag renderers, LRU token caching, allow/deny filtering, and XSS-safe defaults.
 
 ## Package Information
 
 - Package: `@humanspeak/svelte-markdown`
-- Version: 8.x (latest)
 - License: MIT
 - Requires: Svelte 5
 - Parser: Marked
@@ -14,6 +13,7 @@
 - Maintained by: Humanspeak, Inc.
 - Homepage: https://markdown.svelte.page
 - Repository: https://github.com/humanspeak/svelte-markdown
+- Current version: see https://www.npmjs.com/package/@humanspeak/svelte-markdown
 
 ## Installation
 
