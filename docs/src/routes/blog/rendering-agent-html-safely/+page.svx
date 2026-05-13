@@ -8,7 +8,7 @@ tags:
     - streaming
     - xss
     - svelte-5
-author: Humanspeak
+author: Jason Kummerl
 readingTime: 9
 ---
 
@@ -23,7 +23,7 @@ readingTime: 9
         description:
             'Thariq’s post on the unreasonable effectiveness of HTML changed how we think about agent output. Here’s how to render it safely in Svelte 5 — every defense the library gives you, with worked examples and the known gaps to plan around.',
         tags: ['ai-agents', 'security', 'streaming', 'xss', 'svelte-5'],
-        author: 'Humanspeak',
+        author: 'Jason Kummerl',
         readingTime: 9
     }
 </script>
@@ -253,6 +253,6 @@ Thariq’s observation that HTML has become the new agent output format is one o
 
 We’d rather you know about every sharp edge up front than discover one in production. If you find one we missed, [open an issue](https://github.com/humanspeak/svelte-markdown/issues). We’re still learning what 2026 agent output looks like, same as you.
 
-— The Humanspeak team
+— Jason Kummerl
 
 </BlogPost>
