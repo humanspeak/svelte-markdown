@@ -41,12 +41,11 @@
 
     // Streaming cases — write the content in word-sized chunks
     interface StreamingHandle {
-        writeChunk: (chunk: string) => void
-        resetStream: (next?: string) => void
+        writeChunk: (_chunk: string) => void
+        resetStream: (_next?: string) => void
     }
     let streamA: StreamingHandle | undefined = $state()
     let streamB: StreamingHandle | undefined = $state()
-    let streamingDone = $state(false)
 
     const streamInto = (handle: StreamingHandle | undefined, content: string) => {
         if (!handle) return
@@ -62,10 +61,8 @@
     }
 
     const startStreams = () => {
-        streamingDone = false
         streamInto(streamA, NESTED)
         streamInto(streamB, DIV_UL_TIGHT)
-        setTimeout(() => (streamingDone = true), 5000)
     }
 </script>
 
