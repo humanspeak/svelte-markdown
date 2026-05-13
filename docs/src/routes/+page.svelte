@@ -67,7 +67,7 @@
         {
             title: 'AI Agent Output',
             description:
-                'Render streaming HTML and markdown from Claude Code, ChatGPT, and agentic workflows — with XSS defaults, sanitization-aware streaming, and sub-2ms updates.',
+                'Render streaming HTML and markdown from Claude Code, ChatGPT, and agentic workflows — with XSS defaults, sanitization-aware streaming, and low-latency updates (median ~3ms, well under the 60fps budget).',
             icon: 'zap'
         }
     ]

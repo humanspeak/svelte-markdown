@@ -68,6 +68,8 @@ Built-in sanitization runs in the Parser before tokens reach any renderer or sni
 <script lang="ts">
     import SvelteMarkdown, { defaultSanitizeUrl } from '@humanspeak/svelte-markdown'
 
+    const markdown = '![diagram](data:image/png;base64,iVBORw0KGgo...) and [external](javascript:alert(1))'
+
     // Custom policy: allow data: URIs only on images
     function customSanitizeUrl(url, { type, tag }) {
         if (tag === 'img' && url.startsWith('data:image/')) return url
@@ -88,6 +90,8 @@ Route semantic markup like `<thinking>`, `<tool-call>`, or any custom element to
     import Thinking from './Thinking.svelte'
     import ToolCall from './ToolCall.svelte'
 
+    const agentResponse = '<thinking>weighing options</thinking>\n\nHere is my plan:\n\n<tool-call name="search" />'
+
     const renderers = {
         html: { ...Html, thinking: Thinking, 'tool-call': ToolCall }
     }
@@ -99,7 +103,7 @@ Route semantic markup like `<thinking>`, `<tool-call>`, or any custom element to
 ## Key Features
 
 - AI agent / LLM output rendering — stream mixed markdown and HTML from Claude Code, ChatGPT, Gemini, and agentic workflows
-- LLM streaming mode with smart token diffing (sub-2ms per chunk on typical streams)
+- LLM streaming mode with smart token diffing (median ~3ms per chunk on typical streams, well under the 60fps budget)
 - Streaming-aware sanitization — partial HTML blocks reconcile correctly as the closing tag arrives
 - XSS-safe defaults — URL protocol allowlist, `on*` and `srcdoc` stripping
 - Custom sanitizer hooks — `sanitizeUrl` / `sanitizeAttributes` props with `defaultSanitize*` and `unsanitized*` exports

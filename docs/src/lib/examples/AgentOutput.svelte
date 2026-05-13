@@ -182,9 +182,8 @@ That is everything — the renderer kept the safe content and dropped the rest.`
     }
 
     onMount(() => {
-        const t = setTimeout(start, 500)
+        timerId = setTimeout(start, 500)
         return () => {
-            clearTimeout(t)
             sessionId++
             if (timerId) clearTimeout(timerId)
         }

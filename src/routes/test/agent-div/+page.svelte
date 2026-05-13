@@ -47,27 +47,47 @@
     let streamA: StreamingHandle | undefined = $state()
     let streamB: StreamingHandle | undefined = $state()
 
+    const cancels: Array<() => void> = []
+    const cancelActiveStreams = () => {
+        while (cancels.length) cancels.pop()?.()
+    }
+
     const streamInto = (handle: StreamingHandle | undefined, content: string) => {
         if (!handle) return
         handle.resetStream('')
         const chunks = content.match(/\S+\s*/g) ?? []
         let i = 0
+        let timer: ReturnType<typeof setTimeout> | null = null
+        let cancelled = false
+        const cancel = () => {
+            cancelled = true
+            if (timer !== null) {
+                clearTimeout(timer)
+                timer = null
+            }
+        }
+        cancels.push(cancel)
         const tick = () => {
-            if (i >= chunks.length) return
+            if (cancelled || i >= chunks.length) return
             handle.writeChunk(chunks[i++])
-            setTimeout(tick, 20)
+            timer = setTimeout(tick, 20)
         }
         tick()
     }
 
     const startStreams = () => {
+        cancelActiveStreams()
         streamInto(streamA, NESTED)
         streamInto(streamB, DIV_UL_TIGHT)
     }
 </script>
 
 <svelte:head>
+    <!-- Internal repro fixture for #291. Lives under /test/* like the
+         rest of the dev-only routes; intentionally has no canonical URL
+         and is excluded from production indexing. -->
     <title>Agent DIV repro</title>
+    <meta name="robots" content="noindex,nofollow" />
     <style>
         body {
             font-family: system-ui, sans-serif;

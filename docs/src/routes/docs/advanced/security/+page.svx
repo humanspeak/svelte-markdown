@@ -66,6 +66,8 @@ Both sanitization functions receive a context object with the token `type` and H
 <script>
     import SvelteMarkdown, { defaultSanitizeUrl } from '@humanspeak/svelte-markdown'
 
+    const markdown = '![diagram](data:image/png;base64,iVBORw0KGgo...) and [external](javascript:alert(1))'
+
     // Allow data: URIs only on images, block everywhere else
     function customSanitizeUrl(url, { type, tag }) {
         if (tag === 'img' && url.startsWith('data:image/')) return url
@@ -86,6 +88,8 @@ Override `sanitizeAttributes` to apply per-tag attribute rules:
         defaultSanitizeAttributes,
         defaultSanitizeUrl
     } from '@humanspeak/svelte-markdown'
+
+    const markdown = '<iframe src="https://example.com" onload="alert(1)"></iframe>'
 
     // Block all attributes on iframes, use defaults for everything else
     function customSanitizeAttributes(attributes, context, sanitizeUrl) {
@@ -110,6 +114,10 @@ If you fully trust your markdown source and need to allow all URLs and attribute
         unsanitizedUrl,
         unsanitizedAttributes
     } from '@humanspeak/svelte-markdown'
+
+    // Only use passthrough sanitizers when the source is fully trusted
+    // (e.g. your own CMS, never user input).
+    const trustedContent = '# Internal doc\n\n<iframe src="/internal/dashboard"></iframe>'
 </script>
 
 <SvelteMarkdown
@@ -154,6 +162,8 @@ For additional defense, you can block HTML tags entirely using the [allow/deny f
 <script>
     import SvelteMarkdown, { buildUnsupportedHTML } from '@humanspeak/svelte-markdown'
 
+    let userInput = $state('# User content\n\n<script>alert(1)</' + 'script>')
+
     const renderers = {
         html: buildUnsupportedHTML()
     }
@@ -169,6 +179,8 @@ This replaces every HTML tag renderer with `UnsupportedHTML`, which renders noth
 ```svelte
 <script>
     import SvelteMarkdown, { allowHtmlOnly } from '@humanspeak/svelte-markdown'
+
+    let userInput = $state('Hello <strong>world</strong> <iframe src="https://example.com"></iframe>')
 
     const safeHtml = allowHtmlOnly([
         'strong', 'em', 'a', 'code', 'pre',
@@ -187,6 +199,8 @@ This replaces every HTML tag renderer with `UnsupportedHTML`, which renders noth
 ```svelte
 <script>
     import SvelteMarkdown, { excludeHtmlOnly } from '@humanspeak/svelte-markdown'
+
+    let userInput = $state('Click <a href="https://example.com">here</a> <iframe src="x"></iframe>')
 
     const filteredHtml = excludeHtmlOnly([
         'iframe', 'embed', 'form', 'input',
@@ -208,6 +222,8 @@ You can also restrict which markdown elements are rendered:
         allowRenderersOnly,
         buildUnsupportedHTML
     } from '@humanspeak/svelte-markdown'
+
+    let userInput = $state('# Heading\n\n**Bold** and *italic* with a [link](https://example.com).')
 
     // Only allow basic text formatting
     const renderers = {
@@ -252,6 +268,8 @@ You can inspect and filter tokens after parsing:
 ```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    let userInput = $state('Plain markdown is safe, but <div>raw HTML</div> may not be.')
 
     function handleParsed(tokens) {
         // Inspect tokens for suspicious content

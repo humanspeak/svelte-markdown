@@ -135,7 +135,7 @@ The first successful write locks the stream into one input mode (append or offse
     async function ask(prompt: string) {
         const client = new Anthropic()
         const stream = client.messages.stream({
-            model: 'claude-sonnet-4-20250514',
+            model: 'claude-sonnet-4-6',
             max_tokens: 4096,
             messages: [{ role: 'user', content: prompt }]
         })
@@ -222,6 +222,8 @@ The library applies built-in sanitization in the Parser before tokens reach any 
         defaultSanitizeAttributes
     } from '@humanspeak/svelte-markdown'
 
+    const markdown = '# Hello\n\n[link](javascript:alert(1)) and <iframe src="https://example.com" onload="alert(2)"></iframe>'
+
     // Allow data: URIs only on images
     function sanitizeUrl(url, { type, tag }) {
         if (tag === 'img' && url.startsWith('data:image/')) return url
@@ -246,6 +248,10 @@ The library applies built-in sanitization in the Parser before tokens reach any 
         unsanitizedUrl,
         unsanitizedAttributes
     } from '@humanspeak/svelte-markdown'
+
+    // Only use passthrough sanitizers when the source is fully trusted
+    // (e.g. your own CMS, never user input).
+    const trustedContent = '# Internal doc\n\n<iframe src="/internal/dashboard"></iframe>'
 </script>
 
 <SvelteMarkdown
@@ -272,6 +278,14 @@ Agents often emit semantic markup like `<thinking>`, `<tool-call>`, or `<artifac
     import Thinking from './Thinking.svelte'
     import ToolCall from './ToolCall.svelte'
     import Artifact from './Artifact.svelte'
+
+    const agentResponse = `<thinking>weighing options</thinking>
+
+Here is my plan:
+
+<tool-call name="search" args='{"q":"svelte markdown"}' />
+
+<artifact title="Result">Found three matches.</artifact>`
 
     const renderers = {
         html: {

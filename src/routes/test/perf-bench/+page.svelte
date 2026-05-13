@@ -19,6 +19,16 @@
     const ROLLING_WINDOW_MS = 10_000
     const LONG_TASK_THRESHOLD_MS = 50
 
+    // Dev-only Parser-instance counters that `Parser.svelte` writes into
+    // `window` when running outside production. Mirroring the shape here
+    // lets us read/reset them without `any` casts.
+    interface SVMWindow extends Window {
+        __svmParserCount?: number
+        __svmParserByType?: Record<string, number>
+    }
+    const svmWindow = (): SVMWindow | undefined =>
+        typeof window === 'undefined' ? undefined : (window as SVMWindow)
+
     // ---- Corpus generators ----------------------------------------------------
 
     const generateLarge = (sections: number, blocksPerSection: number): string => {
@@ -373,17 +383,15 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
      * builds (Vite drops the block).
      */
     const resetParserCounter = () => {
-        if (typeof window === 'undefined') return
-        // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
-        const w = window as any
+        const w = svmWindow()
+        if (!w) return
         w.__svmParserCount = 0
         w.__svmParserByType = {}
     }
 
     const readParserCounter = (): { total: number; byType: Record<string, number> } => {
-        if (typeof window === 'undefined') return { total: 0, byType: {} }
-        // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
-        const w = window as any
+        const w = svmWindow()
+        if (!w) return { total: 0, byType: {} }
         return {
             total: w.__svmParserCount ?? 0,
             byType: w.__svmParserByType ?? {}
@@ -594,7 +602,9 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         const startWall = performance.now()
         await new Promise<void>((resolve) => {
             const step = async () => {
-                if (i >= chunks.length) {
+                // Bail if `clear()` ran mid-stream — same race as the
+                // bursty variant. See note in `runStreamingBursty`.
+                if (!isStreaming || i >= chunks.length) {
                     resolve()
                     return
                 }
@@ -602,6 +612,10 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
                 source += chunks[i]
                 i++
                 await tick()
+                if (!isStreaming) {
+                    resolve()
+                    return
+                }
                 renderDurations.push(performance.now() - t0)
                 streamHandle = setTimeout(step, baseDelay)
             }
@@ -700,7 +714,11 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         const startWall = performance.now()
         await new Promise<void>((resolve) => {
             const step = async () => {
-                if (idx >= chunks.length) {
+                // `clear()` flips `isStreaming` to false and nulls
+                // `streamHandle`, but an in-flight setTimeout callback can
+                // still fire after that. Bail out so we don't mutate
+                // `source` or push stale durations onto the scenario stats.
+                if (!isStreaming || idx >= chunks.length) {
                     resolve()
                     return
                 }
@@ -708,6 +726,10 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
                 source += chunks[idx]
                 idx++
                 await tick()
+                if (!isStreaming) {
+                    resolve()
+                    return
+                }
                 renderDurations.push(performance.now() - t0)
                 // Read the delay associated with the chunk we just emitted
                 // (now at idx-1 after the increment), not the next chunk's

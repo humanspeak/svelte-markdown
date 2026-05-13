@@ -133,8 +133,11 @@
      * effective lifetime value for counting purposes.
      */
     if (import.meta.env.DEV && typeof window !== 'undefined') {
-        // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
-        const w = window as any
+        interface SVMWindow extends Window {
+            __svmParserCount?: number
+            __svmParserByType?: Record<string, number>
+        }
+        const w = window as SVMWindow
         const initialType: string = type ?? '<root>'
         w.__svmParserCount = (w.__svmParserCount ?? 0) + 1
         const byType = (w.__svmParserByType = w.__svmParserByType ?? {})
