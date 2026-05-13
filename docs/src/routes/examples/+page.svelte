@@ -99,6 +99,13 @@
             description:
                 'Stream markdown and rich HTML from AI agents in real time. Adjustable speed, jitter, and chunk modes with live render performance — XSS-safe by default.',
             icon: 'zap'
+        },
+        {
+            slug: 'agent-output',
+            title: 'Agent Output + Live Sanitization',
+            description:
+                'Watch a simulated agent stream mixed markdown and HTML — with a live log of every javascript: URL and on*= handler the sanitizer blocks.',
+            icon: 'shield'
         }
     ]
 </script>
