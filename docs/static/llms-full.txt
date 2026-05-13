@@ -594,6 +594,8 @@ This package (`@humanspeak/svelte-markdown`) is the maintained successor to the 
 - [Snippet Overrides](https://markdown.svelte.page/docs/renderers/snippet-overrides)
 - [Migration Guide](https://markdown.svelte.page/docs/migration)
 - [Interactive Examples](https://markdown.svelte.page/examples)
+- [Blog](https://markdown.svelte.page/blog)
+- [Rendering Agent HTML Safely (blog post)](https://markdown.svelte.page/blog/rendering-agent-html-safely)
 - [Agent Output Demo (live, with sanitization log)](https://markdown.svelte.page/examples/agent-output)
 - [LLM Streaming Demo (live, with perf metrics)](https://markdown.svelte.page/examples/llm-streaming)
 - [Interactive Playground](https://markdown.svelte.page/examples/playground)

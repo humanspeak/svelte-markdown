@@ -1,0 +1,258 @@
+---
+title: Rendering Agent HTML Safely
+date: 2026-05-13
+description: Thariq’s post on the unreasonable effectiveness of HTML changed how we think about agent output. Here’s how to render it safely in Svelte 5 — every defense the library gives you, with worked examples and the known gaps to plan around.
+tags:
+    - ai-agents
+    - security
+    - streaming
+    - xss
+    - svelte-5
+author: Humanspeak
+readingTime: 9
+---
+
+<script lang="ts">
+    import { BlogPost, type BlogPostMeta } from '@humanspeak/docs-kit/blog'
+    import { docsConfig } from '$lib/docs-config'
+
+    const post: BlogPostMeta = {
+        slug: 'rendering-agent-html-safely',
+        title: 'Rendering Agent HTML Safely',
+        date: '2026-05-13',
+        description:
+            'Thariq’s post on the unreasonable effectiveness of HTML changed how we think about agent output. Here’s how to render it safely in Svelte 5 — every defense the library gives you, with worked examples and the known gaps to plan around.',
+        tags: ['ai-agents', 'security', 'streaming', 'xss', 'svelte-5'],
+        author: 'Humanspeak',
+        readingTime: 9
+    }
+</script>
+
+<BlogPost {post} config={docsConfig}>
+
+A few weeks ago, [Thariq](https://x.com/trq212) wrote a post called [Using Claude Code: The Unreasonable Effectiveness of HTML](https://x.com/trq212/status/2052809885763747935). His thesis is short and, if you’ve been paying attention to how people are actually using coding agents, hard to argue with:
+
+> _Markdown has become a restricting format. I find it difficult to read a markdown file of more than a hundred lines. I want richer visualizations, color and diagrams and I want to be able to share them easily._
+>
+> _I’ve started preferring HTML as an output format instead of Markdown and increasingly see this being used by others on the Claude Code team, this is why._
+
+He’s right. Markdown won because it was the simplest format that read like prose and rendered acceptably as HTML. But "acceptable" is doing a lot of work in that sentence. Once you start asking an agent to produce a PR review, a design exploration, a dashboard mockup, or a one-off editor for a piece of data you’re working on, markdown’s ceiling shows up fast. HTML doesn’t have that ceiling. And critically, the same LLMs that learned markdown also learned HTML — fluently.
+
+This is good news for the kinds of outputs we want. It is less good news for whoever has to render the result in a browser.
+
+## The shape of agent HTML output
+
+If you’ve been rendering markdown in your product and your agent has been emitting `**bold**` and `# headings`, the worst payload you could plausibly worry about is a malformed link. The whole input shape was opinionated about what could be expressed.
+
+Once you accept HTML from an agent, the attack surface widens to roughly _everything a browser can do_:
+
+- `<a href="javascript:steal()">` — clickjacking via protocol abuse
+- `<img src=x onerror="...">` — event handlers on any element
+- `<iframe srcdoc="...">` — arbitrary HTML injection
+- `<form action="javascript:...">` — credentials redirected to attacker-controlled handlers
+- `<style>body{display:none}</style>` — visual hijacking
+- `<a href="data:text/html,...">` — data URIs that the browser dutifully renders
+
+The agent isn’t malicious. _Prompt injection is._ A user pastes a webpage into the chat, the model dutifully echoes some of its HTML into the response, and now your renderer is asked to put attacker-controlled markup into the DOM.
+
+This isn’t hypothetical, and it isn’t even particularly creative. It’s the same XSS surface every CMS has dealt with for twenty years — except now it’s reaching your app through a model instead of through a user form.
+
+## What we wanted from the rendering layer
+
+When we shipped the agent-output use case in [`@humanspeak/svelte-markdown`](https://www.npmjs.com/package/@humanspeak/svelte-markdown), three things had to be true:
+
+1. **Safe by default.** Most people don’t read the security section first. If you do nothing special, the dangerous stuff should already be off.
+2. **Streaming-aware.** A partial `<a href="javascript:..."` arriving mid-chunk has to be blocked _before_ the DOM ever sees it. Sanitizing the final document is too late; the bad attribute landed five chunks ago.
+3. **Layered.** Defaults handle the 90% case. For the 10%, you should be able to add a stricter policy, route specific tags to your own components, or block whole classes of elements without ejecting from the library.
+
+Below is what each of those looks like in practice.
+
+## Layer 1 — Defaults you don’t have to think about
+
+`<SvelteMarkdown source={agentResponse} />` already applies, before any token reaches a renderer or snippet:
+
+- **URL protocol allowlist** for `href`, `src`, `action`, `formaction`, `cite`, `data`, and `poster` — only `http:`, `https:`, `mailto:`, `tel:`, and relative URLs survive. `javascript:`, `vbscript:`, `data:`, and `blob:` are blocked, including mixed-case and leading-whitespace variants.
+- **Event-handler stripping** — every `on*` attribute is removed: `onclick`, `onerror`, `onload`, `onsubmit`, all of them.
+- **`srcdoc` stripping** — iframes can’t inject arbitrary HTML through the `srcdoc` attribute.
+- **No `<script>` or `<style>` renderer** — both tags fall through to a placeholder that renders them as visible escaped text. They’re inert.
+
+This is the case for both static input and streaming input. Sanitization runs in the parser, not the renderer, which means it’s applied per token as chunks arrive:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { StreamingChunk } from '@humanspeak/svelte-markdown'
+
+    let markdown:
+        | {
+              writeChunk: (chunk: StreamingChunk) => void
+              resetStream: (next?: string) => void
+          }
+        | undefined
+
+    async function ask(prompt: string) {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            body: JSON.stringify({ prompt })
+        })
+        const reader = response.body!.getReader()
+        const decoder = new TextDecoder()
+
+        markdown?.resetStream('')
+
+        while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            markdown?.writeChunk(decoder.decode(value, { stream: true }))
+        }
+    }
+</script>
+
+<SvelteMarkdown bind:this={markdown} source="" streaming={true} />
+```
+
+This snippet is the entire integration for an Anthropic, OpenAI, or any-other-SSE backed chat UI. There is no separate sanitization step. There is no `dangerouslySetInnerHTML` to forget about. A `javascript:alert(1)` href that arrives in chunk 23 gets stripped between the parser emitting that token and the renderer mounting it.
+
+## Layer 2 — Tightening or loosening the policy
+
+The defaults are reasonable, but the right policy depends on what you’re rendering. If you’re streaming output from an agent whose prompts you control on the server, you can probably afford to be more permissive. If you’re rendering output from a user-supplied agent, you almost certainly want to be stricter.
+
+The `sanitizeUrl` and `sanitizeAttributes` props accept your own functions, and the defaults are exported so you can compose:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown, {
+        defaultSanitizeUrl,
+        defaultSanitizeAttributes
+    } from '@humanspeak/svelte-markdown'
+
+    // Allow `data:image/*` only on <img>; defaults for everything else.
+    function sanitizeUrl(url, { type, tag }) {
+        if (tag === 'img' && url.startsWith('data:image/')) return url
+        return defaultSanitizeUrl(url, { type, tag })
+    }
+
+    // Block all attributes on <iframe>; defaults elsewhere.
+    function sanitizeAttributes(attributes, context, urlSanitizer) {
+        if (context.tag === 'iframe') return {}
+        return defaultSanitizeAttributes(attributes, context, urlSanitizer)
+    }
+</script>
+
+<SvelteMarkdown source={agentResponse} {sanitizeUrl} {sanitizeAttributes} />
+```
+
+The functions run per element, so per-tag policies (`<iframe>` is treated differently than `<a>`) come naturally. If you want to give up sanitization entirely for trusted content, the `unsanitizedUrl` and `unsanitizedAttributes` passthroughs are also exported — useful for rendering your own assistant’s output where you control both ends.
+
+## Layer 3 — Blocking whole classes of elements
+
+Even with `on*` stripped and `src` protocol-restricted, an `<iframe>` can still load any `http(s)` URL. If the embed surface is not part of your product, just don’t render it:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown, { excludeHtmlOnly } from '@humanspeak/svelte-markdown'
+
+    const renderers = {
+        html: excludeHtmlOnly(['iframe', 'form', 'embed', 'object'])
+    }
+</script>
+
+<SvelteMarkdown source={agentResponse} {renderers} />
+```
+
+If you only want a small set of tags through, flip it:
+
+```ts
+import { allowHtmlOnly } from '@humanspeak/svelte-markdown'
+
+const renderers = {
+    html: allowHtmlOnly([
+        'strong',
+        'em',
+        'a',
+        'code',
+        'pre',
+        'ul',
+        'ol',
+        'li',
+        'p',
+        'br',
+        'hr',
+        'h1',
+        'h2',
+        'h3',
+        'blockquote',
+        'table',
+        'thead',
+        'tbody',
+        'tr',
+        'th',
+        'td'
+    ])
+}
+```
+
+`buildUnsupportedHTML()` is the full lockdown — markdown still works, HTML is universally stripped to escaped text. Useful for low-trust inputs where you want the model to be able to _talk about_ HTML in code blocks but never _execute_ it.
+
+## Layer 4 — Routing your own components
+
+The interesting agent output isn’t the dangerous part. It’s `<thinking>`, `<tool-call>`, `<artifact>`, `<citation>` — semantic markup the model emits because you asked for it, that you want to render as a real component rather than a raw tag. The HTML renderer map accepts arbitrary tag names:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown, { Html } from '@humanspeak/svelte-markdown'
+    import Thinking from './Thinking.svelte'
+    import ToolCall from './ToolCall.svelte'
+    import Artifact from './Artifact.svelte'
+    import Citation from './Citation.svelte'
+
+    const renderers = {
+        html: {
+            ...Html,
+            thinking: Thinking,
+            'tool-call': ToolCall,
+            artifact: Artifact,
+            citation: Citation
+        }
+    }
+</script>
+
+<SvelteMarkdown source={agentResponse} {renderers} />
+```
+
+Each component receives `{ attributes, children }`. Attributes have already been through the sanitizer; children are a Svelte snippet you can place wherever you want. A `<thinking>` block could collapse by default; a `<tool-call>` could show its parameters and result as a card; a `<citation source="...">` could render as a numbered link. The model gets a richer vocabulary; you get a richer UI; the sanitizer keeps doing its job underneath.
+
+## The streaming bug that wasn’t obvious
+
+While shipping this, we hit a class of bugs that’s worth flagging if you’re building anything similar. A `<div>` containing a `<strong>` and a `<ul><li>...</li></ul>` would, mid-stream, render with the `<div>` empty and the `<strong>` and list items as siblings _outside_ the div. The closing `</div>` arriving in a later chunk did not retroactively put them inside.
+
+The root cause was an optimization in our incremental parser: it kept a "stable prefix" of tokens between updates and only re-parsed the tail. Reasonable for plain markdown. Unsound for HTML, because an opening `<div>` token’s `.raw` is just `"<div>"` — its children and closing tag are tracked separately on the token tree, and the source-offset math the optimization relied on silently underestimated where the html block actually ended in the source.
+
+The fix is in the library now. We wrote it up in [issue #291](https://github.com/humanspeak/svelte-markdown/issues/291) for posterity, and the regression suite has 44 tests pinning every chunking strategy (word, tag, char), every input mode (`writeChunk` strings, `writeChunk` offset chunks, reactive `source` prop), and every nested-html shape we could think of. If you’re using `streaming={true}` against a recent version, you’re getting the fix automatically.
+
+The lesson generalized beyond streaming: any optimization that assumes "this token won’t grow" needs to know what HTML blocks actually look like at the moment marked emits them. We didn’t — we assumed marked’s token shape was self-describing — and the assumption held until agents started emitting HTML.
+
+## Known gaps you should plan around
+
+The library is honest about what it doesn’t do. A few things to know:
+
+- **Inline `style="..."` attributes are not sanitized.** Modern browsers won’t execute JavaScript via CSS, but `display: none` and exfiltration via `background-image: url(...)` are possible. If you’re rendering untrusted input, layer DOMPurify on top, or strip `style` in your own `sanitizeAttributes`.
+- **`<iframe>`, `<form>`, and `<embed>` are rendered by default.** With `on*`/`srcdoc` stripped and `src`/`action` protocol-restricted, the worst is blocked, but an iframe to an attacker-controlled `http(s)` URL is still possible. `excludeHtmlOnly()` is one line away.
+- **`srcset` and other less common URL attributes are not sanitized.** Only the standard URL-bearing attributes flow through `sanitizeUrl`. A custom `sanitizeAttributes` can plug the rest.
+- **There is no bundled DOM sanitizer.** By design — we don’t want to make decisions about what a user’s policy should look like, and DOMPurify is a hard dependency to lock to a version. For untrusted inputs, compose with DOMPurify; the layers stack cleanly.
+
+## Try it
+
+We built a live demo at [`/examples/agent-output`](/examples/agent-output) that streams a simulated PR-review response containing both legitimate rich HTML (a styled verdict box, a findings table, a real link) and deliberate XSS attempts (`javascript:` URLs, `onerror`/`onclick`/`onsubmit` handlers, a `vbscript:` protocol, a form posting to `javascript:`). Three panes side by side: the raw source as it arrives, the rendered output, and a live sanitization log showing every URL blocked and attribute stripped.
+
+It’s the cleanest way to see the layers in action without writing any code.
+
+## Closing
+
+Thariq’s observation that HTML has become the new agent output format is one of those calls that’s obvious in retrospect — agents are using the most expressive tool they have access to, and we should expect that trend to continue, not reverse. The job of a rendering library in that world isn’t to fight the trend. It’s to make the default safe, the customization layered, and the failure modes legible.
+
+We’d rather you know about every sharp edge up front than discover one in production. If you find one we missed, [open an issue](https://github.com/humanspeak/svelte-markdown/issues). We’re still learning what 2026 agent output looks like, same as you.
+
+— The Humanspeak team
+
+</BlogPost>

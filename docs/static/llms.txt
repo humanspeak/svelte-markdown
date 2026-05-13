@@ -141,6 +141,8 @@ Route semantic markup like `<thinking>`, `<tool-call>`, or any custom element to
 - [Interactive Examples](https://markdown.svelte.page/examples)
 - [Agent Output Demo (live)](https://markdown.svelte.page/examples/agent-output)
 - [LLM Streaming Demo (live)](https://markdown.svelte.page/examples/llm-streaming)
+- [Blog](https://markdown.svelte.page/blog)
+- [Rendering Agent HTML Safely (blog post)](https://markdown.svelte.page/blog/rendering-agent-html-safely)
 - [Full LLM Reference](https://markdown.svelte.page/llms-full.txt)
 
 ## Links
