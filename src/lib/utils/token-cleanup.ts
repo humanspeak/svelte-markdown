@@ -317,6 +317,12 @@ const hasMultipleTags = (html: string): boolean => {
  *     the legacy "partial result on unclosed tags" output.
  *   - Whitespace-only text between tags is dropped.
  *
+ * Post-condition (depended on by `IncrementalParser`, see #291): an html
+ * token's `.tokens` array is set only when a real (non-implied) closing
+ * tag was seen in the source. Unclosed openings leave `.tokens` as
+ * `undefined`, which is how downstream streaming code distinguishes
+ * `<div>` (still streaming) from `<div></div>` (genuinely empty).
+ *
  * @internal
  */
 const expandHtmlBlockNested = (html: string): Token[] => {
@@ -364,19 +370,23 @@ const expandHtmlBlockNested = (html: string): Token[] => {
             ontext: (text) => {
                 currentText += text
             },
-            onclosetag: (name) => {
+            onclosetag: (name, implied) => {
                 flushText()
                 if (opens.length === 0) return
                 const top = opens[opens.length - 1]
                 if (top.tag !== name) return
                 opens.pop()
                 stack.pop()
-                if (html.includes(`</${name}>`)) {
+                if (!implied) {
+                    // Real `</tag>` in source — fully resolved nested token.
                     ;(top.opening as Token & { tokens?: Token[] }).tokens = top.childTokens
                 } else {
-                    // Auto-closed by htmlparser2 at end-of-input — flatten
-                    // children under the opening to match legacy parseHtmlBlock
-                    // + processHtmlTokens partial-result behavior.
+                    // Auto-closed by htmlparser2 at end-of-input — this
+                    // opening tag is unclosed in the source. Leave `.tokens`
+                    // undefined so downstream code can tell it apart from a
+                    // genuinely empty closed element (`<div></div>`), and
+                    // flatten any children under the parent to match the
+                    // legacy partial-result behavior.
                     const parent = stack[stack.length - 1]
                     for (const child of top.childTokens) parent.push(child)
                 }

@@ -13,6 +13,16 @@ import type { SvelteMarkdownOptions } from '$lib/types.js'
 import type { Token } from '$lib/utils/markdown-parser.js'
 import { lexAndClean } from '$lib/utils/parse-and-cache.js'
 
+/**
+ * The shape of an HTML token after the cleanup pipeline. Marked's base
+ * `Token` type doesn't discriminate html, so the cleanup-added fields
+ * are surfaced here for the few places we need to read them.
+ */
+type HtmlToken = Token & {
+    tag?: string
+    tokens?: Token[]
+}
+
 interface TailWindowBoundary {
     prefixCount: number
     reparseOffset: number
@@ -67,6 +77,11 @@ export class IncrementalParser {
     /** Whether caller-supplied parser hooks make tail-window reparsing unsafe */
     private tailWindowDisabled: boolean
 
+    /** True iff any token in `prevTokens` is an unclosed HTML opening. Cached
+     *  to keep `getTailWindowBoundary` O(1) on the hot path; refreshed in
+     *  `update()` after each parse. */
+    private prevHasUnclosedHtml = false
+
     /**
      * Creates a new incremental parser instance.
      *
@@ -93,6 +108,18 @@ export class IncrementalParser {
             return { prefixCount: 0, reparseOffset: 0 }
         }
 
+        // (#291) If any prev token is an unclosed HTML opening, the
+        // tail-window prefix is unsound: our offset accounting sums
+        // token raws, but a closed nested html token's `.raw` is only
+        // its opening tag — the children and closing tag are tracked
+        // separately. Sum-of-raws therefore underestimates the true
+        // source position once any html block has streamed in, so we
+        // fall through to a full re-parse instead of serving a corrupt
+        // prefix.
+        if (this.prevHasUnclosedHtml) {
+            return { prefixCount: 0, reparseOffset: 0 }
+        }
+
         let offset = 0
         for (let i = 0; i < this.prevTokens.length - 1; i++) {
             offset += this.prevTokens[i].raw.length
@@ -111,6 +138,24 @@ export class IncrementalParser {
             prefixCount: this.prevTokens.length - 1,
             reparseOffset: offset
         }
+    }
+
+    /**
+     * True for an HTML opening tag whose matching close hasn't been seen
+     * in the source yet. After token-cleanup, an html token gets its
+     * `.tokens` array set only when `htmlparser2` reports a real (non-
+     * implied) closing tag. An html token with `.tag` set but no
+     * `.tokens` field is therefore an orphan opening — exactly what the
+     * tail-window optimization mustn't freeze across updates. The
+     * `endsWith('/>')` guard skips self-closing tokens (e.g. `<br/>`)
+     * whose `.tokens` is also undefined but isn't going to grow.
+     */
+    private isUnclosedHtmlOpen = (token: Token): boolean => {
+        if (token.type !== 'html') return false
+        const html = token as HtmlToken
+        if (!html.tag) return false
+        if (html.raw.endsWith('/>')) return false
+        return html.tokens === undefined
     }
 
     private isStableAtSourceEnd = (token: Token): boolean => {
@@ -180,18 +225,32 @@ export class IncrementalParser {
             this.hasAppendSensitiveReferenceSyntax(this.prevSource) ||
             this.hasAppendSensitiveReferenceSyntax(source)
 
-        // Find first divergence point by comparing raw strings
+        // Find first divergence point. We compare `.raw` for fast equality,
+        // and for html tokens we also check the structural shape — an
+        // unclosed `<div>` and a closed `<div>...</div>` both have
+        // `raw === '<div>'` but very different `.tokens` children. Without
+        // this check the streaming consumer would never see the partial-
+        // to-closed transition. See #291.
         let divergeAt = 0
         if (!referenceSensitive) {
             const minLen = Math.min(this.prevTokens.length, newTokens.length)
             while (divergeAt < minLen) {
-                if (this.prevTokens[divergeAt].raw !== newTokens[divergeAt].raw) break
+                const prev = this.prevTokens[divergeAt]
+                const next = newTokens[divergeAt]
+                if (prev.raw !== next.raw) break
+                if (prev.type === 'html' && next.type === 'html') {
+                    const prevKids = (prev as HtmlToken).tokens
+                    const nextKids = (next as HtmlToken).tokens
+                    if ((prevKids === undefined) !== (nextKids === undefined)) break
+                    if (prevKids && nextKids && prevKids.length !== nextKids.length) break
+                }
                 divergeAt++
             }
         }
 
         this.prevSource = source
         this.prevTokens = newTokens
+        this.prevHasUnclosedHtml = newTokens.some(this.isUnclosedHtmlOpen)
         return { tokens: newTokens, divergeAt }
     }
 }
