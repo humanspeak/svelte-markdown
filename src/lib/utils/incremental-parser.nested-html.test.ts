@@ -104,6 +104,10 @@ describe('IncrementalParser — streaming nested HTML (regression #291)', () => 
             {
                 name: 'div containing details/summary block',
                 source: `<div>\n<details>\n<summary>title</summary>\n<p>body content here</p>\n</details>\n</div>`
+            },
+            {
+                name: 'deeply nested (4 levels: section > article > div > p)',
+                source: `<section>\n<article>\n<header>\n<h2>Title</h2>\n</header>\n<div>\n<p>Body paragraph</p>\n<p>Second paragraph</p>\n</div>\n<footer>\n<small>Footer</small>\n</footer>\n</article>\n</section>`
             }
         ]
 

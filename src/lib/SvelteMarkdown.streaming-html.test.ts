@@ -72,12 +72,16 @@ const DIV_TABLE = `<div>
 
 /**
  * Normalize a container's innerHTML for comparison: strip Svelte
- * reactivity comments and collapse whitespace runs. The DOM structure
- * itself is what we care about, not whitespace formatting.
+ * reactivity comments, drop auto-generated heading `id` attributes
+ * (github-slugger's counter is stateful across renders so successive
+ * renders of the same source get suffixed ids), and collapse
+ * whitespace runs. The DOM structure itself is what we care about,
+ * not whitespace formatting or slugger nondeterminism.
  */
 const normalizeHtml = (html: string): string =>
     html
         .replace(/<!--[^>]*-->/g, '')
+        .replace(/ id="[^"]*"/g, '')
         .replace(/>\s+</g, '><')
         .replace(/\s+/g, ' ')
         .trim()
@@ -272,6 +276,213 @@ Look at this:
             const uls = div!.querySelectorAll('ul')
             expect(uls.length).toBe(1)
             expect(uls[0].querySelectorAll('li').length).toBe(3)
+        })
+    })
+
+    describe('resetStream() between sessions (#291 follow-up)', () => {
+        // Chat UIs reset the stream between assistant turns. If a previous
+        // session left `prevHasHtmlSpanMismatch` set on the parser, the
+        // next session would incorrectly take the full-reparse path
+        // forever, or worse, retain stale token state across resets.
+
+        test('resetStream after an HTML-heavy stream clears the DOM', async () => {
+            const harness = render(SvelteMarkdown, {
+                props: { source: '', streaming: true }
+            })
+            for (const c of NESTED.match(/\S+\s*/g) ?? []) {
+                await act(() => harness.component.writeChunk(c))
+                await flushStreamingBatch()
+            }
+            expect(harness.container.querySelector('ul')).not.toBeNull()
+
+            await act(() => harness.component.resetStream())
+            await flushStreamingBatch()
+
+            expect(harness.container.querySelector('ul')).toBeNull()
+            expect(harness.container.querySelector('div[style*="background"]')).toBeNull()
+        })
+
+        test('streaming new HTML after resetStream produces correct nested DOM', async () => {
+            const harness = render(SvelteMarkdown, {
+                props: { source: '', streaming: true }
+            })
+            // First session: stream a div with ul/li
+            for (const c of NESTED.match(/\S+\s*/g) ?? []) {
+                await act(() => harness.component.writeChunk(c))
+                await flushStreamingBatch()
+            }
+            await act(() => harness.component.resetStream())
+            await flushStreamingBatch()
+
+            // Second session: stream a totally different shape
+            const NEXT = `<details>\n<summary>fresh title</summary>\n\n<p>fresh body</p>\n\n</details>`
+            for (const c of NEXT.match(/\S+\s*/g) ?? []) {
+                await act(() => harness.component.writeChunk(c))
+                await flushStreamingBatch()
+            }
+
+            const details = harness.container.querySelector('details')
+            expect(details).not.toBeNull()
+            expect(details!.querySelector('summary')?.textContent).toBe('fresh title')
+            // Previous session's tokens must not survive the reset
+            expect(harness.container.querySelector('ul')).toBeNull()
+            expect(harness.container.querySelector('div[style*="background"]')).toBeNull()
+        })
+    })
+
+    describe('reactive source prop with streaming=true (#291 follow-up)', () => {
+        // The other streaming ingress path: instead of imperative
+        // writeChunk(), some apps mutate the `source` prop reactively as
+        // chunks arrive. The component's `syncStreamingSourceFromProp`
+        // routes those through the same applyStreamingSource pipeline,
+        // so the same convergence guarantee must hold.
+
+        test('mutating source prop in chunks produces correct nested DOM', async () => {
+            const harness = render(SvelteMarkdown, {
+                props: { source: '', streaming: true }
+            })
+            const chunks = NESTED.match(/\S+\s*/g) ?? []
+            let acc = ''
+            for (const c of chunks) {
+                acc += c
+                await act(() => harness.rerender({ source: acc, streaming: true }))
+                await flushStreamingBatch()
+            }
+            const div = harness.container.querySelector(
+                'div[style*="background"]'
+            ) as HTMLElement | null
+            expect(div).not.toBeNull()
+            expect(div!.querySelectorAll('li').length).toBe(3)
+        })
+
+        test('reactive-source streamed DOM equals writeChunk-streamed DOM', async () => {
+            const SHORT = `<div>\n<strong>ship it</strong>\n<ul>\n<li>a</li>\n<li>b</li>\n</ul>\n</div>`
+
+            const writeChunkHarness = render(SvelteMarkdown, {
+                props: { source: '', streaming: true }
+            })
+            for (const c of SHORT.match(/\S+\s*/g) ?? []) {
+                await act(() => writeChunkHarness.component.writeChunk(c))
+                await flushStreamingBatch()
+            }
+
+            const reactiveHarness = render(SvelteMarkdown, {
+                props: { source: '', streaming: true }
+            })
+            let acc = ''
+            for (const c of SHORT.match(/\S+\s*/g) ?? []) {
+                acc += c
+                await act(() => reactiveHarness.rerender({ source: acc, streaming: true }))
+                await flushStreamingBatch()
+            }
+
+            expect(normalizeHtml(reactiveHarness.container.innerHTML)).toBe(
+                normalizeHtml(writeChunkHarness.container.innerHTML)
+            )
+        })
+    })
+
+    describe('offset-mode chunks (#291 follow-up)', () => {
+        // writeChunk({ value, offset }) supports out-of-order websocket
+        // delivery via overwrite-at-position semantics. The full source
+        // converges regardless of arrival order, so the final DOM must
+        // match in-order streaming once all offsets have been written.
+
+        test('out-of-order offset writes converge to the same DOM as in-order chunks', async () => {
+            const SOURCE = `<details><summary>title</summary><p>body content</p></details>`
+
+            const inOrder = render(SvelteMarkdown, {
+                props: { source: '', streaming: true }
+            })
+            for (const c of SOURCE.match(/\S+\s*/g) ?? []) {
+                await act(() => inOrder.component.writeChunk(c))
+                await flushStreamingBatch()
+            }
+
+            const outOfOrder = render(SvelteMarkdown, {
+                props: { source: '', streaming: true }
+            })
+            // Write the second half first (overwrite at later offset),
+            // then fill in the first half. Both halves are aligned with
+            // the natural byte boundary in SOURCE.
+            const splitAt = SOURCE.indexOf('<p>')
+            const head = SOURCE.slice(0, splitAt)
+            const tail = SOURCE.slice(splitAt)
+            await act(() => outOfOrder.component.writeChunk({ value: tail, offset: splitAt }))
+            await flushStreamingBatch()
+            await act(() => outOfOrder.component.writeChunk({ value: head, offset: 0 }))
+            await flushStreamingBatch()
+
+            expect(normalizeHtml(outOfOrder.container.innerHTML)).toBe(
+                normalizeHtml(inOrder.container.innerHTML)
+            )
+        })
+    })
+
+    describe('streaming with custom sanitizers (#291 follow-up)', () => {
+        // Custom sanitizeUrl / sanitizeAttributes hooks must run on
+        // every streamed token transition, not just the final one — a
+        // bad URL emitted mid-stream must never reach the DOM.
+
+        test('custom sanitizeUrl blocks bad URLs during streaming', async () => {
+            const seen: string[] = []
+            const sanitizeUrl = (url: string) => {
+                if (url.startsWith('javascript:')) {
+                    seen.push(url)
+                    return ''
+                }
+                return url
+            }
+
+            const SRC = `<div>\n<a href="javascript:alert(1)">bad</a>\n<a href="https://example.com">good</a>\n</div>`
+
+            const harness = render(SvelteMarkdown, {
+                props: { source: '', streaming: true, sanitizeUrl }
+            })
+            for (const c of SRC.match(/\S+\s*/g) ?? []) {
+                await act(() => harness.component.writeChunk(c))
+                await flushStreamingBatch()
+            }
+
+            expect(seen).toContain('javascript:alert(1)')
+            const links = Array.from(harness.container.querySelectorAll('a'))
+            const bad = links.find((a) => a.textContent === 'bad')
+            const good = links.find((a) => a.textContent === 'good')
+            expect(bad?.getAttribute('href')).toBeFalsy()
+            expect(good?.getAttribute('href')).toBe('https://example.com')
+        })
+    })
+
+    describe('alternating html and markdown blocks (#291 follow-up)', () => {
+        const ALTERNATING = `<div>HTML block 1</div>
+
+# Markdown heading
+
+<div>HTML block 2</div>
+
+Paragraph between
+
+<div>HTML block 3</div>`
+
+        test('three sibling html blocks separated by markdown stream correctly', async () => {
+            const container = await renderStreamed(ALTERNATING)
+            const divs = container.querySelectorAll('div')
+            // Filter only the agent-emitted html divs (not wrapper divs
+            // the test environment may inject).
+            const htmlBlocks = Array.from(divs).filter((d) =>
+                d.textContent?.startsWith('HTML block')
+            )
+            expect(htmlBlocks.length).toBe(3)
+            expect(htmlBlocks[0].textContent).toBe('HTML block 1')
+            expect(htmlBlocks[1].textContent).toBe('HTML block 2')
+            expect(htmlBlocks[2].textContent).toBe('HTML block 3')
+            expect(container.querySelector('h1')?.textContent).toBe('Markdown heading')
+        })
+
+        test('alternating blocks streamed DOM equals non-streamed DOM', async () => {
+            const staticDom = await renderStatic(ALTERNATING)
+            const streamDom = await renderStreamed(ALTERNATING)
+            expect(normalizeHtml(streamDom.innerHTML)).toBe(normalizeHtml(staticDom.innerHTML))
         })
     })
 })
