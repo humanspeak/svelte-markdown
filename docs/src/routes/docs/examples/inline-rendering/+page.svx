@@ -25,7 +25,7 @@ The `isInline` prop tells `SvelteMarkdown` to parse the source as inline markdow
 
 By default, markdown is parsed as block content, which wraps text in `<p>` tags:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 </script>
@@ -45,7 +45,7 @@ Notice that inline parsing does not wrap the output in a `<p>` tag.
 
 Use `isInline` when you need to embed formatted text inside a paragraph or other inline container:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -66,7 +66,7 @@ Use `isInline` when you need to embed formatted text inside a paragraph or other
 
 Render user-provided markdown in places where block elements would break the layout:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -120,7 +120,7 @@ The following block-level elements are **not** produced in inline mode:
 
 Custom renderers work normally in inline mode:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import CustomLink from './CustomLink.svelte'

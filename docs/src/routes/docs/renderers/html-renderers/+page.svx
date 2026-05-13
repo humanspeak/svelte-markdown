@@ -42,7 +42,7 @@ console.log(htmlRendererKeys) // ['a', 'abbr', 'address', ...]
 
 Override specific HTML tag renderers via the `renderers.html` prop:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import CustomDiv from './CustomDiv.svelte'
@@ -203,7 +203,7 @@ When a tag is mapped to `UnsupportedHTML`, any instances of that tag in the mark
 
 Use the provided utility functions to control which HTML tags are rendered:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, {
         allowHtmlOnly,

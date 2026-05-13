@@ -6,7 +6,17 @@ import { createHighlighter } from 'shiki'
 // Create highlighter instance
 const highlighter = await createHighlighter({
     themes: ['github-light', 'one-dark-pro'],
-    langs: ['javascript', 'typescript', 'html', 'css', 'json', 'bash', 'shell']
+    langs: [
+        'javascript',
+        'typescript',
+        'html',
+        'svelte',
+        'css',
+        'json',
+        'bash',
+        'shell',
+        'markdown'
+    ]
 })
 
 /** @type {import('@sveltejs/kit').Config} */

@@ -41,7 +41,7 @@ yarn add @humanspeak/svelte-markdown
 
 Import the `SvelteMarkdown` component and pass your markdown string to the `source` prop:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -69,7 +69,7 @@ The `SvelteMarkdown` component accepts the following props:
 
 You can configure the markdown parser through the `options` prop:
 
-```html
+```svelte
 <SvelteMarkdown
     source="# Hello"
     options={{
@@ -92,7 +92,7 @@ You can configure the markdown parser through the `options` prop:
 
 You can replace any built-in renderer with your own Svelte component:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import CustomLink from './CustomLink.svelte'

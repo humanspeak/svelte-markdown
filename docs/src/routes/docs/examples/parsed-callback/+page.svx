@@ -23,7 +23,7 @@ The `parsed` prop accepts a callback function that is invoked with the parsed to
 
 ## Basic Usage
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -42,7 +42,7 @@ The `parsed` prop accepts a callback function that is invoked with the parsed to
 
 Extract headings from the parsed tokens to build a navigation sidebar:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -94,7 +94,7 @@ Extract headings from the parsed tokens to build a navigation sidebar:
 
 Count the total words in the markdown content:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -128,7 +128,7 @@ Count the total words in the markdown content:
 
 Analyze the structure of the parsed markdown:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -180,7 +180,7 @@ const x = 1
 
 Use the parsed callback to warn about HTML in user-generated content:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { buildUnsupportedHTML } from '@humanspeak/svelte-markdown'
 
@@ -215,7 +215,7 @@ The `parsed` callback fires reactively via Svelte's `$effect`. It is called agai
 - The `options` prop changes
 - The `isInline` prop changes
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 

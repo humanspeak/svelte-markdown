@@ -25,7 +25,7 @@ These examples demonstrate how to use Svelte 5 snippets to customize markdown re
 
 Add a class or wrapper to paragraphs with a simple snippet:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -45,7 +45,7 @@ Add a class or wrapper to paragraphs with a simple snippet:
 
 Open all links in a new tab and add a visual indicator:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -74,7 +74,7 @@ Check out [Svelte](https://svelte.dev) and [SvelteKit](https://kit.svelte.dev).
 
 Add clickable anchor links to headings for easy deep-linking:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -113,7 +113,7 @@ Use the component.
 
 Wrap code blocks with a language indicator:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -138,7 +138,7 @@ Wrap code blocks with a language indicator:
 
 Transform blockquotes into styled callout boxes:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -159,7 +159,7 @@ Transform blockquotes into styled callout boxes:
 
 Replace default bullet points with custom markers:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -192,7 +192,7 @@ Replace default bullet points with custom markers:
 
 Wrap tables in a scrollable container with styling:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -232,7 +232,7 @@ Wrap tables in a scrollable container with styling:
 
 Turn image titles into figure captions:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -262,7 +262,7 @@ Turn image titles into figure captions:
 
 Override how raw HTML tags render using the `html_` prefix:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -292,7 +292,7 @@ Override how raw HTML tags render using the `html_` prefix:
 
 Combine several snippet overrides for a fully customized rendering experience:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -354,7 +354,7 @@ const greeting = 'Hello from snippets!'
 The same customization as a snippet override vs a component renderer:
 
 **Snippet approach** (inline, no extra file):
-```html
+```svelte
 <SvelteMarkdown {source}>
     {#snippet link({ href, title, children })}
         <a {href} {title} target="_blank" rel="noopener noreferrer">
@@ -365,7 +365,7 @@ The same customization as a snippet override vs a component renderer:
 ```
 
 **Component approach** (separate file):
-```html
+```svelte
 <!-- ExternalLink.svelte -->
 <script lang="ts">
     import type { Snippet } from 'svelte'
@@ -384,7 +384,7 @@ The same customization as a snippet override vs a component renderer:
 </a>
 ```
 
-```html
+```svelte
 <!-- Usage -->
 <SvelteMarkdown {source} renderers={{ link: ExternalLink }} />
 ```

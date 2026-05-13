@@ -3,6 +3,7 @@ import { SiHtml5 } from '@icons-pack/svelte-simple-icons'
 import {
     ArrowRightLeft,
     BookOpen,
+    Bot,
     Box,
     Code,
     FileText,
@@ -115,11 +116,12 @@ export const docsSections: NavSection[] = [
         title: 'Advanced',
         icon: Settings,
         items: [
+            { title: 'AI Agent Output', href: '/docs/advanced/agent-output', icon: Bot },
+            { title: 'LLM Streaming', href: '/docs/advanced/llm-streaming', icon: Zap },
+            { title: 'Security', href: '/docs/advanced/security', icon: Lock },
             { title: 'Token Caching', href: '/docs/advanced/token-caching', icon: Zap },
             { title: 'Allow/Deny', href: '/docs/advanced/allow-deny', icon: Shield },
-            { title: 'Security', href: '/docs/advanced/security', icon: Lock },
-            { title: 'Marked Extensions', href: '/docs/advanced/marked-extensions', icon: Puzzle },
-            { title: 'LLM Streaming', href: '/docs/advanced/llm-streaming', icon: Zap }
+            { title: 'Marked Extensions', href: '/docs/advanced/marked-extensions', icon: Puzzle }
         ]
     },
     {
@@ -153,6 +155,7 @@ export const docsSections: NavSection[] = [
         icon: Play,
         items: [
             { title: 'All Examples', href: '/examples', icon: Play },
+            { title: 'Agent Output', href: '/examples/agent-output', icon: Bot },
             { title: 'Live Playground', href: '/examples/playground', icon: SquarePen },
             { title: 'Custom Renderers', href: '/examples/custom-renderers', icon: Paintbrush },
             { title: 'Snippet Overrides', href: '/examples/snippet-overrides', icon: Scissors },

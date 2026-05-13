@@ -16,7 +16,7 @@ A powerful, customizable markdown renderer for Svelte with TypeScript support. B
 
 ## Features
 
-- 🔒 **Secure HTML parsing** via HTMLParser2 with XSS protection
+- 🔒 **Secure HTML parsing** via HTMLParser2 with built-in XSS defaults (protocol allowlist, `on*` handler stripping)
 - 🚀 Full markdown syntax support through Marked
 - 💪 Complete TypeScript support with strict typing
 - 🔄 Svelte 5 runes compatibility
@@ -63,6 +63,38 @@ This is a paragraph with **bold** and <em>mixed HTML</em>.
 
 <SvelteMarkdown {source} />
 ```
+
+## Rendering AI Agent Output
+
+Modern AI coding agents — Claude Code, Codex, agentic workflows — increasingly emit HTML alongside markdown for richer output (design mockups, dashboards, reports, interactive artifacts). `@humanspeak/svelte-markdown` is built for this:
+
+- **Mixed markdown + HTML in a single source** — agents can interleave standard markdown with rich HTML (tables, SVG, custom elements) without a second renderer
+- **XSS defaults on by default** — `javascript:` URLs and `on*` handlers stripped from agent output before render, no opt-in required (see [Security](#security))
+- **Streaming-aware sanitization** — when `streaming` is enabled, each token is sanitized as it's emitted; mid-tag partials buffer until well-formed, so progressive HTML from an LLM renders without flicker
+- **Custom HTML tag support** — route semantic markup like `<tool-call>`, `<thinking>`, or your own design-system tags to your own components via `renderers.html` (see [Custom HTML Tags](#custom-html-tags))
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { StreamingChunk } from '@humanspeak/svelte-markdown'
+
+    let markdown: { writeChunk: (chunk: StreamingChunk) => void } | undefined
+
+    async function streamFromAgent(response: Response) {
+        const reader = response.body!.getReader()
+        const decoder = new TextDecoder()
+        while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            markdown?.writeChunk(decoder.decode(value, { stream: true }))
+        }
+    }
+</script>
+
+<SvelteMarkdown bind:this={markdown} source="" streaming />
+```
+
+For background on why HTML has become a common agent output format, see Thariq's post: [Using Claude Code: The Unreasonable Effectiveness of HTML](https://x.com/trq212/status/2052809885763747935). For the full streaming API (offset chunks, reset, websocket patterns), see [LLM Streaming](#llm-streaming) below.
 
 ## TypeScript Support
 
@@ -862,25 +894,41 @@ The component emits a `parsed` event when tokens are calculated:
 
 ## Props
 
-| Prop       | Type                    | Description                                      |
-| ---------- | ----------------------- | ------------------------------------------------ |
-| source     | `string \| Token[]`     | Markdown content or pre-parsed tokens            |
-| streaming  | `boolean`               | Enable incremental rendering for LLM streaming   |
-| renderers  | `Partial<Renderers>`    | Custom component overrides                       |
-| options    | `SvelteMarkdownOptions` | Marked parser configuration                      |
-| isInline   | `boolean`               | Toggle inline parsing mode                       |
-| extensions | `MarkedExtension[]`     | Third-party marked extensions (e.g., KaTeX math) |
+| Prop               | Type                    | Description                                                                                            |
+| ------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| source             | `string \| Token[]`     | Markdown content or pre-parsed tokens                                                                  |
+| streaming          | `boolean`               | Enable incremental rendering for LLM streaming                                                         |
+| renderers          | `Partial<Renderers>`    | Custom component overrides                                                                             |
+| options            | `SvelteMarkdownOptions` | Marked parser configuration                                                                            |
+| isInline           | `boolean`               | Toggle inline parsing mode                                                                             |
+| extensions         | `MarkedExtension[]`     | Third-party marked extensions (e.g., KaTeX math)                                                       |
+| sanitizeUrl        | `SanitizeUrlFn`         | URL sanitizer applied before render. Defaults to `defaultSanitizeUrl` (http/https/mailto/tel/relative) |
+| sanitizeAttributes | `SanitizeAttributesFn`  | Attribute sanitizer applied before render. Defaults to `defaultSanitizeAttributes`                     |
 
 ## Security
 
-This package takes a defense-in-depth approach to security:
+This package takes a defense-in-depth approach to security. The defaults below are applied automatically in the Parser before tokens reach any renderer or snippet, so custom renderers cannot bypass them.
 
-- **Secure HTML parsing** - All HTML is parsed through HTMLParser2's streaming parser rather than `innerHTML`, preventing script injection
-- **XSS protection** - HTML entities are safely handled; malicious markdown injection is neutralized during parsing
-- **Granular HTML control** - Use `allowHtmlOnly()` / `excludeHtmlOnly()` to restrict which HTML tags are rendered (see [Helper utilities](#helper-utilities-for-allowdeny-strategies))
-- **Full HTML lockdown** - Call `buildUnsupportedHTML()` to block all raw HTML rendering
-- **Markdown renderer control** - Use `allowRenderersOnly()` / `excludeRenderersOnly()` to limit which markdown token types are rendered
-- **No built-in sanitizer** - By design, the package does not bundle a sanitizer. Integrate your own (e.g., DOMPurify) if you accept untrusted input
+**On by default:**
+
+- **Secure HTML parsing** — All HTML is parsed through HTMLParser2's streaming parser rather than `innerHTML`, preventing script injection
+- **URL protocol allowlist** (`defaultSanitizeUrl`) — Markdown link/image URLs and the HTML attributes `href`, `src`, `action`, `formaction`, `cite`, `data`, and `poster` are restricted to `http:`, `https:`, `mailto:`, `tel:`, and relative URLs. `javascript:`, `vbscript:`, `data:`, and `blob:` URIs are blocked (including mixed-case and leading-whitespace variants).
+- **Event handler stripping** (`defaultSanitizeAttributes`) — All `on*` attributes (e.g. `onclick`, `onerror`, `onload`) are removed. The `srcdoc` attribute is also stripped to prevent iframe HTML injection.
+- **No `<script>` or `<style>` renderers** — Both tags fall through to `UnsupportedHTML`, which renders them as visible escaped text (e.g. `<script>...</script>`) rather than executing or applying them.
+
+**Configurable controls:**
+
+- **Custom sanitizers** — Pass `sanitizeUrl` / `sanitizeAttributes` props to tighten or loosen the defaults. Use the exported `unsanitizedUrl` / `unsanitizedAttributes` passthroughs to disable sanitization entirely (only for trusted input).
+- **Granular HTML control** — Use `allowHtmlOnly()` / `excludeHtmlOnly()` to restrict which HTML tags are rendered (see [Helper utilities](#helper-utilities-for-allowdeny-strategies)). For example, `excludeHtmlOnly(['iframe', 'form', 'embed'])` if you don't want those.
+- **Full HTML lockdown** — Call `buildUnsupportedHTML()` to block all raw HTML rendering.
+- **Markdown renderer control** — Use `allowRenderersOnly()` / `excludeRenderersOnly()` to limit which markdown token types are rendered.
+
+**Known gaps (not handled by defaults):**
+
+- **Inline `style="..."` attributes are not sanitized.** They pass through unchanged (only `on*` and `srcdoc` are stripped from attribute maps). Modern browsers don't execute JavaScript via CSS, but visual hijacking (e.g. `display:none`) and exfiltration via background-image URLs are possible.
+- **`iframe`, `form`, `embed` are rendered** by default. With `on*`/`srcdoc` stripped and `src`/`action` protocol-restricted, the worst exploits are blocked, but an iframe to an arbitrary `http(s)` URL is still possible. Use `excludeHtmlOnly(['iframe', 'form', 'embed'])` to remove them.
+- **`srcset` and other less common URL attributes are not sanitized.** Only the attributes listed above pass through `sanitizeUrl`. Provide a custom `sanitizeAttributes` if you need broader coverage.
+- **No built-in DOM sanitizer** — By design, the package does not bundle DOMPurify or similar. For untrusted input, layer a full sanitizer on top of the defaults above.
 
 ## License
 

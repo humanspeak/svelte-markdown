@@ -1,14 +1,14 @@
 # Svelte Markdown
 
-> A powerful, customizable markdown renderer for Svelte 5 with TypeScript support. Built on Marked and HTMLParser2 with 24 markdown renderers, 69+ HTML tag renderers, LRU token caching, and allow/deny filtering utilities.
+> A powerful, customizable markdown and HTML renderer for Svelte 5 — built for rendering streaming AI agent output from Claude Code, ChatGPT, and agentic workflows. Built on Marked and HTMLParser2 with 24 markdown renderers, 77+ HTML tag renderers, LRU token caching, allow/deny filtering, and XSS-safe defaults.
 
 ## Overview
 
 - Package: `@humanspeak/svelte-markdown`
-- Version: 8.x (latest)
 - License: MIT
 - Requires: Svelte 5
 - Maintained by: [Humanspeak, Inc.](https://humanspeak.com)
+- Current version: see https://www.npmjs.com/package/@humanspeak/svelte-markdown
 
 ## Installation
 
@@ -19,42 +19,134 @@ npm install @humanspeak/svelte-markdown
 ## Basic Usage
 
 ```svelte
-<script>
+<script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
-    const source = '# Hello World\n\nThis is **bold** and *italic* text.'
+    const source = '# Hello\n\nThis is **bold** and *italic*. Mixed <em>HTML</em> works too.'
 </script>
 
 <SvelteMarkdown {source} />
 ```
 
+## Streaming AI Agent Output
+
+The library is purpose-built to render LLM streaming output that mixes markdown and HTML — partial nested HTML structures reconcile correctly as `</tag>` arrives mid-stream.
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { StreamingChunk } from '@humanspeak/svelte-markdown'
+
+    let markdown: { writeChunk: (chunk: StreamingChunk) => void; resetStream: (next?: string) => void } | undefined
+
+    async function streamFromAgent(response: Response) {
+        const reader = response.body!.getReader()
+        const decoder = new TextDecoder()
+        markdown?.resetStream('')
+        while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            markdown?.writeChunk(decoder.decode(value, { stream: true }))
+        }
+    }
+</script>
+
+<SvelteMarkdown bind:this={markdown} source="" streaming={true} />
+```
+
+The streaming API supports both append-mode (string chunks) and websocket-style offset chunks (`writeChunk({ value, offset })`). Sanitization runs per token as chunks arrive — a `javascript:` URL or `on*=` handler emitted mid-stream is blocked before it reaches the DOM.
+
+## XSS-Safe Defaults
+
+Built-in sanitization runs in the Parser before tokens reach any renderer or snippet. Applied automatically with no opt-in:
+
+- **URL protocol allowlist** — `href`, `src`, `action`, `formaction`, `cite`, `data`, `poster` restricted to `http:`, `https:`, `mailto:`, `tel:`, and relative URLs. `javascript:`, `vbscript:`, `data:`, and `blob:` are blocked (including mixed-case and leading-whitespace variants).
+- **Event handler stripping** — every `on*` attribute (`onclick`, `onerror`, `onload`, etc.) removed.
+- **`srcdoc` stripping** — prevents iframe HTML injection.
+- **No `<script>` or `<style>` renderers** — both tags fall through to `UnsupportedHTML` (visible escaped text, not executed).
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown, { defaultSanitizeUrl } from '@humanspeak/svelte-markdown'
+
+    const markdown = '![diagram](data:image/png;base64,iVBORw0KGgo...) and [external](javascript:alert(1))'
+
+    // Custom policy: allow data: URIs only on images
+    function customSanitizeUrl(url, { type, tag }) {
+        if (tag === 'img' && url.startsWith('data:image/')) return url
+        return defaultSanitizeUrl(url, { type, tag })
+    }
+</script>
+
+<SvelteMarkdown source={markdown} sanitizeUrl={customSanitizeUrl} />
+```
+
+## Custom HTML Tag Routing
+
+Route semantic markup like `<thinking>`, `<tool-call>`, or any custom element to your own Svelte components:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown, { Html } from '@humanspeak/svelte-markdown'
+    import Thinking from './Thinking.svelte'
+    import ToolCall from './ToolCall.svelte'
+
+    const agentResponse = '<thinking>weighing options</thinking>\n\nHere is my plan:\n\n<tool-call name="search" />'
+
+    const renderers = {
+        html: { ...Html, thinking: Thinking, 'tool-call': ToolCall }
+    }
+</script>
+
+<SvelteMarkdown source={agentResponse} {renderers} />
+```
+
 ## Key Features
 
-- Svelte 5 runes compatibility ($props, $derived)
-- Full TypeScript support with complete type definitions
+- AI agent / LLM output rendering — stream mixed markdown and HTML from Claude Code, ChatGPT, Gemini, and agentic workflows
+- LLM streaming mode with smart token diffing (median ~3ms per chunk on typical streams, well under the 60fps budget)
+- Streaming-aware sanitization — partial HTML blocks reconcile correctly as the closing tag arrives
+- XSS-safe defaults — URL protocol allowlist, `on*` and `srcdoc` stripping
+- Custom sanitizer hooks — `sanitizeUrl` / `sanitizeAttributes` props with `defaultSanitize*` and `unsanitized*` exports
 - 24 built-in markdown renderers (heading, paragraph, link, code, table, etc.)
-- 69+ HTML tag renderers for raw HTML within markdown
+- 77+ HTML tag renderers for raw HTML within markdown
+- Custom HTML tag routing — render `<thinking>`, `<tool-call>`, or any tag as your own component
+- Svelte 5 runes compatibility ($props, $derived) with full TypeScript types
 - LRU token caching (50-200x faster re-renders)
-- Allow/deny filtering for HTML tags and markdown renderers
-- Custom renderer components for full output control
-- Svelte 5 snippet overrides for inline customization
-- Marked extensions support (KaTeX, Mermaid, etc.)
+- Allow/deny filtering for HTML tags and markdown renderers (`allowHtmlOnly`, `excludeHtmlOnly`, `buildUnsupportedHTML`, `allowRenderersOnly`, `excludeRenderersOnly`, `buildUnsupportedRenderers`)
+- Custom renderer components and Svelte 5 snippet overrides for inline customization
+- Marked extensions support (KaTeX, Mermaid, alerts, footnotes)
 - Async markdown parsing support
-- Secure HTML parsing via HTMLParser2
+- Secure HTML parsing via HTMLParser2 (no `innerHTML`)
+
+## Use Cases
+
+- Streaming chat / assistant UIs (Anthropic SDK, OpenAI SDK, custom SSE)
+- Rich AI artifact rendering (design mockups, PR explainers, dashboards) emitted by agents as HTML
+- Throwaway editors with copy-back exports — agent emits an HTML editor for one piece of data, user pastes the result back into the next prompt
+- Status reports / synthesized explainers — agents emit semi-structured HTML reports with embedded diagrams and tables
+- Mixed markdown + custom semantic tags (`<thinking>`, `<citation>`, `<artifact>`)
 
 ## Documentation
 
 - [Getting Started](https://markdown.svelte.page/docs/getting-started)
+- [Rendering AI Agent Output](https://markdown.svelte.page/docs/advanced/agent-output)
+- [LLM Streaming](https://markdown.svelte.page/docs/advanced/llm-streaming)
+- [Security](https://markdown.svelte.page/docs/advanced/security)
+- [Token Caching](https://markdown.svelte.page/docs/advanced/token-caching)
+- [Allow/Deny Filtering](https://markdown.svelte.page/docs/advanced/allow-deny)
+- [Marked Extensions](https://markdown.svelte.page/docs/advanced/marked-extensions)
 - [API Reference](https://markdown.svelte.page/docs/api/svelte-markdown)
 - [Types & Exports](https://markdown.svelte.page/docs/api/types)
 - [Markdown Renderers](https://markdown.svelte.page/docs/renderers/markdown-renderers)
 - [HTML Renderers](https://markdown.svelte.page/docs/renderers/html-renderers)
 - [Custom Renderers](https://markdown.svelte.page/docs/renderers/custom-renderers)
 - [Snippet Overrides](https://markdown.svelte.page/docs/renderers/snippet-overrides)
-- [Token Caching](https://markdown.svelte.page/docs/advanced/token-caching)
-- [Allow/Deny Filtering](https://markdown.svelte.page/docs/advanced/allow-deny)
-- [Security](https://markdown.svelte.page/docs/advanced/security)
-- [Marked Extensions](https://markdown.svelte.page/docs/advanced/marked-extensions)
 - [Migration Guide](https://markdown.svelte.page/docs/migration)
+- [Interactive Examples](https://markdown.svelte.page/examples)
+- [Agent Output Demo (live)](https://markdown.svelte.page/examples/agent-output)
+- [LLM Streaming Demo (live)](https://markdown.svelte.page/examples/llm-streaming)
+- [Blog](https://markdown.svelte.page/blog)
+- [Rendering Agent HTML Safely (blog post)](https://markdown.svelte.page/blog/rendering-agent-html-safely)
 - [Full LLM Reference](https://markdown.svelte.page/llms-full.txt)
 
 ## Links
@@ -63,3 +155,4 @@ npm install @humanspeak/svelte-markdown
 - Repository: <https://github.com/humanspeak/svelte-markdown>
 - NPM: <https://www.npmjs.com/package/@humanspeak/svelte-markdown>
 - Issues: <https://github.com/humanspeak/svelte-markdown/issues>
+- Background reading: [Using Claude Code: The Unreasonable Effectiveness of HTML](https://x.com/trq212/status/2052809885763747935) by Thariq

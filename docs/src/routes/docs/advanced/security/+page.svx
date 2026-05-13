@@ -35,7 +35,7 @@ By default, all `href` values on markdown links and images are validated against
 
 Dangerous protocols like `javascript:`, `data:`, `vbscript:`, and `blob:` are blocked automatically.
 
-```text
+```markdown
 <!-- This link will have its href stripped -->
 [Click me](javascript:alert('XSS'))
 
@@ -50,7 +50,7 @@ For raw HTML within markdown, the default sanitizer:
 1. **Strips all event handler attributes** (`onclick`, `onerror`, `onload`, etc.)
 2. **Validates URL-bearing attributes** (`href`, `src`, `action`, `formaction`, `cite`, `data`, `poster`) against the same protocol allowlist
 
-```text
+```html
 <!-- onclick is stripped, javascript: href is blocked -->
 <a href="javascript:alert('XSS')" onclick="alert('XSS')">Click</a>
 
@@ -62,9 +62,11 @@ For raw HTML within markdown, the default sanitizer:
 
 Both sanitization functions receive a context object with the token `type` and HTML `tag` name, so you can implement per-element policies:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { defaultSanitizeUrl } from '@humanspeak/svelte-markdown'
+
+    const markdown = '![diagram](data:image/png;base64,iVBORw0KGgo...) and [external](javascript:alert(1))'
 
     // Allow data: URIs only on images, block everywhere else
     function customSanitizeUrl(url, { type, tag }) {
@@ -80,12 +82,14 @@ Both sanitization functions receive a context object with the token `type` and H
 
 Override `sanitizeAttributes` to apply per-tag attribute rules:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, {
         defaultSanitizeAttributes,
         defaultSanitizeUrl
     } from '@humanspeak/svelte-markdown'
+
+    const markdown = '<iframe src="https://example.com" onload="alert(1)"></iframe>'
 
     // Block all attributes on iframes, use defaults for everything else
     function customSanitizeAttributes(attributes, context, sanitizeUrl) {
@@ -104,12 +108,16 @@ Override `sanitizeAttributes` to apply per-tag attribute rules:
 
 If you fully trust your markdown source and need to allow all URLs and attributes, use the passthrough functions:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, {
         unsanitizedUrl,
         unsanitizedAttributes
     } from '@humanspeak/svelte-markdown'
+
+    // Only use passthrough sanitizers when the source is fully trusted
+    // (e.g. your own CMS, never user input).
+    const trustedContent = '# Internal doc\n\n<iframe src="/internal/dashboard"></iframe>'
 </script>
 
 <SvelteMarkdown
@@ -133,15 +141,28 @@ If you fully trust your markdown source and need to allow all URLs and attribute
 | `SanitizeAttributesFn` | Type | `(attributes: Record<string, string>, context: SanitizeContext, sanitizeUrl: SanitizeUrlFn) => Record<string, string>` |
 | `SanitizeContext` | Type | `{ type: string, tag: string }` |
 
+## Known Gaps (Not Handled by Defaults)
+
+The built-in sanitizer covers URL protocols and event handlers, but some classes of risk pass through and need either custom sanitizers or HTML tag filtering:
+
+- **Inline `style="..."` attributes are not sanitized.** They pass through unchanged (only `on*` and `srcdoc` are stripped). Modern browsers do not execute JavaScript via CSS, but visual hijacking (`display: none`) and exfiltration via background-image URLs are possible.
+- **`<iframe>`, `<form>`, and `<embed>` are rendered by default.** With `on*` and `srcdoc` stripped and `src`/`action` protocol-restricted, the worst exploits are blocked, but an iframe to an arbitrary `http(s)` URL is still possible. Use `excludeHtmlOnly(['iframe', 'form', 'embed'])` to remove them.
+- **`srcset` and other less common URL attributes are not sanitized.** Only `href`, `src`, `action`, `formaction`, `cite`, `data`, and `poster` flow through `sanitizeUrl`. Provide a custom `sanitizeAttributes` if you need broader coverage.
+- **No bundled DOM sanitizer.** By design, the package does not ship DOMPurify or equivalent. For fully untrusted input, layer one on top of the defaults below.
+
+For trusted sources like your own AI agent output, the built-in defaults are typically sufficient. For arbitrary user-generated markdown, combine the defaults with HTML tag filtering and/or external sanitization.
+
 ## Blocking HTML in Markdown
 
 For additional defense, you can block HTML tags entirely using the [allow/deny filtering](/docs/advanced/allow-deny) utilities. This is complementary to URL/attribute sanitization.
 
 ### Block All HTML
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { buildUnsupportedHTML } from '@humanspeak/svelte-markdown'
+
+    let userInput = $state('# User content\n\n<script>alert(1)</' + 'script>')
 
     const renderers = {
         html: buildUnsupportedHTML()
@@ -155,9 +176,11 @@ This replaces every HTML tag renderer with `UnsupportedHTML`, which renders noth
 
 ### Allow Only Safe Tags
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { allowHtmlOnly } from '@humanspeak/svelte-markdown'
+
+    let userInput = $state('Hello <strong>world</strong> <iframe src="https://example.com"></iframe>')
 
     const safeHtml = allowHtmlOnly([
         'strong', 'em', 'a', 'code', 'pre',
@@ -173,9 +196,11 @@ This replaces every HTML tag renderer with `UnsupportedHTML`, which renders noth
 
 ### Block Specific Dangerous Tags
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, { excludeHtmlOnly } from '@humanspeak/svelte-markdown'
+
+    let userInput = $state('Click <a href="https://example.com">here</a> <iframe src="x"></iframe>')
 
     const filteredHtml = excludeHtmlOnly([
         'iframe', 'embed', 'form', 'input',
@@ -191,12 +216,14 @@ This replaces every HTML tag renderer with `UnsupportedHTML`, which renders noth
 
 You can also restrict which markdown elements are rendered:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown, {
         allowRenderersOnly,
         buildUnsupportedHTML
     } from '@humanspeak/svelte-markdown'
+
+    let userInput = $state('# Heading\n\n**Bold** and *italic* with a [link](https://example.com).')
 
     // Only allow basic text formatting
     const renderers = {
@@ -217,7 +244,7 @@ For applications that require additional protection, you can sanitize the markdo
 
 ### Using DOMPurify (Combined with Built-in Sanitization)
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import DOMPurify from 'dompurify'
@@ -238,9 +265,11 @@ For applications that require additional protection, you can sanitize the markdo
 
 You can inspect and filter tokens after parsing:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    let userInput = $state('Plain markdown is safe, but <div>raw HTML</div> may not be.')
 
     function handleParsed(tokens) {
         // Inspect tokens for suspicious content
@@ -275,11 +304,11 @@ You can inspect and filter tokens after parsing:
 3. **Keep dependencies updated.** Regularly update `@humanspeak/svelte-markdown`, Marked, and HTMLParser2 to get security fixes.
 4. **Audit your custom renderers.** If you create custom renderers, make sure they do not use `{@html}` with untrusted content.
 
-## What About `<script>` Tags?
+## What About `<script>` and `<style>` Tags?
 
-Marked does not produce `<script>` tokens by default, and HTMLParser2 processes HTML structurally rather than executing it. Additionally, the HTML renderer map does not include a `script` component, so `<script>` tags in markdown are not rendered.
+Neither tag has a renderer in the HTML map. Both fall through to `UnsupportedHTML`, which renders them as visible escaped text (for example, `<script>...</script>`) rather than executing or applying them. HTMLParser2 processes HTML structurally and does not execute scripts on its own.
 
-However, for defense-in-depth, you should still block or sanitize HTML when processing untrusted input.
+This means dangerous content is visible but inert. For untrusted input you should still block or sanitize HTML — escaped script text in a document is rarely the user experience you want.
 
 ## Related
 

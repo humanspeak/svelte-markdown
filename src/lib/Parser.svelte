@@ -133,8 +133,11 @@
      * effective lifetime value for counting purposes.
      */
     if (import.meta.env.DEV && typeof window !== 'undefined') {
-        // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
-        const w = window as any
+        interface SVMWindow extends Window {
+            __svmParserCount?: number
+            __svmParserByType?: Record<string, number>
+        }
+        const w = window as SVMWindow
         const initialType: string = type ?? '<root>'
         w.__svmParserCount = (w.__svmParserCount ?? 0) + 1
         const byType = (w.__svmParserByType = w.__svmParserByType ?? {})
@@ -150,7 +153,15 @@
     // the default renderers / has no snippet override so we can render
     // these inline at the call site without spawning a Parser.
     const inlineTextOk = $derived(
-        renderers.text === defaultRenderers.text && !snippetOverrides.text
+        renderers.text === defaultRenderers.text &&
+            !snippetOverrides.text &&
+            // The inline path skips the leaf-text `rawtext` fallback that
+            // the general-branch dispatch uses, so we must also keep the
+            // optimization off when the user has provided their own
+            // `rawtext` renderer or snippet — otherwise their override is
+            // silently bypassed for plain text inside paragraphs/headings.
+            renderers.rawtext === defaultRenderers.rawtext &&
+            !snippetOverrides.rawtext
     )
     const inlineSpaceOk = $derived(
         // No default renderer for `space`; only safe to skip when nothing

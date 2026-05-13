@@ -25,7 +25,7 @@ By default, `@humanspeak/svelte-markdown` renders headings with `id` attributes 
 
 The simplest approach — add a hover-reveal `#` link after each heading inline:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -66,7 +66,7 @@ The `slug` function (from `github-slugger`) and `options` object are passed as s
 
 For reuse across multiple pages, create a dedicated component:
 
-```html
+```svelte
 <!-- LinkedHeading.svelte -->
 <script lang="ts">
     import type { Snippet } from 'svelte'
@@ -102,7 +102,7 @@ For reuse across multiple pages, create a dedicated component:
 
 Then use it via the `renderers` prop:
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import LinkedHeading from './LinkedHeading.svelte'
@@ -115,7 +115,7 @@ Then use it via the `renderers` prop:
 
 Instead of a hover-reveal `#`, show a subtle link icon that's always visible:
 
-```html
+```svelte
 <SvelteMarkdown {source}>
     {#snippet heading({ depth, text, slug, options, children })}
         {@const id = options.headerIds ? options.headerPrefix + slug(text) : undefined}
@@ -135,7 +135,7 @@ Instead of a hover-reveal `#`, show a subtle link icon that's always visible:
 
 Wrap the entire heading text in an `<a>` tag for a larger click target:
 
-```html
+```svelte
 <SvelteMarkdown {source}>
     {#snippet heading({ depth, text, slug, options, children })}
         {@const id = options.headerIds ? options.headerPrefix + slug(text) : undefined}

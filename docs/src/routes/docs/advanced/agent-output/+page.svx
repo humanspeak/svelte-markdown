@@ -1,0 +1,245 @@
+---
+title: Rendering AI Agent Output
+description: Render streaming HTML and markdown from Claude Code, ChatGPT, and agentic workflows with XSS-safe defaults, sanitization-aware streaming, and custom HTML tag support.
+---
+
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Rendering AI Agent Output | Svelte Markdown'
+        seo.description =
+            'Render streaming HTML and markdown output from AI coding agents — Claude Code, ChatGPT, Codex, agentic workflows — with XSS-safe defaults, sanitization-aware streaming, and custom HTML tag routing.'
+        seo.ogTitle = 'Rendering AI Agent Output'
+        seo.ogTagline = 'Built for streaming agent HTML and markdown.'
+        seo.ogFeatures = [
+            'Agent / LLM Streaming',
+            'XSS-Safe Defaults',
+            'Mixed Markdown + HTML',
+            'Custom HTML Tags'
+        ]
+        seo.ogSlug = 'docs-advanced-agent-output'
+    }
+</script>
+
+# Rendering AI Agent Output
+
+Modern AI coding agents — Claude Code, Codex, ChatGPT, and agentic workflows — increasingly emit HTML alongside markdown to produce richer output: design mockups, dashboards, code review explainers, interactive artifacts, throwaway editors, status reports. `@humanspeak/svelte-markdown` is built to render this kind of mixed output safely and incrementally.
+
+For background on why HTML has become a common agent output format, see [Thariq's post on the unreasonable effectiveness of HTML](https://x.com/trq212/status/2052809885763747935).
+
+## Why This Package
+
+Four properties make rendering agent output particularly demanding, and the defaults here handle each one:
+
+1. **Agents stream their output.** You need to render a partial response as chunks arrive, not after the whole message is done.
+2. **Agents mix markdown and HTML freely.** A single response can include headings, fenced code, tables, SVG, custom elements, and inline `<a>` tags side by side.
+3. **Agents can produce dangerous markup.** A prompt-injected response might contain `javascript:` URLs, inline event handlers, or `<iframe srcdoc="...">`. You need defaults that block those without rejecting the whole response.
+4. **Agents emit semantic tags you may want to customize.** `<thinking>`, `<tool-call>`, `<artifact>`, or your own design-system tags should route to your own components — not be rendered raw.
+
+## What Works Out of the Box
+
+### Mixed markdown and HTML
+
+`SvelteMarkdown` accepts the agent's output verbatim — no second renderer, no preprocessing. Markdown is parsed by Marked; raw HTML is parsed by HTMLParser2 (not `innerHTML`) and routed through the same renderer pipeline.
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const agentResponse = `## Architecture overview
+
+The system has three layers:
+
+<div class="grid grid-cols-3 gap-4">
+    <div><strong>API</strong><br/>Hono + D1</div>
+    <div><strong>Worker</strong><br/>Queue consumer</div>
+    <div><strong>UI</strong><br/>Svelte 5</div>
+</div>
+
+See <a href="#data-flow">data flow</a> below.`
+</script>
+
+<SvelteMarkdown source={agentResponse} />
+```
+
+### XSS-safe defaults
+
+Defaults are applied **in the Parser** before tokens reach any renderer or snippet, so custom renderers cannot bypass them.
+
+- **URL protocol allowlist** — `href`, `src`, `action`, `formaction`, `cite`, `data`, and `poster` are restricted to `http:`, `https:`, `mailto:`, `tel:`, and relative URLs. `javascript:`, `vbscript:`, `data:`, and `blob:` are blocked, including mixed-case and leading-whitespace variants.
+- **Event handler stripping** — all `on*` attributes (`onclick`, `onerror`, `onload`, etc.) are removed.
+- **`srcdoc` stripping** — prevents iframe HTML injection.
+- **No `<script>` or `<style>` renderers** — both fall through to `UnsupportedHTML`, which renders them as visible escaped text rather than executing or applying them.
+
+See [Security](/docs/advanced/security) for the full list of defaults and known gaps.
+
+### Streaming-aware sanitization
+
+When `streaming` is enabled, each token is sanitized as it is emitted. A partial `<a href="javascript:` arriving mid-stream is sanitized before it reaches the DOM; half-open tags buffer until the parser sees enough to emit a well-formed token, so progressive HTML renders without flicker.
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { StreamingChunk } from '@humanspeak/svelte-markdown'
+
+    let markdown: { writeChunk: (chunk: StreamingChunk) => void } | undefined
+
+    async function streamFromAgent(response: Response) {
+        const reader = response.body!.getReader()
+        const decoder = new TextDecoder()
+        while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            markdown?.writeChunk(decoder.decode(value, { stream: true }))
+        }
+    }
+</script>
+
+<SvelteMarkdown bind:this={markdown} source="" streaming />
+```
+
+See [LLM Streaming](/docs/advanced/llm-streaming) for the full API (offset chunks, `resetStream`, websocket patterns, SDK examples for Anthropic and OpenAI).
+
+### Custom HTML tag routing
+
+Agents often emit semantic markup that should map to a component rather than render literally. The HTML renderer map accepts any tag name, so you can route `<thinking>`, `<tool-call>`, `<artifact>`, or your own design-system tags to your own Svelte components.
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown, { Html } from '@humanspeak/svelte-markdown'
+    import Thinking from '$lib/components/agent/Thinking.svelte'
+    import ToolCall from '$lib/components/agent/ToolCall.svelte'
+
+    const renderers = {
+        html: {
+            ...Html,
+            thinking: Thinking,
+            'tool-call': ToolCall
+        }
+    }
+</script>
+
+<SvelteMarkdown source={agentResponse} {renderers} />
+```
+
+Tags without a registered renderer fall through to `UnsupportedHTML` (escaped text). See [Custom Renderers](/docs/renderers/custom-renderers).
+
+## Common Use Cases
+
+### Streaming agent responses
+
+The most common case: render a chat-style agent response token-by-token. Bind the component instance, call `writeChunk()` as chunks arrive, and the rendered markdown updates instantly with sanitization applied per token.
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import Anthropic from '@anthropic-ai/sdk'
+
+    let markdown
+
+    async function ask(prompt) {
+        const client = new Anthropic()
+        const stream = client.messages.stream({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 4096,
+            messages: [{ role: 'user', content: prompt }]
+        })
+
+        markdown?.resetStream('')
+
+        for await (const event of stream) {
+            if (
+                event.type === 'content_block_delta' &&
+                event.delta.type === 'text_delta'
+            ) {
+                markdown?.writeChunk(event.delta.text)
+            }
+        }
+    }
+</script>
+
+<SvelteMarkdown bind:this={markdown} source="" streaming={true} />
+```
+
+### Rich HTML artifacts (designs, dashboards, reports)
+
+When an agent produces a one-shot HTML document — a design exploration, a code-review explainer, a status report — you can render the whole response as a single source. No streaming needed; the same defaults apply.
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    let { artifact } = $props()
+</script>
+
+<SvelteMarkdown source={artifact.html} />
+```
+
+For PR explainers in particular, ask the agent to emit annotated diffs and severity-coded findings — both render cleanly with the built-in HTML renderers (`<table>`, `<pre>`, `<code>`, `<details>`, etc.) plus inline `style="..."` for visual emphasis.
+
+### Throwaway editors with copy-back
+
+A common agent-output pattern is a single-file editor for one piece of data — drag-rank tickets, edit feature flags, tune a system prompt side-by-side — that ends with a "copy as JSON" or "copy as prompt" button. The agent emits the editor as a self-contained HTML artifact; this package renders it and the user pastes the export back into their next prompt.
+
+These artifacts often need real interactivity. Inline `<script>` is rendered as escaped text by default (not executed), so for an interactive editor you have two options:
+
+1. **Trust the agent's HTML** (only if the agent runs locally / on your infrastructure) — disable sanitization with the [`unsanitizedAttributes`](/docs/advanced/security#disabling-sanitization) passthrough and add a `<script>` renderer to your `renderers.html` map.
+2. **Sandbox the artifact in an `<iframe>`** — render the agent's HTML inside an `<iframe srcdoc>` you control, where script execution is isolated from the parent page.
+
+Option 2 is generally safer.
+
+### Mixed text + structured output
+
+Many agents emit a markdown summary followed by structured HTML — a table of metrics, a flowchart SVG, a card grid. This package handles the transition between markdown and HTML automatically; no mode switch needed.
+
+## Custom Semantic Tags
+
+If your agent emits non-standard tags (because you instructed it to in the system prompt, or because the model has been fine-tuned to), provide renderers for them:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown, { Html } from '@humanspeak/svelte-markdown'
+
+    let renderers = {
+        html: {
+            ...Html,
+            // <thinking>...</thinking> → collapsed by default
+            thinking: ThinkingBlock,
+            // <citation source="...">...</citation> → numbered link
+            citation: Citation,
+            // <artifact type="..." id="...">...</artifact> → boxed panel
+            artifact: ArtifactPanel
+        }
+    }
+</script>
+```
+
+Each renderer receives `{ attributes, children }` as props — the parsed HTML attributes and a snippet for the children. See [HTML Renderers](/docs/renderers/html-renderers) for the full props contract.
+
+## Security Considerations for Agent Output
+
+The defaults are designed for the common case of trusted agent output (output from an agent you invoked, with prompts you control). For untrusted input — anything that may include user-supplied or prompt-injected content — layer additional protection on top:
+
+- **Lock down HTML further.** Use `excludeHtmlOnly(['iframe', 'form', 'embed'])` if you do not want those tags at all.
+- **Combine with DOMPurify.** Built-in sanitization handles markdown-native vectors (e.g. `[Click](javascript:...)`); DOMPurify handles HTML-level threats. See [Security: External Sanitization](/docs/advanced/security#external-sanitization).
+- **Use CSP headers.** A strict Content-Security-Policy at the response level is your final line of defense.
+
+For the full picture — including known gaps the defaults do not cover (CSS not sanitized, `iframe`/`form`/`embed` rendered by default, less common URL attributes) — see [Security](/docs/advanced/security).
+
+## Performance
+
+Streaming render times stay well under the 16.7ms frame budget even at 100 characters per second — see [LLM Streaming: Performance](/docs/advanced/llm-streaming#performance-characteristics) for measured numbers. Token caching also kicks in automatically for any completed responses in a chat history, so re-renders of earlier messages are effectively free.
+
+## Try It Live
+
+The [Agent Output example](/examples/agent-output) renders a simulated streaming agent response with both clean and malicious payloads side by side, so you can see sanitization apply in real time.
+
+## Related
+
+- [Security](/docs/advanced/security) — full sanitization defaults and known gaps
+- [LLM Streaming](/docs/advanced/llm-streaming) — full streaming API (SSE, websocket offsets, SDK examples)
+- [Custom Renderers](/docs/renderers/custom-renderers) — override any renderer with your own component
+- [HTML Renderers](/docs/renderers/html-renderers) — every HTML tag renderer
+- [Allow/Deny Filtering](/docs/advanced/allow-deny) — restrict which tags render

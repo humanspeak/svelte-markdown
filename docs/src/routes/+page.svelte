@@ -65,9 +65,9 @@
             icon: 'javascript'
         },
         {
-            title: 'LLM Streaming',
+            title: 'AI Agent Output',
             description:
-                'Render ChatGPT and Claude responses in real-time. Smart token diffing keeps updates under 2ms.',
+                'Render streaming HTML and markdown from Claude Code, ChatGPT, and agentic workflows — with XSS defaults, sanitization-aware streaming, and low-latency updates (median ~3ms, well under the 60fps budget).',
             icon: 'zap'
         }
     ]
@@ -315,9 +315,10 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                         <p
                             class="text-muted-foreground mt-6 text-base leading-7 text-pretty md:text-lg"
                         >
-                            A powerful, customizable markdown renderer for Svelte 5. <br />24
-                            renderers, 69+ HTML tags, token caching, and allow/deny utilities—all
-                            with full TypeScript support.
+                            A powerful, customizable markdown and HTML renderer for Svelte 5 — built
+                            for rendering streaming output from AI agents like Claude Code and
+                            ChatGPT. <br />24 renderers, 69+ HTML tags, token caching, XSS-safe
+                            defaults, and allow/deny utilities, all fully typed.
                         </p>
                         <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
                             <MotionA
@@ -356,6 +357,15 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                                 Playground
                                 <Play class="ml-2 size-3" />
                             </MotionA>
+                            <MotionA
+                                href="/blog"
+                                class="border-border bg-card text-foreground hover:border-brand-500/50 hover:text-brand-700 focus-visible:ring-brand-600/20 inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
+                                whileTap={{ scale: 0.96 }}
+                                whileHover={{ scale: 1.03 }}
+                            >
+                                Blog
+                                <BookOpen class="ml-2 size-3" />
+                            </MotionA>
                         </div>
                         <ul
                             class="text-muted-foreground mt-10 flex flex-wrap justify-center gap-2 text-xs"
@@ -371,6 +381,9 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
                             </li>
                             <li class="border-border-muted rounded-full border px-3 py-1">
                                 69+ HTML Tags
+                            </li>
+                            <li class="border-border-muted rounded-full border px-3 py-1">
+                                Agent Output
                             </li>
                             <li class="border-border-muted rounded-full border px-3 py-1">
                                 LLM Streaming

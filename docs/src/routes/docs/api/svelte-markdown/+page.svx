@@ -21,7 +21,7 @@ description: Complete API reference for the SvelteMarkdown component
 
 The `SvelteMarkdown` component is the main entry point for rendering markdown content. It accepts a markdown string (or pre-parsed tokens), parses it, and renders the result through a composable system of Svelte renderer components.
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 </script>
@@ -42,7 +42,7 @@ When a string is provided, it is parsed using Marked's lexer (with built-in toke
 
 When using the imperative streaming API (`bind:this` + `writeChunk()`), `source` must be a string. Token-array sources remain read-only.
 
-```html
+```svelte
 <!-- String source -->
 <SvelteMarkdown source="**Bold** and *italic*" />
 
@@ -62,7 +62,7 @@ The `renderers` object supports two categories of keys:
 1. **Markdown renderer keys** (e.g., `heading`, `paragraph`, `link`, `code`) -- see [Markdown Renderers](/docs/renderers/markdown-renderers)
 2. **`html`** -- an object mapping HTML tag names to components -- see [HTML Renderers](/docs/renderers/html-renderers)
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import CustomHeading from './CustomHeading.svelte'
@@ -82,7 +82,7 @@ The `renderers` object supports two categories of keys:
 
 To override HTML tag renderers within markdown, use the nested `html` key:
 
-```html
+```svelte
 <SvelteMarkdown
     {source}
     renderers={{
@@ -103,7 +103,7 @@ When you provide a partial `html` object, it is merged with the defaults -- your
 
 Configuration options for the markdown parser. These are merged with the default options.
 
-```html
+```svelte
 <SvelteMarkdown
     source={markdown}
     options={{
@@ -135,7 +135,7 @@ When set to `true`, the markdown is parsed as inline content. This means block-l
 
 This is useful when you want to embed markdown within a `<span>` or other inline HTML context.
 
-```html
+```svelte
 <p>
     Status: <SvelteMarkdown source="**Active** since *2024*" isInline={true} />
 </p>
@@ -148,7 +148,7 @@ This is useful when you want to embed markdown within a `<span>` or other inline
 
 Enables optimized rendering for LLM streaming scenarios. When `true`, the component diffs parsed tokens against the previous result and only updates changed DOM nodes, keeping render cost proportional to the change rather than the full document size.
 
-```html
+```svelte
 <SvelteMarkdown {source} streaming={true} />
 ```
 
@@ -168,7 +168,7 @@ When you bind the component instance, `SvelteMarkdown` exposes imperative helper
 
 Accepts either a string append chunk or an offset patch object:
 
-```html
+```svelte
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import type { StreamingChunk } from '@humanspeak/svelte-markdown'
@@ -205,7 +205,7 @@ Rules:
 
 Clears the internal streaming buffer and resets mode locking. Pass a string to seed the next stream:
 
-```ts
+```typescript
 markdown?.resetStream()
 markdown?.resetStream('# Seed')
 ```
@@ -219,7 +219,7 @@ Changing the `source` prop also resets the imperative buffer and becomes the new
 
 A callback function that is invoked with the parsed token array whenever the source is parsed. This is useful for inspecting the token tree, building a table of contents, or performing other analysis on the parsed output.
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
 
@@ -292,7 +292,7 @@ This means:
 
 ## Complete Example
 
-```html
+```svelte
 <script>
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import CustomHeading from './CustomHeading.svelte'
