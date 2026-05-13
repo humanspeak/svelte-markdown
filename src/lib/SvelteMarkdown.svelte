@@ -155,12 +155,16 @@
         const parser = incrementalParser
         if (!parser) return
 
-        const { tokens: newTokens, divergeAt } = parser.update(nextSource)
+        const { tokens: newTokens } = parser.update(nextSource)
 
-        for (let i = divergeAt; i < newTokens.length; i++) {
-            streamTokens[i] = newTokens[i]
-        }
-        streamTokens.length = newTokens.length
+        // Replace the array reference rather than mutating per-index +
+        // length. Under Svelte 5's reactive proxy, shrinking the array
+        // via per-index assignment + `length = N` (and even `splice()`)
+        // didn't consistently dispatch the unmount signal to the each
+        // block, leaving stale snippets in the DOM whenever a streamed
+        // `</details>` collapsed several siblings into one nested token.
+        // See #291.
+        streamTokens = newTokens
     }
 
     const commitPendingAppendBuffer = () => {

@@ -77,10 +77,13 @@ export class IncrementalParser {
     /** Whether caller-supplied parser hooks make tail-window reparsing unsafe */
     private tailWindowDisabled: boolean
 
-    /** True iff any token in `prevTokens` is an unclosed HTML opening. Cached
-     *  to keep `getTailWindowBoundary` O(1) on the hot path; refreshed in
-     *  `update()` after each parse. */
-    private prevHasUnclosedHtml = false
+    /** True iff any token in `prevTokens` is an HTML opening (closed or
+     *  unclosed) whose `.raw` is shorter than its actual source span. The
+     *  tail-window's sum-of-raws offset arithmetic only works when token
+     *  raws sum to the source length; this flag detects when that
+     *  invariant is broken so we fall through to a full re-parse. Cached
+     *  to keep `getTailWindowBoundary` O(1) on the hot path. */
+    private prevHasHtmlSpanMismatch = false
 
     /**
      * Creates a new incremental parser instance.
@@ -108,15 +111,15 @@ export class IncrementalParser {
             return { prefixCount: 0, reparseOffset: 0 }
         }
 
-        // (#291) If any prev token is an unclosed HTML opening, the
-        // tail-window prefix is unsound: our offset accounting sums
-        // token raws, but a closed nested html token's `.raw` is only
-        // its opening tag — the children and closing tag are tracked
-        // separately. Sum-of-raws therefore underestimates the true
-        // source position once any html block has streamed in, so we
-        // fall through to a full re-parse instead of serving a corrupt
-        // prefix.
-        if (this.prevHasUnclosedHtml) {
+        // (#291) If any prev token is an HTML opening (closed or
+        // unclosed), the tail-window prefix is unsound: our offset
+        // accounting sums token raws, but an html opening token's
+        // `.raw` is only the opening tag itself — children and closing
+        // tag are tracked separately on `.tokens`. Sum-of-raws therefore
+        // underestimates the true source position once any html block
+        // has been parsed, so we fall through to a full re-parse
+        // instead of serving a corrupt prefix.
+        if (this.prevHasHtmlSpanMismatch) {
             return { prefixCount: 0, reparseOffset: 0 }
         }
 
@@ -141,21 +144,21 @@ export class IncrementalParser {
     }
 
     /**
-     * True for an HTML opening tag whose matching close hasn't been seen
-     * in the source yet. After token-cleanup, an html token gets its
-     * `.tokens` array set only when `htmlparser2` reports a real (non-
-     * implied) closing tag. An html token with `.tag` set but no
-     * `.tokens` field is therefore an orphan opening — exactly what the
-     * tail-window optimization mustn't freeze across updates. The
-     * `endsWith('/>')` guard skips self-closing tokens (e.g. `<br/>`)
-     * whose `.tokens` is also undefined but isn't going to grow.
+     * True for an HTML opening tag whose `.raw` is shorter than its
+     * actual source span. After token-cleanup, a non-self-closing html
+     * opening token's `.raw` is only the opening tag itself (e.g.
+     * `<div>`); its children and closing tag (if any) live on
+     * `.tokens`. The tail-window's `reparseOffset = sum(raws)` math is
+     * unsound any time such a token sits in `prevTokens`, regardless
+     * of whether the close has arrived yet.
      */
-    private isUnclosedHtmlOpen = (token: Token): boolean => {
+    private hasHtmlSpanMismatch = (token: Token): boolean => {
         if (token.type !== 'html') return false
         const html = token as HtmlToken
         if (!html.tag) return false
         if (html.raw.endsWith('/>')) return false
-        return html.tokens === undefined
+        if (html.raw.startsWith('</')) return false
+        return true
     }
 
     private isStableAtSourceEnd = (token: Token): boolean => {
@@ -250,7 +253,7 @@ export class IncrementalParser {
 
         this.prevSource = source
         this.prevTokens = newTokens
-        this.prevHasUnclosedHtml = newTokens.some(this.isUnclosedHtmlOpen)
+        this.prevHasHtmlSpanMismatch = newTokens.some(this.hasHtmlSpanMismatch)
         return { tokens: newTokens, divergeAt }
     }
 }

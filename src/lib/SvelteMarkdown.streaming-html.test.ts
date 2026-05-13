@@ -131,6 +131,59 @@ describe('SvelteMarkdown streaming — nested HTML (regression #291)', () => {
         }
     })
 
+    describe('streamed array truncation on token count shrink (#291 follow-up)', () => {
+        // When a partial-state stream has, say, 10 top-level tokens and the
+        // final closing </details> collapses them to 5, the leftover
+        // indices must be removed from the rendered DOM. A naive
+        // `tokens.length = N` after per-index assignment was leaving the
+        // trailing snippets mounted in Svelte 5's reactive each block.
+        const TABLE_PLUS_DETAILS = `### Findings
+
+| File | Severity | Note |
+|------|----------|------|
+| \`Parser.svelte\` | info | First |
+| \`sanitize.ts\` | info | Context-aware (per-tag policies possible) |
+
+<details>
+<summary>Show payloads</summary>
+
+Look:
+
+<a href="https://example.com">Real link</a>
+
+</details>
+
+That is everything.`
+
+        test('streamed DOM has exactly one <summary>, no orphans after </details>', async () => {
+            const container = await renderStreamed(TABLE_PLUS_DETAILS)
+            expect(container.querySelectorAll('summary').length).toBe(1)
+            const orphans = Array.from(container.querySelectorAll('summary')).filter(
+                (s) => s.closest('details') === null
+            )
+            expect(orphans).toEqual([])
+        })
+
+        test('streamed DOM has exactly one <details>, no duplicates', async () => {
+            const container = await renderStreamed(TABLE_PLUS_DETAILS)
+            expect(container.querySelectorAll('details').length).toBe(1)
+        })
+
+        test('streamed DOM has exactly one each of the headings', async () => {
+            const container = await renderStreamed(TABLE_PLUS_DETAILS)
+            const headings = Array.from(container.querySelectorAll('h3')).map((h) => h.textContent)
+            expect(headings).toEqual(['Findings'])
+        })
+
+        test('streamed DOM does not leak raw table-cell text as a paragraph', async () => {
+            const container = await renderStreamed(TABLE_PLUS_DETAILS)
+            // Marked emits partial table rows as plain paragraphs while the
+            // table is still streaming. Those intermediate paragraphs must
+            // be removed once the full table is recognized.
+            expect(container.innerHTML.includes('es possible) |')).toBe(false)
+        })
+    })
+
     describe('details with blank-line-separated children (#291 follow-up)', () => {
         const DETAILS_WITH_PAYLOADS = `<details>
 <summary>Show payloads</summary>
