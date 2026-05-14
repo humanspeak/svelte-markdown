@@ -145,8 +145,8 @@ importers:
         specifier: ^5.2.8
         version: 5.2.8
       '@humanspeak/docs-kit':
-        specifier: github:humanspeak/docs-kit#2026.5.2
-        version: https://codeload.github.com/humanspeak/docs-kit/tar.gz/0ab231ff687cdb4b5ed2f2a76720159231eaf1b4(@humanspeak/svelte-markdown@)(@humanspeak/svelte-motion@0.3.5(svelte@5.55.5))(@internationalized/date@3.12.1)(@lucide/svelte@1.14.0(svelte@5.55.5))(@sveltejs/kit@2.59.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.5)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)(typescript@6.0.3)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(mode-watcher@1.1.0(svelte@5.55.5))(svelte@5.55.5)
+        specifier: github:humanspeak/docs-kit#2026.5.3
+        version: https://codeload.github.com/humanspeak/docs-kit/tar.gz/410c5f3b45c4ae824d82b80d3d7de662c3e0650b(@humanspeak/svelte-markdown@)(@humanspeak/svelte-motion@0.3.5(svelte@5.55.5))(@internationalized/date@3.12.1)(@lucide/svelte@1.14.0(svelte@5.55.5))(@sveltejs/kit@2.59.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.5)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)(typescript@6.0.3)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(mode-watcher@1.1.0(svelte@5.55.5))(svelte@5.55.5)
       '@humanspeak/svelte-markdown':
         specifier: workspace:*
         version: link:..
@@ -675,8 +675,8 @@ packages:
     resolution: {integrity: sha512-/zUx+yOsIrG4Y43Eh2peDeKCxlRt/gET6aHfaKpuq267qXdYDFViVHfMaLyygZOnl0kGWxFIgsBy8QFuTLUXEQ==}
     engines: {node: '>=18.18.0'}
 
-  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/0ab231ff687cdb4b5ed2f2a76720159231eaf1b4':
-    resolution: {tarball: https://codeload.github.com/humanspeak/docs-kit/tar.gz/0ab231ff687cdb4b5ed2f2a76720159231eaf1b4}
+  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/410c5f3b45c4ae824d82b80d3d7de662c3e0650b':
+    resolution: {tarball: https://codeload.github.com/humanspeak/docs-kit/tar.gz/410c5f3b45c4ae824d82b80d3d7de662c3e0650b}
     version: 0.0.0
     peerDependencies:
       '@humanspeak/svelte-markdown': '>=1.0.0'
@@ -4324,7 +4324,7 @@ snapshots:
       '@humanfs/core': 0.19.1
       '@humanwhocodes/retry': 0.4.3
 
-  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/0ab231ff687cdb4b5ed2f2a76720159231eaf1b4(@humanspeak/svelte-markdown@)(@humanspeak/svelte-motion@0.3.5(svelte@5.55.5))(@internationalized/date@3.12.1)(@lucide/svelte@1.14.0(svelte@5.55.5))(@sveltejs/kit@2.59.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.5)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)(typescript@6.0.3)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(mode-watcher@1.1.0(svelte@5.55.5))(svelte@5.55.5)':
+  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/410c5f3b45c4ae824d82b80d3d7de662c3e0650b(@humanspeak/svelte-markdown@)(@humanspeak/svelte-motion@0.3.5(svelte@5.55.5))(@internationalized/date@3.12.1)(@lucide/svelte@1.14.0(svelte@5.55.5))(@sveltejs/kit@2.59.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.5)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)(typescript@6.0.3)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(mode-watcher@1.1.0(svelte@5.55.5))(svelte@5.55.5)':
     dependencies:
       '@humanspeak/svelte-motion': 0.3.5(svelte@5.55.5)
       '@humanspeak/svelte-satori-fix': 0.0.3(svelte@5.55.5)
