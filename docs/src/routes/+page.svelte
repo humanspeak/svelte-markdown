@@ -21,11 +21,10 @@
     const breadcrumbContext = getBreadcrumbContext()
     if (breadcrumbContext) breadcrumbContext.breadcrumbs = []
 
-    // ── Package stats reach the page via worker env vars set by
-    // `docs/scripts/deploy.ts` (which fetches the registry record at
-    // deploy time). Dev mode falls back to the workspace `package.json`
-    // version with `null` sizes. Renderer / HTML tag counts come from
-    // the library exports directly, so those stay live automatically.
+    // ── Package stats are fetched from the npm registry at request
+    // time by `+page.server.ts` (cached for ~1 hour at the edge and in
+    // memory). Renderer / HTML tag counts come from the library
+    // exports directly, so those stay live automatically.
     const PKG_NAME = $derived(packageStats.name)
     const PKG_VERSION = $derived(packageStats.version)
     const TARBALL_KB = $derived(
