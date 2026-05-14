@@ -688,6 +688,7 @@ Happy coding! <span style="color: hotpink">♥</span>`
         --brut-rule: #d6dedb;
         --brut-rule-2: #bbc4c0;
         --brut-accent: #247768;
+        --brut-accent-hover: #1b5a4e;
         --brut-accent-ink: #f8fcfb;
         --brut-accent-soft: rgba(36, 119, 104, 0.1);
 
@@ -707,6 +708,7 @@ Happy coding! <span style="color: hotpink">♥</span>`
         --brut-rule: #1c2422;
         --brut-rule-2: #2a332f;
         --brut-accent: #54dbbc;
+        --brut-accent-hover: #7fe9d1;
         --brut-accent-ink: #06090a;
         --brut-accent-soft: rgba(84, 219, 188, 0.14);
     }
@@ -840,9 +842,13 @@ Happy coding! <span style="color: hotpink">♥</span>`
         border-color: var(--brut-accent);
     }
     .brut-hero .cta-row .pri:hover {
-        filter: brightness(0.95);
+        background: var(--brut-accent-hover);
+        border-color: var(--brut-accent-hover);
     }
-    .brut-hero .cta-row a:hover,
+    /* Scope the muted hover to non-primary anchors only — without :not(.pri)
+       the rule clobbered the primary CTA's accent background and left dark
+       ink on a dark surface (unreadable in both themes). */
+    .brut-hero .cta-row a:not(.pri):hover,
     .brut-hero .cta-row :global(.inst:hover) {
         background: var(--brut-bg-2);
         border-color: var(--brut-rule-2);
