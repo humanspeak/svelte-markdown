@@ -8,7 +8,7 @@
         "cf-typegen": "wrangler types && mv worker-configuration.d.ts src/",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-        "deploy": "npm run build && wrangler deploy",
+        "deploy": "npm run build && tsx ./scripts/deploy.ts",
         "dev": "vite dev",
         "format": "prettier --write .",
         "generate-social": "tsx ./scripts/generate-social-cards.ts",
@@ -20,7 +20,9 @@
         "social:watch": "chokidar 'src/lib/components/shared-link/OG.svelte' 'scripts/generate-social-cards.ts' -c 'tsx ./scripts/generate-social-cards.ts' --initial --silent"
     },
     "dependencies": {
-        "@humanspeak/docs-kit": "github:humanspeak/docs-kit#2026.3.31",
+        "@fontsource-variable/inter": "^5.2.8",
+        "@fontsource-variable/jetbrains-mono": "^5.2.8",
+        "@humanspeak/docs-kit": "github:humanspeak/docs-kit#2026.5.1",
         "@humanspeak/svelte-markdown": "workspace:*",
         "katex": "^0.16.45",
         "marked-code-format": "^1.1.6",

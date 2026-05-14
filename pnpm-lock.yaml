@@ -138,9 +138,15 @@ importers:
 
   docs:
     dependencies:
+      '@fontsource-variable/inter':
+        specifier: ^5.2.8
+        version: 5.2.8
+      '@fontsource-variable/jetbrains-mono':
+        specifier: ^5.2.8
+        version: 5.2.8
       '@humanspeak/docs-kit':
-        specifier: github:humanspeak/docs-kit#2026.3.31
-        version: https://codeload.github.com/humanspeak/docs-kit/tar.gz/59a8b3adb285aa3fcceef6c69e9b46d2cb8002fd(@humanspeak/svelte-markdown@)(@humanspeak/svelte-motion@0.3.5(svelte@5.55.5))(@internationalized/date@3.11.0)(@lucide/svelte@1.14.0(svelte@5.55.5))(@sveltejs/kit@2.59.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.5)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)(typescript@6.0.3)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(mode-watcher@1.1.0(svelte@5.55.5))(svelte@5.55.5)
+        specifier: github:humanspeak/docs-kit#2026.5.1
+        version: https://codeload.github.com/humanspeak/docs-kit/tar.gz/3b07d2e2647a4c03a64f4795aaafc7478d836b74(@humanspeak/svelte-markdown@)(@humanspeak/svelte-motion@0.3.5(svelte@5.55.5))(@internationalized/date@3.12.1)(@lucide/svelte@1.14.0(svelte@5.55.5))(@sveltejs/kit@2.59.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.5)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)(typescript@6.0.3)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(mode-watcher@1.1.0(svelte@5.55.5))(svelte@5.55.5)
       '@humanspeak/svelte-markdown':
         specifier: workspace:*
         version: link:..
@@ -655,6 +661,12 @@ packages:
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
 
+  '@fontsource-variable/inter@5.2.8':
+    resolution: {integrity: sha512-kOfP2D+ykbcX/P3IFnokOhVRNoTozo5/JxhAIVYLpea/UBmCQ/YWPBfWIDuBImXX/15KH+eKh4xpEUyS2sQQGQ==}
+
+  '@fontsource-variable/jetbrains-mono@5.2.8':
+    resolution: {integrity: sha512-WBA9elru6Jdp5df2mES55wuOO0WIrn3kpXnI4+W2ek5u3ZgLS9XS4gmIlcQhiZOWEKl95meYdvK7xI+ETLCq/Q==}
+
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
     engines: {node: '>=18.18.0'}
@@ -663,8 +675,8 @@ packages:
     resolution: {integrity: sha512-/zUx+yOsIrG4Y43Eh2peDeKCxlRt/gET6aHfaKpuq267qXdYDFViVHfMaLyygZOnl0kGWxFIgsBy8QFuTLUXEQ==}
     engines: {node: '>=18.18.0'}
 
-  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/59a8b3adb285aa3fcceef6c69e9b46d2cb8002fd':
-    resolution: {tarball: https://codeload.github.com/humanspeak/docs-kit/tar.gz/59a8b3adb285aa3fcceef6c69e9b46d2cb8002fd}
+  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/3b07d2e2647a4c03a64f4795aaafc7478d836b74':
+    resolution: {tarball: https://codeload.github.com/humanspeak/docs-kit/tar.gz/3b07d2e2647a4c03a64f4795aaafc7478d836b74}
     version: 0.0.0
     peerDependencies:
       '@humanspeak/svelte-markdown': '>=1.0.0'
@@ -865,8 +877,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@internationalized/date@3.11.0':
-    resolution: {integrity: sha512-BOx5huLAWhicM9/ZFs84CzP+V3gBW6vlpM02yzsdYC7TGlZJX1OJiEEHcSayF00Z+3jLlm4w79amvSt6RqKN3Q==}
+  '@internationalized/date@3.12.1':
+    resolution: {integrity: sha512-6IedsVWXyq4P9Tj+TxuU8WGWM70hYLl12nbYU8jkikVpa6WXapFazPUcHUMDMoWftIDE2ILDkFFte6W2nFCkRQ==}
 
   '@isaacs/cliui@9.0.0':
     resolution: {integrity: sha512-AokJm4tuBHillT+FpMtxQ60n8ObyXBatq7jD2/JA9dxbDDokKQm8KMht5ibGzLVU9IJDIKK4TPKgMHEYMn3lMg==}
@@ -1211,8 +1223,8 @@ packages:
       svelte: ^5.46.4
       vite: ^8.0.0-beta.7 || ^8.0.0
 
-  '@swc/helpers@0.5.19':
-    resolution: {integrity: sha512-QamiFeIK3txNjgUTNppE6MiG3p7TdninpZu0E0PbqVh1a9FNLT2FRhisaa4NcaX52XVhA5l7Pk58Ft7Sqi/2sA==}
+  '@swc/helpers@0.5.21':
+    resolution: {integrity: sha512-jI/VAmtdjB/RnI8GTnokyX7Ug8c+g+ffD6QRLa6XQewtnGyukKkKSk3wLTM3b5cjt1jNh9x0jfVlagdN2gDKQg==}
 
   '@tailwindcss/node@4.3.0':
     resolution: {integrity: sha512-aFb4gUhFOgdh9AXo4IzBEOzBkkAxm9VigwDJnMIYv3lcfXCJVesNfbEaBl4BNgVRyid92AmdviqwBUBRKSeY3g==}
@@ -1720,8 +1732,8 @@ packages:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
     engines: {node: '>=8'}
 
-  bits-ui@2.16.5:
-    resolution: {integrity: sha512-Dx+Sc1DGzRaRfzpxrBI40d+O7vykIZ8E2G6tCaOzqYLzg+mN3YYK+8f8ysAFLfkHzey1MACGrYO3IcO6ROKlSA==}
+  bits-ui@2.18.1:
+    resolution: {integrity: sha512-KkemzKFH4T3gt3H+P86JcnAWExjByv/6vlwjm/BoCwTPHu03yiCdxbghdJLvFReQTe0acCAiRcKfmixxD6XvlA==}
     engines: {node: '>=20'}
     peerDependencies:
       '@internationalized/date': ^3.8.1
@@ -4301,6 +4313,10 @@ snapshots:
 
   '@floating-ui/utils@0.2.11': {}
 
+  '@fontsource-variable/inter@5.2.8': {}
+
+  '@fontsource-variable/jetbrains-mono@5.2.8': {}
+
   '@humanfs/core@0.19.1': {}
 
   '@humanfs/node@0.16.7':
@@ -4308,14 +4324,14 @@ snapshots:
       '@humanfs/core': 0.19.1
       '@humanwhocodes/retry': 0.4.3
 
-  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/59a8b3adb285aa3fcceef6c69e9b46d2cb8002fd(@humanspeak/svelte-markdown@)(@humanspeak/svelte-motion@0.3.5(svelte@5.55.5))(@internationalized/date@3.11.0)(@lucide/svelte@1.14.0(svelte@5.55.5))(@sveltejs/kit@2.59.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.5)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)(typescript@6.0.3)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(mode-watcher@1.1.0(svelte@5.55.5))(svelte@5.55.5)':
+  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/3b07d2e2647a4c03a64f4795aaafc7478d836b74(@humanspeak/svelte-markdown@)(@humanspeak/svelte-motion@0.3.5(svelte@5.55.5))(@internationalized/date@3.12.1)(@lucide/svelte@1.14.0(svelte@5.55.5))(@sveltejs/kit@2.59.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.5)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)(typescript@6.0.3)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(mode-watcher@1.1.0(svelte@5.55.5))(svelte@5.55.5)':
     dependencies:
       '@humanspeak/svelte-motion': 0.3.5(svelte@5.55.5)
       '@humanspeak/svelte-satori-fix': 0.0.3(svelte@5.55.5)
       '@lucide/svelte': 1.14.0(svelte@5.55.5)
       '@resvg/resvg-js': 2.6.2
       '@sveltejs/kit': 2.59.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.5)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)(typescript@6.0.3)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0))
-      bits-ui: 2.16.5(@internationalized/date@3.11.0)(@sveltejs/kit@2.59.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.5)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)(typescript@6.0.3)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)
+      bits-ui: 2.18.1(@internationalized/date@3.12.1)(@sveltejs/kit@2.59.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.5)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)(typescript@6.0.3)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)
       clsx: 2.1.1
       github-slugger: 2.0.0
       mode-watcher: 1.1.0(svelte@5.55.5)
@@ -4459,9 +4475,9 @@ snapshots:
   '@img/sharp-win32-x64@0.34.5':
     optional: true
 
-  '@internationalized/date@3.11.0':
+  '@internationalized/date@3.12.1':
     dependencies:
-      '@swc/helpers': 0.5.19
+      '@swc/helpers': 0.5.21
 
   '@isaacs/cliui@9.0.0': {}
 
@@ -4745,7 +4761,7 @@ snapshots:
       vite: 8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)
       vitefu: 1.1.2(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0))
 
-  '@swc/helpers@0.5.19':
+  '@swc/helpers@0.5.21':
     dependencies:
       tslib: 2.8.1
 
@@ -5316,11 +5332,11 @@ snapshots:
 
   binary-extensions@2.3.0: {}
 
-  bits-ui@2.16.5(@internationalized/date@3.11.0)(@sveltejs/kit@2.59.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.5)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)(typescript@6.0.3)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5):
+  bits-ui@2.18.1(@internationalized/date@3.12.1)(@sveltejs/kit@2.59.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.5)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)(typescript@6.0.3)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5):
     dependencies:
       '@floating-ui/core': 1.7.5
       '@floating-ui/dom': 1.7.6
-      '@internationalized/date': 3.11.0
+      '@internationalized/date': 3.12.1
       esm-env: 1.2.2
       runed: 0.35.1(@sveltejs/kit@2.59.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.5)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)(typescript@6.0.3)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)))(svelte@5.55.5)
       svelte: 5.55.5

@@ -1,124 +1,96 @@
 <script lang="ts">
-    import { Header, Footer, getBreadcrumbContext } from '@humanspeak/docs-kit'
+    import { HeaderV2, FooterV2, getBreadcrumbContext } from '@humanspeak/docs-kit'
     import { docsConfig } from '$lib/docs-config'
     import favicon from '$lib/assets/logo.svg'
-    import Icon from '$lib/components/general/Icon.svelte'
-    import SvelteMarkdown from '@humanspeak/svelte-markdown'
-    import { MotionA } from '@humanspeak/svelte-motion'
-    import {
-        ArrowRight,
-        Rocket,
-        BookOpen,
-        Play,
-        Square,
-        RotateCw,
-        Pen,
-        Eye,
-        FlaskConical,
-        Zap
-    } from '@lucide/svelte'
-    import { tick } from 'svelte'
+    import SvelteMarkdown, { rendererKeys, htmlRendererKeys } from '@humanspeak/svelte-markdown'
+    import { AnimatePresence, MotionButton, MotionSpan } from '@humanspeak/svelte-motion'
     import { competitors } from '$lib/compare-data'
-    import type { IconName } from '$lib/icons'
+    import { tick } from 'svelte'
+    import '@fontsource-variable/inter/index.css'
+    import '@fontsource-variable/jetbrains-mono/index.css'
+    import type { PageData } from './$types'
+
+    const { data }: { data: PageData } = $props()
+    const packageStats = $derived(data.packageStats)
 
     interface StreamingMarkdownHandle {
         writeChunk: (chunk: string) => void
         resetStream: (nextSource?: string) => void
     }
 
-    let headingContainer: HTMLDivElement | null = $state(null)
     const breadcrumbContext = getBreadcrumbContext()
+    if (breadcrumbContext) breadcrumbContext.breadcrumbs = []
 
-    if (breadcrumbContext) {
-        breadcrumbContext.breadcrumbs = []
+    // ── Package stats reach the page via worker env vars set by
+    // `docs/scripts/deploy.ts` (which fetches the registry record at
+    // deploy time). Dev mode falls back to the workspace `package.json`
+    // version with `null` sizes. Renderer / HTML tag counts come from
+    // the library exports directly, so those stay live automatically.
+    const PKG_NAME = $derived(packageStats.name)
+    const PKG_VERSION = $derived(packageStats.version)
+    const TARBALL_KB = $derived(
+        packageStats.tarballBytes !== null
+            ? Math.round(packageStats.tarballBytes / 102.4) / 10
+            : null
+    )
+    const RENDERER_COUNT = rendererKeys.length
+    const HTML_TAG_COUNT = htmlRendererKeys.length
+
+    interface StatItem {
+        k: string
+        v: string
+        sup?: string
+        n: string
+        ac?: boolean
     }
+    const stats: StatItem[] = $derived([
+        { k: 'renderers', v: String(RENDERER_COUNT), n: 'built-in', ac: true },
+        { k: 'html tags', v: String(HTML_TAG_COUNT), n: 'allow/deny' },
+        {
+            k: 'per chunk',
+            v: '~3',
+            sup: 'ms',
+            n: 'median streaming',
+            ac: true
+        },
+        {
+            k: 'tarball',
+            v: TARBALL_KB !== null ? String(TARBALL_KB) : '—',
+            sup: TARBALL_KB !== null ? 'kB' : undefined,
+            n: 'packed (npm gz)'
+        },
+        { k: 'runtime deps', v: '0', n: 'zero dependencies' },
+        { k: 'licence', v: 'MIT', n: 'on GitHub' }
+    ])
 
-    const features: { title: string; description: string; icon: IconName }[] = [
+    const features = [
         {
             title: 'Full Markdown Support',
-            description:
-                'GitHub Flavored Markdown with 24 built-in renderers for headings, tables, code blocks, lists, and more.',
-            icon: 'file-text'
+            body: `GitHub Flavored Markdown with ${RENDERER_COUNT} built-in renderers for headings, tables, code blocks, lists, and more.`
         },
         {
             title: 'HTML Tag Rendering',
-            description:
-                '69+ HTML tags supported with allow/deny controls to filter exactly which tags render.',
-            icon: 'html5'
+            body: `${HTML_TAG_COUNT} HTML tags supported with allow/deny controls to filter exactly which tags render.`
         },
         {
             title: 'Custom Renderers',
-            description:
-                'Override any renderer with your own Svelte components for full control over markdown output.',
-            icon: 'paintbrush'
+            body: 'Override any renderer with your own Svelte components for full control over markdown output.'
         },
         {
             title: 'Svelte 5 Snippets',
-            description:
-                'Override renderers inline with Svelte 5 snippets — no separate component files needed.',
-            icon: 'scissors'
+            body: 'Override renderers inline with Svelte 5 snippets — no separate component files needed.'
         },
         {
             title: 'TypeScript First',
-            description:
-                'Full type safety with generics. All props, renderers, and options are properly typed.',
-            icon: 'javascript'
+            body: 'Full type safety with generics. All props, renderers, and options are properly typed.'
         },
         {
             title: 'AI Agent Output',
-            description:
-                'Render streaming HTML and markdown from Claude Code, ChatGPT, and agentic workflows — with XSS defaults, sanitization-aware streaming, and low-latency updates (median ~3ms, well under the 60fps budget).',
-            icon: 'zap'
+            body: 'Render streaming HTML and markdown from Claude Code, ChatGPT, and agentic workflows — with XSS defaults, sanitization-aware streaming, and low-latency updates (median ~3ms, well under the 60fps budget).'
         }
     ]
 
-    const defaultMarkdown = `## Welcome to My Markdown Playground! \u{1F3A8}
-
-Hey there! This is a *fun* example of mixing **Markdown** and <em>HTML</em> together.
-
-## Things I Love:
-1. Writing in <strong>bold</strong> and _italic_
-2. Making lists (like this one!)
-3. Using emojis \u{1F680} \u{2728} \u{1F308}
-
-| Feature | Markdown | HTML |
-|---------|:--------:|-----:|
-| Bold | **text** | <strong>text</strong> |
-| Italic | *text* | <em>text</em> |
-| Links | [npm](https://www.npmjs.com/package/@humanspeak/svelte-markdown) | <a href="https://github.com/humanspeak/svelte-markdown">github</a> |
-
-Here's a quote for you:
-> "The best of both worlds" - <cite>Someone who loves markdown & HTML</cite>
-
-You can even use <sup>superscript</sup> and <sub>subscript</sub> text!
-
----
-
-<details>
-<summary>Want to see something cool?</summary>
-Here's a hidden surprise! \u{1F389}
-</details>
-
-Happy coding! <span style="color: hotpink">\u{2665}</span>`
-
-    let editorText = $state(defaultMarkdown)
-    let source = $state(defaultMarkdown)
-    let debounceTimeout: number | null = null
-
-    const onInput = () => {
-        if (typeof window === 'undefined') return
-        if (debounceTimeout) clearTimeout(debounceTimeout)
-        debounceTimeout = window.setTimeout(() => {
-            source = editorText
-        }, 500)
-    }
-
-    const resetPlayground = () => {
-        editorText = defaultMarkdown
-        source = defaultMarkdown
-    }
-
-    // --- Streaming demo state ---
+    // ── Streaming demo ───────────────────────────────────────────────
     const streamContent = `# Understanding Reactive Systems
 
 Reactive programming is a **declarative paradigm** concerned with _data streams_ and the propagation of change.
@@ -160,7 +132,7 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
     let streamTotalMs = 0
     let streamRenderCount = $state(0)
     let streamPreviewEl: HTMLDivElement | undefined = $state()
-    let streamSourceEl: HTMLTextAreaElement | undefined = $state()
+    let streamSourceEl: HTMLPreElement | undefined = $state()
     let streamMarkdown: StreamingMarkdownHandle | undefined = $state()
 
     const startStream = () => {
@@ -211,15 +183,17 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
         }
     }
 
-    const resetStream = () => {
+    const restartStream = () => {
         stopStream()
         streamSource = ''
         streamMarkdown?.resetStream('')
         streamAvgMs = 0
         streamPeakMs = 0
+        startStream()
     }
 
-    // Auto-start streaming demo after a short delay
+    // Auto-start streaming demo after a short delay so it's running when
+    // the user lands on the section.
     $effect(() => {
         if (typeof window === 'undefined') return
         const timer = setTimeout(startStream, 1000)
@@ -229,580 +203,1602 @@ The \`writable\` store notifies all subscribers when the value changes. This mak
         }
     })
 
-    function splitHeadingWords(root: HTMLElement) {
-        const lines = root.querySelectorAll('h1 span')
-        const words: HTMLElement[] = []
-        lines.forEach((line) => {
-            const text = line.textContent ?? ''
-            line.textContent = ''
-            const tokens = text.split(/(\s+)/)
-            for (const t of tokens) {
-                if (t.trim().length === 0) {
-                    line.appendChild(document.createTextNode(t))
-                } else {
-                    const w = document.createElement('span')
-                    w.className = 'split-word'
-                    w.textContent = t
-                    line.appendChild(w)
-                    words.push(w)
-                }
-            }
-        })
-        return words
+    // ── Playground ───────────────────────────────────────────────────
+    const defaultMarkdown = `## Welcome to Markdown 👋
+
+Hey! This is a *fun* example of mixing **markdown** and <em>HTML</em> together.
+
+### Things I love
+1. Writing in **bold** and _italic_
+2. Streaming tokens in real-time
+3. Tables that just work
+
+| Feature | Markdown | HTML |
+| ------- | -------- | ---- |
+| Bold    | **text** | <strong>text</strong> |
+| Links   | [npm](https://www.npmjs.com/package/@humanspeak/svelte-markdown) | <a href="https://github.com/humanspeak/svelte-markdown">github</a> |
+
+Happy coding! <span style="color: hotpink">♥</span>`
+
+    let editorText = $state(defaultMarkdown)
+    let playgroundSource = $state(defaultMarkdown)
+    let debounceTimeout: number | null = null
+
+    const onEditorInput = () => {
+        if (typeof window === 'undefined') return
+        if (debounceTimeout) clearTimeout(debounceTimeout)
+        debounceTimeout = window.setTimeout(() => {
+            playgroundSource = editorText
+        }, 400)
     }
 
-    $effect(() => {
-        if (typeof document === 'undefined') return
-        if (!headingContainer) return
-        headingContainer.style.visibility = 'hidden'
-        document.fonts?.ready
-            .then(() => {
-                if (!headingContainer) return
-                const words = splitHeadingWords(headingContainer)
-                headingContainer.style.visibility = 'visible'
-                words.forEach((el, i) => {
-                    el.animate(
-                        [
-                            { opacity: 0, transform: 'translateY(10px)' },
-                            { opacity: 1, transform: 'translateY(0)' }
-                        ],
-                        {
-                            duration: 800,
-                            easing: 'ease-out',
-                            delay: i * 50,
-                            fill: 'forwards'
-                        }
-                    )
-                })
-            })
-            .catch(() => {
-                headingContainer!.style.visibility = 'visible'
-            })
+    const resetPlayground = () => {
+        editorText = defaultMarkdown
+        playgroundSource = defaultMarkdown
+    }
+
+    // ── Featured examples (homepage tiles → /examples/<slug>) ────────
+    const featuredExamples = [
+        {
+            slug: 'agent-output',
+            title: 'Agent Output + Live Sanitization',
+            body: 'Watch a simulated agent stream mixed markdown and HTML — with a live log of every javascript: URL and on*= handler the sanitizer blocks.'
+        },
+        {
+            slug: 'llm-streaming',
+            title: 'AI Agent / LLM Streaming',
+            body: 'Stream markdown and rich HTML from AI agents in real time. Adjustable speed, jitter, and chunk modes with live render performance.'
+        },
+        {
+            slug: 'playground',
+            title: 'Live Playground',
+            body: 'Edit markdown in real-time and see it rendered instantly. Mix markdown with HTML tags.'
+        },
+        {
+            slug: 'custom-renderers',
+            title: 'Custom Renderers',
+            body: 'Override default renderers and control which markdown elements are rendered with your own Svelte components.'
+        },
+        {
+            slug: 'html-filtering',
+            title: 'HTML Filtering',
+            body: 'Interactive demo of allow/deny controls for HTML tags within markdown content.'
+        },
+        {
+            slug: 'snippet-overrides',
+            title: 'Snippet Overrides',
+            body: 'Customize rendering inline with Svelte 5 snippets. No separate component files needed.'
+        }
+    ]
+
+    // ── Compare matrix ───────────────────────────────────────────────
+    // Pull a handful of competitors and flatten their data into the
+    // matrix shape the brutalist table expects.
+    const compareRows = competitors.slice(0, 9).map((c) => {
+        const featureMap = new Map(c.features.map((f) => [f.name, f]))
+        const find = (name: string) => featureMap.get(name)?.them
+        return {
+            slug: c.slug,
+            name: c.name,
+            type: c.type,
+            streaming: find('Streaming HTML Output') ?? find('LLM Streaming') ?? false,
+            svelte5: find('Svelte 5 Compatibility') ?? find('Svelte 5 Support') ?? '—',
+            customRenderers: find('Custom Renderers') ?? '—',
+            allowDeny: find('HTML Tag Control') ?? false
+        }
     })
+
+    const formatCell = (v: string | boolean): { text: string; cls: string } => {
+        if (v === true) return { text: 'yes', cls: 'y' }
+        if (v === false) return { text: 'no', cls: 'n' }
+        return { text: String(v), cls: '' }
+    }
+
+    // ── Copy install command ─────────────────────────────────────────
+    const installCmd = $derived(`npm i ${PKG_NAME}`)
+    let copied = $state(false)
+    const copyInstall = async () => {
+        if (typeof navigator === 'undefined') return
+        try {
+            await navigator.clipboard.writeText(installCmd)
+            copied = true
+            setTimeout(() => (copied = false), 1500)
+        } catch {
+            /* clipboard blocked — fail quiet */
+        }
+    }
 </script>
 
-<div class="flex min-h-svh flex-col">
-    <!-- Header with links -->
-    <Header config={docsConfig} {favicon} />
-    <div class="relative flex flex-1 flex-col overflow-hidden">
-        <!-- Layer: subtle grid -->
-        <div class="bg-grid pointer-events-none absolute inset-0 -z-20"></div>
-        <!-- Layer: soft radial glow -->
-        <div class="bg-glow pointer-events-none absolute inset-0 -z-10"></div>
-        <!-- Layer: animated orbs via motion -->
-        <div
-            class="orb-a-bg pointer-events-none absolute bottom-[-80px] left-[-80px] h-[320px] w-[320px] rounded-full opacity-50 blur-[30px]"
-            style="will-change: transform;"
-        ></div>
-        <div
-            class="orb-b-bg pointer-events-none absolute top-[20%] right-[-60px] h-[260px] w-[260px] rounded-full opacity-50 blur-[30px]"
-            style="will-change: transform;"
-        ></div>
+<svelte:head>
+    <title>svelte-markdown · streaming markdown + HTML renderer for Svelte 5</title>
+    <meta
+        name="description"
+        content="A streaming-aware markdown + HTML renderer for Svelte 5. 24 renderers, 84 HTML tags, allow/deny utilities, XSS-safe defaults, and a streaming mode tuned for LLM output. MIT, zero runtime deps."
+    />
+</svelte:head>
 
-        <!-- Hero Section -->
-        <section class="relative flex flex-1">
-            <div
-                class="relative mx-auto flex w-full max-w-7xl items-center justify-center px-6 py-8 md:py-12"
-            >
-                <div class="mx-auto max-w-4xl text-center">
-                    <div bind:this={headingContainer} class="mx-auto max-w-4xl text-center">
-                        <h1
-                            class="text-foreground text-5xl leading-tight font-semibold text-balance md:text-7xl"
+<div class="brut-wrap flex min-h-svh flex-col">
+    <HeaderV2
+        config={docsConfig}
+        {favicon}
+        version={PKG_VERSION}
+        nav={[
+            { label: 'docs', href: '/docs' },
+            { label: 'api', href: '/docs/api/svelte-markdown' },
+            { label: 'examples', href: '/examples' },
+            { label: 'playground', href: '/examples/playground' },
+            { label: 'blog', href: '/blog' }
+        ]}
+    />
+
+    <main class="brut">
+        <!-- ── Coordinate strip (decorative grid markers) ────────────── -->
+        <div class="brut-coord" aria-hidden="true">
+            {#each Array(12) as _, i (i)}
+                <div>{String(i + 1).padStart(2, '0')}</div>
+            {/each}
+        </div>
+
+        <!-- ── FIG-001 · MASTHEAD ─────────────────────────────────── -->
+        <section class="brut-hero">
+            <div class="corner tr">FIG-001 · MASTHEAD</div>
+            <aside class="meta">
+                <div><span class="k">pkg</span> · <span class="v">{PKG_NAME}</span></div>
+                <div><span class="k">version</span> · <span class="v">{PKG_VERSION}</span></div>
+                <div>
+                    <span class="k">tarball</span> ·
+                    <span class="v">{TARBALL_KB !== null ? `${TARBALL_KB} kB gz` : '—'}</span>
+                </div>
+                <div><span class="k">deps</span> · <span class="v">0</span></div>
+                <div><span class="k">licence</span> · <span class="v">MIT</span></div>
+                <hr />
+                <div>
+                    <span class="k">renderers</span> ·
+                    <span class="v">{RENDERER_COUNT}</span>
+                </div>
+                <div>
+                    <span class="k">html tags</span> ·
+                    <span class="v">{HTML_TAG_COUNT}</span>
+                </div>
+                <div>
+                    <span class="k">streaming</span> ·
+                    <span class="v accent">median ~3 ms</span>
+                </div>
+                <hr />
+                <div class="k">// scroll for full spec</div>
+            </aside>
+            <div class="hero-body">
+                <h1>
+                    <span>svelte</span><span class="slash">/</span><span>markdown</span><span
+                        class="end">.</span
+                    >
+                </h1>
+                <p class="sub">
+                    A <b>powerful, customizable</b> markdown and HTML renderer for Svelte 5 — built
+                    for rendering streaming output from AI agents like Claude Code and ChatGPT. {RENDERER_COUNT}
+                    renderers, {HTML_TAG_COUNT} HTML tags, token caching, XSS-safe defaults, and allow/deny
+                    utilities, all fully typed.
+                </p>
+                <div class="cta-row">
+                    <a class="pri" href="/docs/getting-started">get started ↗</a>
+                    <a href="/docs/api/svelte-markdown">api reference</a>
+                    <a href="/examples">examples</a>
+                    <a href="/examples/playground">playground</a>
+                    <a href="/blog">blog</a>
+                    <MotionButton
+                        class="inst"
+                        type="button"
+                        onclick={copyInstall}
+                        aria-label="Copy install command"
+                        whileTap={{ scale: 0.97 }}
+                        whileHover={{ scale: 1.01 }}
+                        transition={{ type: 'spring', stiffness: 360, damping: 26 }}
+                    >
+                        <span class="inst-prompt">$</span>
+                        <span class="inst-cmd">npm i <span class="pkg">{PKG_NAME}</span></span>
+                        <span class="inst-copy {copied ? 'is-copied' : ''}">
+                            <AnimatePresence initial={false}>
+                                <MotionSpan
+                                    key={copied ? 'copied' : 'idle'}
+                                    class="inst-copy-label"
+                                    initial={{ opacity: 0, y: 6 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -6 }}
+                                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                                >
+                                    {copied ? '✓ copied' : 'copy'}
+                                </MotionSpan>
+                            </AnimatePresence>
+                        </span>
+                    </MotionButton>
+                </div>
+            </div>
+            <div class="corner bl">FIG-001</div>
+            <div class="corner br">SHEET 01 / 06</div>
+        </section>
+
+        <!-- ── Stats row ───────────────────────────────────────────── -->
+        <section class="brut-stats">
+            {#each stats as s, i (s.k)}
+                <div class="s {s.ac ? 'ac' : ''}" data-idx="/0{i + 1}">
+                    <div class="k">{s.k}</div>
+                    <div class="v">
+                        <span class="v-num">{s.v}</span>{#if s.sup}<span class="v-unit"
+                                >{s.sup}</span
+                            >{/if}
+                    </div>
+                    <div class="note">{s.n}</div>
+                </div>
+            {/each}
+        </section>
+
+        <!-- ── FIG-002 · STREAMING DEMO ────────────────────────────── -->
+        <section class="brut-stream">
+            <div class="lede">
+                <div class="k">FIG-002 / STREAMING</div>
+                <h2>stream <span>AI responses</span> in real-time.</h2>
+                <p>
+                    Render ChatGPT, Claude, and Gemini responses as they stream in. Smart token
+                    diffing keeps each update at a median ~3ms — well under the 60fps budget.
+                </p>
+            </div>
+            <div class="panel">
+                <div class="bar">
+                    <span
+                        ><span class="lbl">file</span> ·
+                        <span class="v">llm-streaming.svelte</span></span
+                    >
+                    <span><span class="lbl">avg</span> <span class="v">{streamAvgMs}ms</span></span>
+                    <span
+                        ><span class="lbl">peak</span> <span class="v">{streamPeakMs}ms</span></span
+                    >
+                    <span>
+                        <span class="lbl">chunks</span>
+                        <span class="v">{streamRenderCount}/{streamChunks.length || '—'}</span>
+                    </span>
+                    <span class="live">
+                        {#if isStreamActive}● LIVE{:else}○ IDLE{/if}
+                    </span>
+                    <button class="ctrl" type="button" onclick={restartStream}>↻ restart</button>
+                </div>
+                <div class="grid">
+                    <div class="pane">
+                        <div class="label">SRC / STREAMING</div>
+                        <pre bind:this={streamSourceEl}>{streamSource}<span class="cursor"
+                            ></span></pre>
+                    </div>
+                    <div class="pane out" bind:this={streamPreviewEl}>
+                        <div class="label">OUT / RENDERED</div>
+                        <SvelteMarkdown bind:this={streamMarkdown} source="" streaming={true} />
+                    </div>
+                </div>
+                <div class="footer">
+                    <div>fps · <span class="v">60</span></div>
+                    <div>frames · <span class="v">{streamRenderCount}</span></div>
+                    <div>cache · <span class="v">LRU 50d / 5m</span></div>
+                    <div>worker · <span class="v">main thread</span></div>
+                    <div>
+                        status · <span class="v accent"
+                            >{isStreamActive ? 'streaming' : 'idle'}</span
                         >
-                            <span class="block">Svelte</span>
-                            <span class="text-brand-500 block"> Markdown </span>
-                        </h1>
-                        <p
-                            class="text-muted-foreground mt-6 text-base leading-7 text-pretty md:text-lg"
-                        >
-                            A powerful, customizable markdown and HTML renderer for Svelte 5 — built
-                            for rendering streaming output from AI agents like Claude Code and
-                            ChatGPT. <br />24 renderers, 69+ HTML tags, token caching, XSS-safe
-                            defaults, and allow/deny utilities, all fully typed.
-                        </p>
-                        <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-                            <MotionA
-                                href="/docs/getting-started"
-                                class="bg-brand-600 hover:bg-brand-700 focus-visible:ring-brand-600/30 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-white shadow transition-colors focus:outline-none focus-visible:ring-2"
-                                whileTap={{ scale: 0.96 }}
-                                whileHover={{ scale: 1.03 }}
-                            >
-                                Get Started
-                                <Rocket class="ml-2 size-3" />
-                            </MotionA>
-                            <MotionA
-                                href="/docs/api/svelte-markdown"
-                                class="border-border bg-card text-foreground hover:border-brand-500/50 hover:text-brand-700 focus-visible:ring-brand-600/20 inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
-                                whileTap={{ scale: 0.96 }}
-                                whileHover={{ scale: 1.03 }}
-                            >
-                                API Reference
-                                <BookOpen class="ml-2 size-3" />
-                            </MotionA>
-                            <MotionA
-                                href="/examples"
-                                class="border-border bg-card text-foreground hover:border-brand-500/50 hover:text-brand-700 focus-visible:ring-brand-600/20 inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
-                                whileTap={{ scale: 0.96 }}
-                                whileHover={{ scale: 1.03 }}
-                            >
-                                Examples
-                                <FlaskConical class="ml-2 size-3" />
-                            </MotionA>
-                            <MotionA
-                                href="/examples/playground"
-                                class="border-border bg-card text-foreground hover:border-brand-500/50 hover:text-brand-700 focus-visible:ring-brand-600/20 inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
-                                whileTap={{ scale: 0.96 }}
-                                whileHover={{ scale: 1.03 }}
-                            >
-                                Playground
-                                <Play class="ml-2 size-3" />
-                            </MotionA>
-                            <MotionA
-                                href="/blog"
-                                class="border-border bg-card text-foreground hover:border-brand-500/50 hover:text-brand-700 focus-visible:ring-brand-600/20 inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
-                                whileTap={{ scale: 0.96 }}
-                                whileHover={{ scale: 1.03 }}
-                            >
-                                Blog
-                                <BookOpen class="ml-2 size-3" />
-                            </MotionA>
-                        </div>
-                        <ul
-                            class="text-muted-foreground mt-10 flex flex-wrap justify-center gap-2 text-xs"
-                        >
-                            <li class="border-border-muted rounded-full border px-3 py-1">
-                                Svelte 5
-                            </li>
-                            <li class="border-border-muted rounded-full border px-3 py-1">
-                                TypeScript
-                            </li>
-                            <li class="border-border-muted rounded-full border px-3 py-1">
-                                24 Renderers
-                            </li>
-                            <li class="border-border-muted rounded-full border px-3 py-1">
-                                69+ HTML Tags
-                            </li>
-                            <li class="border-border-muted rounded-full border px-3 py-1">
-                                Agent Output
-                            </li>
-                            <li class="border-border-muted rounded-full border px-3 py-1">
-                                LLM Streaming
-                            </li>
-                        </ul>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- LLM Streaming Demo Section -->
-        <section class="relative px-6 py-10">
-            <div class="container mx-auto max-w-7xl">
-                <div class="mb-8 text-center">
-                    <h2
-                        class="from-brand-500 to-brand-600 mb-4 bg-gradient-to-r bg-clip-text text-3xl font-bold text-transparent md:text-4xl"
-                    >
-                        Stream AI Responses in Real-Time
-                    </h2>
-                    <p class="text-muted-foreground mx-auto max-w-2xl">
-                        Render ChatGPT, Claude, and Gemini responses as they stream in. Smart token
-                        diffing keeps each update under 2ms.
-                    </p>
-                </div>
-                <div class="border-border overflow-hidden rounded-xl border">
-                    <!-- Toolbar -->
-                    <div
-                        class="border-border bg-card/80 flex items-center justify-between border-b px-4 py-2"
-                    >
-                        <div class="flex items-center gap-3">
-                            <div class="flex gap-1.5">
-                                <div class="h-3 w-3 rounded-full bg-red-400/60"></div>
-                                <div class="h-3 w-3 rounded-full bg-yellow-400/60"></div>
-                                <div class="h-3 w-3 rounded-full bg-green-400/60"></div>
-                            </div>
-                            <span class="text-muted-foreground text-xs font-medium"
-                                >LLM streaming demo</span
-                            >
+        <!-- ── FIG-003 · CAPABILITIES ──────────────────────────────── -->
+        <section class="brut-feat">
+            <div class="lede">
+                <div class="k">FIG-003 / CAPABILITIES</div>
+                <h2>why <span>svelte-markdown</span>.</h2>
+                <p>The most complete markdown renderer for Svelte 5 applications.</p>
+            </div>
+            <div class="grid">
+                {#each features as f, i (f.title)}
+                    <div class="cell">
+                        <div class="id">
+                            № {String(i + 1).padStart(2, '0')} / {String(features.length).padStart(
+                                2,
+                                '0'
+                            )}
                         </div>
-                        <div class="flex items-center gap-3">
-                            {#if streamRenderCount > 0}
-                                <div
-                                    class="text-muted-foreground hidden items-center gap-3 font-mono text-xs sm:flex"
-                                >
-                                    <span>
-                                        avg: <span class="text-brand-500 font-semibold"
-                                            >{streamAvgMs}ms</span
-                                        >
-                                    </span>
-                                    <span>
-                                        peak: <span
-                                            class="font-semibold {streamPeakMs > 16
-                                                ? 'text-amber-500'
-                                                : 'text-brand-500'}">{streamPeakMs}ms</span
-                                        >
-                                    </span>
-                                    <span>
-                                        {streamIndex}/{streamChunks.length} chunks
-                                    </span>
-                                </div>
-                            {/if}
-                            <div class="flex items-center gap-1.5">
-                                <button
-                                    onclick={startStream}
-                                    disabled={isStreamActive}
-                                    class="text-muted-foreground hover:text-foreground inline-flex items-center text-xs transition-colors disabled:opacity-40"
-                                >
-                                    <Play class="mr-1 size-3" />
-                                    Start
-                                </button>
-                                <button
-                                    onclick={stopStream}
-                                    disabled={!isStreamActive}
-                                    class="text-muted-foreground hover:text-foreground inline-flex items-center text-xs transition-colors disabled:opacity-40"
-                                >
-                                    <Square class="mr-1 size-3" />
-                                    Stop
-                                </button>
-                                <button
-                                    onclick={resetStream}
-                                    class="text-muted-foreground hover:text-foreground inline-flex items-center text-xs transition-colors"
-                                >
-                                    <RotateCw class="mr-1 size-3" />
-                                    Reset
-                                </button>
-                            </div>
-                            <a
-                                href="/examples/llm-streaming"
-                                class="text-brand-600 hover:text-brand-700 inline-flex items-center text-xs font-medium transition-colors"
-                            >
-                                Full Demo
-                                <ArrowRight class="ml-1 size-3" />
-                            </a>
-                        </div>
+                        <div class="corner">▢</div>
+                        <h3>{f.title}</h3>
+                        <p>{f.body}</p>
+                        <div class="marker"></div>
                     </div>
-                    <!-- Source + Preview -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2">
-                        <!-- Source -->
-                        <div class="border-border bg-card lg:border-r">
-                            <div
-                                class="border-border bg-muted/30 flex items-center border-b px-4 py-1.5 text-xs font-medium"
-                            >
-                                <Zap class="text-brand-500 mr-1.5 size-3" />
-                                <span class="text-muted-foreground">Streaming source</span>
-                            </div>
-                            <textarea
-                                bind:this={streamSourceEl}
-                                readonly
-                                value={streamSource}
-                                class="bg-card text-foreground h-[350px] w-full resize-none p-4 font-mono text-xs leading-relaxed focus:outline-none"
-                                placeholder="Click Start to begin streaming..."
-                            ></textarea>
-                        </div>
-                        <!-- Preview -->
-                        <div class="bg-background">
-                            <div
-                                class="border-border bg-muted/30 flex items-center border-b px-4 py-1.5 text-xs font-medium"
-                            >
-                                <Eye class="text-muted-foreground mr-1.5 size-3" />
-                                <span class="text-muted-foreground">Rendered output</span>
-                                {#if isStreamActive}
-                                    <span
-                                        class="ml-2 inline-flex items-center gap-1 text-xs text-green-500"
+                {/each}
+            </div>
+        </section>
+
+        <!-- ── FIG-004 · PLAYGROUND ────────────────────────────────── -->
+        <section class="brut-play" id="playground">
+            <div class="lede">
+                <div class="k">FIG-004 / PLAYGROUND</div>
+                <h2>live <span>playground</span>.</h2>
+                <p>Edit markdown on the left, see it rendered on the right.</p>
+            </div>
+            <div class="panel">
+                <div class="head">
+                    <span class="tab on">editor.md</span>
+                    <span class="grow"></span>
+                    <button class="ctrl" type="button" onclick={resetPlayground}>⟲ reset</button>
+                </div>
+                <div class="body">
+                    <div class="col">
+                        <textarea
+                            bind:value={editorText}
+                            oninput={onEditorInput}
+                            spellcheck="false"
+                            aria-label="Markdown source"
+                        ></textarea>
+                    </div>
+                    <div class="col preview">
+                        <SvelteMarkdown source={playgroundSource} />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── FIG-005 · COMPARISON MATRIX ─────────────────────────── -->
+        <section class="brut-comp">
+            <div class="k">FIG-005 / COMPARISON MATRIX</div>
+            <h2>how we <span>compare</span>.</h2>
+            <p class="lede-p">
+                Honest, side-by-side comparisons with every major Svelte markdown library and
+                editor.
+            </p>
+            <div class="comp-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>library</th>
+                            <th>category</th>
+                            <th>streaming html</th>
+                            <th>svelte 5</th>
+                            <th>custom renderers</th>
+                            <th>allow/deny html</th>
+                            <th class="comp-read-th">read more</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="us-row">
+                            <td class="us">{PKG_NAME} ●</td>
+                            <td class="us">renderer</td>
+                            <td class="y">yes</td>
+                            <td class="y">yes</td>
+                            <td class="y">yes</td>
+                            <td class="y">yes</td>
+                            <td class="comp-read"><span class="comp-read-self">this row</span></td>
+                        </tr>
+                        {#each compareRows as row (row.slug)}
+                            {@const streaming = formatCell(row.streaming)}
+                            {@const svelte5 = formatCell(row.svelte5)}
+                            {@const custom = formatCell(row.customRenderers)}
+                            {@const allow = formatCell(row.allowDeny)}
+                            <tr>
+                                <td>{row.name}</td>
+                                <td>{row.type}</td>
+                                <td class={streaming.cls}>{streaming.text}</td>
+                                <td class={svelte5.cls}>{svelte5.text}</td>
+                                <td class={custom.cls}>{custom.text}</td>
+                                <td class={allow.cls}>{allow.text}</td>
+                                <td class="comp-read">
+                                    <a
+                                        href="/compare/{row.slug}"
+                                        class="comp-read-link"
+                                        aria-label="Read full comparison with {row.name}"
                                     >
-                                        <span
-                                            class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-green-500"
-                                        ></span>
-                                        streaming
-                                    </span>
-                                {/if}
-                            </div>
-                            <div
-                                bind:this={streamPreviewEl}
-                                class="prose prose-sm dark:prose-invert h-[350px] max-w-none overflow-y-auto p-4"
-                            >
-                                <SvelteMarkdown
-                                    bind:this={streamMarkdown}
-                                    source=""
-                                    streaming={true}
-                                />
-                                {#if !streamSource}
-                                    <p class="text-muted-foreground italic">
-                                        Click "Start" to stream an AI response...
-                                    </p>
-                                {/if}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                        read more <span aria-hidden="true">→</span>
+                                    </a>
+                                </td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
             </div>
+            <a class="comp-all" href="/compare">view all comparisons →</a>
         </section>
 
-        <!-- Features Section -->
-        <section class="relative px-6 py-10">
-            <div class="container mx-auto max-w-7xl">
-                <!-- Section Header -->
-                <div class="mb-16 text-center">
-                    <h2
-                        class="from-brand-500 to-brand-600 mb-4 bg-gradient-to-r bg-clip-text text-4xl font-bold text-transparent md:text-5xl"
-                    >
-                        Why Svelte Markdown
-                    </h2>
-                    <p class="text-muted-foreground mx-auto max-w-2xl text-lg">
-                        The most complete markdown renderer for Svelte 5 applications.
-                    </p>
-                </div>
-                <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {#each features as feature (feature.title)}
-                        <div
-                            class="group border-border bg-card hover:border-brand-500/50 hover:shadow-brand-500/10 relative overflow-hidden rounded-xl border p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-                        >
-                            <div
-                                class="from-brand-500/5 absolute inset-0 bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                            ></div>
-                            <div class="relative z-10">
-                                <div
-                                    class="from-brand-500 to-brand-600 mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br text-white"
-                                >
-                                    <Icon name={feature.icon} class="size-5" />
-                                </div>
-                                <h3
-                                    class="group-hover:text-brand-600 mb-2 text-xl font-semibold transition-colors"
-                                >
-                                    {feature.title}
-                                </h3>
-                                <p class="text-muted-foreground text-sm leading-relaxed">
-                                    {feature.description}
-                                </p>
-                            </div>
-                            <div
-                                class="from-brand-500/10 absolute top-0 right-0 h-20 w-20 rounded-bl-full bg-gradient-to-bl to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                            ></div>
-                        </div>
-                    {/each}
-                </div>
+        <!-- ── FIG-006 · EXAMPLES ──────────────────────────────────── -->
+        <section class="brut-ex">
+            <div class="lede">
+                <div class="k">FIG-006 / EXAMPLES</div>
+                <h2>explore <span>interactive examples</span>.</h2>
+                <p>
+                    See agent streaming, custom renderers, HTML filtering, marked extensions,
+                    Mermaid diagrams, and more — all with live editors.
+                </p>
             </div>
-        </section>
-
-        <!-- Live Playground Section -->
-        <section class="relative px-6 py-10">
-            <div class="container mx-auto max-w-7xl">
-                <div class="mb-8 text-center">
-                    <h2 class="text-foreground mb-4 text-3xl font-bold">Live Playground</h2>
-                    <p class="text-muted-foreground">
-                        Edit markdown on the left, see it rendered on the right.
-                    </p>
-                </div>
-                <div class="border-border overflow-hidden rounded-xl border">
-                    <!-- Toolbar -->
-                    <div
-                        class="border-border bg-card/80 flex items-center justify-between border-b px-4 py-2"
-                    >
-                        <div class="flex items-center gap-3">
-                            <div class="flex gap-1.5">
-                                <div class="h-3 w-3 rounded-full bg-red-400/60"></div>
-                                <div class="h-3 w-3 rounded-full bg-yellow-400/60"></div>
-                                <div class="h-3 w-3 rounded-full bg-green-400/60"></div>
+            <div>
+                <div class="grid">
+                    {#each featuredExamples as ex, i (ex.slug)}
+                        <a class="cell" href="/examples/{ex.slug}">
+                            <div class="id">
+                                № {String(i + 1).padStart(2, '0')} / {String(
+                                    featuredExamples.length
+                                ).padStart(2, '0')}
                             </div>
-                            <span class="text-muted-foreground text-xs font-medium"
-                                >svelte-markdown playground</span
-                            >
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button
-                                onclick={resetPlayground}
-                                class="text-muted-foreground hover:text-foreground inline-flex items-center text-xs transition-colors"
-                            >
-                                <RotateCw class="mr-1 size-3" />
-                                Reset
-                            </button>
-                            <a
-                                href="/examples/playground"
-                                class="text-brand-600 hover:text-brand-700 inline-flex items-center text-xs font-medium transition-colors"
-                            >
-                                Full Playground
-                                <ArrowRight class="ml-1 size-3" />
-                            </a>
-                        </div>
-                    </div>
-                    <!-- Editor + Preview -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2">
-                        <!-- Editor -->
-                        <div class="border-border bg-card lg:border-r">
-                            <div
-                                class="border-border bg-muted/30 flex items-center border-b px-4 py-1.5 text-xs font-medium"
-                            >
-                                <Pen class="text-muted-foreground mr-1.5 size-3" />
-                                <span class="text-muted-foreground">Editor</span>
-                            </div>
-                            <textarea
-                                bind:value={editorText}
-                                oninput={onInput}
-                                class="bg-card text-foreground h-[400px] w-full resize-none p-4 font-mono text-sm leading-relaxed focus:outline-none"
-                                spellcheck="false"
-                            ></textarea>
-                        </div>
-                        <!-- Preview -->
-                        <div class="bg-background">
-                            <div
-                                class="border-border bg-muted/30 flex items-center border-b px-4 py-1.5 text-xs font-medium"
-                            >
-                                <Eye class="text-muted-foreground mr-1.5 size-3" />
-                                <span class="text-muted-foreground">Preview</span>
-                            </div>
-                            <div
-                                class="prose prose-sm dark:prose-invert h-[400px] max-w-none overflow-y-auto p-4"
-                            >
-                                <SvelteMarkdown {source} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Examples CTA Section -->
-        <section class="relative px-6 py-10">
-            <div class="container mx-auto max-w-7xl">
-                <div
-                    class="border-brand-500/20 from-brand-500/10 to-brand-600/10 relative overflow-hidden rounded-2xl border bg-gradient-to-r p-8 text-center md:p-12"
-                >
-                    <div
-                        class="from-brand-500/5 pointer-events-none absolute inset-0 bg-gradient-to-br to-transparent"
-                    ></div>
-                    <div class="relative z-10">
-                        <div
-                            class="from-brand-500 to-brand-600 mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br text-white"
-                        >
-                            <FlaskConical class="size-5" />
-                        </div>
-                        <h2 class="text-foreground mb-3 text-2xl font-bold md:text-3xl">
-                            Explore Interactive Examples
-                        </h2>
-                        <p class="text-muted-foreground mx-auto mb-6 max-w-xl text-sm md:text-base">
-                            See custom renderers, HTML filtering, marked extensions, Mermaid
-                            diagrams, code formatting, and more — all with live editors.
-                        </p>
-                        <MotionA
-                            href="/examples"
-                            class="from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 inline-flex items-center rounded-lg bg-gradient-to-r px-5 py-2.5 font-medium text-white transition-all duration-200"
-                            whileTap={{ scale: 0.96 }}
-                            whileHover={{ scale: 1.03 }}
-                        >
-                            Browse Examples
-                            <ArrowRight class="ml-2 size-4" />
-                        </MotionA>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <!-- Compare Section -->
-        <section class="relative px-6 py-10">
-            <div class="container mx-auto max-w-7xl">
-                <div class="mb-8 text-center">
-                    <h2
-                        class="from-brand-500 to-brand-600 mb-4 bg-gradient-to-r bg-clip-text text-3xl font-bold text-transparent md:text-4xl"
-                    >
-                        How We Compare
-                    </h2>
-                    <p class="text-muted-foreground mx-auto max-w-2xl">
-                        Honest, side-by-side comparisons with every major Svelte markdown library
-                        and editor.
-                    </p>
-                </div>
-                <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
-                    {#each competitors as comp (comp.slug)}
-                        <a
-                            href="/compare/{comp.slug}"
-                            class="group border-border bg-card hover:border-brand-500/50 hover:shadow-brand-500/10 relative overflow-hidden rounded-lg border px-4 py-3 text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
-                        >
-                            <div
-                                class="from-brand-500/5 absolute inset-0 bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                            ></div>
-                            <div class="relative z-10">
-                                <p
-                                    class="text-foreground group-hover:text-brand-600 text-sm font-semibold transition-colors"
-                                >
-                                    vs {comp.name}
-                                </p>
-                                <p class="text-muted-foreground mt-0.5 text-xs">
-                                    {comp.type}
-                                </p>
-                            </div>
+                            <div class="corner">↗</div>
+                            <h3>{ex.title}</h3>
+                            <p>{ex.body}</p>
+                            <div class="marker"></div>
                         </a>
                     {/each}
                 </div>
-                <div class="mt-6 text-center">
-                    <a
-                        href="/compare"
-                        class="text-brand-600 hover:text-brand-700 inline-flex items-center text-sm font-medium transition-colors"
-                    >
-                        View all comparisons
-                        <ArrowRight class="ml-1.5 size-3.5" />
-                    </a>
-                </div>
+                <a class="ex-all" href="/examples">view all examples →</a>
             </div>
         </section>
-    </div>
-    <Footer />
+
+        <!-- ── Big-type footer ─────────────────────────────────────── -->
+        <section class="brut-foot">
+            <div class="info">
+                <div>SET / JETBRAINS MONO + INTER</div>
+                <div>HUMANSPEAK · 2026</div>
+                <div>MIT LICENCE</div>
+                <div class="v">● {PKG_VERSION}</div>
+            </div>
+            <MotionButton
+                class="big"
+                type="button"
+                onclick={copyInstall}
+                aria-label="Copy install command"
+                whileTap={{ scale: 0.985 }}
+                whileHover={{ scale: 1.005 }}
+                transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+            >
+                npm&nbsp;i&nbsp;<span>@humanspeak/</span><br />svelte-markdown
+                <span class="copy-hint">
+                    <AnimatePresence initial={false}>
+                        <MotionSpan
+                            key={copied ? 'copied' : 'idle'}
+                            class="copy-hint-label"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.22, ease: 'easeOut' }}
+                        >
+                            {copied ? '✓ copied to clipboard' : 'click to copy'}
+                        </MotionSpan>
+                    </AnimatePresence>
+                </span>
+            </MotionButton>
+            <div class="info right">
+                <div>SHEET 06 / 06</div>
+                <div>END OF DOCUMENT</div>
+                <a class="v" href="#top">↩ TO TOP</a>
+            </div>
+        </section>
+    </main>
+
+    <FooterV2 version={PKG_VERSION} />
 </div>
 
 <style>
-    /* Decorative layers */
-    .bg-grid {
-        background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-        background-size: 24px 24px;
-        background-position: 50% 0;
-        mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 70%);
+    /* ── Brutalist Mono palette + tokens ──────────────────────────── */
+    .brut-wrap {
+        background: var(--brut-bg);
     }
-    .bg-glow {
-        background:
-            radial-gradient(60% 50% at 50% 0%, rgba(84, 219, 188, 0.18), transparent 60%),
-            radial-gradient(40% 40% at 90% 20%, rgba(84, 219, 188, 0.12), transparent 60%),
-            radial-gradient(40% 40% at 10% 15%, rgba(84, 219, 188, 0.12), transparent 60%);
-        filter: blur(0.2px);
+    .brut {
+        --brut-bg: #f8fcfb;
+        --brut-bg-2: #eef4f1;
+        --brut-ink: #0a0a0a;
+        --brut-ink-2: #525252;
+        --brut-ink-3: #9a9a9a;
+        --brut-rule: #d6dedb;
+        --brut-rule-2: #bbc4c0;
+        --brut-accent: #247768;
+        --brut-accent-ink: #f8fcfb;
+        --brut-accent-soft: rgba(36, 119, 104, 0.1);
+
+        background: var(--brut-bg);
+        color: var(--brut-ink);
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 13px;
+        letter-spacing: 0;
+    }
+    :global(html.dark) .brut,
+    :global(html.dark) .brut-wrap {
+        --brut-bg: #06090a;
+        --brut-bg-2: #0d1110;
+        --brut-ink: #ededed;
+        --brut-ink-2: #9a9a9a;
+        --brut-ink-3: #5a5a5a;
+        --brut-rule: #1c2422;
+        --brut-rule-2: #2a332f;
+        --brut-accent: #54dbbc;
+        --brut-accent-ink: #06090a;
+        --brut-accent-soft: rgba(84, 219, 188, 0.14);
+    }
+    :global(html.dark) .brut-wrap {
+        background: var(--brut-bg);
+    }
+    .brut .sans {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        letter-spacing: -0.01em;
     }
 
-    /* Orb animations to replace motion components */
-    .orb-a-bg {
-        animation: orbA 28s ease-in-out infinite;
+    /* ── Coordinate strip ─────────────────────────────────────────── */
+    .brut-coord {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        border-bottom: 1px solid var(--brut-rule);
+        font-size: 10px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.14em;
     }
-    .orb-b-bg {
-        animation: orbB 24s ease-in-out infinite;
-        animation-delay: 3s;
+    .brut-coord div {
+        padding: 6px 8px;
+        border-right: 1px solid var(--brut-rule);
+    }
+    .brut-coord div:last-child {
+        border-right: 0;
     }
 
-    @keyframes orbA {
-        0% {
-            transform: translate(0, 0);
-        }
-        25% {
-            transform: translate(8vw, -10vh);
-        }
+    /* ── Hero ─────────────────────────────────────────────────────── */
+    .brut-hero {
+        padding: 80px 24px 32px;
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 24px;
+        border-bottom: 1px solid var(--brut-rule);
+        position: relative;
+    }
+    .brut-hero .meta {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 11px;
+        color: var(--brut-ink-3);
+        margin: 0;
+    }
+    .brut-hero .meta .k {
+        color: var(--brut-ink-3);
+    }
+    .brut-hero .meta .v {
+        color: var(--brut-ink);
+    }
+    .brut-hero .meta .v.accent {
+        color: var(--brut-accent);
+    }
+    .brut-hero .meta hr {
+        border: 0;
+        border-top: 1px dashed var(--brut-rule);
+        margin: 8px 0;
+    }
+    .brut-hero h1 {
+        margin: 0;
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: clamp(56px, 11vw, 152px);
+        line-height: 0.88;
+        font-weight: 500;
+        letter-spacing: -0.06em;
+        text-transform: lowercase;
+    }
+    .brut-hero h1 .slash {
+        color: var(--brut-accent);
+    }
+    .brut-hero h1 .end {
+        color: var(--brut-ink-3);
+    }
+    .brut-hero .sub {
+        margin: 28px 0 0;
+        max-width: 720px;
+        font-size: 17px;
+        line-height: 1.5;
+        color: var(--brut-ink-2);
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        letter-spacing: -0.01em;
+    }
+    .brut-hero .sub b {
+        color: var(--brut-ink);
+        font-weight: 600;
+    }
+    .brut-hero .cta-row {
+        margin-top: 28px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0;
+        align-items: stretch;
+        width: fit-content;
+        max-width: 100%;
+    }
+    /* Each cell owns its border (so MotionButton transforms stay visible
+       inside their own outline). Adjacent cells share a seam via
+       `margin-left: -1px` so the row reads as one continuous strip
+       without doubled hairlines. On hover, `z-index: 2` lifts the
+       scaled button above the neighbouring cells so the transform is
+       never clipped. */
+    .brut-hero .cta-row > * {
+        padding: 10px 14px;
+        border: 1px solid var(--brut-rule);
+        background: var(--brut-bg);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--brut-ink);
+        cursor: pointer;
+        font-family: inherit;
+        text-decoration: none;
+        position: relative;
+        z-index: 1;
+        transition:
+            background 0.15s,
+            border-color 0.15s;
+    }
+    .brut-hero .cta-row > * + * {
+        margin-left: -1px;
+    }
+    .brut-hero .cta-row > *:hover {
+        z-index: 2;
+    }
+    .brut-hero .cta-row .pri {
+        background: var(--brut-accent);
+        color: var(--brut-accent-ink);
+        font-weight: 600;
+        border-color: var(--brut-accent);
+    }
+    .brut-hero .cta-row .pri:hover {
+        filter: brightness(0.95);
+    }
+    .brut-hero .cta-row a:hover,
+    .brut-hero .cta-row :global(.inst:hover) {
+        background: var(--brut-bg-2);
+        border-color: var(--brut-rule-2);
+    }
+    /* MotionButton renders into a plain <button> without our scoped
+       Svelte hash, so the `.cta-row > *` styles don't reach it and
+       Tailwind's preflight leaves it borderless. Re-state the shared
+       box styles here through `:global()` so the install cell matches
+       the surrounding anchors. */
+    .brut-hero .cta-row :global(.inst) {
+        padding: 10px 18px;
+        border: 1px solid var(--brut-rule);
+        background: var(--brut-bg-2);
+        color: var(--brut-ink-2);
+        font-family: inherit;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        position: relative;
+        z-index: 1;
+        margin-left: -1px;
+        transition:
+            background 0.15s,
+            border-color 0.15s;
+    }
+    .brut-hero .cta-row :global(.inst:hover) {
+        z-index: 2;
+    }
+    .brut-hero .cta-row :global(.inst .inst-prompt) {
+        color: var(--brut-ink-3);
+    }
+    .brut-hero .cta-row :global(.inst .inst-cmd) {
+        color: var(--brut-ink-2);
+    }
+    .brut-hero .cta-row :global(.inst .inst-cmd .pkg) {
+        color: var(--brut-ink);
+    }
+    .brut-hero .cta-row :global(.inst .inst-copy) {
+        margin-left: 4px;
+        padding: 2px 8px;
+        font-size: 10.5px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--brut-accent);
+        border: 1px solid var(--brut-rule);
+        display: inline-grid;
+        align-items: center;
+        justify-items: center;
+        /* Width sized to hold the wider "✓ copied" label so the box does
+           not resize when AnimatePresence cross-fades between states. */
+        min-width: 84px;
+        height: 20px;
+        overflow: hidden;
+        transition:
+            border-color 0.2s,
+            background 0.2s;
+    }
+    .brut-hero .cta-row :global(.inst .inst-copy.is-copied) {
+        border-color: var(--brut-accent);
+        background: var(--brut-accent-soft);
+    }
+    .brut-hero .cta-row :global(.inst .inst-copy-label) {
+        grid-area: 1 / 1;
+        display: inline-block;
+        white-space: nowrap;
+        will-change: transform, opacity;
+    }
+    .brut-hero .corner {
+        position: absolute;
+        font-size: 10px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.14em;
+    }
+    .brut-hero .corner.tr {
+        top: 12px;
+        right: 24px;
+    }
+    .brut-hero .corner.bl {
+        bottom: 12px;
+        left: 24px;
+    }
+    .brut-hero .corner.br {
+        bottom: 12px;
+        right: 24px;
+    }
+
+    /* ── Stats row ────────────────────────────────────────────────── */
+    .brut-stats {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        border-bottom: 1px solid var(--brut-rule);
+    }
+    .brut-stats .s {
+        padding: 28px 24px;
+        border-right: 1px solid var(--brut-rule);
+        position: relative;
+        min-height: 160px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .brut-stats .s:last-child {
+        border-right: 0;
+    }
+    .brut-stats .s .k {
+        font-size: 10.5px;
+        letter-spacing: 0.14em;
+        color: var(--brut-ink-3);
+    }
+    .brut-stats .s .v {
+        font-size: 64px;
+        line-height: 1;
+        font-weight: 500;
+        letter-spacing: -0.04em;
+        display: inline-flex;
+        align-items: baseline;
+        gap: 4px;
+        white-space: nowrap;
+    }
+    .brut-stats .s .v-num {
+        line-height: 1;
+    }
+    .brut-stats .s .v-unit {
+        font-size: 22px;
+        letter-spacing: 0;
+        font-weight: 500;
+        color: inherit;
+        line-height: 1;
+    }
+    .brut-stats .s .note {
+        font-size: 11px;
+        color: var(--brut-ink-2);
+    }
+    .brut-stats .s.ac .v {
+        color: var(--brut-accent);
+    }
+    .brut-stats .s::after {
+        content: attr(data-idx);
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        font-size: 10px;
+        color: var(--brut-ink-3);
+    }
+
+    /* ── Section lede (shared by stream/feat/play) ────────────────── */
+    .brut-stream .lede,
+    .brut-feat .lede,
+    .brut-play .lede {
+        font-size: 10.5px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.14em;
+    }
+    .brut-stream .lede h2,
+    .brut-feat .lede h2,
+    .brut-play .lede h2 {
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 28px;
+        color: var(--brut-ink);
+        margin: 12px 0 0;
+        letter-spacing: -0.02em;
+        text-transform: lowercase;
+        font-weight: 500;
+    }
+    .brut-stream .lede h2 span,
+    .brut-feat .lede h2 span,
+    .brut-play .lede h2 span {
+        color: var(--brut-accent);
+    }
+    .brut-stream .lede p,
+    .brut-play .lede p {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        color: var(--brut-ink-2);
+        margin: 12px 0 0;
+        font-size: 13px;
+        line-height: 1.55;
+        letter-spacing: 0;
+    }
+
+    /* ── Streaming demo ───────────────────────────────────────────── */
+    .brut-stream {
+        padding: 28px 24px;
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 24px;
+        border-bottom: 1px solid var(--brut-rule);
+    }
+    .brut-stream .panel,
+    .brut-play .panel {
+        border: 1px solid var(--brut-rule);
+        background: var(--brut-bg);
+    }
+    .brut-stream .panel .bar {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--brut-rule);
+        font-size: 11px;
+        color: var(--brut-ink-2);
+        background: var(--brut-bg-2);
+        flex-wrap: wrap;
+    }
+    .brut-stream .panel .bar .lbl {
+        color: var(--brut-ink-3);
+    }
+    .brut-stream .panel .bar .v {
+        color: var(--brut-ink);
+    }
+    .brut-stream .panel .bar .live {
+        margin-left: auto;
+        color: var(--brut-accent);
+    }
+    .brut-stream .panel .ctrl {
+        background: transparent;
+        border: 1px solid var(--brut-rule);
+        padding: 4px 10px;
+        font-family: inherit;
+        font-size: 11px;
+        color: var(--brut-ink-2);
+        cursor: pointer;
+    }
+    .brut-stream .panel .ctrl:hover {
+        background: var(--brut-bg);
+        color: var(--brut-ink);
+    }
+    .brut-stream .panel .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        height: 520px;
+    }
+    .brut-stream .panel .pane {
+        padding: 16px 18px;
+        overflow: auto;
+        min-height: 0;
+    }
+    .brut-stream .panel .pane + .pane {
+        border-left: 1px solid var(--brut-rule);
+    }
+    .brut-stream .panel .pane .label {
+        font-size: 10.5px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.14em;
+        margin-bottom: 12px;
+    }
+    .brut-stream .panel .pane pre {
+        margin: 0;
+        font-size: 12.5px;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        word-break: break-word;
+        color: var(--brut-ink);
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+    }
+    .brut-stream .panel .pane.out :global(h1),
+    .brut-stream .panel .pane.out :global(h2),
+    .brut-stream .panel .pane.out :global(h3) {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        letter-spacing: -0.02em;
+        margin: 0 0 6px;
+        color: var(--brut-ink);
+    }
+    .brut-stream .panel .pane.out :global(h1) {
+        font-size: 26px;
+    }
+    .brut-stream .panel .pane.out :global(h2) {
+        font-size: 20px;
+        margin-top: 18px;
+    }
+    .brut-stream .panel .pane.out :global(h3) {
+        font-size: 16px;
+        margin-top: 16px;
+    }
+    .brut-stream .panel .pane.out :global(p) {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        font-size: 13.5px;
+        color: var(--brut-ink-2);
+        margin: 0 0 12px;
+        line-height: 1.55;
+    }
+    .brut-stream .panel .pane.out :global(p b),
+    .brut-stream .panel .pane.out :global(strong) {
+        color: var(--brut-ink);
+    }
+    .brut-stream .panel .pane.out :global(code) {
+        background: var(--brut-bg-2);
+        border: 1px solid var(--brut-rule);
+        padding: 0 4px;
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 12px;
+        color: var(--brut-ink);
+    }
+    .brut-stream .panel .pane.out :global(pre) {
+        background: var(--brut-bg-2);
+        border: 1px solid var(--brut-rule);
+        padding: 10px 12px;
+        font-size: 11.5px;
+        margin-bottom: 12px;
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        color: var(--brut-ink);
+    }
+    .brut-stream .panel .pane.out :global(pre code) {
+        background: transparent;
+        border: 0;
+        padding: 0;
+    }
+    .brut-stream .panel .pane.out :global(ol),
+    .brut-stream .panel .pane.out :global(ul) {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        font-size: 13.5px;
+        color: var(--brut-ink-2);
+        padding-left: 22px;
+        margin: 6px 0;
+        line-height: 1.55;
+    }
+    .brut-stream .panel .pane.out :global(table) {
+        border-collapse: collapse;
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        font-size: 12.5px;
+        width: 100%;
+        margin: 8px 0;
+    }
+    .brut-stream .panel .pane.out :global(th),
+    .brut-stream .panel .pane.out :global(td) {
+        border: 1px solid var(--brut-rule);
+        padding: 6px 10px;
+        text-align: left;
+    }
+    .brut-stream .panel .pane.out :global(th) {
+        background: var(--brut-bg-2);
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        color: var(--brut-ink-3);
+        text-transform: uppercase;
+        font-weight: 400;
+    }
+    .brut-stream .panel .pane.out :global(blockquote) {
+        border-left: 2px solid var(--brut-accent);
+        padding-left: 12px;
+        margin: 12px 0;
+        color: var(--brut-ink-2);
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        font-style: italic;
+    }
+    .cursor {
+        display: inline-block;
+        width: 7px;
+        height: 14px;
+        background: var(--brut-accent);
+        vertical-align: -2px;
+        margin-left: 1px;
+        animation: brutblink 0.9s steps(2, end) infinite;
+    }
+    @keyframes brutblink {
         50% {
-            transform: translate(-4vw, 6vh);
-        }
-        75% {
-            transform: translate(2vw, -4vh);
-        }
-        100% {
-            transform: translate(0, 0);
+            opacity: 0;
         }
     }
+    .brut-stream .panel .footer {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        border-top: 1px solid var(--brut-rule);
+        font-size: 11px;
+        color: var(--brut-ink-2);
+    }
+    .brut-stream .panel .footer > div {
+        padding: 8px 14px;
+        border-right: 1px solid var(--brut-rule);
+    }
+    .brut-stream .panel .footer > div:last-child {
+        border-right: 0;
+    }
+    .brut-stream .panel .footer .v {
+        color: var(--brut-ink);
+    }
+    .brut-stream .panel .footer .v.accent {
+        color: var(--brut-accent);
+    }
 
-    @keyframes orbB {
-        0% {
-            transform: translate(0, 0);
+    /* ── Features grid ────────────────────────────────────────────── */
+    .brut-feat {
+        padding: 28px 24px;
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 24px;
+        border-bottom: 1px solid var(--brut-rule);
+    }
+    .brut-feat .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0;
+        border-left: 1px solid var(--brut-rule);
+        border-top: 1px solid var(--brut-rule);
+    }
+    .brut-feat .cell {
+        border-right: 1px solid var(--brut-rule);
+        border-bottom: 1px solid var(--brut-rule);
+        padding: 20px 22px;
+        min-height: 200px;
+        position: relative;
+    }
+    .brut-feat .cell::after {
+        content: '';
+        position: absolute;
+        inset: 8px;
+        border: 1px solid transparent;
+        pointer-events: none;
+        transition: border-color 0.2s;
+    }
+    .brut-feat .cell:hover::after {
+        border-color: var(--brut-accent);
+    }
+    .brut-feat .cell .id {
+        font-size: 10.5px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.14em;
+    }
+    .brut-feat .cell h3 {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        margin: 30px 0 8px;
+        color: var(--brut-ink);
+    }
+    .brut-feat .cell p {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        font-size: 13.5px;
+        color: var(--brut-ink-2);
+        line-height: 1.55;
+        margin: 0;
+        max-width: 320px;
+    }
+    .brut-feat .cell .corner {
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        font-size: 10.5px;
+        color: var(--brut-ink-3);
+    }
+    .brut-feat .cell .marker {
+        width: 14px;
+        height: 14px;
+        border: 1px solid var(--brut-ink-3);
+        position: absolute;
+        bottom: 16px;
+        right: 16px;
+    }
+    .brut-feat .cell:nth-child(3n + 1) .marker {
+        background: var(--brut-accent);
+        border-color: var(--brut-accent);
+    }
+
+    /* ── Playground ───────────────────────────────────────────────── */
+    .brut-play {
+        padding: 28px 24px;
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 24px;
+        border-bottom: 1px solid var(--brut-rule);
+        scroll-margin-top: 80px;
+    }
+    .brut-play .panel .head {
+        display: flex;
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--brut-rule);
+        font-size: 11px;
+        color: var(--brut-ink-3);
+        background: var(--brut-bg-2);
+        align-items: center;
+        gap: 12px;
+    }
+    .brut-play .panel .head .tab {
+        padding: 0 12px;
+        border-right: 1px solid var(--brut-rule);
+        margin-right: -1px;
+    }
+    .brut-play .panel .head .tab.on {
+        color: var(--brut-ink);
+        background: var(--brut-bg);
+    }
+    .brut-play .panel .head .grow {
+        flex: 1;
+    }
+    .brut-play .panel .head .ctrl {
+        background: transparent;
+        border: 0;
+        padding: 0 8px;
+        font-family: inherit;
+        font-size: 11px;
+        color: var(--brut-accent);
+        cursor: pointer;
+    }
+    .brut-play .panel .body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 380px;
+    }
+    .brut-play .panel .body .col {
+        padding: 16px 18px;
+    }
+    .brut-play .panel .body .col + .col {
+        border-left: 1px solid var(--brut-rule);
+    }
+    .brut-play .panel .body textarea {
+        width: 100%;
+        min-height: 340px;
+        background: transparent;
+        color: var(--brut-ink);
+        border: 0;
+        outline: none;
+        resize: vertical;
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 12.5px;
+        line-height: 1.7;
+    }
+    .brut-play .panel .body .preview {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        color: var(--brut-ink-2);
+        overflow-y: auto;
+        max-height: 480px;
+    }
+    .brut-play .panel .body .preview :global(h1),
+    .brut-play .panel .body .preview :global(h2),
+    .brut-play .panel .body .preview :global(h3) {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        color: var(--brut-ink);
+        margin: 0 0 6px;
+        letter-spacing: -0.02em;
+    }
+    .brut-play .panel .body .preview :global(h2) {
+        font-size: 22px;
+        margin-top: 12px;
+    }
+    .brut-play .panel .body .preview :global(h3) {
+        font-size: 18px;
+        margin-top: 12px;
+    }
+    .brut-play .panel .body .preview :global(p) {
+        font-size: 13.5px;
+        margin: 0 0 8px;
+        line-height: 1.55;
+    }
+    .brut-play .panel .body .preview :global(strong) {
+        color: var(--brut-ink);
+    }
+    .brut-play .panel .body .preview :global(ol),
+    .brut-play .panel .body .preview :global(ul) {
+        padding-left: 22px;
+        font-size: 13.5px;
+        margin: 6px 0;
+        line-height: 1.55;
+    }
+    .brut-play .panel .body .preview :global(code) {
+        background: var(--brut-bg-2);
+        border: 1px solid var(--brut-rule);
+        padding: 0 4px;
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 12px;
+        color: var(--brut-ink);
+    }
+    .brut-play .panel .body .preview :global(table) {
+        border-collapse: collapse;
+        font-size: 12.5px;
+        width: 100%;
+        margin: 8px 0;
+    }
+    .brut-play .panel .body .preview :global(th),
+    .brut-play .panel .body .preview :global(td) {
+        border: 1px solid var(--brut-rule);
+        padding: 6px 10px;
+        text-align: left;
+    }
+    .brut-play .panel .body .preview :global(th) {
+        background: var(--brut-bg-2);
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        color: var(--brut-ink-3);
+        text-transform: uppercase;
+        font-weight: 400;
+    }
+    .brut-play .panel .body .preview :global(a) {
+        color: var(--brut-accent);
+        text-decoration: underline;
+        text-decoration-color: var(--brut-rule);
+    }
+
+    /* ── Compare table ────────────────────────────────────────────── */
+    .brut-comp {
+        padding: 28px 24px;
+        border-bottom: 1px solid var(--brut-rule);
+    }
+    .brut-comp .k {
+        font-size: 10.5px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.14em;
+    }
+    .brut-comp h2 {
+        font-size: 28px;
+        margin: 12px 0 24px;
+        letter-spacing: -0.02em;
+        text-transform: lowercase;
+        font-weight: 500;
+        color: var(--brut-ink);
+    }
+    .brut-comp h2 span {
+        color: var(--brut-accent);
+    }
+    .brut-comp .comp-scroll {
+        overflow-x: auto;
+    }
+    .brut-comp table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 720px;
+    }
+    .brut-comp table th,
+    .brut-comp table td {
+        text-align: left;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--brut-rule);
+        font-size: 13px;
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        color: var(--brut-ink);
+    }
+    .brut-comp table th {
+        font-size: 10.5px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.14em;
+        font-weight: 400;
+        text-transform: lowercase;
+    }
+    .brut-comp table td.us {
+        color: var(--brut-accent);
+    }
+    .brut-comp table .y {
+        color: var(--brut-accent);
+    }
+    .brut-comp table .n {
+        color: var(--brut-ink-3);
+    }
+    .brut-comp table tbody tr:hover {
+        background: var(--brut-bg-2);
+    }
+    .brut-comp table tr.us-row {
+        background: var(--brut-accent-soft);
+    }
+    .brut-comp table tr.us-row:hover {
+        background: var(--brut-accent-soft);
+    }
+    .brut-comp .lede-p {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        font-size: 13.5px;
+        color: var(--brut-ink-2);
+        margin: 0 0 24px;
+        line-height: 1.55;
+        max-width: 720px;
+    }
+    .brut-comp .comp-read-th {
+        text-align: right !important;
+    }
+    .brut-comp .comp-read {
+        text-align: right;
+        white-space: nowrap;
+    }
+    .brut-comp .comp-read-link {
+        color: var(--brut-accent);
+        text-decoration: none;
+        font-size: 11.5px;
+        letter-spacing: 0.04em;
+        transition: opacity 0.15s;
+    }
+    .brut-comp .comp-read-link:hover {
+        text-decoration: underline;
+    }
+    .brut-comp .comp-read-self {
+        color: var(--brut-ink-3);
+        font-size: 11.5px;
+        letter-spacing: 0.04em;
+    }
+    .brut-comp .comp-all {
+        display: inline-block;
+        margin-top: 18px;
+        color: var(--brut-accent);
+        text-decoration: none;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+    }
+    .brut-comp .comp-all:hover {
+        text-decoration: underline;
+    }
+
+    /* ── Examples grid (mirrors FIG-003 features) ─────────────────── */
+    .brut-ex {
+        padding: 28px 24px;
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 24px;
+        border-bottom: 1px solid var(--brut-rule);
+    }
+    .brut-ex .lede .k {
+        font-size: 10.5px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.14em;
+    }
+    .brut-ex .lede h2 {
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 28px;
+        color: var(--brut-ink);
+        margin: 12px 0 0;
+        letter-spacing: -0.02em;
+        text-transform: lowercase;
+        font-weight: 500;
+    }
+    .brut-ex .lede h2 span {
+        color: var(--brut-accent);
+    }
+    .brut-ex .lede p {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        color: var(--brut-ink-2);
+        margin: 12px 0 0;
+        font-size: 13px;
+        line-height: 1.55;
+        max-width: 640px;
+    }
+    .brut-ex .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border-left: 1px solid var(--brut-rule);
+        border-top: 1px solid var(--brut-rule);
+    }
+    .brut-ex .cell {
+        display: block;
+        border-right: 1px solid var(--brut-rule);
+        border-bottom: 1px solid var(--brut-rule);
+        padding: 20px 22px;
+        min-height: 200px;
+        position: relative;
+        color: var(--brut-ink);
+        text-decoration: none;
+    }
+    .brut-ex .cell::after {
+        content: '';
+        position: absolute;
+        inset: 8px;
+        border: 1px solid transparent;
+        pointer-events: none;
+        transition: border-color 0.2s;
+    }
+    .brut-ex .cell:hover::after {
+        border-color: var(--brut-accent);
+    }
+    .brut-ex .cell .id {
+        font-size: 10.5px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.14em;
+    }
+    .brut-ex .cell h3 {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        margin: 30px 0 8px;
+        color: var(--brut-ink);
+    }
+    .brut-ex .cell p {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        font-size: 13.5px;
+        color: var(--brut-ink-2);
+        line-height: 1.55;
+        margin: 0;
+        max-width: 320px;
+    }
+    .brut-ex .cell .corner {
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        font-size: 14px;
+        color: var(--brut-ink-3);
+        transition: color 0.2s;
+    }
+    .brut-ex .cell:hover .corner {
+        color: var(--brut-accent);
+    }
+    .brut-ex .cell .marker {
+        width: 14px;
+        height: 14px;
+        border: 1px solid var(--brut-ink-3);
+        position: absolute;
+        bottom: 16px;
+        right: 16px;
+    }
+    .brut-ex .cell:nth-child(3n + 1) .marker {
+        background: var(--brut-accent);
+        border-color: var(--brut-accent);
+    }
+    .brut-ex .ex-all {
+        display: inline-block;
+        margin-top: 18px;
+        color: var(--brut-accent);
+        text-decoration: none;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+    }
+    .brut-ex .ex-all:hover {
+        text-decoration: underline;
+    }
+
+    /* ── Footer big-type ──────────────────────────────────────────── */
+    .brut-foot {
+        padding: 60px 24px 36px;
+        display: grid;
+        grid-template-columns: 200px 1fr 200px;
+        gap: 24px;
+        border-top: 1px solid var(--brut-rule);
+        align-items: end;
+    }
+    .brut-foot :global(.big) {
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: clamp(40px, 7vw, 96px);
+        line-height: 0.9;
+        letter-spacing: -0.06em;
+        text-transform: lowercase;
+        background: transparent;
+        border: 0;
+        color: var(--brut-ink);
+        text-align: left;
+        cursor: pointer;
+        padding: 0;
+        position: relative;
+    }
+    .brut-foot :global(.big span) {
+        color: var(--brut-accent);
+    }
+    .brut-foot :global(.big .copy-hint) {
+        display: inline-grid;
+        align-items: center;
+        justify-items: start;
+        margin-top: 16px;
+        height: 16px;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        color: var(--brut-ink-3);
+        text-transform: uppercase;
+        overflow: hidden;
+        min-width: 200px;
+    }
+    .brut-foot :global(.big .copy-hint-label) {
+        grid-area: 1 / 1;
+        display: inline-block;
+        white-space: nowrap;
+        will-change: transform, opacity;
+    }
+    .brut-foot :global(.big:hover .copy-hint) {
+        color: var(--brut-accent);
+    }
+    .brut-foot .info {
+        font-size: 11px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.12em;
+        line-height: 1.8;
+    }
+    .brut-foot .info.right {
+        text-align: right;
+    }
+    .brut-foot .info .v,
+    .brut-foot .info a.v {
+        color: var(--brut-ink);
+        text-decoration: none;
+        display: block;
+        margin-top: 12px;
+    }
+    .brut-foot .info a.v:hover {
+        color: var(--brut-accent);
+    }
+
+    /* ── Responsive collapse ─────────────────────────────────────── */
+    @media (max-width: 1024px) {
+        .brut-stats {
+            grid-template-columns: repeat(3, 1fr);
         }
-        25% {
-            transform: translate(-6vw, -8vh);
+        .brut-stats .s:nth-child(3n) {
+            border-right: 0;
         }
-        50% {
-            transform: translate(3vw, 4vh);
+        .brut-stats .s:nth-child(-n + 3) {
+            border-bottom: 1px solid var(--brut-rule);
         }
-        75% {
-            transform: translate(-2vw, -6vh);
+        .brut-feat .grid,
+        .brut-ex .grid {
+            grid-template-columns: repeat(2, 1fr);
         }
-        100% {
-            transform: translate(0, 0);
+        .brut-stream .panel .grid,
+        .brut-play .panel .body {
+            grid-template-columns: 1fr;
+        }
+        .brut-stream .panel .grid {
+            height: auto;
+        }
+        .brut-stream .panel .pane {
+            height: 320px;
+        }
+        .brut-stream .panel .pane + .pane,
+        .brut-play .panel .body .col + .col {
+            border-left: 0;
+            border-top: 1px solid var(--brut-rule);
+        }
+        .brut-ex {
+            grid-template-columns: 1fr;
+        }
+    }
+    @media (max-width: 720px) {
+        .brut-coord {
+            display: none;
+        }
+        .brut-hero,
+        .brut-stream,
+        .brut-feat,
+        .brut-play,
+        .brut-ex {
+            grid-template-columns: 1fr;
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+        .brut-hero {
+            padding-top: 56px;
+        }
+        .brut-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .brut-stats .s {
+            min-height: 130px;
+            padding: 20px 16px;
+        }
+        .brut-stats .s .v {
+            font-size: 44px;
+        }
+        .brut-stats .s:nth-child(2n) {
+            border-right: 0;
+        }
+        .brut-stats .s:not(:nth-last-child(-n + 2)) {
+            border-bottom: 1px solid var(--brut-rule);
+        }
+        .brut-feat .grid,
+        .brut-ex .grid {
+            grid-template-columns: 1fr;
+        }
+        .brut-foot {
+            grid-template-columns: 1fr;
+            padding: 40px 16px 28px;
+        }
+        .brut-foot .info.right {
+            text-align: left;
         }
     }
 </style>
