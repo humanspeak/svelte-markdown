@@ -111,7 +111,12 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
     let tokensPerSecond = $state(30)
     let jitterPercent = $state(50)
     let chunkMode: 'character' | 'word' | 'sentence' = $state('word')
-    let streamMode: 'chunked' | 'concat' | 'offset' = $state('chunked')
+    // Default to `offset` so visitors land on the realistic case: real
+    // model streams deliver `{ value, offset }` patches and they don't
+    // always arrive in order. The other two modes (`chunked`, `concat`)
+    // stay available for comparison.
+    type StreamMode = 'chunked' | 'concat' | 'offset'
+    let streamMode = $state<StreamMode>('offset')
     let jumbleOffsetChunks = $state(true)
 
     // Component ref for imperative API
@@ -328,10 +333,13 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
     <div class="mb-6">
         <h2 class="text-foreground text-2xl font-bold">LLM Streaming Simulation</h2>
         <p class="text-muted-foreground mt-1 text-sm">
-            Simulate real-time AI response streaming and measure render performance. Adjust speed,
-            jitter, and chunking to test how
+            Simulate the way real models actually stream — as
+            <code class="bg-muted rounded px-1.5 py-0.5 text-xs">&#123; value, offset &#125;</code>
+            patches that can arrive out of order. The demo starts in offset mode with patches jumbled
+            so you can watch
             <code class="bg-muted rounded px-1.5 py-0.5 text-xs">SvelteMarkdown</code>
-            handles token-by-token updates from LLMs like ChatGPT, Claude, and Gemini.
+            converge on the final document; toggle speed, jitter, and chunk granularity to stress-test
+            different ChatGPT / Claude / Gemini delivery patterns.
         </p>
     </div>
 
@@ -342,8 +350,9 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                     Live Metrics
                 </h3>
                 <p class="text-muted-foreground mt-1 text-xs">
-                    Watch chunk throughput and render cost live while switching between append,
-                    concat, and offset patch simulation.
+                    Watch chunk throughput and render cost live while switching delivery modes —
+                    offset patches with jumbled order is the default and best matches real model
+                    streams.
                 </p>
             </div>
             {#if isStreaming || tokenCount > 0}
@@ -568,8 +577,24 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                     </div>
                     <div class="border-border border-t"></div>
                     <div>
-                        <span class="text-muted-foreground mb-2 block text-sm">Stream mode</span>
+                        <span class="text-muted-foreground mb-2 block text-sm">
+                            Delivery mode
+                        </span>
                         <div class="flex flex-wrap gap-3">
+                            <label class="flex items-center gap-1.5 text-sm">
+                                <input
+                                    type="radio"
+                                    bind:group={streamMode}
+                                    value="offset"
+                                    disabled={isStreaming}
+                                    class="accent-[var(--brand-500,#ec4899)]"
+                                />
+                                <span class="text-foreground"
+                                    >Out-of-order patches <span class="text-muted-foreground">
+                                        (default · realistic)
+                                    </span></span
+                                >
+                            </label>
                             <label class="flex items-center gap-1.5 text-sm">
                                 <input
                                     type="radio"
@@ -578,7 +603,10 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                                     disabled={isStreaming}
                                     class="accent-[var(--brand-500,#ec4899)]"
                                 />
-                                <span class="text-foreground">Chunked (writeChunk)</span>
+                                <span class="text-foreground">
+                                    In-order chunks
+                                    <span class="text-muted-foreground">(writeChunk)</span>
+                                </span>
                             </label>
                             <label class="flex items-center gap-1.5 text-sm">
                                 <input
@@ -588,17 +616,10 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                                     disabled={isStreaming}
                                     class="accent-[var(--brand-500,#ec4899)]"
                                 />
-                                <span class="text-foreground">Concat (source +=)</span>
-                            </label>
-                            <label class="flex items-center gap-1.5 text-sm">
-                                <input
-                                    type="radio"
-                                    bind:group={streamMode}
-                                    value="offset"
-                                    disabled={isStreaming}
-                                    class="accent-[var(--brand-500,#ec4899)]"
-                                />
-                                <span class="text-foreground">Offset patches</span>
+                                <span class="text-foreground">
+                                    Source append
+                                    <span class="text-muted-foreground">(source +=)</span>
+                                </span>
                             </label>
                         </div>
                         {#if streamMode === 'offset'}
@@ -610,15 +631,18 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                                         disabled={isStreaming}
                                         class="accent-[var(--brand-500,#ec4899)]"
                                     />
-                                    <span class="text-foreground">Jumble delivery order</span>
+                                    <span class="text-foreground">
+                                        Shuffle so later patches arrive first
+                                    </span>
                                 </label>
                                 <p class="text-muted-foreground text-xs leading-relaxed">
-                                    Replays websocket-style
-                                    <code class="bg-muted rounded px-1 py-0.5 text-[11px]">
-                                        &#123; value, offset &#125;
-                                    </code>
-                                    chunks. With jumbling enabled, later patches can arrive before earlier
-                                    ones so you can watch the renderer converge.
+                                    Real model streams send
+                                    <code class="bg-muted rounded px-1 py-0.5 text-[11px]"
+                                        >&#123; value, offset &#125;</code
+                                    >
+                                    patches and the transport doesn't guarantee in-order delivery. With
+                                    this toggle, later patches land before the earlier ones — watch the
+                                    renderer fill in the gaps as they arrive.
                                 </p>
                             </div>
                         {/if}

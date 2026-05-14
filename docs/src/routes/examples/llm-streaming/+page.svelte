@@ -7,10 +7,15 @@
     if (seo) {
         seo.title = 'LLM Streaming | Examples | Svelte Markdown'
         seo.description =
-            'Simulate real-time LLM token streaming with @humanspeak/svelte-markdown. Measure render performance for ChatGPT-style AI response rendering with adjustable speed and chunking.'
+            'Simulate real model streaming with @humanspeak/svelte-markdown — out-of-order offset patches, adjustable speed and jitter, live render metrics. See how SvelteMarkdown converges as ChatGPT / Claude / Gemini-style chunks arrive.'
         seo.ogTitle = 'LLM Streaming Demo'
-        seo.ogTagline = 'Real-time AI response rendering with live metrics.'
-        seo.ogFeatures = ['Token Streaming', 'Live Metrics', 'Custom Markdown', 'Performance']
+        seo.ogTagline = 'Out-of-order offset patches with live render metrics.'
+        seo.ogFeatures = [
+            'Out-of-order Patches',
+            'Live Metrics',
+            'Speed + Jitter',
+            'Render Performance'
+        ]
         seo.ogSlug = 'examples-llm-streaming'
     }
 </script>
