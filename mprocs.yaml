@@ -3,10 +3,13 @@ procs:
         shell: node --no-warnings scripts/dev-urls.mjs
         autostart: true
         autorestart: false
+    # `rm -rf` runs before each dev start so the vite optimizer + svelte-kit
+    # sync never serve a stale bundle after a docs-kit pin bump or pnpm
+    # install. Cheap: vite re-optimizes in a few seconds on the next request.
     pkg:
-        shell: pnpm -w -r --filter @humanspeak/svelte-markdown run dev
+        shell: rm -rf .svelte-kit node_modules/.vite && pnpm -w -r --filter @humanspeak/svelte-markdown run dev
     docs:
-        shell: pnpm --filter docs run dev
+        shell: rm -rf docs/.svelte-kit docs/node_modules/.vite && pnpm --filter docs run dev
     sitemap:
         shell: pnpm --filter docs run sitemap:watch
     social:
