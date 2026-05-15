@@ -10,6 +10,24 @@ export default defineConfig({
             allow: ['..']
         }
     },
+    // docs-kit ships .svelte source (not pre-compiled JS) so vite-plugin-svelte
+    // can run on its components and emit scoped styles. If vite pre-bundles
+    // the package via optimizeDeps the scoped <style> blocks get stripped and
+    // every dk-* class falls back to unstyled `display: block` — the header
+    // collapses, the footer collapses, etc.
+    //
+    // The transitive deps with .node bindings (satori → @resvg/resvg-js)
+    // must also stay out of optimizeDeps because rolldown (vite 8's
+    // bundler) can't process native modules.
+    optimizeDeps: {
+        exclude: [
+            '@humanspeak/docs-kit',
+            '@humanspeak/svelte-satori-fix',
+            '@resvg/resvg-js',
+            'satori',
+            'satori-html'
+        ]
+    },
     build: {
         rollupOptions: {
             output: {
