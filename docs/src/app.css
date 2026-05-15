@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @source '../node_modules/@humanspeak/docs-kit/dist';
 @import '@humanspeak/docs-kit/styles/base.css';
+@import '@humanspeak/docs-kit/styles/brutalist.css';
+@import '@humanspeak/docs-kit/styles/prose-v2.css';
 @plugin '@tailwindcss/typography';
 
 /* Project-specific: landing page decorative styles */

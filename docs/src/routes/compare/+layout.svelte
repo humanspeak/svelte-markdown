@@ -1,13 +1,14 @@
 <script lang="ts">
-    import { page } from '$app/state'
-    import { afterNavigate } from '$app/navigation'
-    import { Header, Footer, getBreadcrumbContext, enhanceCodeBlocks } from '@humanspeak/docs-kit'
+    import { CompareLayoutV2, enhanceCodeBlocks } from '@humanspeak/docs-kit'
     import { docsConfig } from '$lib/docs-config'
     import favicon from '$lib/assets/logo.svg'
+    import rootPkg from '../../../../package.json'
+    import '@fontsource-variable/inter/index.css'
+    import '@fontsource-variable/jetbrains-mono/index.css'
 
     const { children } = $props()
 
-    const breadcrumbContext = getBreadcrumbContext()
+    const PKG_VERSION = rootPkg.version
 
     function buildCompareBreadcrumbs(pathname: string) {
         if (pathname === '/compare') return [{ title: 'Compare' }]
@@ -18,22 +19,20 @@
             .replace(/\b\w/g, (c) => c.toUpperCase())
         return [{ title: 'Compare', href: '/compare' }, { title: `vs ${name}` }]
     }
-
-    if (breadcrumbContext) {
-        breadcrumbContext.breadcrumbs = buildCompareBreadcrumbs(page.url.pathname)
-    }
-
-    afterNavigate(() => {
-        if (breadcrumbContext) {
-            breadcrumbContext.breadcrumbs = buildCompareBreadcrumbs(page.url.pathname)
-        }
-    })
 </script>
 
-<div class="bg-background relative flex min-h-screen flex-col">
-    <Header config={docsConfig} {favicon} />
+<CompareLayoutV2
+    config={docsConfig}
+    {favicon}
+    version={PKG_VERSION}
+    nav={[
+        { label: 'docs', href: '/docs' },
+        { label: 'examples', href: '/examples' },
+        { label: 'compare', href: '/compare' }
+    ]}
+    breadcrumbResolver={buildCompareBreadcrumbs}
+>
     <div class="flex flex-1 flex-col" use:enhanceCodeBlocks>
         {@render children?.()}
     </div>
-    <Footer />
-</div>
+</CompareLayoutV2>

@@ -674,46 +674,8 @@ Happy coding! <span style="color: hotpink">♥</span>`
 </div>
 
 <style>
-    /* ── Brutalist Mono palette + tokens ──────────────────────────── */
-    .brut-wrap {
-        background: var(--brut-bg);
-    }
-    .brut {
-        --brut-bg: #f8fcfb;
-        --brut-bg-2: #eef4f1;
-        --brut-ink: #0a0a0a;
-        --brut-ink-2: #525252;
-        --brut-ink-3: #9a9a9a;
-        --brut-rule: #d6dedb;
-        --brut-rule-2: #bbc4c0;
-        --brut-accent: #247768;
-        --brut-accent-hover: #1b5a4e;
-        --brut-accent-ink: #f8fcfb;
-        --brut-accent-soft: rgba(36, 119, 104, 0.1);
-
-        background: var(--brut-bg);
-        color: var(--brut-ink);
-        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
-        font-size: 13px;
-        letter-spacing: 0;
-    }
-    :global(html.dark) .brut,
-    :global(html.dark) .brut-wrap {
-        --brut-bg: #06090a;
-        --brut-bg-2: #0d1110;
-        --brut-ink: #ededed;
-        --brut-ink-2: #9a9a9a;
-        --brut-ink-3: #5a5a5a;
-        --brut-rule: #1c2422;
-        --brut-rule-2: #2a332f;
-        --brut-accent: #54dbbc;
-        --brut-accent-hover: #7fe9d1;
-        --brut-accent-ink: #06090a;
-        --brut-accent-soft: rgba(84, 219, 188, 0.14);
-    }
-    :global(html.dark) .brut-wrap {
-        background: var(--brut-bg);
-    }
+    /* Brutalist tokens + .brut / .brut-wrap base styles live in
+       @humanspeak/docs-kit/styles/brutalist.css (imported via app.css). */
     .brut .sans {
         font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
         letter-spacing: -0.01em;
