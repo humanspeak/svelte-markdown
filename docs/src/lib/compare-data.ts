@@ -1,28 +1,6 @@
-export interface ComparisonFeature {
-    name: string
-    us: string | boolean
-    them: string | boolean
-    note?: string
-}
+import type { ComparisonFeature, Competitor } from '@humanspeak/docs-kit'
 
-export interface Competitor {
-    slug: string
-    name: string
-    tagline: string
-    description: string
-    website?: string
-    github?: string
-    npm?: string
-    type: string
-    approach: string
-    features: ComparisonFeature[]
-    prosUs: string[]
-    prosThem: string[]
-    consUs: string[]
-    consThem: string[]
-    verdict: string
-    keywords: string[]
-}
+export type { ComparisonFeature, Competitor }
 
 const shared = {
     prosUs: [
