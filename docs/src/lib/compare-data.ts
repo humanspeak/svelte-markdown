@@ -1,6 +1,19 @@
-import type { ComparisonFeature, Competitor } from '@humanspeak/docs-kit'
+import type { ComparisonOurs, Competitor } from '@humanspeak/docs-kit'
 
-export type { ComparisonFeature, Competitor }
+export type { ComparisonFeature, ComparisonOurs, Competitor } from '@humanspeak/docs-kit'
+
+/**
+ * Brand identity passed to `CompareIndexV2` + `ComparisonPageV2` on
+ * every compare route. Keeping the literal here (not at each call site)
+ * means changing the canonical URL once updates the index page, every
+ * /compare/<slug> page, and the JSON-LD inside them.
+ */
+export const ours: ComparisonOurs = {
+    name: 'Svelte Markdown',
+    npmPackage: '@humanspeak/svelte-markdown',
+    slug: 'svelte-markdown',
+    url: 'https://markdown.svelte.page'
+}
 
 const shared = {
     prosUs: [
