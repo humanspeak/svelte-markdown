@@ -76,4 +76,20 @@ describe('extractAttributes', () => {
             style: 'width: calc(100% - 20px);'
         })
     })
+
+    // https://github.com/humanspeak/svelte-markdown/issues/297
+    it('should not treat words inside a quoted value as boolean attributes (issue 297)', () => {
+        const html = '<Tip title="foo bar baz">'
+        expect(extractAttributes(html)).toEqual({
+            title: 'foo bar baz'
+        })
+    })
+
+    it('should ignore tokens inside multiple quoted values that look like boolean attrs', () => {
+        const html = '<Card title="one two" subtitle="three four five">'
+        expect(extractAttributes(html)).toEqual({
+            title: 'one two',
+            subtitle: 'three four five'
+        })
+    })
 })

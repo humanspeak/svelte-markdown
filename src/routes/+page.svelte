@@ -62,6 +62,11 @@
             name: 'Issue 272',
             description: 'Issues: XSS sanitization bypass'
         },
+        {
+            href: '/test/issues/issue-297',
+            name: 'Issue 297',
+            description: 'Issues: Spaces in quoted attribute values leak as boolean attrs'
+        },
         { href: '/test/katex', name: 'KaTeX', description: 'Math rendering with KaTeX extension' },
         {
             href: '/test/katex-issue',
