@@ -28,10 +28,19 @@
     })
 </script>
 
-<div class="bg-background relative flex min-h-screen flex-col">
+<div class="dk-examples-wrap brut-wrap flex min-h-svh flex-col">
     <HeaderV2 config={docsConfig} {favicon} version={PKG_VERSION} nav={headerNav} />
     <div class="flex flex-1 flex-col" use:enhanceCodeBlocks>
         {@render children?.()}
     </div>
     <FooterV2 version={PKG_VERSION} />
 </div>
+
+<style>
+    .dk-examples-wrap {
+        background: #f8fcfb;
+    }
+    :global(html.dark) .dk-examples-wrap {
+        background: #06090a;
+    }
+</style>
