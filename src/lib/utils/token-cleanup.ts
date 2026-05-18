@@ -72,14 +72,24 @@ const formatSelfClosingHtmlToken = (token: Token): Token => {
 
 /**
  * Parses HTML attributes from a tag string into a structured object.
- * Handles both single and double quoted attributes.
+ * Handles both single and double quoted attributes, plus bare boolean
+ * attributes. Quoted regions are stripped before the boolean pass so
+ * space-separated words inside a value (e.g. `bar` in `title="foo bar
+ * baz"`) aren't mistakenly harvested as boolean attributes (issue #297).
  *
- * @param {string} raw - Raw HTML tag string containing attributes
- * @returns {Record<string, string>} Map of attribute names to their values
+ * @param raw - Raw HTML tag string containing attributes.
+ * @returns Map of attribute names to their values. Boolean attributes
+ *   are represented as `''`.
  *
  * @example
  * extractAttributes('<div class="foo" id="bar">')
- * // Returns { class: 'foo', id: 'bar' }
+ * // → { class: 'foo', id: 'bar' }
+ *
+ * extractAttributes('<Tip title="foo bar baz">')
+ * // → { title: 'foo bar baz' }   // not { title: …, bar: '' }
+ *
+ * extractAttributes('<input type="checkbox" checked disabled>')
+ * // → { type: 'checkbox', checked: '', disabled: '' }
  *
  * @internal
  */
