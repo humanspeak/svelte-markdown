@@ -1,12 +1,5 @@
 <script lang="ts">
-    import { page } from '$app/state'
-    import { afterNavigate } from '$app/navigation'
-    import {
-        HeaderV2,
-        FooterV2,
-        getBreadcrumbContext,
-        enhanceCodeBlocks
-    } from '@humanspeak/docs-kit'
+    import { ExampleLayoutV2, enhanceCodeBlocks } from '@humanspeak/docs-kit'
     import { docsConfig } from '$lib/docs-config'
     import favicon from '$lib/assets/logo.svg'
     import { buildBreadcrumbs, headerNav } from '$lib/docsNav'
@@ -16,22 +9,16 @@
 
     const { children } = $props()
     const PKG_VERSION = rootPkg.version
-
-    const breadcrumbContext = getBreadcrumbContext()
-    if (breadcrumbContext) {
-        breadcrumbContext.breadcrumbs = buildBreadcrumbs(page.url.pathname)
-    }
-    afterNavigate(() => {
-        if (breadcrumbContext) {
-            breadcrumbContext.breadcrumbs = buildBreadcrumbs(page.url.pathname)
-        }
-    })
 </script>
 
-<div class="brut-wrap flex min-h-svh flex-col">
-    <HeaderV2 config={docsConfig} {favicon} version={PKG_VERSION} nav={headerNav} />
+<ExampleLayoutV2
+    config={docsConfig}
+    {favicon}
+    version={PKG_VERSION}
+    nav={headerNav}
+    breadcrumbResolver={buildBreadcrumbs}
+>
     <div class="flex flex-1 flex-col" use:enhanceCodeBlocks>
         {@render children?.()}
     </div>
-    <FooterV2 version={PKG_VERSION} />
-</div>
+</ExampleLayoutV2>
