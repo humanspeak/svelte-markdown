@@ -92,4 +92,26 @@ describe('extractAttributes', () => {
             subtitle: 'three four five'
         })
     })
+
+    it('should ignore tokens inside single-quoted values with spaces', () => {
+        const html = "<Tip title='foo bar baz'>"
+        expect(extractAttributes(html)).toEqual({
+            title: 'foo bar baz'
+        })
+    })
+
+    it('should keep real boolean attributes alongside a quoted value with spaces', () => {
+        const html = '<input type="text input" required>'
+        expect(extractAttributes(html)).toEqual({
+            type: 'text input',
+            required: ''
+        })
+    })
+
+    it('should not capture the value of an unclosed quoted attribute as a boolean attr', () => {
+        const html = '<div class="foo bar'
+        expect(extractAttributes(html)).toEqual({
+            class: 'foo bar'
+        })
+    })
 })

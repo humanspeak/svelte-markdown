@@ -94,9 +94,14 @@ export const extractAttributes = (raw: string): Record<string, string> => {
         attributes[key] = value.trim()
     }
 
+    // Strip quoted attribute blocks before the boolean pass so word-like
+    // tokens inside a value (e.g. `bar` in `title="foo bar baz"`) aren't
+    // mistakenly harvested as boolean attributes.
+    const stripped = raw.replace(/[a-zA-Z][\w-]*?=["'][^"']*?(?:["']|$)/g, ' ')
+
     // Second pass: handle boolean attributes
     const booleanRegex = /(?:^|\s)([a-zA-Z][\w-]*?)(?=[\s>]|$)/g
-    while ((match = booleanRegex.exec(raw)) !== null) {
+    while ((match = booleanRegex.exec(stripped)) !== null) {
         const [, key] = match
         if (key && !attributes[key]) {
             attributes[key] = ''
