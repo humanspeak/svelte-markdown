@@ -7,6 +7,7 @@
     import { docsConfig } from '$lib/docs-config'
     import favicon from '$lib/assets/logo.svg'
     import { getCompetitor } from '$lib/compare-data'
+    import { headerNav } from '$lib/docsNav'
     import rootPkg from '../../../../package.json'
     import '@fontsource-variable/inter/index.css'
     import '@fontsource-variable/jetbrains-mono/index.css'
@@ -23,11 +24,7 @@
     config={docsConfig}
     {favicon}
     version={PKG_VERSION}
-    nav={[
-        { label: 'docs', href: '/docs' },
-        { label: 'examples', href: '/examples' },
-        { label: 'compare', href: '/compare' }
-    ]}
+    nav={headerNav}
     {breadcrumbResolver}
 >
     <div class="flex flex-1 flex-col" use:enhanceCodeBlocks>

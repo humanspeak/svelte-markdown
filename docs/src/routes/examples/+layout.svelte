@@ -9,7 +9,7 @@
     } from '@humanspeak/docs-kit'
     import { docsConfig } from '$lib/docs-config'
     import favicon from '$lib/assets/logo.svg'
-    import { buildBreadcrumbs } from '$lib/docsNav'
+    import { buildBreadcrumbs, headerNav } from '$lib/docsNav'
     import rootPkg from '../../../../package.json'
     import '@fontsource-variable/inter/index.css'
     import '@fontsource-variable/jetbrains-mono/index.css'
@@ -29,16 +29,7 @@
 </script>
 
 <div class="bg-background relative flex min-h-screen flex-col">
-    <HeaderV2
-        config={docsConfig}
-        {favicon}
-        version={PKG_VERSION}
-        nav={[
-            { label: 'docs', href: '/docs' },
-            { label: 'examples', href: '/examples' },
-            { label: 'compare', href: '/compare' }
-        ]}
-    />
+    <HeaderV2 config={docsConfig} {favicon} version={PKG_VERSION} nav={headerNav} />
     <div class="flex flex-1 flex-col" use:enhanceCodeBlocks>
         {@render children?.()}
     </div>

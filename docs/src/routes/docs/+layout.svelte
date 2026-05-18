@@ -1,7 +1,7 @@
 <script lang="ts">
     import { DocsLayoutV2 } from '@humanspeak/docs-kit'
     import { docsConfig } from '$lib/docs-config'
-    import { buildBreadcrumbs, docsSections } from '$lib/docsNav'
+    import { buildBreadcrumbs, docsSections, headerNav } from '$lib/docsNav'
     import favicon from '$lib/assets/logo.svg'
     import sitemapManifest from '$lib/sitemap-manifest.json'
     import rootPkg from '../../../../package.json'
@@ -44,11 +44,7 @@
     sections={docsSections}
     otherProjects={data.otherProjects}
     version={PKG_VERSION}
-    nav={[
-        { label: 'docs', href: '/docs' },
-        { label: 'examples', href: '/examples' },
-        { label: 'compare', href: '/compare' }
-    ]}
+    nav={headerNav}
     siteUrl={SITE_URL}
     breadcrumbResolver={buildBreadcrumbs}
     {faqs}

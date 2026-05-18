@@ -5,6 +5,7 @@
     import SvelteMarkdown, { rendererKeys, htmlRendererKeys } from '@humanspeak/svelte-markdown'
     import { AnimatePresence, MotionButton, MotionSpan } from '@humanspeak/svelte-motion'
     import { competitors } from '$lib/compare-data'
+    import { headerNav } from '$lib/docsNav'
     import { tick } from 'svelte'
     import '@fontsource-variable/inter/index.css'
     import '@fontsource-variable/jetbrains-mono/index.css'
@@ -317,18 +318,7 @@ Happy coding! <span style="color: hotpink">♥</span>`
 </svelte:head>
 
 <div class="brut-wrap flex min-h-svh flex-col">
-    <HeaderV2
-        config={docsConfig}
-        {favicon}
-        version={PKG_VERSION}
-        nav={[
-            { label: 'docs', href: '/docs' },
-            { label: 'api', href: '/docs/api/svelte-markdown' },
-            { label: 'examples', href: '/examples' },
-            { label: 'playground', href: '/examples/playground' },
-            { label: 'blog', href: '/blog' }
-        ]}
-    />
+    <HeaderV2 config={docsConfig} {favicon} version={PKG_VERSION} nav={headerNav} />
 
     <main class="brut">
         <!-- ── Coordinate strip (decorative grid markers) ────────────── -->
