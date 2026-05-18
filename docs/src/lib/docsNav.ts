@@ -28,6 +28,11 @@ import {
     Zap
 } from '@lucide/svelte'
 
+/**
+ * Header nav links shared across every top-level docs route (home,
+ * `/docs`, `/examples`, `/compare`). One source of truth so the nav
+ * can't drift between surfaces.
+ */
 export const headerNav: { label: string; href: string }[] = [
     { label: 'docs', href: '/docs' },
     { label: 'api', href: '/docs/api/svelte-markdown' },
@@ -37,10 +42,12 @@ export const headerNav: { label: string; href: string }[] = [
     { label: 'blog', href: '/blog' }
 ]
 
+/** Shorten verbose `docsSections` titles when they appear in breadcrumbs. */
 const sectionBreadcrumbOverrides: Record<string, string> = {
     'API Reference': 'API'
 }
 
+/** Per-pathname breadcrumb-title overrides for the deepest crumb. */
 const itemBreadcrumbOverrides: Record<string, string> = {
     '/docs/migration': 'Migration',
     '/docs/examples': 'Examples',
@@ -50,7 +57,16 @@ const itemBreadcrumbOverrides: Record<string, string> = {
     '/docs/renderers/snippet-overrides': 'Snippets'
 }
 
-export function buildBreadcrumbs(pathname: string): Breadcrumb[] {
+/**
+ * Resolve a pathname to a breadcrumb trail. Drives every brut-themed
+ * layout's `breadcrumbResolver` prop. Top-level paths return a single
+ * crumb; deeper paths walk `docsSections` for the matching item and
+ * apply `itemBreadcrumbOverrides` / `sectionBreadcrumbOverrides` so the
+ * UI shows short labels (e.g. "HTML" instead of
+ * "/docs/renderers/html-renderers"). Falls back to `[{ title: 'Docs' }]`
+ * when no match is found.
+ */
+export const buildBreadcrumbs = (pathname: string): Breadcrumb[] => {
     if (pathname === '/docs') return [{ title: 'Docs' }]
     if (pathname === '/examples') return [{ title: 'Examples' }]
     if (pathname === '/compare') return [{ title: 'Compare' }]
