@@ -1,5 +1,8 @@
 <script lang="ts">
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import rootPkg from '../../../../package.json'
+
+    const PKG_NAME = rootPkg.name
 
     const seo = getSeoContext()
     if (seo) {
@@ -12,100 +15,111 @@
         seo.ogSlug = 'examples'
     }
 
+    type ExampleTag =
+        | 'DEMO'
+        | 'RENDERERS'
+        | 'SECURITY'
+        | 'PERFORMANCE'
+        | 'EXTENSIONS'
+        | 'SNIPPETS'
+        | 'STREAMING'
+
     type Example = {
         slug: string
         title: string
-        tag: string
+        tag: ExampleTag
         description: string
     }
+
+    const COORD_MARKERS = Array.from({ length: 12 }, (_, i) => i)
 
     const examples: Example[] = [
         {
             slug: 'playground',
-            title: 'live playground',
+            title: 'Live Playground',
             tag: 'DEMO',
             description:
                 'Edit markdown in real-time and see it rendered instantly. Mix markdown with HTML tags.'
         },
         {
             slug: 'custom-renderers',
-            title: 'custom renderers',
+            title: 'Custom Renderers',
             tag: 'RENDERERS',
             description:
                 'Override default renderers and control which markdown elements are rendered.'
         },
         {
             slug: 'html-filtering',
-            title: 'html filtering',
+            title: 'HTML Filtering',
             tag: 'SECURITY',
             description: 'Interactive demo of allow/deny controls for HTML tags within markdown.'
         },
         {
             slug: 'caching-performance',
-            title: 'caching performance',
+            title: 'Caching Performance',
             tag: 'PERFORMANCE',
             description:
                 'Explore token caching and see the performance improvement on repeated renders.'
         },
         {
             slug: 'marked-extensions',
-            title: 'marked extensions',
+            title: 'Marked Extensions',
             tag: 'EXTENSIONS',
             description:
                 'Live KaTeX math with the extensions prop. Try component renderers and snippet overrides.'
         },
         {
             slug: 'mermaid',
-            title: 'mermaid diagrams',
+            title: 'Mermaid Diagrams',
             tag: 'EXTENSIONS',
             description:
                 'Async Mermaid diagram rendering with a custom marked extension. Flowcharts, sequence diagrams, and more.'
         },
         {
             slug: 'github-alerts',
-            title: 'github alerts',
+            title: 'GitHub Alerts',
             tag: 'EXTENSIONS',
             description:
                 'GitHub-style alert admonitions (NOTE, TIP, IMPORTANT, WARNING, CAUTION) with markedAlert.'
         },
         {
             slug: 'footnotes',
-            title: 'footnotes',
+            title: 'Footnotes',
             tag: 'EXTENSIONS',
             description:
                 'Footnote references and definitions with bidirectional linking using markedFootnote.'
         },
         {
             slug: 'code-formatting',
-            title: 'code formatting',
+            title: 'Code Formatting',
             tag: 'EXTENSIONS',
             description:
                 'Enhance code blocks with walkTokens extensions and snippet overrides — no custom renderers required.'
         },
         {
             slug: 'snippet-overrides',
-            title: 'snippet overrides',
+            title: 'Snippet Overrides',
             tag: 'SNIPPETS',
             description:
                 'Customize rendering inline with Svelte 5 snippets. No separate component files needed.'
         },
         {
             slug: 'linked-headings',
-            title: 'linked headings',
+            title: 'Linked Headings',
             tag: 'SNIPPETS',
             description:
                 'Add clickable anchor links to headings with snippet overrides or custom renderers.'
         },
         {
             slug: 'llm-streaming',
-            title: 'llm streaming',
+            title: 'LLM Streaming',
             tag: 'STREAMING',
             description:
                 'Stream markdown and rich HTML from AI agents in real time. Adjustable speed, jitter, and chunk modes — XSS-safe by default.'
         },
         {
             slug: 'agent-output',
-            title: 'agent output',
+            title: 'Agent Output',
             tag: 'STREAMING',
             description:
                 'Watch a simulated agent stream mixed markdown and HTML — with a live log of every javascript: URL and on*= handler the sanitizer blocks.'
@@ -116,7 +130,7 @@
 <main class="brut">
     <!-- ── Coordinate strip ─────────────────────────────────────── -->
     <div class="brut-coord" aria-hidden="true">
-        {#each Array.from({ length: 12 }, (_, i) => i) as i (i)}
+        {#each COORD_MARKERS as i (i)}
             <div>{String(i + 1).padStart(2, '0')}</div>
         {/each}
     </div>
@@ -129,10 +143,7 @@
             <div><span class="k">format</span> · <span class="v">live editors</span></div>
             <div><span class="k">tone</span> · <span class="v">interactive</span></div>
             <hr />
-            <div>
-                <span class="k">library</span> ·
-                <span class="v">@humanspeak/svelte-markdown</span>
-            </div>
+            <div><span class="k">library</span> · <span class="v">{PKG_NAME}</span></div>
             <div>
                 <span class="k">framework</span> · <span class="v accent">svelte 5</span>
             </div>
@@ -179,7 +190,7 @@
                         )}
                     </div>
                     <div class="corner">↗</div>
-                    <h3>{example.title}.</h3>
+                    <h3>{example.title.toLowerCase()}.</h3>
                     <p class="tag">{example.tag}</p>
                     <p class="line">{example.description}</p>
                     <div class="marker"></div>
@@ -208,9 +219,6 @@
 </main>
 
 <style>
-    /* Mirror the brutalist tokens & layout used by CompareIndexV2
-       so the two index pages feel like the same sheet of paper. */
-
     .brut-coord {
         display: grid;
         grid-template-columns: repeat(12, 1fr);
