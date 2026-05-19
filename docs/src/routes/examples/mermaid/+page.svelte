@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ExampleV2 } from '@humanspeak/docs-kit'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import Example from '$lib/components/general/Example.svelte'
     import Mermaid from '$lib/examples/Mermaid.svelte'
 
     const seo = getSeoContext()
@@ -15,9 +15,12 @@
     }
 </script>
 
-<Example
-    title="Mermaid Diagrams"
+<ExampleV2
+    figId="FIG-001"
+    tag="EXTENSIONS"
+    title={{ prefix: 'mermaid ', accent: 'diagrams', end: '.' }}
+    description="Async Mermaid rendering via a custom marked extension. Flowcharts, sequence diagrams, gantt charts — straight from markdown."
     sourceUrl="https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/Mermaid.svelte"
 >
     <Mermaid />
-</Example>
+</ExampleV2>

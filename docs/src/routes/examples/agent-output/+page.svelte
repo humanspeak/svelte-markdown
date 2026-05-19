@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ExampleV2 } from '@humanspeak/docs-kit'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import Example from '$lib/components/general/Example.svelte'
     import AgentOutput from '$lib/examples/AgentOutput.svelte'
 
     const seo = getSeoContext()
@@ -20,9 +20,12 @@
     }
 </script>
 
-<Example
-    title="AI Agent Output"
+<ExampleV2
+    figId="FIG-001"
+    tag="STREAMING"
+    title={{ prefix: 'agent ', accent: 'output', end: '.' }}
+    description="A simulated agent streams mixed markdown and HTML — with a live log of every javascript: URL and on*= handler the sanitizer blocks."
     sourceUrl="https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/AgentOutput.svelte"
 >
     <AgentOutput />
-</Example>
+</ExampleV2>

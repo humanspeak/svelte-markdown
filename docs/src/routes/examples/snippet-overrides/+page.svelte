@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ExampleV2 } from '@humanspeak/docs-kit'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import Example from '$lib/components/general/Example.svelte'
     import SnippetOverrides from '$lib/examples/SnippetOverrides.svelte'
 
     const seo = getSeoContext()
@@ -15,9 +15,12 @@
     }
 </script>
 
-<Example
-    title="Snippet Overrides"
+<ExampleV2
+    figId="FIG-001"
+    tag="SNIPPETS"
+    title={{ prefix: 'snippet ', accent: 'overrides', end: '.' }}
+    description="Customise rendering inline with Svelte 5 snippets — no separate component files needed, the override travels with the call site."
     sourceUrl="https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/SnippetOverrides.svelte"
 >
     <SnippetOverrides />
-</Example>
+</ExampleV2>

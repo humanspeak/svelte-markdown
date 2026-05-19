@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ExampleV2 } from '@humanspeak/docs-kit'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import Example from '$lib/components/general/Example.svelte'
     import GitHubAlerts from '$lib/examples/GitHubAlerts.svelte'
 
     const seo = getSeoContext()
@@ -15,9 +15,12 @@
     }
 </script>
 
-<Example
-    title="GitHub Alerts"
+<ExampleV2
+    figId="FIG-001"
+    tag="EXTENSIONS"
+    title={{ prefix: 'github ', accent: 'alerts', end: '.' }}
+    description="GitHub-style admonitions — NOTE, TIP, IMPORTANT, WARNING, CAUTION — via markedAlert with themeable CSS hooks."
     sourceUrl="https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/GitHubAlerts.svelte"
 >
     <GitHubAlerts />
-</Example>
+</ExampleV2>

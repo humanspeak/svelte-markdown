@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ExampleV2 } from '@humanspeak/docs-kit'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import Example from '$lib/components/general/Example.svelte'
     import Footnotes from '$lib/examples/Footnotes.svelte'
 
     const seo = getSeoContext()
@@ -20,9 +20,12 @@
     }
 </script>
 
-<Example
-    title="Footnotes"
+<ExampleV2
+    figId="FIG-001"
+    tag="EXTENSIONS"
+    title={{ prefix: 'academic ', accent: 'footnotes', end: '.' }}
+    description="Numbered and named footnote references with bidirectional links — via the built-in markedFootnote extension."
     sourceUrl="https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/Footnotes.svelte"
 >
     <Footnotes />
-</Example>
+</ExampleV2>

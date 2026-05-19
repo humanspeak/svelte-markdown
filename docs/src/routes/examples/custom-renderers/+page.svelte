@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ExampleV2 } from '@humanspeak/docs-kit'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import Example from '$lib/components/general/Example.svelte'
     import CustomRenderers from '$lib/examples/CustomRenderers.svelte'
 
     const seo = getSeoContext()
@@ -15,9 +15,12 @@
     }
 </script>
 
-<Example
-    title="Custom Renderers"
+<ExampleV2
+    figId="FIG-001"
+    tag="RENDERERS"
+    title={{ prefix: 'custom ', accent: 'renderers', end: '.' }}
+    description="Override default renderers and choose exactly which markdown elements render — via component props or allow-list helpers."
     sourceUrl="https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/CustomRenderers.svelte"
 >
     <CustomRenderers />
-</Example>
+</ExampleV2>

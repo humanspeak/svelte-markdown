@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ExampleV2 } from '@humanspeak/docs-kit'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import Example from '$lib/components/general/Example.svelte'
     import { LoaderCircle } from '@lucide/svelte'
     import type { Component } from 'svelte'
     import { onMount } from 'svelte'
@@ -24,8 +24,11 @@
     }
 </script>
 
-<Example
-    title="Code Formatting"
+<ExampleV2
+    figId="FIG-001"
+    tag="EXTENSIONS"
+    title={{ prefix: 'code ', accent: 'formatting', end: '.' }}
+    description="Enhance code blocks with walkTokens extensions and snippet overrides — syntax highlighting, language tags, copy buttons."
     sourceUrl="https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/CodeFormatting.svelte"
 >
     {#if CodeFormatting}
@@ -36,4 +39,4 @@
             Loading code formatting demo…
         </div>
     {/if}
-</Example>
+</ExampleV2>

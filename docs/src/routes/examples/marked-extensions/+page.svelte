@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ExampleV2 } from '@humanspeak/docs-kit'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import Example from '$lib/components/general/Example.svelte'
     import MarkedExtensions from '$lib/examples/MarkedExtensions.svelte'
 
     const seo = getSeoContext()
@@ -15,9 +15,12 @@
     }
 </script>
 
-<Example
-    title="Marked Extensions"
+<ExampleV2
+    figId="FIG-001"
+    tag="EXTENSIONS"
+    title={{ prefix: 'marked ', accent: 'extensions', end: '.' }}
+    description="Plug in marked extensions for KaTeX math, GitHub alerts, and more — render via component renderers or inline snippets."
     sourceUrl="https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/MarkedExtensions.svelte"
 >
     <MarkedExtensions />
-</Example>
+</ExampleV2>

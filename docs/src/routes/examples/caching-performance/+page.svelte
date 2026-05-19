@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ExampleV2 } from '@humanspeak/docs-kit'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import Example from '$lib/components/general/Example.svelte'
     import CachingPerformance from '$lib/examples/CachingPerformance.svelte'
 
     const seo = getSeoContext()
@@ -15,9 +15,12 @@
     }
 </script>
 
-<Example
-    title="Caching Performance"
+<ExampleV2
+    figId="FIG-001"
+    tag="PERFORMANCE"
+    title={{ prefix: 'caching ', accent: 'performance', end: '.' }}
+    description="Token caching gives 50–200× speedups on repeat renders. Toggle the LRU cache and watch the render budget collapse."
     sourceUrl="https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/CachingPerformance.svelte"
 >
     <CachingPerformance />
-</Example>
+</ExampleV2>

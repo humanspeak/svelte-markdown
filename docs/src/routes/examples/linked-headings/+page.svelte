@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ExampleV2 } from '@humanspeak/docs-kit'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import Example from '$lib/components/general/Example.svelte'
     import LinkedHeadings from '$lib/examples/LinkedHeadings.svelte'
 
     const seo = getSeoContext()
@@ -15,9 +15,12 @@
     }
 </script>
 
-<Example
-    title="Linked Headings"
+<ExampleV2
+    figId="FIG-001"
+    tag="SNIPPETS"
+    title={{ prefix: 'linked ', accent: 'headings', end: '.' }}
+    description="Clickable anchor permalinks on every heading — via a snippet override or a custom renderer component."
     sourceUrl="https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/LinkedHeadings.svelte"
 >
     <LinkedHeadings />
-</Example>
+</ExampleV2>

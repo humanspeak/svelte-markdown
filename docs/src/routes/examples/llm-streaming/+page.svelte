@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ExampleV2 } from '@humanspeak/docs-kit'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import Example from '$lib/components/general/Example.svelte'
     import LlmStreaming from '$lib/examples/LlmStreaming.svelte'
 
     const seo = getSeoContext()
@@ -20,9 +20,12 @@
     }
 </script>
 
-<Example
-    title="LLM Streaming"
+<ExampleV2
+    figId="FIG-001"
+    tag="STREAMING"
+    title={{ prefix: 'llm ', accent: 'streaming', end: '.' }}
+    description="Out-of-order chunk patches, adjustable speed and jitter, live render metrics — see how SvelteMarkdown converges as model output arrives."
     sourceUrl="https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/LlmStreaming.svelte"
 >
     <LlmStreaming />
-</Example>
+</ExampleV2>
