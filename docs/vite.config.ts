@@ -1,9 +1,22 @@
+import { demoManifestPlugin, sitemapManifestPlugin } from '@humanspeak/docs-kit/vite'
 import { sveltekit } from '@sveltejs/kit/vite'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-    plugins: [tailwindcss(), sveltekit()],
+    // Both manifest plugins emit JSON into `src/lib/`:
+    //   * `demoManifestPlugin`     scans `src/lib/examples/<...>/demos/*.svelte`
+    //     and writes pre-highlighted source into `demo-manifest.json`.
+    //   * `sitemapManifestPlugin`  scans `src/routes/**/+page.{svelte,svx,md}`
+    //     and writes `sitemap-manifest.json` (the input to `sitemap.xml`).
+    // Both run on `buildStart` and rewatch via Vite's own file watcher —
+    // no chokidar process, no package.json scripts to maintain.
+    plugins: [
+        sitemapManifestPlugin({ blogDir: false }),
+        demoManifestPlugin(),
+        tailwindcss(),
+        sveltekit()
+    ],
     server: {
         port: 8234,
         fs: {

@@ -1,7 +1,10 @@
 <script lang="ts">
+    import { CodeReferenceV2, ExampleV2 } from '@humanspeak/docs-kit'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import Example from '$lib/components/general/Example.svelte'
-    import LlmStreaming from '$lib/examples/LlmStreaming.svelte'
+    import StreamingConsole from '$lib/examples/llm-streaming/demos/StreamingConsole.svelte'
+    import demoManifest from '$lib/demo-manifest.json'
+    import { Activity, DollarSign, Lightbulb, Zap } from '@lucide/svelte'
+    import type { Snippet } from 'svelte'
 
     const seo = getSeoContext()
     if (seo) {
@@ -18,11 +21,117 @@
         ]
         seo.ogSlug = 'examples-llm-streaming'
     }
+
+    const SOURCE_URL =
+        'https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/'
+
+    type Section = {
+        figId: string
+        tag: string
+        title: { prefix?: string; accent: string; end?: string }
+        description: string
+        snippet: Snippet
+        codeSnippet?: Snippet
+        notes?: Snippet
+        mode?: 'live' | 'static'
+        barCells?: { k: string; v: string }[]
+        sourceUrl?: string
+    }
+
+    type ManifestEntry = {
+        code: string
+        lang: string
+        html?: { light: string; dark: string }
+    }
+    const manifest = demoManifest as Record<string, ManifestEntry>
+
+    const sections: Section[] = [
+        {
+            figId: 'FIG-001',
+            tag: 'STREAMING',
+            title: { prefix: 'llm ', accent: 'streaming', end: '.' },
+            description:
+                'Stream markdown the way real models actually deliver it — `{ value, offset }` patches that can arrive out of order. Toggle speed, jitter, and granularity to stress-test ChatGPT / Claude / Gemini delivery patterns.',
+            snippet: streamingSection,
+            codeSnippet: streamingCode,
+            notes: streamingNotes,
+            barCells: [{ k: 'mode', v: 'offset · jumbled' }],
+            sourceUrl: `${SOURCE_URL}llm-streaming/demos/StreamingConsole.svelte`
+        }
+    ]
+
+    const pad2 = (n: number) => String(n).padStart(2, '0')
 </script>
 
-<Example
-    title="LLM Streaming"
-    sourceUrl="https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/LlmStreaming.svelte"
->
-    <LlmStreaming />
-</Example>
+{#snippet streamingSection()}
+    <StreamingConsole />
+{/snippet}
+
+{#snippet streamingNotes()}
+    <ul>
+        <li>
+            <Zap />
+            <span>
+                LLMs stream tokens via SSE. SvelteMarkdown re-parses and re-renders on each update,
+                keeping output in sync — even when patches arrive out of order.
+            </span>
+        </li>
+        <li>
+            <Activity />
+            <span>
+                Render times stay under one frame budget (16ms) for typical LLM speeds of 30–80
+                tokens/sec.
+            </span>
+        </li>
+        <li>
+            <DollarSign />
+            <span>
+                Track token costs across providers with
+                <a href="https://modelpricing.ai" target="_blank" rel="noopener noreferrer">
+                    ModelPricing.ai
+                </a>.
+            </span>
+        </li>
+        <li>
+            <Lightbulb />
+            <span>
+                Building a chat UI? Pair with
+                <a href="https://virtualchat.svelte.page" target="_blank" rel="noopener noreferrer">
+                    @humanspeak/svelte-virtual-chat
+                </a>
+                for a virtualized chat viewport purpose-built for LLM conversations.
+            </span>
+        </li>
+    </ul>
+{/snippet}
+
+{#snippet streamingCode()}
+    <CodeReferenceV2
+        samples={[
+            {
+                id: 'streaming-console',
+                label: 'StreamingConsole.svelte',
+                ...manifest['llm-streaming/demos/StreamingConsole.svelte']
+            }
+        ]}
+        columns={1}
+    />
+{/snippet}
+
+{#each sections as section, i (section.figId)}
+    <ExampleV2
+        figId={section.figId}
+        tag={section.tag}
+        title={section.title}
+        description={section.description}
+        mode={section.mode ?? 'live'}
+        sheetLabel="SHEET {pad2(i + 1)} / {pad2(sections.length)}"
+        barCells={section.barCells}
+        sourceUrl={section.sourceUrl}
+        codeSnippet={section.codeSnippet}
+        codeLabel="show code"
+        notes={section.notes}
+    >
+        {@render section.snippet()}
+    </ExampleV2>
+{/each}

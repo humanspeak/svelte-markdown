@@ -10,7 +10,5 @@ procs:
         shell: rm -rf .svelte-kit node_modules/.vite && pnpm -w -r --filter @humanspeak/svelte-markdown run dev
     docs:
         shell: rm -rf docs/.svelte-kit docs/node_modules/.vite && pnpm --filter docs run dev
-    sitemap:
-        shell: pnpm --filter docs run sitemap:watch
     social:
         shell: pnpm --filter docs run social:watch

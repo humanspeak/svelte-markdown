@@ -403,7 +403,7 @@ Happy coding! <span style="color: hotpink">♥</span>`
                 </div>
             </div>
             <div class="corner bl">FIG-001</div>
-            <div class="corner br">SHEET 01 / 06</div>
+            <div class="corner br">SHEET 01 / 07</div>
         </section>
 
         <!-- ── Stats row ───────────────────────────────────────────── -->
@@ -589,10 +589,78 @@ Happy coding! <span style="color: hotpink">♥</span>`
             <a class="comp-all" href="/compare">view all comparisons →</a>
         </section>
 
-        <!-- ── FIG-006 · EXAMPLES ──────────────────────────────────── -->
+        <!-- ── FIG-006 · AI-READY DOCS ─────────────────────────────── -->
+        <section class="brut-ai" id="ai-ready">
+            <div class="lede">
+                <div class="k">FIG-006 / AI-READY</div>
+                <h2>built for <span>ai-assisted</span> code.</h2>
+                <p>
+                    Point Cursor, Claude Code, or any LLM at the manifests below and they know the
+                    full svelte-markdown API — streaming chunks, sanitizer hooks, allow/deny
+                    helpers, all 24 renderers. Migration prompts from raw `marked` just work.
+                </p>
+            </div>
+            <div class="ai-panel">
+                <div class="ai-head">
+                    <span class="ai-tab on">llms.txt</span>
+                    <span class="ai-tab">llms-full.txt</span>
+                    <span class="grow"></span>
+                    <span class="ai-meta">/llmstxt.org</span>
+                </div>
+                <div class="ai-grid">
+                    <a class="ai-cell" href="/llms.txt" target="_blank" rel="noopener">
+                        <div class="ai-cell-k">01 · index</div>
+                        <h3>
+                            <code>/llms.txt</code>
+                        </h3>
+                        <p>
+                            Compact map. Project blurb, streaming API, sanitizer hooks, allow/deny
+                            helpers, doc URLs. Drop into any agent for ground-truth lookup.
+                        </p>
+                        <div class="ai-cell-foot">~8 kB · open ↗</div>
+                    </a>
+                    <a class="ai-cell" href="/llms-full.txt" target="_blank" rel="noopener">
+                        <div class="ai-cell-k">02 · full</div>
+                        <h3>
+                            <code>/llms-full.txt</code>
+                        </h3>
+                        <p>
+                            Full reference. Every renderer, every HTML tag, sanitization internals,
+                            streaming semantics — with code snippets. Optimised for LLM context
+                            windows.
+                        </p>
+                        <div class="ai-cell-foot">~24 kB · open ↗</div>
+                    </a>
+                    <a class="ai-cell" href="/examples/agent-output" rel="noopener">
+                        <div class="ai-cell-k">03 · live demos</div>
+                        <h3>
+                            <code>/examples/*</code>
+                        </h3>
+                        <p>
+                            13 interactive examples — agent streaming with live sanitization, LLM
+                            chunks with offset patches, caching benchmark. The patterns the agent
+                            should generate.
+                        </p>
+                        <div class="ai-cell-foot">13 demos · open ↗</div>
+                    </a>
+                </div>
+                <div class="ai-prompt">
+                    <span class="ai-prompt-k">// example prompt</span>
+                    <code>
+                        Use https://markdown.svelte.page/llms.txt as the source for
+                        <em>@humanspeak/svelte-markdown</em>. Build a Svelte 5 chat UI that streams
+                        a Claude API response chunk-by-chunk using
+                        <em>SvelteMarkdown</em>'s `writeChunk` API with `streaming={'{true}'}` and
+                        the default sanitizer.
+                    </code>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── FIG-007 · EXAMPLES ──────────────────────────────────── -->
         <section class="brut-ex">
             <div class="lede">
-                <div class="k">FIG-006 / EXAMPLES</div>
+                <div class="k">FIG-007 / EXAMPLES</div>
                 <h2>explore <span>interactive examples</span>.</h2>
                 <p>
                     See agent streaming, custom renderers, HTML filtering, marked extensions,
@@ -653,7 +721,7 @@ Happy coding! <span style="color: hotpink">♥</span>`
                 </span>
             </MotionButton>
             <div class="info right">
-                <div>SHEET 06 / 06</div>
+                <div>SHEET 07 / 07</div>
                 <div>END OF DOCUMENT</div>
                 <a class="v" href="#top">↩ TO TOP</a>
             </div>
@@ -947,17 +1015,19 @@ Happy coding! <span style="color: hotpink">♥</span>`
         color: var(--brut-ink-3);
     }
 
-    /* ── Section lede (shared by stream/feat/play) ────────────────── */
+    /* ── Section lede (shared by stream/feat/play/ai) ─────────────── */
     .brut-stream .lede,
     .brut-feat .lede,
-    .brut-play .lede {
+    .brut-play .lede,
+    .brut-ai .lede {
         font-size: 10.5px;
         color: var(--brut-ink-3);
         letter-spacing: 0.14em;
     }
     .brut-stream .lede h2,
     .brut-feat .lede h2,
-    .brut-play .lede h2 {
+    .brut-play .lede h2,
+    .brut-ai .lede h2 {
         font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
         font-size: 28px;
         color: var(--brut-ink);
@@ -968,11 +1038,13 @@ Happy coding! <span style="color: hotpink">♥</span>`
     }
     .brut-stream .lede h2 span,
     .brut-feat .lede h2 span,
-    .brut-play .lede h2 span {
+    .brut-play .lede h2 span,
+    .brut-ai .lede h2 span {
         color: var(--brut-accent);
     }
     .brut-stream .lede p,
-    .brut-play .lede p {
+    .brut-play .lede p,
+    .brut-ai .lede p {
         font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
         color: var(--brut-ink-2);
         margin: 12px 0 0;
@@ -1612,6 +1684,138 @@ Happy coding! <span style="color: hotpink">♥</span>`
         text-decoration: underline;
     }
 
+    /* ── AI-ready docs section ────────────────────────────────────── */
+    .brut-ai {
+        padding: 28px 24px;
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 24px;
+        border-bottom: 1px solid var(--brut-rule);
+    }
+    .brut-ai .ai-panel {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--brut-rule);
+        background: var(--brut-bg);
+    }
+    .brut-ai .ai-head {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        border-bottom: 1px solid var(--brut-rule);
+        background: var(--brut-bg-2);
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        color: var(--brut-ink-3);
+        text-transform: uppercase;
+    }
+    .brut-ai .ai-tab {
+        padding: 9px 14px;
+        border-right: 1px solid var(--brut-rule);
+    }
+    .brut-ai .ai-tab.on {
+        background: var(--brut-bg);
+        color: var(--brut-ink);
+    }
+    .brut-ai .grow {
+        flex: 1;
+    }
+    .brut-ai .ai-meta {
+        padding: 9px 14px;
+        border-left: 1px solid var(--brut-rule);
+    }
+    .brut-ai .ai-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .brut-ai .ai-cell {
+        position: relative;
+        padding: 20px 22px 56px;
+        min-height: 200px;
+        border-right: 1px solid var(--brut-rule);
+        color: var(--brut-ink);
+        text-decoration: none;
+        transition: background-color 0.15s;
+    }
+    .brut-ai .ai-cell:last-child {
+        border-right: 0;
+    }
+    .brut-ai .ai-cell:hover {
+        background: color-mix(in oklab, var(--brut-accent) 6%, transparent);
+    }
+    .brut-ai .ai-cell-k {
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 10.5px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }
+    .brut-ai .ai-cell h3 {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        margin: 22px 0 10px;
+        color: var(--brut-ink);
+    }
+    .brut-ai .ai-cell h3 code {
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        background: transparent;
+        padding: 0;
+        font-size: 0.85em;
+        color: var(--brut-accent);
+    }
+    .brut-ai .ai-cell p {
+        font-size: 13.5px;
+        line-height: 1.55;
+        color: var(--brut-ink-2);
+        margin: 0;
+    }
+    .brut-ai .ai-cell p code {
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        background: var(--brut-bg-2);
+        padding: 1px 4px;
+        border-radius: 2px;
+        font-size: 0.92em;
+    }
+    .brut-ai .ai-cell-foot {
+        position: absolute;
+        left: 22px;
+        bottom: 18px;
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 11px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    .brut-ai .ai-prompt {
+        padding: 16px 22px;
+        border-top: 1px solid var(--brut-rule);
+        background: var(--brut-bg-2);
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--brut-ink-2);
+    }
+    .brut-ai .ai-prompt-k {
+        display: block;
+        font-size: 10.5px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+    .brut-ai .ai-prompt code {
+        background: transparent;
+        padding: 0;
+        color: var(--brut-ink);
+    }
+    .brut-ai .ai-prompt em {
+        color: var(--brut-accent);
+        font-style: normal;
+    }
+
     /* ── Footer big-type ──────────────────────────────────────────── */
     .brut-foot {
         padding: 60px 24px 36px;
@@ -1710,7 +1914,18 @@ Happy coding! <span style="color: hotpink">♥</span>`
             border-left: 0;
             border-top: 1px solid var(--brut-rule);
         }
-        .brut-ex {
+        .brut-ai .ai-grid {
+            grid-template-columns: 1fr;
+        }
+        .brut-ai .ai-cell {
+            border-right: 0;
+            border-bottom: 1px solid var(--brut-rule);
+        }
+        .brut-ai .ai-cell:last-child {
+            border-bottom: 0;
+        }
+        .brut-ex,
+        .brut-ai {
             grid-template-columns: 1fr;
         }
     }
@@ -1722,6 +1937,7 @@ Happy coding! <span style="color: hotpink">♥</span>`
         .brut-stream,
         .brut-feat,
         .brut-play,
+        .brut-ai,
         .brut-ex {
             grid-template-columns: 1fr;
             padding-left: 16px;
