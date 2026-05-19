@@ -3,6 +3,7 @@
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import DefaultRendering from '$lib/examples/snippet-overrides/demos/DefaultRendering.svelte'
     import WithSnippets from '$lib/examples/snippet-overrides/demos/WithSnippets.svelte'
+    import { Code, Layers, Paintbrush, Sparkles } from '@lucide/svelte'
     import demoManifest from '$lib/demo-manifest.json'
     import type { Snippet } from 'svelte'
 
@@ -27,6 +28,7 @@
         description: string
         snippet: Snippet
         codeSnippet?: Snippet
+        notes?: Snippet
         mode?: 'live' | 'static'
         barCells?: { k: string; v: string }[]
         sourceUrl?: string
@@ -48,6 +50,7 @@
                 'No overrides. Every markdown element falls through to its built-in renderer — clean baseline for comparison.',
             snippet: defaultSection,
             codeSnippet: defaultCode,
+            notes: defaultNotes,
             barCells: [{ k: 'overrides', v: 'none' }],
             sourceUrl: `${SOURCE_URL}snippet-overrides/demos/DefaultRendering.svelte`
         },
@@ -59,6 +62,7 @@
                 'Inline Svelte 5 snippets customize paragraphs, headings, links, blockquotes, list items, code blocks, and table cells — all in one template, no separate component files.',
             snippet: snippetsSection,
             codeSnippet: snippetsCode,
+            notes: snippetsNotes,
             barCells: [{ k: 'overrides', v: 'inline snippets' }],
             sourceUrl: `${SOURCE_URL}snippet-overrides/demos/WithSnippets.svelte`
         }
@@ -69,6 +73,24 @@
 
 {#snippet defaultSection()}
     <DefaultRendering />
+{/snippet}
+{#snippet defaultNotes()}
+    <ul>
+        <li>
+            <Layers />
+            <span>
+                Same markdown source as the snippet variant — rendered with zero overrides for clean
+                baseline comparison.
+            </span>
+        </li>
+        <li>
+            <Sparkles />
+            <span>
+                Headings, paragraphs, lists, code, tables, blockquotes — all fall through to the
+                built-in renderers.
+            </span>
+        </li>
+    </ul>
 {/snippet}
 {#snippet defaultCode()}
     <CodeReferenceV2
@@ -85,6 +107,31 @@
 
 {#snippet snippetsSection()}
     <WithSnippets />
+{/snippet}
+{#snippet snippetsNotes()}
+    <ul>
+        <li>
+            <Code />
+            <span>
+                <code>{'{#snippet paragraph}'}…{'{/snippet}'}</code> overrides happen inline inside
+                <code>&lt;SvelteMarkdown&gt;</code> — no separate component files.
+            </span>
+        </li>
+        <li>
+            <Paintbrush />
+            <span>
+                Mix-and-match: override just the elements you care about (heading + blockquote
+                here), let the rest fall through.
+            </span>
+        </li>
+        <li>
+            <Sparkles />
+            <span>
+                Snippets are fully typed and take precedence over component renderers — perfect for
+                one-off layout tweaks per page.
+            </span>
+        </li>
+    </ul>
 {/snippet}
 {#snippet snippetsCode()}
     <CodeReferenceV2
@@ -111,6 +158,7 @@
         sourceUrl={section.sourceUrl}
         codeSnippet={section.codeSnippet}
         codeLabel="show code"
+        notes={section.notes}
     >
         {@render section.snippet()}
     </ExampleV2>

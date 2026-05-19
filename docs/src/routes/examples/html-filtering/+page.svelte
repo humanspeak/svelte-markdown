@@ -4,6 +4,7 @@
     import AllowAllHtml from '$lib/examples/html-filtering/demos/AllowAllHtml.svelte'
     import AllowOnlySafe from '$lib/examples/html-filtering/demos/AllowOnlySafe.svelte'
     import BlockAllHtml from '$lib/examples/html-filtering/demos/BlockAllHtml.svelte'
+    import { AlertTriangle, ShieldCheck, ShieldOff, Sparkles, Filter, Ban } from '@lucide/svelte'
     // The manifest is generated at build/dev start by `demoManifestPlugin`
     // (registered in vite.config.ts). Each entry's key is the demo file's
     // path relative to `src/lib/examples/`. Editing any demo file
@@ -40,6 +41,7 @@
         description: string
         snippet: Snippet
         codeSnippet?: Snippet
+        notes?: Snippet
         mode?: 'live' | 'static'
         barCells?: { k: string; v: string }[]
         sourceUrl?: string
@@ -61,6 +63,7 @@
                 'Every HTML tag survives into the DOM. Iframes load, forms render, styles apply — only safe with content you fully trust.',
             snippet: allowAllSection,
             codeSnippet: allowAllCode,
+            notes: allowAllNotes,
             barCells: [{ k: 'policy', v: 'allow-all-html' }],
             sourceUrl: `${SOURCE_URL}html-filtering/demos/AllowAllHtml.svelte`
         },
@@ -72,6 +75,7 @@
                 'Allow-list a tight set of formatting tags via allowHtmlOnly. Script, iframe, and anything else dangerous drops silently.',
             snippet: allowSafeSection,
             codeSnippet: allowSafeCode,
+            notes: allowSafeNotes,
             barCells: [{ k: 'policy', v: 'allow-only-safe' }],
             sourceUrl: `${SOURCE_URL}html-filtering/demos/AllowOnlySafe.svelte`
         },
@@ -83,6 +87,7 @@
                 'Strip every HTML tag via buildUnsupportedHTML — markdown formatting only, raw HTML stripped from the output.',
             snippet: blockAllSection,
             codeSnippet: blockAllCode,
+            notes: blockAllNotes,
             barCells: [{ k: 'policy', v: 'block-all-html' }],
             sourceUrl: `${SOURCE_URL}html-filtering/demos/BlockAllHtml.svelte`
         }
@@ -93,6 +98,24 @@
 
 {#snippet allowAllSection()}
     <AllowAllHtml />
+{/snippet}
+{#snippet allowAllNotes()}
+    <ul>
+        <li>
+            <Sparkles />
+            <span>
+                Default behaviour — every HTML tag is rendered through its built-in renderer
+                including <code>iframe</code>, <code>form</code>, and <code>style</code>.
+            </span>
+        </li>
+        <li>
+            <AlertTriangle />
+            <span>
+                Only safe for content you fully trust. Untrusted markdown can inject phishing forms,
+                redirect users, or load tracking pixels.
+            </span>
+        </li>
+    </ul>
 {/snippet}
 {#snippet allowAllCode()}
     <CodeReferenceV2
@@ -110,6 +133,25 @@
 {#snippet allowSafeSection()}
     <AllowOnlySafe />
 {/snippet}
+{#snippet allowSafeNotes()}
+    <ul>
+        <li>
+            <Filter />
+            <span>
+                Pass a tag allow-list to <code>allowHtmlOnly</code> — only those tags render, everything
+                else drops out silently.
+            </span>
+        </li>
+        <li>
+            <ShieldCheck />
+            <span>
+                The right default for user-generated content. Keeps formatting like
+                <code>&lt;strong&gt;</code>, <code>&lt;em&gt;</code>, and <code>&lt;a&gt;</code>
+                while killing script + iframe vectors.
+            </span>
+        </li>
+    </ul>
+{/snippet}
 {#snippet allowSafeCode()}
     <CodeReferenceV2
         samples={[
@@ -125,6 +167,24 @@
 
 {#snippet blockAllSection()}
     <BlockAllHtml />
+{/snippet}
+{#snippet blockAllNotes()}
+    <ul>
+        <li>
+            <Ban />
+            <span>
+                <code>buildUnsupportedHTML()</code> returns a renderer map that drops every HTML tag —
+                only markdown formatting survives.
+            </span>
+        </li>
+        <li>
+            <ShieldOff />
+            <span>
+                Best when the source is a markdown editor with no need for raw HTML. Smallest attack
+                surface, predictable output.
+            </span>
+        </li>
+    </ul>
 {/snippet}
 {#snippet blockAllCode()}
     <CodeReferenceV2
@@ -151,6 +211,7 @@
         sourceUrl={section.sourceUrl}
         codeSnippet={section.codeSnippet}
         codeLabel="show code"
+        notes={section.notes}
     >
         {@render section.snippet()}
     </ExampleV2>

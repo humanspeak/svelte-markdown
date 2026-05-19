@@ -3,6 +3,7 @@
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import ComponentRendered from '$lib/examples/marked-extensions/demos/ComponentRendered.svelte'
     import SnippetRendered from '$lib/examples/marked-extensions/demos/SnippetRendered.svelte'
+    import { Code, Layers, Paintbrush, Puzzle, Sigma } from '@lucide/svelte'
     import demoManifest from '$lib/demo-manifest.json'
     import type { Snippet } from 'svelte'
 
@@ -27,6 +28,7 @@
         description: string
         snippet: Snippet
         codeSnippet?: Snippet
+        notes?: Snippet
         mode?: 'live' | 'static'
         barCells?: { k: string; v: string }[]
         sourceUrl?: string
@@ -48,6 +50,7 @@
                 'Hand the built-in `KatexRenderer` through the `renderers` prop for both `inlineKatex` and `blockKatex`. Reusable, testable, dark-mode aware.',
             snippet: componentSection,
             codeSnippet: componentCode,
+            notes: componentNotes,
             barCells: [{ k: 'override', v: 'component' }],
             sourceUrl: `${SOURCE_URL}marked-extensions/demos/ComponentRendered.svelte`
         },
@@ -59,6 +62,7 @@
                 'Inline `{#snippet inlineKatex}` + `{#snippet blockKatex}` blocks call `katex.renderToString` directly. Best for one-off layouts or wrapping the math output in custom chrome per page.',
             snippet: snippetSectionRender,
             codeSnippet: snippetCode,
+            notes: snippetNotes,
             barCells: [{ k: 'override', v: 'inline snippets' }],
             sourceUrl: `${SOURCE_URL}marked-extensions/demos/SnippetRendered.svelte`
         }
@@ -69,6 +73,32 @@
 
 {#snippet componentSection()}
     <ComponentRendered />
+{/snippet}
+{#snippet componentNotes()}
+    <ul>
+        <li>
+            <Puzzle />
+            <span>
+                <code>markedKatex()</code> extension turns <code>\(…\)</code> and
+                <code>\[…\]</code> syntax into <code>inlineKatex</code> /
+                <code>blockKatex</code> tokens.
+            </span>
+        </li>
+        <li>
+            <Sigma />
+            <span>
+                Built-in <code>KatexRenderer</code> handles both modes, AMS environments, and dark-mode
+                stylesheet variants out of the box.
+            </span>
+        </li>
+        <li>
+            <Layers />
+            <span>
+                Best when math rendering should be consistent across the whole site — one renderer,
+                no per-page chrome.
+            </span>
+        </li>
+    </ul>
 {/snippet}
 {#snippet componentCode()}
     <CodeReferenceV2
@@ -85,6 +115,25 @@
 
 {#snippet snippetSectionRender()}
     <SnippetRendered />
+{/snippet}
+{#snippet snippetNotes()}
+    <ul>
+        <li>
+            <Code />
+            <span>
+                <code>{'{#snippet inlineKatex({ text })}'}</code> +
+                <code>{'{#snippet blockKatex({ text })}'}</code> call
+                <code>katex.renderToString</code> directly inside one component.
+            </span>
+        </li>
+        <li>
+            <Paintbrush />
+            <span>
+                Best for pages that need wrapper chrome (figure + caption, custom container) or
+                site-specific math styling.
+            </span>
+        </li>
+    </ul>
 {/snippet}
 {#snippet snippetCode()}
     <CodeReferenceV2
@@ -111,6 +160,7 @@
         sourceUrl={section.sourceUrl}
         codeSnippet={section.codeSnippet}
         codeLabel="show code"
+        notes={section.notes}
     >
         {@render section.snippet()}
     </ExampleV2>

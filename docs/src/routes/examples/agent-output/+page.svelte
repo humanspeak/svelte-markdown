@@ -72,22 +72,22 @@
         <li>
             <Shield />
             <span>
-                Sanitization happens at the `Parser` layer — custom renderers and snippets cannot
-                bypass it.
+                Sanitization happens at the <code>Parser</code> layer — custom renderers and snippets
+                cannot bypass it.
             </span>
         </li>
         <li>
             <ShieldCheck />
             <span>
-                The URL allowlist covers `javascript:`, `vbscript:`, `data:` (where unsafe), and
-                other dangerous protocols.
+                The URL allowlist covers <code>javascript:</code>, <code>vbscript:</code>,
+                <code>data:</code> (where unsafe), and other dangerous protocols.
             </span>
         </li>
         <li>
             <ShieldOff />
             <span>
-                Inline event handlers (`onclick`, `onerror`, `onsubmit`, …) and `srcdoc` are
-                stripped before render.
+                Inline event handlers (<code>onclick</code>, <code>onerror</code>,
+                <code>onsubmit</code>, …) and <code>srcdoc</code> are stripped before render.
             </span>
         </li>
         <li>

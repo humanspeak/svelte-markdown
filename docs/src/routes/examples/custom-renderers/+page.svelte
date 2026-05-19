@@ -3,6 +3,7 @@
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import DefaultRenderers from '$lib/examples/custom-renderers/demos/DefaultRenderers.svelte'
     import FilteredRenderers from '$lib/examples/custom-renderers/demos/FilteredRenderers.svelte'
+    import { Filter, Layers, Sparkles, Wrench } from '@lucide/svelte'
     import demoManifest from '$lib/demo-manifest.json'
     import type { Snippet } from 'svelte'
 
@@ -27,6 +28,7 @@
         description: string
         snippet: Snippet
         codeSnippet?: Snippet
+        notes?: Snippet
         mode?: 'live' | 'static'
         barCells?: { k: string; v: string }[]
         sourceUrl?: string
@@ -48,6 +50,7 @@
                 'No renderer override — every built-in lights up. Headings, paragraphs, lists, code blocks, tables, blockquotes, and horizontal rules all render normally.',
             snippet: defaultSection,
             codeSnippet: defaultCode,
+            notes: defaultNotes,
             barCells: [{ k: 'renderers', v: 'all built-ins' }],
             sourceUrl: `${SOURCE_URL}custom-renderers/demos/DefaultRenderers.svelte`
         },
@@ -59,6 +62,7 @@
                 'allowRenderersOnly whitelists a tight set of formatting renderers. Code blocks, tables, blockquotes, and horizontal rules drop entirely from the same markdown source.',
             snippet: filteredSection,
             codeSnippet: filteredCode,
+            notes: filteredNotes,
             barCells: [{ k: 'renderers', v: 'allow-list' }],
             sourceUrl: `${SOURCE_URL}custom-renderers/demos/FilteredRenderers.svelte`
         }
@@ -69,6 +73,24 @@
 
 {#snippet defaultSection()}
     <DefaultRenderers />
+{/snippet}
+{#snippet defaultNotes()}
+    <ul>
+        <li>
+            <Layers />
+            <span>
+                Pass nothing for <code>renderers</code> and every built-in lights up — paragraphs, headings,
+                lists, code blocks, tables, blockquotes, rules.
+            </span>
+        </li>
+        <li>
+            <Sparkles />
+            <span>
+                The right default for content authoring. You get full markdown fidelity with no
+                opt-in needed.
+            </span>
+        </li>
+    </ul>
 {/snippet}
 {#snippet defaultCode()}
     <CodeReferenceV2
@@ -85,6 +107,24 @@
 
 {#snippet filteredSection()}
     <FilteredRenderers />
+{/snippet}
+{#snippet filteredNotes()}
+    <ul>
+        <li>
+            <Filter />
+            <span>
+                <code>allowRenderersOnly([...])</code> turns the renderer map into an allow-list. Anything
+                not in the list silently drops out.
+            </span>
+        </li>
+        <li>
+            <Wrench />
+            <span>
+                Use to strip features the source supports but you don't want — e.g. no code blocks
+                in chat bubbles, no tables in mobile previews.
+            </span>
+        </li>
+    </ul>
 {/snippet}
 {#snippet filteredCode()}
     <CodeReferenceV2
@@ -111,6 +151,7 @@
         sourceUrl={section.sourceUrl}
         codeSnippet={section.codeSnippet}
         codeLabel="show code"
+        notes={section.notes}
     >
         {@render section.snippet()}
     </ExampleV2>

@@ -3,6 +3,7 @@
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import ComponentRendered from '$lib/examples/github-alerts/demos/ComponentRendered.svelte'
     import SnippetRendered from '$lib/examples/github-alerts/demos/SnippetRendered.svelte'
+    import { AlertCircle, Code, Layers, Paintbrush, Puzzle } from '@lucide/svelte'
     import demoManifest from '$lib/demo-manifest.json'
     import type { Snippet } from 'svelte'
 
@@ -32,6 +33,7 @@
         description: string
         snippet: Snippet
         codeSnippet?: Snippet
+        notes?: Snippet
         mode?: 'live' | 'static'
         barCells?: { k: string; v: string }[]
         sourceUrl?: string
@@ -53,6 +55,7 @@
                 'Pass the built-in `AlertRenderer` through the `renderers` prop. Best when alerts need to look identical across pages and the styling lives in one place.',
             snippet: componentSection,
             codeSnippet: componentCode,
+            notes: componentNotes,
             barCells: [{ k: 'override', v: 'component' }],
             sourceUrl: `${SOURCE_URL}github-alerts/demos/ComponentRendered.svelte`
         },
@@ -64,6 +67,7 @@
                 'An inline `{#snippet alert(props)}` block lets each page render alerts however it wants — different icon set, different layout, full markup control.',
             snippet: snippetSectionRender,
             codeSnippet: snippetCode,
+            notes: snippetNotes,
             barCells: [{ k: 'override', v: 'inline snippet' }],
             sourceUrl: `${SOURCE_URL}github-alerts/demos/SnippetRendered.svelte`
         }
@@ -74,6 +78,31 @@
 
 {#snippet componentSection()}
     <ComponentRendered />
+{/snippet}
+{#snippet componentNotes()}
+    <ul>
+        <li>
+            <Puzzle />
+            <span>
+                <code>markedAlert()</code> extension parses <code>&gt; [!NOTE]</code> syntax into
+                <code>alert</code> tokens — five severities: NOTE, TIP, IMPORTANT, WARNING, CAUTION.
+            </span>
+        </li>
+        <li>
+            <Layers />
+            <span>
+                Pass the built-in <code>AlertRenderer</code> through <code>renderers</code> and every
+                page gets the identical look + icon set.
+            </span>
+        </li>
+        <li>
+            <AlertCircle />
+            <span>
+                Best for docs sites: alert styling lives in one component, easy to dark-mode tune,
+                accessible by default.
+            </span>
+        </li>
+    </ul>
 {/snippet}
 {#snippet componentCode()}
     <CodeReferenceV2
@@ -90,6 +119,24 @@
 
 {#snippet snippetSectionRender()}
     <SnippetRendered />
+{/snippet}
+{#snippet snippetNotes()}
+    <ul>
+        <li>
+            <Code />
+            <span>
+                <code>{'{#snippet alert({ variant, text })}'}</code> gives this page full control over
+                markup — different icons, layout, or even an entirely different design.
+            </span>
+        </li>
+        <li>
+            <Paintbrush />
+            <span>
+                Use when you need page-specific alert styling that shouldn't leak into the site-wide
+                component.
+            </span>
+        </li>
+    </ul>
 {/snippet}
 {#snippet snippetCode()}
     <CodeReferenceV2
@@ -116,6 +163,7 @@
         sourceUrl={section.sourceUrl}
         codeSnippet={section.codeSnippet}
         codeLabel="show code"
+        notes={section.notes}
     >
         {@render section.snippet()}
     </ExampleV2>

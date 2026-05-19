@@ -3,6 +3,7 @@
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import ComponentRendered from '$lib/examples/mermaid/demos/ComponentRendered.svelte'
     import SnippetRendered from '$lib/examples/mermaid/demos/SnippetRendered.svelte'
+    import { Code, Frame, GitBranch, Layers, Moon, Puzzle } from '@lucide/svelte'
     import demoManifest from '$lib/demo-manifest.json'
     import type { Snippet } from 'svelte'
 
@@ -32,6 +33,7 @@
         description: string
         snippet: Snippet
         codeSnippet?: Snippet
+        notes?: Snippet
         mode?: 'live' | 'static'
         barCells?: { k: string; v: string }[]
         sourceUrl?: string
@@ -53,6 +55,7 @@
                 'Pass the built-in `MermaidRenderer` through the `renderers` prop. Handles async rendering, loading + error states, and dark-mode reactivity with no custom logic on your end.',
             snippet: componentSection,
             codeSnippet: componentCode,
+            notes: componentNotes,
             barCells: [{ k: 'override', v: 'component' }],
             sourceUrl: `${SOURCE_URL}mermaid/demos/ComponentRendered.svelte`
         },
@@ -64,6 +67,7 @@
                 'Wrap each diagram in extra chrome via `{#snippet mermaid}` — figure + caption, custom container, anything you want. Delegates the async rendering itself to MermaidRenderer.',
             snippet: snippetSectionRender,
             codeSnippet: snippetCode,
+            notes: snippetNotes,
             barCells: [{ k: 'override', v: 'snippet wrap' }],
             sourceUrl: `${SOURCE_URL}mermaid/demos/SnippetRendered.svelte`
         }
@@ -74,6 +78,31 @@
 
 {#snippet componentSection()}
     <ComponentRendered />
+{/snippet}
+{#snippet componentNotes()}
+    <ul>
+        <li>
+            <Puzzle />
+            <span>
+                <code>markedMermaid()</code> registers an async <code>walkTokens</code> extension
+                that turns <code>```mermaid</code> fences into renderable tokens.
+            </span>
+        </li>
+        <li>
+            <GitBranch />
+            <span>
+                Built-in <code>MermaidRenderer</code> handles flowcharts, sequence diagrams, class diagrams,
+                state diagrams, gantt charts.
+            </span>
+        </li>
+        <li>
+            <Moon />
+            <span>
+                Loading + error states + dark-mode theme switching are all handled — zero custom
+                logic on your end.
+            </span>
+        </li>
+    </ul>
 {/snippet}
 {#snippet componentCode()}
     <CodeReferenceV2
@@ -90,6 +119,31 @@
 
 {#snippet snippetSectionRender()}
     <SnippetRendered />
+{/snippet}
+{#snippet snippetNotes()}
+    <ul>
+        <li>
+            <Code />
+            <span>
+                <code>{'{#snippet mermaid({ text })}'}</code> lets the page own the chrome around each
+                diagram — figure + caption, custom container, anything.
+            </span>
+        </li>
+        <li>
+            <Frame />
+            <span>
+                The async rendering itself still delegates to <code>MermaidRenderer</code> — you only
+                own the wrapper.
+            </span>
+        </li>
+        <li>
+            <Layers />
+            <span>
+                Pairs nicely with <code>markedMermaid()</code> — extension parses the fences, snippet
+                shapes the output.
+            </span>
+        </li>
+    </ul>
 {/snippet}
 {#snippet snippetCode()}
     <CodeReferenceV2
@@ -116,6 +170,7 @@
         sourceUrl={section.sourceUrl}
         codeSnippet={section.codeSnippet}
         codeLabel="show code"
+        notes={section.notes}
     >
         {@render section.snippet()}
     </ExampleV2>

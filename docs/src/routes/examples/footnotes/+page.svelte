@@ -3,6 +3,7 @@
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import ComponentRendered from '$lib/examples/footnotes/demos/ComponentRendered.svelte'
     import SnippetRendered from '$lib/examples/footnotes/demos/SnippetRendered.svelte'
+    import { ArrowLeftRight, BookOpen, Code, Paintbrush, Puzzle } from '@lucide/svelte'
     import demoManifest from '$lib/demo-manifest.json'
     import type { Snippet } from 'svelte'
 
@@ -32,6 +33,7 @@
         description: string
         snippet: Snippet
         codeSnippet?: Snippet
+        notes?: Snippet
         mode?: 'live' | 'static'
         barCells?: { k: string; v: string }[]
         sourceUrl?: string
@@ -53,6 +55,7 @@
                 'Pair the built-in `FootnoteRef` + `FootnoteSection` components through the `renderers` prop. Best for long-form / academic writing that needs consistent footnote styling across pages.',
             snippet: componentSection,
             codeSnippet: componentCode,
+            notes: componentNotes,
             barCells: [{ k: 'override', v: 'component' }],
             sourceUrl: `${SOURCE_URL}footnotes/demos/ComponentRendered.svelte`
         },
@@ -64,6 +67,7 @@
                 'Inline `{#snippet footnoteRef}` + `{#snippet footnoteSection}` blocks let one page own its footnote markup — bracketed reference style and a chip-labelled definition list, all in one file.',
             snippet: snippetSectionRender,
             codeSnippet: snippetCode,
+            notes: snippetNotes,
             barCells: [{ k: 'override', v: 'inline snippets' }],
             sourceUrl: `${SOURCE_URL}footnotes/demos/SnippetRendered.svelte`
         }
@@ -74,6 +78,31 @@
 
 {#snippet componentSection()}
     <ComponentRendered />
+{/snippet}
+{#snippet componentNotes()}
+    <ul>
+        <li>
+            <Puzzle />
+            <span>
+                <code>markedFootnote()</code> extension parses <code>[^id]</code> references +
+                <code>[^id]: text</code> definitions into linked footnote tokens.
+            </span>
+        </li>
+        <li>
+            <ArrowLeftRight />
+            <span>
+                Built-in <code>FootnoteRef</code> + <code>FootnoteSection</code> give you superscript
+                reference numerals and a backlink from the definition list.
+            </span>
+        </li>
+        <li>
+            <BookOpen />
+            <span>
+                Best for long-form / academic writing where footnote styling should stay identical
+                across every page.
+            </span>
+        </li>
+    </ul>
 {/snippet}
 {#snippet componentCode()}
     <CodeReferenceV2
@@ -90,6 +119,25 @@
 
 {#snippet snippetSectionRender()}
     <SnippetRendered />
+{/snippet}
+{#snippet snippetNotes()}
+    <ul>
+        <li>
+            <Code />
+            <span>
+                Inline <code>{'{#snippet footnoteRef}'}</code> +
+                <code>{'{#snippet footnoteSection}'}</code> keep the bidirectional links but let one page
+                own its markup.
+            </span>
+        </li>
+        <li>
+            <Paintbrush />
+            <span>
+                Demo here swaps superscript for <code>[n]</code> bracketed references and a chip-labelled
+                definition list — all per-page, no shared component.
+            </span>
+        </li>
+    </ul>
 {/snippet}
 {#snippet snippetCode()}
     <CodeReferenceV2
@@ -116,6 +164,7 @@
         sourceUrl={section.sourceUrl}
         codeSnippet={section.codeSnippet}
         codeLabel="show code"
+        notes={section.notes}
     >
         {@render section.snippet()}
     </ExampleV2>
