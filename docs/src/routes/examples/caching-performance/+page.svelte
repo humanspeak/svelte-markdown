@@ -1,26 +1,114 @@
 <script lang="ts">
-    import { ExampleV2 } from '@humanspeak/docs-kit'
+    import { CodeReferenceV2, ExampleV2 } from '@humanspeak/docs-kit'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import CachingPerformance from '$lib/examples/CachingPerformance.svelte'
+    import CachingBenchmark from '$lib/examples/caching-performance/demos/CachingBenchmark.svelte'
+    import demoManifest from '$lib/demo-manifest.json'
+    import { Gauge, Recycle, Zap } from '@lucide/svelte'
+    import type { Snippet } from 'svelte'
 
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Caching Performance | Examples | Svelte Markdown'
         seo.description =
-            'Explore token caching performance in @humanspeak/svelte-markdown. See the 50-200x speedup from built-in LRU caching.'
+            'Explore the built-in LRU TokenCache in @humanspeak/svelte-markdown — measure cold vs warm render times, watch the cache size grow, and see the 50–200× speedup on repeat renders.'
         seo.ogTitle = 'Caching Performance'
-        seo.ogTagline = 'See the 50-200x speedup from LRU caching.'
-        seo.ogFeatures = ['Benchmark', '50-200x Speed', 'LRU Cache', 'Real-Time Stats']
+        seo.ogTagline = 'Measure the LRU token cache live — cold render vs cached render.'
+        seo.ogFeatures = ['LRU Cache', '50–200× Speedup', 'Live Metrics', 'Render Log']
         seo.ogSlug = 'examples-caching-performance'
     }
+
+    const SOURCE_URL =
+        'https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/'
+
+    type Section = {
+        figId: string
+        tag: string
+        title: { prefix?: string; accent: string; end?: string }
+        description: string
+        snippet: Snippet
+        codeSnippet?: Snippet
+        notes?: Snippet
+        mode?: 'live' | 'static'
+        barCells?: { k: string; v: string }[]
+        sourceUrl?: string
+    }
+
+    type ManifestEntry = {
+        code: string
+        lang: string
+        html?: { light: string; dark: string }
+    }
+    const manifest = demoManifest as Record<string, ManifestEntry>
+
+    const sections: Section[] = [
+        {
+            figId: 'FIG-001',
+            tag: 'BENCHMARK',
+            title: { prefix: 'token cache ', accent: 'benchmark', end: '.' },
+            description:
+                'Render the same markdown once cold, once warm. The render log records every cycle; the stats card surfaces average time and cache size. Clear the cache to start the comparison over.',
+            snippet: benchmarkSection,
+            codeSnippet: benchmarkCode,
+            notes: benchmarkNotes,
+            barCells: [{ k: 'cache', v: 'lru 50d / 5m' }],
+            sourceUrl: `${SOURCE_URL}caching-performance/demos/CachingBenchmark.svelte`
+        }
+    ]
+
+    const pad2 = (n: number) => String(n).padStart(2, '0')
 </script>
 
-<ExampleV2
-    figId="FIG-001"
-    tag="PERFORMANCE"
-    title={{ prefix: 'caching ', accent: 'performance', end: '.' }}
-    description="Token caching gives 50–200× speedups on repeat renders. Toggle the LRU cache and watch the render budget collapse."
-    sourceUrl="https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/CachingPerformance.svelte"
->
-    <CachingPerformance />
-</ExampleV2>
+{#snippet benchmarkSection()}
+    <CachingBenchmark />
+{/snippet}
+
+{#snippet benchmarkNotes()}
+    <ul>
+        <li>
+            <Zap />
+            <span>First render parses markdown into tokens and stores them in an LRU cache.</span>
+        </li>
+        <li>
+            <Gauge />
+            <span>
+                Subsequent renders of the same content skip parsing and use cached tokens (50–200×
+                faster).
+            </span>
+        </li>
+        <li>
+            <Recycle />
+            <span>LRU eviction and TTL expiration manage memory automatically.</span>
+        </li>
+    </ul>
+{/snippet}
+
+{#snippet benchmarkCode()}
+    <CodeReferenceV2
+        samples={[
+            {
+                id: 'caching-benchmark',
+                label: 'CachingBenchmark.svelte',
+                ...manifest['caching-performance/demos/CachingBenchmark.svelte']
+            }
+        ]}
+        columns={1}
+    />
+{/snippet}
+
+{#each sections as section, i (section.figId)}
+    <ExampleV2
+        figId={section.figId}
+        tag={section.tag}
+        title={section.title}
+        description={section.description}
+        mode={section.mode ?? 'live'}
+        sheetLabel="SHEET {pad2(i + 1)} / {pad2(sections.length)}"
+        barCells={section.barCells}
+        sourceUrl={section.sourceUrl}
+        codeSnippet={section.codeSnippet}
+        codeLabel="show code"
+        notes={section.notes}
+    >
+        {@render section.snippet()}
+    </ExampleV2>
+{/each}
