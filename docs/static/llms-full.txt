@@ -1,6 +1,6 @@
 # Svelte Markdown - Complete Reference
 
-> A powerful, customizable markdown and HTML renderer for Svelte 5 — built for rendering streaming AI agent output from Claude Code, ChatGPT, and agentic workflows. Built on Marked and HTMLParser2 with 24 markdown renderers, 77+ HTML tag renderers, LRU token caching, allow/deny filtering, and XSS-safe defaults.
+> A powerful, customizable markdown and HTML renderer for Svelte 5 — built for rendering streaming AI agent output from Claude Code, ChatGPT, and agentic workflows. Built on Marked and HTMLParser2 with 24 markdown renderers, 83 HTML tag renderers, LRU token caching, allow/deny filtering, and XSS-safe defaults.
 
 ## Package Information
 
@@ -367,7 +367,7 @@ The following keys can be used in the `renderers` prop:
 - tablerow - tr elements
 - tablecell - th/td elements
 
-## 77+ HTML Tag Renderers
+## 83 HTML Tag Renderers
 
 Built-in renderers for HTML tags found within markdown content (use the `html` key in `renderers`):
 
@@ -454,21 +454,66 @@ const renderers = buildUnsupportedRenderers()
 
 ## Marked Extensions
 
-Use third-party marked extensions via the `extensions` prop:
+The library ships first-party marked extensions in the `@humanspeak/svelte-markdown/extensions` subpath. Each pair (`markedX` + `XRenderer`) is designed to plug into the `extensions` prop with the matching renderer wired through `renderers`. Inline `{#snippet}` overrides also work — see the snippet-overrides example.
 
 ```svelte
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
-    import { markedKatex } from 'marked-katex-extension'
+    import {
+        markedKatex,
+        KatexRenderer,
+        markedMermaid,
+        MermaidRenderer,
+        markedAlert,
+        AlertRenderer,
+        markedFootnote,
+        FootnoteRef,
+        FootnoteSection
+    } from '@humanspeak/svelte-markdown/extensions'
 
-    const extensions = [markedKatex({ throwOnError: false })]
-    const source = '$$E = mc^2$$'
+    const extensions = [
+        markedKatex({ throwOnError: false }),
+        markedMermaid(),
+        markedAlert(),
+        markedFootnote()
+    ]
+    const renderers = {
+        inlineKatex: KatexRenderer,
+        blockKatex: KatexRenderer,
+        mermaid: MermaidRenderer,
+        alert: AlertRenderer,
+        footnoteRef: FootnoteRef,
+        footnoteSection: FootnoteSection
+    }
+    const source = `## Math + alerts + footnotes
+$$E = mc^2$$
+
+> [!TIP]
+> Markdown alerts work alongside KaTeX[^1].
+
+[^1]: Footnotes too.`
+</script>
+
+<SvelteMarkdown {source} {extensions} {renderers} />
+```
+
+For Prettier-powered code formatting, pair the third-party `marked-code-format` extension with the `prettier` info-string marker on any code fence:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { markedCodeFormat } from 'marked-code-format'
+
+    const extensions = [markedCodeFormat()]
+    const source = `\`\`\`js prettier
+function add(a,b){return a+b}
+\`\`\``
 </script>
 
 <SvelteMarkdown {source} {extensions} />
 ```
 
-Streaming is automatically disabled when an async extension (e.g. Mermaid) is active, since async `walkTokens` callbacks are incompatible with the synchronous diffing path.
+Streaming is automatically disabled when an async extension (e.g. Mermaid, marked-code-format) is active, since async `walkTokens` callbacks are incompatible with the synchronous diffing path.
 
 ## Direct Use of IncrementalParser
 

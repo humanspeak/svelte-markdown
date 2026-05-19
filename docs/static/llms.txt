@@ -1,6 +1,6 @@
 # Svelte Markdown
 
-> A powerful, customizable markdown and HTML renderer for Svelte 5 — built for rendering streaming AI agent output from Claude Code, ChatGPT, and agentic workflows. Built on Marked and HTMLParser2 with 24 markdown renderers, 77+ HTML tag renderers, LRU token caching, allow/deny filtering, and XSS-safe defaults.
+> A powerful, customizable markdown and HTML renderer for Svelte 5 — built for rendering streaming AI agent output from Claude Code, ChatGPT, and agentic workflows. Built on Marked and HTMLParser2 with 24 markdown renderers, 83 HTML tag renderers, LRU token caching, allow/deny filtering, and XSS-safe defaults.
 
 ## Overview
 
@@ -108,13 +108,14 @@ Route semantic markup like `<thinking>`, `<tool-call>`, or any custom element to
 - XSS-safe defaults — URL protocol allowlist, `on*` and `srcdoc` stripping
 - Custom sanitizer hooks — `sanitizeUrl` / `sanitizeAttributes` props with `defaultSanitize*` and `unsanitized*` exports
 - 24 built-in markdown renderers (heading, paragraph, link, code, table, etc.)
-- 77+ HTML tag renderers for raw HTML within markdown
+- 83 HTML tag renderers for raw HTML within markdown
 - Custom HTML tag routing — render `<thinking>`, `<tool-call>`, or any tag as your own component
 - Svelte 5 runes compatibility ($props, $derived) with full TypeScript types
 - LRU token caching (50-200x faster re-renders)
 - Allow/deny filtering for HTML tags and markdown renderers (`allowHtmlOnly`, `excludeHtmlOnly`, `buildUnsupportedHTML`, `allowRenderersOnly`, `excludeRenderersOnly`, `buildUnsupportedRenderers`)
 - Custom renderer components and Svelte 5 snippet overrides for inline customization
-- Marked extensions support (KaTeX, Mermaid, alerts, footnotes)
+- First-party marked extensions module — `@humanspeak/svelte-markdown/extensions` exports `markedKatex` + `KatexRenderer`, `markedMermaid` + `MermaidRenderer`, `markedAlert` + `AlertRenderer`, and `markedFootnote` + `FootnoteRef` + `FootnoteSection`
+- Code formatting via the `marked-code-format` walkTokens extension — add `prettier` to any code fence and it's auto-formatted through Prettier with zero custom renderer
 - Async markdown parsing support
 - Secure HTML parsing via HTMLParser2 (no `innerHTML`)
 
