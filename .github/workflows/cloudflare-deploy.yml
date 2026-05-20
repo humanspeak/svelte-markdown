@@ -49,10 +49,6 @@ jobs:
             - name: Build Package
               run: pnpm run build
 
-            - name: Generate sitemap manifest
-              working-directory: docs
-              run: pnpm run sitemap:manifest
-
             - name: Deploy Docs
               working-directory: docs
               env:
