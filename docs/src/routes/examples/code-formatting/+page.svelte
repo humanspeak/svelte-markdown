@@ -1,11 +1,16 @@
 <script lang="ts">
-    import { CodeReferenceV2, ExampleV2 } from '@humanspeak/docs-kit'
+    import {
+        CodeReferenceV2,
+        ExampleV2,
+        formatSheetLabel,
+        type DemoManifestEntry,
+        type ExampleSection
+    } from '@humanspeak/docs-kit'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import PrettierExtension from '$lib/examples/code-formatting/demos/PrettierExtension.svelte'
     import SnippetRendered from '$lib/examples/code-formatting/demos/SnippetRendered.svelte'
     import { Code, Package, Puzzle, Tag, Wrench } from '@lucide/svelte'
     import demoManifest from '$lib/demo-manifest.json'
-    import type { Snippet } from 'svelte'
 
     const seo = getSeoContext()
     if (seo) {
@@ -21,27 +26,9 @@
     const SOURCE_URL =
         'https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/'
 
-    type Section = {
-        figId: string
-        tag: string
-        title: { prefix?: string; accent: string; end?: string }
-        description: string
-        snippet: Snippet
-        codeSnippet?: Snippet
-        notes?: Snippet
-        mode?: 'live' | 'static'
-        barCells?: { k: string; v: string }[]
-        sourceUrl?: string
-    }
+    const manifest = demoManifest as Record<string, DemoManifestEntry>
 
-    type ManifestEntry = {
-        code: string
-        lang: string
-        html?: { light: string; dark: string }
-    }
-    const manifest = demoManifest as Record<string, ManifestEntry>
-
-    const sections: Section[] = [
+    const sections: ExampleSection[] = [
         {
             figId: 'FIG-001',
             tag: 'EXTENSION',
@@ -67,8 +54,6 @@
             sourceUrl: `${SOURCE_URL}code-formatting/demos/SnippetRendered.svelte`
         }
     ]
-
-    const pad2 = (n: number) => String(n).padStart(2, '0')
 </script>
 
 {#snippet extensionSection()}
@@ -154,7 +139,7 @@
         title={section.title}
         description={section.description}
         mode={section.mode ?? 'live'}
-        sheetLabel="SHEET {pad2(i + 1)} / {pad2(sections.length)}"
+        sheetLabel={formatSheetLabel(i, sections.length)}
         barCells={section.barCells}
         sourceUrl={section.sourceUrl}
         codeSnippet={section.codeSnippet}

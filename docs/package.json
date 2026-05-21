@@ -20,7 +20,7 @@
     "dependencies": {
         "@fontsource-variable/inter": "^5.2.8",
         "@fontsource-variable/jetbrains-mono": "^5.2.8",
-        "@humanspeak/docs-kit": "github:humanspeak/docs-kit#2026.5.27",
+        "@humanspeak/docs-kit": "github:humanspeak/docs-kit#2026.5.31",
         "@humanspeak/svelte-markdown": "workspace:*",
         "katex": "^0.16.47",
         "marked-code-format": "^1.1.6",
