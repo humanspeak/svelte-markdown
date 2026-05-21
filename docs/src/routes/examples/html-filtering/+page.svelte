@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { CodeReferenceV2, ExampleV2 } from '@humanspeak/docs-kit'
+    import {
+        CodeReferenceV2,
+        ExampleV2,
+        formatSheetLabel,
+        type DemoManifestEntry,
+        type ExampleSection
+    } from '@humanspeak/docs-kit'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import AllowAllHtml from '$lib/examples/html-filtering/demos/AllowAllHtml.svelte'
     import AllowOnlySafe from '$lib/examples/html-filtering/demos/AllowOnlySafe.svelte'
@@ -12,7 +18,6 @@
     // demo and the displayed code stay in lockstep with zero per-page
     // bookkeeping.
     import demoManifest from '$lib/demo-manifest.json'
-    import type { Snippet } from 'svelte'
 
     const seo = getSeoContext()
     if (seo) {
@@ -34,27 +39,10 @@
     // component is mounted as the body, and the manifest entry is fed
     // through CodeReferenceV2 as the toggleable code panel. Adding a new
     // policy is one new demo file + one row here.
-    type Section = {
-        figId: string
-        tag: string
-        title: { prefix?: string; accent: string; end?: string }
-        description: string
-        snippet: Snippet
-        codeSnippet?: Snippet
-        notes?: Snippet
-        mode?: 'live' | 'static'
-        barCells?: { k: string; v: string }[]
-        sourceUrl?: string
-    }
 
-    type ManifestEntry = {
-        code: string
-        lang: string
-        html?: { light: string; dark: string }
-    }
-    const manifest = demoManifest as Record<string, ManifestEntry>
+    const manifest = demoManifest as Record<string, DemoManifestEntry>
 
-    const sections: Section[] = [
+    const sections: ExampleSection[] = [
         {
             figId: 'FIG-001',
             tag: 'UNRESTRICTED',
@@ -92,8 +80,6 @@
             sourceUrl: `${SOURCE_URL}html-filtering/demos/BlockAllHtml.svelte`
         }
     ]
-
-    const pad2 = (n: number) => String(n).padStart(2, '0')
 </script>
 
 {#snippet allowAllSection()}
@@ -206,7 +192,7 @@
         title={section.title}
         description={section.description}
         mode={section.mode ?? 'live'}
-        sheetLabel="SHEET {pad2(i + 1)} / {pad2(sections.length)}"
+        sheetLabel={formatSheetLabel(i, sections.length)}
         barCells={section.barCells}
         sourceUrl={section.sourceUrl}
         codeSnippet={section.codeSnippet}
