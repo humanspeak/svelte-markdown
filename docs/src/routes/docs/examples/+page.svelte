@@ -1,7 +1,5 @@
 <script lang="ts">
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import Icon from '$lib/components/general/Icon.svelte'
-    import { ArrowRight } from '@lucide/svelte'
     import type { IconName } from '$lib/icons'
 
     const seo = getSeoContext()
@@ -15,10 +13,15 @@
         seo.ogSlug = 'docs-examples'
     }
 
-    const examples: {
-        category: string
-        items: { title: string; description: string; href: string; icon: IconName }[]
-    }[] = [
+    type ExampleItem = {
+        title: string
+        description: string
+        href: string
+        icon: IconName
+        kind?: 'doc' | 'live'
+    }
+
+    const examples: { category: string; items: ExampleItem[] }[] = [
         {
             category: 'Getting Started',
             items: [
@@ -79,14 +82,16 @@
                     description:
                         'Render Mermaid diagrams with a custom marked extension and async component renderers.',
                     href: '/examples/mermaid',
-                    icon: 'workflow'
+                    icon: 'workflow',
+                    kind: 'live'
                 },
                 {
                     title: 'LLM Streaming',
                     description:
                         'Simulate real-time AI response streaming with adjustable speed, jitter, and chunk modes.',
                     href: '/examples/llm-streaming',
-                    icon: 'zap'
+                    icon: 'zap',
+                    kind: 'live'
                 }
             ]
         }
@@ -119,143 +124,294 @@
             notes: 'Access AST tokens'
         }
     ]
+
+    const pad2 = (n: number) => String(n).padStart(2, '0')
 </script>
 
-<!-- Hero Section -->
-<div class="not-prose mb-10">
-    <h1 class="text-foreground mb-3 text-4xl font-bold">Usage Examples</h1>
-    <p class="text-muted-foreground max-w-2xl text-lg">
-        Explore practical examples of how to use @humanspeak/svelte-markdown in real-world
-        scenarios.
-    </p>
-</div>
+<div class="dx not-prose">
+    <header class="dx-head">
+        <div class="dx-kicker">// docs / examples</div>
+        <h1>usage <span>examples</span>.</h1>
+        <p>
+            Curated patterns for integrating <b>@humanspeak/svelte-markdown</b> — short walkthrough
+            docs paired with live demos. Items marked <span class="dx-tag dx-tag-live">live</span>
+            jump to interactive editors under <code>/examples</code>.
+        </p>
+    </header>
 
-<!-- Examples Grid by Category -->
-{#each examples as category, categoryIndex}
-    <div class="not-prose mb-10">
-        <h2 class="text-foreground mb-4 text-xl font-semibold">{category.category}</h2>
-        <div class="grid gap-4 sm:grid-cols-2">
-            {#each category.items as example, itemIndex}
-                <a
-                    href={example.href}
-                    class="example-card group border-border bg-card hover:border-brand-500/50 hover:shadow-brand-500/10 relative overflow-hidden rounded-xl border p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-                    style="animation-delay: {(categoryIndex * 3 + itemIndex) * 50}ms"
-                >
-                    <!-- Gradient overlay on hover -->
-                    <div
-                        class="from-brand-500/5 absolute inset-0 bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                    ></div>
-
-                    <!-- Content -->
-                    <div class="relative z-10">
-                        <!-- Icon -->
-                        <div
-                            class="from-brand-500 to-brand-600 mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br text-white transition-transform duration-300 group-hover:scale-110"
-                        >
-                            <Icon name={example.icon} class="size-4" />
-                        </div>
-
-                        <h3
-                            class="text-foreground group-hover:text-brand-600 mb-1.5 text-lg font-semibold transition-colors"
-                        >
-                            {example.title}
-                        </h3>
-
-                        <p class="text-muted-foreground mb-3 line-clamp-2 text-sm">
-                            {example.description}
-                        </p>
-
-                        <!-- View link -->
-                        <div
-                            class="text-brand-600 group-hover:text-brand-700 flex items-center text-sm font-medium"
-                        >
-                            View Example
-                            <ArrowRight
-                                class="ml-2 size-4 transition-transform duration-200 group-hover:translate-x-1"
-                            />
-                        </div>
-                    </div>
-
-                    <!-- Decorative corner -->
-                    <div
-                        class="from-brand-500/10 absolute top-0 right-0 h-16 w-16 rounded-bl-full bg-gradient-to-bl to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                    ></div>
-                </a>
-            {/each}
-        </div>
-    </div>
-{/each}
-
-<!-- Quick Reference Section -->
-<div class="not-prose mb-10">
-    <h2 class="text-foreground mb-4 text-xl font-semibold">Quick Reference</h2>
-    <div class="border-border overflow-x-auto rounded-xl border">
-        <table class="w-full text-sm">
-            <thead class="bg-muted/50">
-                <tr>
-                    <th class="text-foreground px-4 py-3 text-left font-medium">Use Case</th>
-                    <th class="text-foreground px-4 py-3 text-left font-medium">Usage</th>
-                    <th class="text-foreground px-4 py-3 text-left font-medium">Notes</th>
-                </tr>
-            </thead>
-            <tbody class="divide-border divide-y">
-                {#each quickReference as row}
-                    <tr class="hover:bg-muted/30 transition-colors">
-                        <td class="text-foreground px-4 py-3">{row.useCase}</td>
-                        <td class="px-4 py-3">
-                            <code class="bg-muted text-brand-600 rounded px-1.5 py-0.5 text-xs"
-                                >{row.component}</code
-                            >
-                        </td>
-                        <td class="text-muted-foreground px-4 py-3">{row.notes}</td>
-                    </tr>
-                {/each}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Best Practices Section -->
-<div class="not-prose">
-    <h2 class="text-foreground mb-4 text-xl font-semibold">Best Practices</h2>
-    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {#each [{ icon: 'shield' as IconName, title: 'Filter untrusted HTML', description: 'Use allowHtmlOnly/excludeHtmlOnly for user content' }, { icon: 'zap' as IconName, title: 'Leverage token caching', description: 'Repeated renders are 50-200x faster automatically' }, { icon: 'paintbrush' as IconName, title: 'Use custom renderers', description: 'Override specific elements for custom styling' }, { icon: 'code' as IconName, title: 'Use isInline for labels', description: 'Avoid block-level wrapping for inline content' }, { icon: 'workflow' as IconName, title: 'Inspect tokens when debugging', description: 'Use the parsed callback to see the AST' }] as practice}
-            <div class="border-border bg-card flex items-start gap-3 rounded-lg border p-4">
-                <div
-                    class="bg-brand-500/10 text-brand-600 flex h-8 w-8 shrink-0 items-center justify-center rounded-md"
-                >
-                    <Icon name={practice.icon} class="size-3.5" />
-                </div>
-                <div>
-                    <h3 class="text-foreground font-medium">{practice.title}</h3>
-                    <p class="text-muted-foreground text-sm">{practice.description}</p>
-                </div>
+    {#each examples as category, ci (category.category)}
+        <section class="dx-cat">
+            <div class="dx-cat-head">
+                <span class="dx-cat-id">{pad2(ci + 1)}</span>
+                <h2>{category.category}</h2>
+                <span class="dx-cat-count">
+                    {category.items.length} item{category.items.length === 1 ? '' : 's'}
+                </span>
             </div>
-        {/each}
-    </div>
+            <div class="dx-grid">
+                {#each category.items as item (item.href)}
+                    <a class="dx-cell" href={item.href}>
+                        <div class="dx-cell-head">
+                            <span class="dx-cell-tag">
+                                {item.kind === 'live' ? 'LIVE DEMO' : 'WALKTHROUGH'}
+                            </span>
+                            <span class="dx-cell-arrow">↗</span>
+                        </div>
+                        <h3>{item.title}</h3>
+                        <p>{item.description}</p>
+                    </a>
+                {/each}
+            </div>
+        </section>
+    {/each}
+
+    <section class="dx-ref">
+        <div class="dx-cat-head">
+            <span class="dx-cat-id">{pad2(examples.length + 1)}</span>
+            <h2>Quick Reference</h2>
+            <span class="dx-cat-count">{quickReference.length} patterns</span>
+        </div>
+        <div class="dx-table-wrap">
+            <table class="dx-table">
+                <thead>
+                    <tr>
+                        <th>Use case</th>
+                        <th>Usage</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each quickReference as row (row.useCase)}
+                        <tr>
+                            <td>{row.useCase}</td>
+                            <td><code>{row.component}</code></td>
+                            <td class="dx-table-notes">{row.notes}</td>
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
+        </div>
+    </section>
 </div>
 
 <style>
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+    /* ── Page chrome — sits inside DocsLayoutV2's content rail. */
+    .dx {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        color: var(--brut-ink, currentColor);
+    }
+    .dx-head {
+        margin-bottom: 32px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--brut-rule);
+    }
+    .dx-kicker {
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 10.5px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.14em;
+        margin-bottom: 12px;
+    }
+    .dx-head h1 {
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 32px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        margin: 0 0 14px;
+        color: var(--brut-ink);
+        text-transform: lowercase;
+    }
+    .dx-head h1 span {
+        color: var(--brut-accent);
+    }
+    .dx-head p {
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--brut-ink-2);
+        margin: 0;
+        max-width: 60ch;
+    }
+    .dx-head p b {
+        color: var(--brut-ink);
+        font-weight: 600;
+    }
+    .dx-head p code {
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 0.92em;
+        background: var(--brut-bg-2);
+        border: 1px solid var(--brut-rule);
+        padding: 0 4px;
+        border-radius: 2px;
+        color: var(--brut-ink);
+    }
+    .dx-tag {
+        display: inline-block;
+        padding: 1px 6px;
+        border: 1px solid var(--brut-rule);
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--brut-ink-3);
+        vertical-align: 1px;
+    }
+    .dx-tag-live {
+        color: var(--brut-accent);
+        border-color: var(--brut-accent);
     }
 
-    .example-card {
-        animation: fadeInUp 0.5s ease-out both;
+    /* ── Category header (id · title · count) ────────────────────── */
+    .dx-cat {
+        margin-bottom: 32px;
+    }
+    .dx-cat-head {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+    .dx-cat-id {
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 11px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.14em;
+    }
+    .dx-cat-head h2 {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        margin: 0;
+        color: var(--brut-ink);
+    }
+    .dx-cat-count {
+        margin-left: auto;
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 10.5px;
+        color: var(--brut-ink-3);
+        letter-spacing: 0.08em;
     }
 
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(12px);
+    /* ── Tile cards — hairline borders, mono labels, no gradients. */
+    .dx-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0;
+        border-top: 1px solid var(--brut-rule);
+        border-left: 1px solid var(--brut-rule);
+    }
+    .dx-cell {
+        display: flex;
+        flex-direction: column;
+        padding: 16px 18px;
+        border-right: 1px solid var(--brut-rule);
+        border-bottom: 1px solid var(--brut-rule);
+        background: var(--brut-bg);
+        color: var(--brut-ink);
+        text-decoration: none;
+        transition: background-color 0.15s;
+    }
+    .dx-cell:hover {
+        background: color-mix(in oklab, var(--brut-accent) 6%, transparent);
+    }
+    .dx-cell-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+    .dx-cell-tag {
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--brut-ink-3);
+    }
+    .dx-cell:hover .dx-cell-tag {
+        color: var(--brut-accent);
+    }
+    .dx-cell-arrow {
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 14px;
+        color: var(--brut-ink-3);
+        transition:
+            color 0.15s,
+            transform 0.15s;
+    }
+    .dx-cell:hover .dx-cell-arrow {
+        color: var(--brut-accent);
+        transform: translate(2px, -2px);
+    }
+    .dx-cell h3 {
+        font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        margin: 0 0 6px;
+        color: var(--brut-ink);
+    }
+    .dx-cell p {
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--brut-ink-2);
+        margin: 0;
+    }
+
+    /* ── Quick-reference table ────────────────────────────────────── */
+    .dx-ref {
+        margin-top: 40px;
+    }
+    .dx-table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--brut-rule);
+    }
+    .dx-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+    .dx-table th {
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        text-align: left;
+        padding: 10px 14px;
+        background: var(--brut-bg-2);
+        border-bottom: 1px solid var(--brut-rule);
+        color: var(--brut-ink-3);
+        font-weight: 500;
+    }
+    .dx-table td {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--brut-rule);
+        color: var(--brut-ink);
+        vertical-align: top;
+    }
+    .dx-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+    .dx-table code {
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 12px;
+        background: var(--brut-bg-2);
+        border: 1px solid var(--brut-rule);
+        padding: 1px 5px;
+        border-radius: 2px;
+        color: var(--brut-ink);
+        white-space: nowrap;
+    }
+    .dx-table-notes {
+        color: var(--brut-ink-2);
+    }
+
+    /* ── Responsive ───────────────────────────────────────────────── */
+    @media (max-width: 720px) {
+        .dx-grid {
+            grid-template-columns: 1fr;
         }
-        to {
-            opacity: 1;
-            transform: translateY(0);
+        .dx-head h1 {
+            font-size: 26px;
         }
     }
 </style>
