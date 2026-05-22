@@ -64,10 +64,21 @@ const itemBreadcrumbOverrides: Record<string, string> = {
  * "/docs/renderers/html-renderers"). Falls back to `[{ title: 'Docs' }]`
  * when no match is found.
  */
+/** Pretty titles for individual blog posts, keyed by slug. */
+const blogPostTitles: Record<string, string> = {
+    'rendering-agent-html-safely': 'Rendering Agent HTML Safely'
+}
+
 export const buildBreadcrumbs = (pathname: string): Breadcrumb[] => {
     if (pathname === '/docs') return [{ title: 'Docs' }]
     if (pathname === '/examples') return [{ title: 'Examples' }]
     if (pathname === '/compare') return [{ title: 'Compare' }]
+    if (pathname === '/blog' || pathname === '/blog/') return [{ title: 'Blog' }]
+    if (pathname.startsWith('/blog/')) {
+        const slug = pathname.replace('/blog/', '').replace(/\/$/, '')
+        const title = blogPostTitles[slug] ?? slug
+        return [{ title: 'Blog', href: '/blog' }, { title }]
+    }
 
     for (const section of docsSections) {
         for (const item of section.items) {
