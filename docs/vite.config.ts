@@ -2,6 +2,7 @@ import {
     demoManifestPlugin,
     docMirrorsPlugin,
     llmsFullPlugin,
+    llmsPlugin,
     sitemapManifestPlugin
 } from '@humanspeak/docs-kit/vite'
 import { sveltekit } from '@sveltejs/kit/vite'
@@ -26,10 +27,16 @@ export default defineConfig({
     //   * `llmsFullPlugin`         concatenates every per-page mirror into
     //     `static/llms-full.txt`, served at /llms-full.txt — the surface
     //     agentic LLMs (Claude Code, Cursor) reach for when they want the
-    //     whole library in a single context window. We skip the companion
-    //     `llmsPlugin` deliberately: our `/llms.txt` is hand-curated and
-    //     carries the streaming pitch + XSS-safe positioning + install
-    //     snippet, which the auto-generated link table can't capture.
+    //     whole library in a single context window.
+    //   * `llmsPlugin`             emits `static/llms.txt` — the compact
+    //     discovery index per the llmstxt.org convention. The `prepend` +
+    //     `append` slots inline our hand-curated positioning content
+    //     (`static/llms-prepend.md`: install snippet, streaming pitch,
+    //     XSS-safe defaults, custom HTML tag routing example, key
+    //     features, use cases; `static/llms-append.md`: external links)
+    //     while the canonical-URL block and `## Documentation` link
+    //     table auto-sync from the sitemap manifest so new doc pages
+    //     show up without a manual edit.
     plugins: [
         sitemapManifestPlugin({ blogDir: false }),
         demoManifestPlugin(),
@@ -37,6 +44,14 @@ export default defineConfig({
         llmsFullPlugin({
             siteUrl: 'https://markdown.svelte.page',
             pkgName: '@humanspeak/svelte-markdown'
+        }),
+        llmsPlugin({
+            siteUrl: 'https://markdown.svelte.page',
+            pkgName: 'Svelte Markdown',
+            description:
+                'A powerful, customizable markdown and HTML renderer for Svelte 5 — built for rendering streaming AI agent output from Claude Code, ChatGPT, and agentic workflows. Built on Marked and HTMLParser2 with 24 markdown renderers, 83 HTML tag renderers, LRU token caching, allow/deny filtering, and XSS-safe defaults.',
+            prepend: 'static/llms-prepend.md',
+            append: 'static/llms-append.md'
         }),
         tailwindcss(),
         sveltekit()
