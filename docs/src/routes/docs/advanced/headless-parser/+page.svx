@@ -1,0 +1,165 @@
+---
+title: Headless Parser
+description: Direct access to the IncrementalParser for headless, non-Svelte, and server-side token streaming
+---
+
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Headless Parser | Svelte Markdown'
+        seo.description = 'Use IncrementalParser directly without the Svelte component — same streaming-aware engine, exposed as a plain class for headless agents, non-Svelte consumers, and server-side pipelines.'
+        seo.ogTitle = 'Headless Parser'
+        seo.ogTagline = 'IncrementalParser as a standalone class — same engine, no component.'
+        seo.ogFeatures = ['Headless API', 'Streaming Tokens', 'divergeAt Diffing', 'Framework-Agnostic']
+        seo.ogSlug = 'docs-advanced-headless-parser'
+    }
+</script>
+
+# Headless Parser
+
+`@humanspeak/svelte-markdown` exports the streaming engine that powers `streaming={true}` as a standalone class: `IncrementalParser`. The same instance is used internally by the Svelte component, so the diffing behavior and token shape are identical — the export is for cases where the Svelte component itself is the wrong layer.
+
+Reach for `IncrementalParser` when:
+
+- You're rendering markdown outside Svelte — a custom DOM library, a CLI, a React island in the same app — and want the streaming-aware token diff without re-implementing it.
+- You need the parsed tokens on the **server** before the page reaches the client (e.g. precomputing token arrays for analytics, building a search index of LLM output, gating content via policy before HTML is generated).
+- You're writing a higher-level abstraction over `@humanspeak/svelte-markdown` and want to reuse the diff index without owning the renderer.
+- You're running benchmarks or property tests that need direct token access.
+
+For typical Svelte apps, [`<SvelteMarkdown source={...} streaming={true} />`](/docs/advanced/llm-streaming) is what you want — it wraps `IncrementalParser` and handles rendering for you.
+
+## Basic Usage
+
+```typescript
+import { IncrementalParser } from '@humanspeak/svelte-markdown'
+
+const parser = new IncrementalParser({ gfm: true })
+
+// First update — all tokens are "new"
+const r1 = parser.update('# Hello')
+// r1.tokens   → [{ type: 'heading', depth: 1, text: 'Hello', ... }]
+// r1.divergeAt → 0
+
+// Second update — heading unchanged, paragraph appended
+const r2 = parser.update('# Hello\n\nWorld')
+// r2.tokens   → [headingToken, paragraphToken]
+// r2.divergeAt → 1   (token at index 0 is reference-equal to the previous one)
+```
+
+The parser holds the previous parse internally and diffs against it on every `update()`, so consumers don't need to track the prior state themselves.
+
+## API
+
+### `new IncrementalParser(options)`
+
+Constructor. Takes `SvelteMarkdownOptions` — the same options accepted by the Svelte component's `options` prop.
+
+```typescript
+import { IncrementalParser, type SvelteMarkdownOptions } from '@humanspeak/svelte-markdown'
+
+const options: SvelteMarkdownOptions = {
+    gfm: true,       // GitHub-Flavored Markdown (tables, strikethrough, task lists)
+    breaks: false,   // Convert single newlines into <br>
+    pedantic: false
+}
+
+const parser = new IncrementalParser(options)
+```
+
+The full set of options matches Marked's [`MarkedOptions`](https://marked.js.org/using_advanced#options), including extension hooks (`walkTokens`, `tokenizer`). When any custom tokenizer or extension is registered, the internal tail-window optimization is disabled (each `update()` becomes a full re-parse), since user-provided tokenizers can mutate tokens in ways the diff can't detect.
+
+### `parser.update(source)`
+
+Parses the full source string and returns the diff against the previous parse.
+
+```typescript
+const result = parser.update(currentSource)
+```
+
+Always pass the **full accumulated source** — not just the delta. Append-only streaming (typical LLM use case) is the optimized path, but the parser correctly handles arbitrary edits (insertions, replacements, full rewrites) too.
+
+### `IncrementalUpdateResult`
+
+```typescript
+interface IncrementalUpdateResult {
+    /** The full new token array */
+    tokens: Token[]
+    /** Index of the first token that differs from the previous parse */
+    divergeAt: number
+}
+```
+
+`divergeAt` is the actionable field: every token at index `< divergeAt` is reference-equal to the corresponding token from the previous `update()` call, so a consumer can skip re-rendering them. On the first call (or after a structural change that invalidates the prefix), `divergeAt` is `0`.
+
+## Streaming Pattern
+
+The common loop for LLM output:
+
+```typescript
+import { IncrementalParser } from '@humanspeak/svelte-markdown'
+
+const parser = new IncrementalParser({ gfm: true })
+let source = ''
+
+async function consumeStream(response: Response) {
+    const reader = response.body!.getReader()
+    const decoder = new TextDecoder()
+
+    while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        source += decoder.decode(value, { stream: true })
+        const { tokens, divergeAt } = parser.update(source)
+
+        // Render only what changed. The first `divergeAt` tokens
+        // are reference-equal to the previous frame, so a virtual
+        // DOM or manual reconciler can short-circuit them.
+        renderFrom(tokens, divergeAt)
+    }
+}
+```
+
+Per-update cost stays well under the 60fps budget on typical LLM streams (median ~3 ms on the [caching-performance harness](/examples/caching-performance)), regardless of total document size, because the tail-window optimization re-parses only the suffix beyond the last stable token boundary.
+
+## Reconciling With Sanitization
+
+`IncrementalParser` returns tokens with sanitization **not yet applied** — `href` allow-listing, `on*` stripping, and other guards run inside the Svelte component layer. If you're using the headless parser to render to a non-Svelte target, you'll want to apply the same defenses before mounting the result.
+
+The defaults are exported as plain functions so you can plug them in:
+
+```typescript
+import {
+    defaultSanitizeUrl,
+    defaultSanitizeAttributes
+} from '@humanspeak/svelte-markdown'
+
+// Apply per token after parsing, before handing off to your renderer.
+for (const token of tokens) {
+    if (token.type === 'link' || token.type === 'image') {
+        token.href = defaultSanitizeUrl(token.href, {
+            type: token.type,
+            tag: token.type === 'image' ? 'img' : 'a'
+        })
+    }
+    // Walk html tokens, etc.
+}
+```
+
+See [Security](/docs/advanced/security) for the full sanitizer contract, including the context-aware override pattern.
+
+## Caveats
+
+- **Sanitization is your responsibility.** As above — the headless parser hands you raw Marked tokens.
+- **Tail-window optimization is disabled when extensions are registered.** If you pass `walkTokens`, `tokenizer`, or block/inline extensions, every `update()` becomes a full re-parse. Per-update cost stays bounded, but the constant factor goes up.
+- **Reference-syntax-aware reparse.** When the source contains markdown reference links (`[text][ref]`) or reference definitions (`[ref]: url`), the parser falls back to a full re-parse, since later definitions can retroactively change earlier inline children without changing their `raw` strings.
+- **Not thread-safe.** One `IncrementalParser` instance per stream. Don't share instances across concurrent inputs.
+
+## Related
+
+- [LLM Streaming](/docs/advanced/llm-streaming) — the Svelte component wrapper around this parser, with `writeChunk()` / `resetStream()` ergonomics.
+- [Token Caching](/docs/advanced/token-caching) — the LRU cache layer used by the parser. Exported as `TokenCache` and `MemoryCache` for direct use.
+- [Security](/docs/advanced/security) — sanitization contract you'll want to layer on top when rendering to a non-Svelte target.
+- [Types & Exports](/docs/api/types) — full type reference for `IncrementalUpdateResult`, `Token`, `SvelteMarkdownOptions`.

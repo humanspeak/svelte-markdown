@@ -349,22 +349,37 @@ Snippets and component renderers work together. Use component renderers for comp
 
 ## TypeScript Types
 
-All snippet prop interfaces are exported for use in external code:
+Every snippet prop interface is exported for use in external code. The full set covers all 23 token kinds the renderer emits — block-level (paragraph, heading, list, table, blockquote, hr), inline (text, link, image, em, strong, codespan, del), structural (raw text, escape, br), and embedded HTML.
 
 ```typescript
 import type {
+    // Block-level
     ParagraphSnippetProps,
     HeadingSnippetProps,
-    LinkSnippetProps,
-    ImageSnippetProps,
-    CodeSnippetProps,
-    CodespanSnippetProps,
+    HrSnippetProps,
     BlockquoteSnippetProps,
     ListSnippetProps,
     ListItemSnippetProps,
+    CodeSnippetProps,
     TableSnippetProps,
+    TableHeadSnippetProps,
+    TableBodySnippetProps,
+    TableRowSnippetProps,
     TableCellSnippetProps,
+    // Inline
+    TextSnippetProps,
+    RawTextSnippetProps,
+    EscapeSnippetProps,
+    LinkSnippetProps,
+    ImageSnippetProps,
+    EmSnippetProps,
+    StrongSnippetProps,
+    CodespanSnippetProps,
+    DelSnippetProps,
+    BrSnippetProps,
+    // Embedded HTML
     HtmlSnippetProps,
+    // Override-map types
     SnippetOverrides,
     HtmlSnippetOverrides
 } from '@humanspeak/svelte-markdown'
