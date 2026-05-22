@@ -35,9 +35,7 @@ import {
  */
 export const headerNav: { label: string; href: string }[] = [
     { label: 'docs', href: '/docs' },
-    { label: 'api', href: '/docs/api/svelte-markdown' },
     { label: 'examples', href: '/examples' },
-    { label: 'playground', href: '/examples/playground' },
     { label: 'compare', href: '/compare' },
     { label: 'blog', href: '/blog' }
 ]
