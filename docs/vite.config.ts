@@ -1,19 +1,31 @@
-import { demoManifestPlugin, sitemapManifestPlugin } from '@humanspeak/docs-kit/vite'
+import {
+    demoManifestPlugin,
+    docMirrorsPlugin,
+    sitemapManifestPlugin
+} from '@humanspeak/docs-kit/vite'
 import { sveltekit } from '@sveltejs/kit/vite'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-    // Both manifest plugins emit JSON into `src/lib/`:
+    // Three docs-kit plugins run on `buildStart` and rewatch via Vite's
+    // own file watcher — no chokidar process, no package.json scripts to
+    // maintain.
     //   * `demoManifestPlugin`     scans `src/lib/examples/<...>/demos/*.svelte`
-    //     and writes pre-highlighted source into `demo-manifest.json`.
+    //     and writes pre-highlighted source into `src/lib/demo-manifest.json`.
     //   * `sitemapManifestPlugin`  scans `src/routes/**/+page.{svelte,svx,md}`
-    //     and writes `sitemap-manifest.json` (the input to `sitemap.xml`).
-    // Both run on `buildStart` and rewatch via Vite's own file watcher —
-    // no chokidar process, no package.json scripts to maintain.
+    //     and writes `src/lib/sitemap-manifest.json` (the input to
+    //     `sitemap.xml`).
+    //   * `docMirrorsPlugin`       scans `src/routes/docs/**/+page.svx`,
+    //     strips Svelte scripts + component tags while preserving fenced
+    //     code blocks, and emits clean Markdown to `static/docs/<slug>.md`.
+    //     Served verbatim at `https://markdown.svelte.page/docs/<slug>.md`
+    //     so LLM crawlers (ChatGPT, Perplexity, Claude) can cite the
+    //     source the way they prefer.
     plugins: [
         sitemapManifestPlugin({ blogDir: false }),
         demoManifestPlugin(),
+        docMirrorsPlugin({ siteUrl: 'https://markdown.svelte.page' }),
         tailwindcss(),
         sveltekit()
     ],
