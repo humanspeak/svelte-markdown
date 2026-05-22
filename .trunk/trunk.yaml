@@ -28,6 +28,12 @@ lint:
         - linters: [markdownlint]
           paths:
               - .changeset/**
+              # docs-kit llmsPlugin prepend/append fragment files — not
+              # standalone markdown docs; they're spliced into the
+              # auto-generated `static/llms.txt`. Bare URLs and missing
+              # H1 are expected (the H1 comes from the plugin's pkgName).
+              - docs/static/llms-prepend.md
+              - docs/static/llms-append.md
     definitions:
         - name: prettier
           files:

@@ -1,7 +1,3 @@
-# Svelte Markdown
-
-> A powerful, customizable markdown and HTML renderer for Svelte 5 — built for rendering streaming AI agent output from Claude Code, ChatGPT, and agentic workflows. Built on Marked and HTMLParser2 with 24 markdown renderers, 83 HTML tag renderers, LRU token caching, allow/deny filtering, and XSS-safe defaults.
-
 ## Overview
 
 - Package: `@humanspeak/svelte-markdown`
@@ -36,7 +32,9 @@ The library is purpose-built to render LLM streaming output that mixes markdown 
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import type { StreamingChunk } from '@humanspeak/svelte-markdown'
 
-    let markdown: { writeChunk: (chunk: StreamingChunk) => void; resetStream: (next?: string) => void } | undefined
+    let markdown:
+        | { writeChunk: (chunk: StreamingChunk) => void; resetStream: (next?: string) => void }
+        | undefined
 
     async function streamFromAgent(response: Response) {
         const reader = response.body!.getReader()
@@ -68,7 +66,8 @@ Built-in sanitization runs in the Parser before tokens reach any renderer or sni
 <script lang="ts">
     import SvelteMarkdown, { defaultSanitizeUrl } from '@humanspeak/svelte-markdown'
 
-    const markdown = '![diagram](data:image/png;base64,iVBORw0KGgo...) and [external](javascript:alert(1))'
+    const markdown =
+        '![diagram](data:image/png;base64,iVBORw0KGgo...) and [external](javascript:alert(1))'
 
     // Custom policy: allow data: URIs only on images
     function customSanitizeUrl(url, { type, tag }) {
@@ -90,7 +89,8 @@ Route semantic markup like `<thinking>`, `<tool-call>`, or any custom element to
     import Thinking from './Thinking.svelte'
     import ToolCall from './ToolCall.svelte'
 
-    const agentResponse = '<thinking>weighing options</thinking>\n\nHere is my plan:\n\n<tool-call name="search" />'
+    const agentResponse =
+        '<thinking>weighing options</thinking>\n\nHere is my plan:\n\n<tool-call name="search" />'
 
     const renderers = {
         html: { ...Html, thinking: Thinking, 'tool-call': ToolCall }
@@ -118,6 +118,7 @@ Route semantic markup like `<thinking>`, `<tool-call>`, or any custom element to
 - Code formatting via the `marked-code-format` walkTokens extension — add `prettier` to any code fence and it's auto-formatted through Prettier with zero custom renderer
 - Async markdown parsing support
 - Secure HTML parsing via HTMLParser2 (no `innerHTML`)
+- Standalone `IncrementalParser` export for headless / non-Svelte / server-side consumers (same engine as `streaming={true}`)
 
 ## Use Cases
 
@@ -126,36 +127,3 @@ Route semantic markup like `<thinking>`, `<tool-call>`, or any custom element to
 - Throwaway editors with copy-back exports — agent emits an HTML editor for one piece of data, user pastes the result back into the next prompt
 - Status reports / synthesized explainers — agents emit semi-structured HTML reports with embedded diagrams and tables
 - Mixed markdown + custom semantic tags (`<thinking>`, `<citation>`, `<artifact>`)
-
-## Documentation
-
-- [Getting Started](https://markdown.svelte.page/docs/getting-started)
-- [Rendering AI Agent Output](https://markdown.svelte.page/docs/advanced/agent-output)
-- [LLM Streaming](https://markdown.svelte.page/docs/advanced/llm-streaming)
-- [Security](https://markdown.svelte.page/docs/advanced/security)
-- [Token Caching](https://markdown.svelte.page/docs/advanced/token-caching)
-- [Allow/Deny Filtering](https://markdown.svelte.page/docs/advanced/allow-deny)
-- [Marked Extensions](https://markdown.svelte.page/docs/advanced/marked-extensions)
-- [API Reference](https://markdown.svelte.page/docs/api/svelte-markdown)
-- [Types & Exports](https://markdown.svelte.page/docs/api/types)
-- [Markdown Renderers](https://markdown.svelte.page/docs/renderers/markdown-renderers)
-- [HTML Renderers](https://markdown.svelte.page/docs/renderers/html-renderers)
-- [Custom Renderers](https://markdown.svelte.page/docs/renderers/custom-renderers)
-- [Snippet Overrides](https://markdown.svelte.page/docs/renderers/snippet-overrides)
-- [Migration Guide](https://markdown.svelte.page/docs/migration)
-- [Interactive Examples](https://markdown.svelte.page/examples)
-- [Agent Output Demo (live)](https://markdown.svelte.page/examples/agent-output)
-- [LLM Streaming Demo (live)](https://markdown.svelte.page/examples/llm-streaming)
-- [Blog](https://markdown.svelte.page/blog)
-- [Rendering Agent HTML Safely (blog post)](https://markdown.svelte.page/blog/rendering-agent-html-safely)
-- [Full LLM Reference](https://markdown.svelte.page/llms-full.txt)
-
-Every documentation page is also mirrored as raw Markdown under `/docs/<slug>.md` — e.g. `https://markdown.svelte.page/docs/getting-started.md`, `https://markdown.svelte.page/docs/advanced-security.md`. The mirror strips Svelte scripts + component tags, preserves fenced code, and carries a source-attribution header so LLMs (ChatGPT, Perplexity, Claude) can cite the canonical HTML doc.
-
-## Links
-
-- Homepage: <https://markdown.svelte.page>
-- Repository: <https://github.com/humanspeak/svelte-markdown>
-- NPM: <https://www.npmjs.com/package/@humanspeak/svelte-markdown>
-- Issues: <https://github.com/humanspeak/svelte-markdown/issues>
-- Background reading: [Using Claude Code: The Unreasonable Effectiveness of HTML](https://x.com/trq212/status/2052809885763747935) by Thariq

@@ -22,6 +22,7 @@ import {
     SquarePen,
     Superscript,
     Swords,
+    Terminal,
     TextCursor,
     TriangleAlert,
     Workflow,
@@ -152,6 +153,7 @@ export const docsSections: NavSection[] = [
         items: [
             { title: 'AI Agent Output', href: '/docs/advanced/agent-output', icon: Bot },
             { title: 'LLM Streaming', href: '/docs/advanced/llm-streaming', icon: Zap },
+            { title: 'Headless Parser', href: '/docs/advanced/headless-parser', icon: Terminal },
             { title: 'Security', href: '/docs/advanced/security', icon: Lock },
             { title: 'Token Caching', href: '/docs/advanced/token-caching', icon: Zap },
             { title: 'Allow/Deny', href: '/docs/advanced/allow-deny', icon: Shield },
