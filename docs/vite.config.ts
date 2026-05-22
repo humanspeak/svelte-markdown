@@ -1,6 +1,7 @@
 import {
     demoManifestPlugin,
     docMirrorsPlugin,
+    llmsFullPlugin,
     sitemapManifestPlugin
 } from '@humanspeak/docs-kit/vite'
 import { sveltekit } from '@sveltejs/kit/vite'
@@ -22,10 +23,21 @@ export default defineConfig({
     //     Served verbatim at `https://markdown.svelte.page/docs/<slug>.md`
     //     so LLM crawlers (ChatGPT, Perplexity, Claude) can cite the
     //     source the way they prefer.
+    //   * `llmsFullPlugin`         concatenates every per-page mirror into
+    //     `static/llms-full.txt`, served at /llms-full.txt — the surface
+    //     agentic LLMs (Claude Code, Cursor) reach for when they want the
+    //     whole library in a single context window. We skip the companion
+    //     `llmsPlugin` deliberately: our `/llms.txt` is hand-curated and
+    //     carries the streaming pitch + XSS-safe positioning + install
+    //     snippet, which the auto-generated link table can't capture.
     plugins: [
         sitemapManifestPlugin({ blogDir: false }),
         demoManifestPlugin(),
         docMirrorsPlugin({ siteUrl: 'https://markdown.svelte.page' }),
+        llmsFullPlugin({
+            siteUrl: 'https://markdown.svelte.page',
+            pkgName: '@humanspeak/svelte-markdown'
+        }),
         tailwindcss(),
         sveltekit()
     ],

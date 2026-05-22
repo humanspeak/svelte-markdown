@@ -2,5 +2,6 @@
 static/og-default.png
 static/twitter-default.png
 static/docs/
+static/llms-full.txt
 src/lib/sitemap-manifest.json
 src/lib/demo-manifest.json
