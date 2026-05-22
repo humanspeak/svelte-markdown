@@ -1,6 +1,6 @@
 <script lang="ts">
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import { BlogIndex, loadBlogPostsMdsvex } from '@humanspeak/docs-kit/blog'
+    import { BlogIndexV2, loadBlogPostsMdsvex } from '@humanspeak/docs-kit/blog'
 
     const modules = import.meta.glob('/src/routes/blog/*/+page.svx', { eager: true })
     const posts = loadBlogPostsMdsvex(modules)
@@ -17,4 +17,4 @@
     }
 </script>
 
-<BlogIndex {posts} />
+<BlogIndexV2 {posts} />

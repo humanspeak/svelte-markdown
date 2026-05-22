@@ -13,7 +13,7 @@ readingTime: 9
 ---
 
 <script lang="ts">
-    import { BlogPost, type BlogPostMeta } from '@humanspeak/docs-kit/blog'
+    import { BlogPostV2, type BlogPostMeta } from '@humanspeak/docs-kit/blog'
     import { docsConfig } from '$lib/docs-config'
 
     const post: BlogPostMeta = {
@@ -28,7 +28,7 @@ readingTime: 9
     }
 </script>
 
-<BlogPost {post} config={docsConfig}>
+<BlogPostV2 {post} config={docsConfig}>
 
 A few weeks ago, [Thariq](https://x.com/trq212) wrote a post called [Using Claude Code: The Unreasonable Effectiveness of HTML](https://x.com/trq212/status/2052809885763747935). His thesis is short and, if you’ve been paying attention to how people are actually using coding agents, hard to argue with:
 
@@ -255,4 +255,4 @@ We’d rather you know about every sharp edge up front than discover one in prod
 
 — Jason Kummerl
 
-</BlogPost>
+</BlogPostV2>

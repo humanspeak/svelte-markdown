@@ -150,6 +150,8 @@ Route semantic markup like `<thinking>`, `<tool-call>`, or any custom element to
 - [Rendering Agent HTML Safely (blog post)](https://markdown.svelte.page/blog/rendering-agent-html-safely)
 - [Full LLM Reference](https://markdown.svelte.page/llms-full.txt)
 
+Every documentation page is also mirrored as raw Markdown under `/docs/<slug>.md` — e.g. `https://markdown.svelte.page/docs/getting-started.md`, `https://markdown.svelte.page/docs/advanced-security.md`. The mirror strips Svelte scripts + component tags, preserves fenced code, and carries a source-attribution header so LLMs (ChatGPT, Perplexity, Claude) can cite the canonical HTML doc.
+
 ## Links
 
 - Homepage: <https://markdown.svelte.page>

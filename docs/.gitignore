@@ -1,5 +1,6 @@
 .wrangler/
 static/og-default.png
 static/twitter-default.png
+static/docs/
 src/lib/sitemap-manifest.json
 src/lib/demo-manifest.json

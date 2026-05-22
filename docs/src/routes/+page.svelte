@@ -631,17 +631,22 @@ Happy coding! <span style="color: hotpink">♥</span>`
                         </p>
                         <div class="ai-cell-foot">~24 kB · open ↗</div>
                     </a>
-                    <a class="ai-cell" href="/examples/agent-output" rel="noopener">
-                        <div class="ai-cell-k">03 · live demos</div>
+                    <a
+                        class="ai-cell"
+                        href="/docs/getting-started.md"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        <div class="ai-cell-k">03 · per-page mirrors</div>
                         <h3>
-                            <code>/examples/*</code>
+                            <code>/docs/&lt;slug&gt;.md</code>
                         </h3>
                         <p>
-                            13 interactive examples — agent streaming with live sanitization, LLM
-                            chunks with offset patches, caching benchmark. The patterns the agent
-                            should generate.
+                            Every doc page mirrored as raw markdown — Svelte scripts stripped,
+                            fenced code preserved. The citation surface ChatGPT, Perplexity, and
+                            Claude prefer.
                         </p>
-                        <div class="ai-cell-foot">13 demos · open ↗</div>
+                        <div class="ai-cell-foot">21 docs · open ↗</div>
                     </a>
                 </div>
                 <div class="ai-prompt">
