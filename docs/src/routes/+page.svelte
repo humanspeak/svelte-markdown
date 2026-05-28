@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { HeaderV2, FooterV2, getBreadcrumbContext } from '@humanspeak/docs-kit'
+    import { HeaderV2, FooterV2, getBreadcrumbContext, getSeoContext } from '@humanspeak/docs-kit'
     import { docsConfig } from '$lib/docs-config'
     import favicon from '$lib/assets/logo.svg'
     import SvelteMarkdown, { rendererKeys, htmlRendererKeys } from '@humanspeak/svelte-markdown'
@@ -21,6 +21,16 @@
 
     const breadcrumbContext = getBreadcrumbContext()
     if (breadcrumbContext) breadcrumbContext.breadcrumbs = []
+
+    // Homepage-specific SEO copy. Mutated synchronously so SSR emits the
+    // right <title>/<meta name="description"> in one pass — docs-kit's
+    // SeoHead renders after children and reads these reactively. Counts
+    // come from the live renderer keys so they can never drift.
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'svelte-markdown · streaming markdown + HTML renderer for Svelte 5'
+        seo.description = `A streaming-aware markdown + HTML renderer for Svelte 5. ${rendererKeys.length} renderers, ${htmlRendererKeys.length} HTML tags, allow/deny utilities, XSS-safe defaults, and a streaming mode tuned for LLM output. MIT, zero runtime deps.`
+    }
 
     // ── Package stats are fetched from the npm registry at request
     // time by `+page.server.ts` (cached for ~1 hour at the edge and in
@@ -308,14 +318,6 @@ Happy coding! <span style="color: hotpink">♥</span>`
         }
     }
 </script>
-
-<svelte:head>
-    <title>svelte-markdown · streaming markdown + HTML renderer for Svelte 5</title>
-    <meta
-        name="description"
-        content="A streaming-aware markdown + HTML renderer for Svelte 5. 24 renderers, 84 HTML tags, allow/deny utilities, XSS-safe defaults, and a streaming mode tuned for LLM output. MIT, zero runtime deps."
-    />
-</svelte:head>
 
 <div class="brut-wrap flex min-h-svh flex-col">
     <HeaderV2 config={docsConfig} {favicon} version={PKG_VERSION} nav={headerNav} />
