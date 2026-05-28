@@ -3,11 +3,15 @@ import {
     docMirrorsPlugin,
     llmsFullPlugin,
     llmsPlugin,
-    sitemapManifestPlugin
+    sitemapManifestPlugin,
+    socialCardsPlugin
 } from '@humanspeak/docs-kit/vite'
 import { sveltekit } from '@sveltejs/kit/vite'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
+
+import { competitors } from './src/lib/compare-data'
+import { docsConfig } from './src/lib/docs-config'
 
 export default defineConfig({
     // Three docs-kit plugins run on `buildStart` and rewatch via Vite's
@@ -52,6 +56,30 @@ export default defineConfig({
                 'A powerful, customizable markdown and HTML renderer for Svelte 5 — built for rendering streaming AI agent output from Claude Code, ChatGPT, and agentic workflows. Built on Marked and HTMLParser2 with 24 markdown renderers, 83 HTML tag renderers, LRU token caching, allow/deny filtering, and XSS-safe defaults.',
             prepend: 'static/llms-prepend.md',
             append: 'static/llms-append.md'
+        }),
+        // Renders `static/og-default.png` + per-page social cards from
+        // satori templates. `apply: 'build'` — dev skips it, so iterating
+        // on copy doesn't pay the ~10s render cost on every save. The
+        // compare pages can't be picked up by the static `seo.ogSlug =
+        // '...'` regex (ComparisonPageV2 builds the slug from a prop) so
+        // they're injected explicitly via `extraPages`.
+        socialCardsPlugin({
+            npmPackage: docsConfig.npmPackage,
+            defaultTitle: docsConfig.name,
+            defaultDescription:
+                'Fast, secure markdown rendering with built-in caching and snippet overrides.',
+            defaultFeatures: docsConfig.defaultFeatures,
+            extraPages: competitors.map((c) => ({
+                ogSlug: `compare-${c.slug}`,
+                ogTitle: `vs ${c.name}`,
+                ogTagline: c.tagline,
+                ogFeatures: [
+                    'Feature Comparison',
+                    'Pros & Cons',
+                    'Migration Guide',
+                    'Honest Verdict'
+                ]
+            }))
         }),
         tailwindcss(),
         sveltekit()
