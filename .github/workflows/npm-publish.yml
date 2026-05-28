@@ -537,7 +537,7 @@ jobs:
                   pnpm publish --provenance --access public --no-git-checks
 
             - name: Cleanup on failure
-              if: failure() && steps.create_release.outcome == 'success'
+              if: failure()
               env:
                   RELEASE_VERSION: ${{ steps.version.outputs.new_version }}
                   GITHUB_TOKEN: ${{ secrets.ACTIONS_KEY }}
@@ -549,9 +549,9 @@ jobs:
                   fi
 
                   # Proceed with cleanup only if validation passes
-                  gh release delete "$RELEASE_VERSION" --yes
-                  git tag -d "$RELEASE_VERSION"
-                  git push --delete origin "$RELEASE_VERSION"
+                  gh release delete "$RELEASE_VERSION" --yes || true
+                  git tag -d "$RELEASE_VERSION" || true
+                  git push --delete origin "$RELEASE_VERSION" || true
 
             - name: Notify on failure
               if: failure()
