@@ -4,23 +4,21 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "tsx ./scripts/fetch-github-stats.ts && tsx ./scripts/generate-social-cards.ts && vite build",
+        "build": "tsx ./scripts/fetch-github-stats.ts && vite build",
         "cf-typegen": "wrangler types && mv worker-configuration.d.ts src/",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
         "deploy": "npm run build && wrangler deploy",
         "dev": "vite dev",
         "format": "prettier --write .",
-        "generate-social": "tsx ./scripts/generate-social-cards.ts",
         "lint": "prettier --check . && eslint .",
         "lint:fix": "npm run format && eslint . --fix",
-        "preview": "vite preview",
-        "social:watch": "chokidar 'src/lib/components/shared-link/OG.svelte' 'scripts/generate-social-cards.ts' -c 'tsx ./scripts/generate-social-cards.ts' --initial --silent"
+        "preview": "vite preview"
     },
     "dependencies": {
         "@fontsource-variable/inter": "^5.2.8",
         "@fontsource-variable/jetbrains-mono": "^5.2.8",
-        "@humanspeak/docs-kit": "github:humanspeak/docs-kit#2026.5.39",
+        "@humanspeak/docs-kit": "github:humanspeak/docs-kit#2026.5.41",
         "@humanspeak/svelte-markdown": "workspace:*",
         "katex": "^0.16.47",
         "marked-code-format": "^1.1.6",
