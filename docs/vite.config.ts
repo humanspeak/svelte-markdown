@@ -42,7 +42,17 @@ export default defineConfig({
     //     table auto-sync from the sitemap manifest so new doc pages
     //     show up without a manual edit.
     plugins: [
-        sitemapManifestPlugin({ blogDir: false }),
+        sitemapManifestPlugin({
+            blogDir: false,
+            // The `/compare/[slug]` route is a single SvelteKit dynamic page, so
+            // filesystem discovery can't see the concrete competitor slugs.
+            // Inject them so each comparison lands in the sitemap manifest with
+            // its own lastmod (driven by `compare-data.ts`'s mtime).
+            extraPages: competitors.map((competitor) => ({
+                route: `/compare/${competitor.slug}`,
+                source: 'src/lib/compare-data.ts'
+            }))
+        }),
         demoManifestPlugin(),
         docMirrorsPlugin({ siteUrl: 'https://markdown.svelte.page' }),
         llmsFullPlugin({
