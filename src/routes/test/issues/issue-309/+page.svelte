@@ -41,6 +41,14 @@
     })
 
     const extensions = $derived([makeDisplayButtonExtension(displayFormat)])
+
+    $effect(() => {
+        document.documentElement.setAttribute('data-issue-309-hydrated', 'true')
+
+        return () => {
+            document.documentElement.removeAttribute('data-issue-309-hydrated')
+        }
+    })
 </script>
 
 <main>
