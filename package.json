@@ -164,7 +164,7 @@
             "optional": true
         }
     },
-    "packageManager": "pnpm@11.5.0",
+    "packageManager": "pnpm@11",
     "volta": {
         "node": "24.15.0"
     },
