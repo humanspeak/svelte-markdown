@@ -112,15 +112,12 @@ const earliestIndex = (src: string, needles: string[]): number | undefined => {
 export function markedKatex(options: MarkedKatexOptions = {}): MarkedExtension {
     const { singleDollarInline = false } = options
 
-    // The token-cache hash serializes functions via `fn.toString()`, which
-    // can't see option values that live in a closure (our tokenizers'
-    // source code is identical regardless of `singleDollarInline`). This
-    // marker makes the option visible to JSON.stringify so two
-    // `markedKatex({ ... })` calls with different options produce
-    // different cache keys — without it, toggling the option at runtime
-    // returns stale tokens. Cast because `MarkedExtension` doesn't permit
-    // arbitrary fields, but Marked.use() shallow-spreads our object into
-    // `defaults`, so the marker survives.
+    // Keep the option visible to JSON.stringify for code paths that hash
+    // resolved Marked options directly. SvelteMarkdown also adds an internal
+    // extension identity signature for component-level cache invalidation.
+    // Cast because `MarkedExtension` doesn't permit arbitrary fields, but
+    // Marked.use() shallow-spreads our object into `defaults`, so the marker
+    // survives.
     const ext: MarkedExtension & { _humanspeakKatexConfig: string } = {
         _humanspeakKatexConfig: JSON.stringify({ singleDollarInline }),
         extensions: [

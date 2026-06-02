@@ -7,6 +7,12 @@ import type { SvelteMarkdownProps } from './types.js'
 import * as parseAndCacheModule from './utils/parse-and-cache.js'
 import { tokenCache } from './utils/token-cache.js'
 
+type DisplayButtonToken = {
+    type: string
+    displayFormat?: string
+    tokens?: DisplayButtonToken[]
+}
+
 // Clear token cache before each test to avoid cross-test pollution
 beforeEach(() => {
     tokenCache.clearAllTokens()
@@ -43,6 +49,74 @@ describe('testing initialization', () => {
         expect(element).toBeInTheDocument()
         expect(element?.textContent).toBe('example')
         expect(element?.nodeName).toBe('STRONG')
+    })
+})
+
+describe('extension cache invalidation', () => {
+    const makeDisplayButtonExtension = (displayFormat: string): MarkedExtension => ({
+        extensions: [
+            {
+                name: 'displayButton',
+                level: 'inline',
+                start(src) {
+                    return src.indexOf('(')
+                },
+                tokenizer(src) {
+                    const match = /^\((-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)\)/.exec(src)
+                    if (!match) return
+
+                    return {
+                        type: 'displayButton',
+                        raw: match[0],
+                        text: match[0],
+                        displayFormat
+                    }
+                }
+            }
+        ]
+    })
+
+    const findDisplayButtonToken = (
+        tokens: DisplayButtonToken[] | undefined
+    ): DisplayButtonToken | undefined => {
+        if (!tokens) return undefined
+
+        for (const token of tokens) {
+            if (token.type === 'displayButton') return token
+
+            const nestedToken = findDisplayButtonToken(token.tokens)
+            if (nestedToken) return nestedToken
+        }
+
+        return undefined
+    }
+
+    const getLastParsedTokens = (parsed: ReturnType<typeof vi.fn>) =>
+        parsed.mock.calls.at(-1)?.[0] as DisplayButtonToken[] | undefined
+
+    test('parsed callback receives updated custom token data when extension object changes', async () => {
+        const parsed = vi.fn()
+        const source = '(1, 2)'
+        const { rerender } = render(SvelteMarkdown, {
+            props: {
+                source,
+                extensions: [makeDisplayButtonExtension('decimal')],
+                parsed
+            }
+        })
+
+        await act(async () => {})
+
+        expect(findDisplayButtonToken(getLastParsedTokens(parsed))?.displayFormat).toBe('decimal')
+
+        await rerender({
+            source,
+            extensions: [makeDisplayButtonExtension('percent')],
+            parsed
+        })
+        await act(async () => {})
+
+        expect(findDisplayButtonToken(getLastParsedTokens(parsed))?.displayFormat).toBe('percent')
     })
 })
 
