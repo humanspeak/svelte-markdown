@@ -66,7 +66,7 @@
     import { parseAndCacheTokens, parseAndCacheTokensAsync } from '$lib/utils/parse-and-cache.js'
     import { rendererKeysInternal } from '$lib/utils/rendererKeys.js'
     import { defaultSanitizeAttributes, defaultSanitizeUrl } from '$lib/utils/sanitize.js'
-    import { Marked } from 'marked'
+    import { Marked, type MarkedExtension } from 'marked'
 
     // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
     type AnySnippet = (..._args: any[]) => any
@@ -74,9 +74,49 @@
         | { kind: 'raf'; id: number }
         | { kind: 'timeout'; id: ReturnType<typeof setTimeout> }
         | null
+    type ExtensionIdentityRecord = Record<string, unknown>
 
     const STREAM_BATCH_FALLBACK_MS = 16
     const STREAM_BATCH_MAX_CHARS = 256
+    let extensionIdentityId = 0
+    const extensionIdentityIds = new WeakMap<object, number>()
+
+    const getExtensionIdentityId = (value: object) => {
+        let id = extensionIdentityIds.get(value)
+        if (!id) {
+            id = ++extensionIdentityId
+            extensionIdentityIds.set(value, id)
+        }
+
+        return id
+    }
+
+    const getFunctionIdentityId = (value: unknown) =>
+        typeof value === 'function' ? getExtensionIdentityId(value) : null
+
+    const getExtensionCacheSignature = (extensionList: MarkedExtension[]) =>
+        extensionList.map((extension) => ({
+            extension: getExtensionIdentityId(extension),
+            async: extension.async ?? false,
+            extensions:
+                extension.extensions?.map((tokenizer) => {
+                    const tokenizerRecord = tokenizer as unknown as ExtensionIdentityRecord
+
+                    return {
+                        token: getExtensionIdentityId(tokenizer),
+                        name: tokenizer.name,
+                        level: tokenizerRecord.level ?? null,
+                        childTokens: tokenizerRecord.childTokens ?? null,
+                        start: getFunctionIdentityId(tokenizerRecord.start),
+                        tokenizer: getFunctionIdentityId(tokenizerRecord.tokenizer),
+                        renderer: getFunctionIdentityId(tokenizerRecord.renderer)
+                    }
+                }) ?? null,
+            hooks: extension.hooks ? getExtensionIdentityId(extension.hooks) : null,
+            renderer: extension.renderer ? getExtensionIdentityId(extension.renderer) : null,
+            tokenizer: extension.tokenizer ? getExtensionIdentityId(extension.tokenizer) : null,
+            walkTokens: getFunctionIdentityId(extension.walkTokens)
+        }))
 
     const {
         source = [],
@@ -103,7 +143,17 @@
         extensions.length > 0 ? new Marked(...extensions).defaults : {}
     )
 
-    const combinedOptions = $derived({ ...defaultOptions, ...extensionDefaults, ...options })
+    const extensionCacheSignature = $derived(
+        extensions.length > 0 ? getExtensionCacheSignature(extensions) : undefined
+    )
+    const combinedOptions = $derived({
+        ...defaultOptions,
+        ...extensionDefaults,
+        ...options,
+        ...(extensionCacheSignature
+            ? { _svelteMarkdownExtensionCacheSignature: extensionCacheSignature }
+            : {})
+    })
     const slugger = new Slugger()
 
     // Detect if any extension requires async processing

@@ -266,11 +266,9 @@ describe('markedKatex', () => {
             expect(ext.extensions).toHaveLength(2)
         })
 
-        // Regression: the token-cache hashes options by JSON.stringify, which
-        // serializes functions via fn.toString(). Without a serializable
-        // marker, two markedKatex calls with different options would produce
-        // identical hashes (closures are invisible to toString) and toggling
-        // singleDollarInline at runtime would return stale tokens from cache.
+        // The token-cache hashes resolved options by JSON.stringify, which
+        // serializes functions via fn.toString(). Keep this serializable
+        // marker so direct cache users can still distinguish KaTeX options.
         it('emits a serializable config marker so the token cache can distinguish options', () => {
             const off = markedKatex({ singleDollarInline: false }) as MarkedExtension & {
                 _humanspeakKatexConfig?: string
