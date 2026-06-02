@@ -619,6 +619,51 @@ To find the token type names for any extension, check its source or documentatio
 
 Each snippet/component receives the token's properties as props (e.g., `text`, `displayMode` for KaTeX; `text`, `level` for alerts).
 
+### Dynamic Extension Objects
+
+SvelteMarkdown includes extension identity in its internal parser cache. If you replace an extension object, tokenizer object, or tokenizer function, the parser treats that as a new parsing configuration and re-parses the source.
+
+This means extension factories can safely close over reactive state:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { MarkedExtension } from 'marked'
+
+    let displayFormat = $state<'decimal' | 'percent'>('decimal')
+
+    const makeDisplayExtension = (format: 'decimal' | 'percent'): MarkedExtension => ({
+        extensions: [
+            {
+                name: 'displayValue',
+                level: 'inline',
+                tokenizer(src) {
+                    const match = /^\((\d+)\)/.exec(src)
+                    if (!match) return
+
+                    return {
+                        type: 'displayValue',
+                        raw: match[0],
+                        text: match[1],
+                        displayFormat: format
+                    }
+                }
+            }
+        ]
+    })
+
+    const extensions = $derived([makeDisplayExtension(displayFormat)])
+</script>
+
+<SvelteMarkdown source="(42)" {extensions}>
+    {#snippet displayValue(props)}
+        <span data-format={props.displayFormat}>{props.text}</span>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+When `displayFormat` changes from `decimal` to `percent`, the new extension object invalidates the cached parse even though the markdown source is unchanged. The updated token props flow into your renderer or snippet without requiring a manual cache key.
+
 See the [full documentation](https://markdown.svelte.page/docs/advanced/marked-extensions) and [interactive demo](https://markdown.svelte.page/examples/marked-extensions).
 
 ### TypeScript
