@@ -67,6 +67,11 @@
             name: 'Issue 297',
             description: 'Issues: Spaces in quoted attribute values leak as boolean attrs'
         },
+        {
+            href: '/test/issues/issue-309',
+            name: 'Issue 309',
+            description: 'Issues: Dynamic custom extension cache invalidation'
+        },
         { href: '/test/katex', name: 'KaTeX', description: 'Math rendering with KaTeX extension' },
         {
             href: '/test/katex-issue',
