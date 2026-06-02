@@ -217,9 +217,9 @@ jobs:
                   persist-credentials: false
                   token: ${{ secrets.ACTIONS_KEY }}
 
-            - uses: pnpm/action-setup@v4 # zizmor: ignore[unpinned-uses]
+            - uses: pnpm/action-setup@v6 # zizmor: ignore[unpinned-uses]
               with:
-                  version: 10
+                  version: 11
 
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
@@ -266,9 +266,9 @@ jobs:
                   persist-credentials: false
                   token: ${{ secrets.ACTIONS_KEY }}
 
-            - uses: pnpm/action-setup@v4 # zizmor: ignore[unpinned-uses]
+            - uses: pnpm/action-setup@v6 # zizmor: ignore[unpinned-uses]
               with:
-                  version: 10
+                  version: 11
 
             - uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
               with:
@@ -341,9 +341,9 @@ jobs:
                   token: ${{ secrets.GITHUB_TOKEN }}
                   fetch-depth: 0
 
-            - uses: pnpm/action-setup@v4 # zizmor: ignore[unpinned-uses]
+            - uses: pnpm/action-setup@v6 # zizmor: ignore[unpinned-uses]
               with:
-                  version: 10
+                  version: 11
 
             - name: Use Node.js - 24
               uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses,cache-poisoning]
