@@ -55,68 +55,31 @@
         type StreamingOffsetChunk,
         type SvelteMarkdownProps
     } from '$lib/types.js'
-    import { IncrementalParser } from '$lib/utils/incremental-parser.js'
     import {
-        defaultOptions,
-        defaultRenderers,
-        Slugger,
-        type Token,
-        type TokensList
-    } from '$lib/utils/markdown-parser.js'
+        buildCombinedRenderers,
+        getAllRendererKeys,
+        getHtmlSnippetOverrides,
+        getPassThroughProps,
+        getSnippetOverrides
+    } from '$lib/utils/component-props.js'
+    import {
+        buildParserOptions,
+        getExtensionTokenNames,
+        hasAsyncExtension as getHasAsyncExtension
+    } from '$lib/utils/extension-options.js'
+    import { IncrementalParser } from '$lib/utils/incremental-parser.js'
+    import { Slugger, type Token, type TokensList } from '$lib/utils/markdown-parser.js'
     import { parseAndCacheTokens, parseAndCacheTokensAsync } from '$lib/utils/parse-and-cache.js'
-    import { rendererKeysInternal } from '$lib/utils/rendererKeys.js'
     import { defaultSanitizeAttributes, defaultSanitizeUrl } from '$lib/utils/sanitize.js'
-    import { Marked, type MarkedExtension } from 'marked'
+    import { isStreamingOffsetChunk } from '$lib/utils/streaming.js'
 
-    // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
-    type AnySnippet = (..._args: any[]) => any
     type StreamFlushHandle =
         | { kind: 'raf'; id: number }
         | { kind: 'timeout'; id: ReturnType<typeof setTimeout> }
         | null
-    type ExtensionIdentityRecord = Record<string, unknown>
 
     const STREAM_BATCH_FALLBACK_MS = 16
     const STREAM_BATCH_MAX_CHARS = 256
-    let extensionIdentityId = 0
-    const extensionIdentityIds = new WeakMap<object, number>()
-
-    const getExtensionIdentityId = (value: object) => {
-        let id = extensionIdentityIds.get(value)
-        if (!id) {
-            id = ++extensionIdentityId
-            extensionIdentityIds.set(value, id)
-        }
-
-        return id
-    }
-
-    const getFunctionIdentityId = (value: unknown) =>
-        typeof value === 'function' ? getExtensionIdentityId(value) : null
-
-    const getExtensionCacheSignature = (extensionList: MarkedExtension[]) =>
-        extensionList.map((extension) => ({
-            extension: getExtensionIdentityId(extension),
-            async: extension.async ?? false,
-            extensions:
-                extension.extensions?.map((tokenizer) => {
-                    const tokenizerRecord = tokenizer as unknown as ExtensionIdentityRecord
-
-                    return {
-                        token: getExtensionIdentityId(tokenizer),
-                        name: tokenizer.name,
-                        level: tokenizerRecord.level ?? null,
-                        childTokens: tokenizerRecord.childTokens ?? null,
-                        start: getFunctionIdentityId(tokenizerRecord.start),
-                        tokenizer: getFunctionIdentityId(tokenizerRecord.tokenizer),
-                        renderer: getFunctionIdentityId(tokenizerRecord.renderer)
-                    }
-                }) ?? null,
-            hooks: extension.hooks ? getExtensionIdentityId(extension.hooks) : null,
-            renderer: extension.renderer ? getExtensionIdentityId(extension.renderer) : null,
-            tokenizer: extension.tokenizer ? getExtensionIdentityId(extension.tokenizer) : null,
-            walkTokens: getFunctionIdentityId(extension.walkTokens)
-        }))
 
     const {
         source = [],
@@ -134,30 +97,12 @@
     } = $props()
 
     // Extract custom token type names from the extensions array
-    const extensionTokenNames = $derived(
-        extensions.flatMap((ext) => ext.extensions?.map((e) => e.name) ?? [])
-    )
-
-    // Create a scoped Marked instance and extract its resolved defaults
-    const extensionDefaults = $derived(
-        extensions.length > 0 ? new Marked(...extensions).defaults : {}
-    )
-
-    const extensionCacheSignature = $derived(
-        extensions.length > 0 ? getExtensionCacheSignature(extensions) : undefined
-    )
-    const combinedOptions = $derived({
-        ...defaultOptions,
-        ...extensionDefaults,
-        ...options,
-        ...(extensionCacheSignature
-            ? { _svelteMarkdownExtensionCacheSignature: extensionCacheSignature }
-            : {})
-    })
+    const extensionTokenNames = $derived(getExtensionTokenNames(extensions))
+    const combinedOptions = $derived(buildParserOptions(options, extensions))
     const slugger = new Slugger()
 
     // Detect if any extension requires async processing
-    const hasAsyncExtension = $derived(extensions.some((ext) => ext.async === true))
+    const hasAsyncExtension = $derived(getHasAsyncExtension(extensions))
 
     // Streaming mode: full re-parse + smart in-place diff
     let incrementalParser: IncrementalParser | undefined
@@ -354,9 +299,6 @@
         applyStreamingSource(streamSourceBuffer)
     }
 
-    const isStreamingOffsetChunk = (chunk: StreamingChunk): chunk is StreamingOffsetChunk =>
-        typeof chunk === 'object' && chunk !== null && 'offset' in chunk
-
     export function writeChunk(chunk: StreamingChunk): void {
         if (!canUseImperativeStreaming('writeChunk')) return
 
@@ -526,45 +468,19 @@
         parsed(tokens)
     })
 
-    const combinedRenderers = $derived({
-        ...defaultRenderers,
-        ...renderers,
-        html: renderers.html
-            ? {
-                  ...defaultRenderers.html,
-                  ...renderers.html
-              }
-            : defaultRenderers.html
-    })
+    const combinedRenderers = $derived(buildCombinedRenderers(renderers))
 
     // All renderer keys: built-in + extension token names
-    const allRendererKeys = $derived([...rendererKeysInternal, ...extensionTokenNames])
+    const allRendererKeys = $derived(getAllRendererKeys(extensionTokenNames))
 
     // Collect markdown snippet overrides (keys matching renderer names or extension token names)
-    const snippetOverrides = $derived(
-        Object.fromEntries(
-            allRendererKeys
-                .filter((key) => key in rest && rest[key] != null)
-                .map((key) => [key, rest[key]])
-        ) as Record<string, AnySnippet>
-    )
+    const snippetOverrides = $derived(getSnippetOverrides(rest, allRendererKeys))
 
     // Collect HTML snippet overrides (keys matching html_<tag>)
-    const htmlSnippetOverrides = $derived(
-        Object.fromEntries(
-            Object.entries(rest)
-                .filter(([key, val]) => key.startsWith('html_') && val != null)
-                .map(([key, val]) => [key.slice(5), val])
-        ) as Record<string, AnySnippet>
-    )
+    const htmlSnippetOverrides = $derived(getHtmlSnippetOverrides(rest))
 
     // Passthrough: everything that isn't a known snippet override
-    const snippetKeySet = $derived(
-        new Set([...allRendererKeys, ...Object.keys(rest).filter((k) => k.startsWith('html_'))])
-    )
-    const passThroughProps = $derived(
-        Object.fromEntries(Object.entries(rest).filter(([key]) => !snippetKeySet.has(key)))
-    )
+    const passThroughProps = $derived(getPassThroughProps(rest, allRendererKeys))
 </script>
 
 <Parser
