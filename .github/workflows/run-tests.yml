@@ -48,8 +48,6 @@ jobs:
                   fetch-depth: 1
 
             - uses: pnpm/action-setup@v6 # zizmor: ignore[unpinned-uses]
-              with:
-                  version: 11
 
             - name: Use Node.js - 24
               uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
@@ -116,8 +114,6 @@ jobs:
                   fetch-depth: 1
 
             - uses: pnpm/action-setup@v6 # zizmor: ignore[unpinned-uses]
-              with:
-                  version: 11
 
             - name: Use Node.js - 24
               uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
