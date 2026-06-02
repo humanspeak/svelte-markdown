@@ -3,6 +3,7 @@ packages:
     - docs
 
 allowBuilds:
+    '@humanspeak/docs-kit': true
     esbuild: true
     sharp: true
     workerd: true
