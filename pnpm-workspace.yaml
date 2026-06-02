@@ -1,3 +1,18 @@
 packages:
     - .
     - docs
+
+allowBuilds:
+    esbuild: true
+    sharp: true
+    workerd: true
+
+onlyBuiltDependencies:
+    - '@humanspeak/docs-kit'
+    - esbuild
+    - sharp
+    - workerd
+
+minimumReleaseAge: 2880
+minimumReleaseAgeExclude:
+    - '@humanspeak/*'

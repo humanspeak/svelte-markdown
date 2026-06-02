@@ -79,17 +79,31 @@ export default defineConfig({
             defaultDescription:
                 'Fast, secure markdown rendering with built-in caching and snippet overrides.',
             defaultFeatures: docsConfig.defaultFeatures,
-            extraPages: competitors.map((c) => ({
-                ogSlug: `compare-${c.slug}`,
-                ogTitle: `vs ${c.name}`,
-                ogTagline: c.tagline,
-                ogFeatures: [
-                    'Feature Comparison',
-                    'Pros & Cons',
-                    'Migration Guide',
-                    'Honest Verdict'
-                ]
-            }))
+            extraPages: [
+                {
+                    ogSlug: 'compare',
+                    ogTitle: 'Compare',
+                    ogTagline:
+                        'Honest, side-by-side comparisons against every major Svelte markdown library you would consider.',
+                    ogFeatures: [
+                        'All Comparisons',
+                        'Feature Matrices',
+                        'Pros & Cons',
+                        'Migration Guides'
+                    ]
+                },
+                ...competitors.map((c) => ({
+                    ogSlug: `compare-${c.slug}`,
+                    ogTitle: `vs ${c.name}`,
+                    ogTagline: c.tagline,
+                    ogFeatures: [
+                        'Feature Comparison',
+                        'Pros & Cons',
+                        'Migration Guide',
+                        'Honest Verdict'
+                    ]
+                }))
+            ]
         }),
         tailwindcss(),
         sveltekit()
