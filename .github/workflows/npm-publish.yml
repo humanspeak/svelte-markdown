@@ -479,9 +479,11 @@ jobs:
                       ;;
                   esac
 
-                  # Get the new version number
-                  NEW_VERSION=$(pnpm version "$BUMP_TYPE" --no-git-tag-version)
-                  echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+                  # Mutate package.json only — do NOT parse pnpm stdout (pnpm 11 prints multi-line text)
+                  pnpm version "$BUMP_TYPE" --no-git-tag-version
+                  PACKAGE_VERSION=$(node -p "require('./package.json').version")
+                  NEW_VERSION="v${PACKAGE_VERSION}"
+                  echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
 
                   # Escape special characters in PR title and URL
                   ESCAPED_TITLE=$(echo "$PR_TITLE" | sed 's/[`$"\]/\\&/g')
