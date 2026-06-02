@@ -2,8 +2,13 @@
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import { BlogIndexV2, loadBlogPostsMdsvex } from '@humanspeak/docs-kit/blog'
 
+    type MdsvexModule = {
+        metadata?: Record<string, unknown>
+        default?: unknown
+    }
+
     const modules = import.meta.glob('/src/routes/blog/*/+page.svx', { eager: true })
-    const posts = loadBlogPostsMdsvex(modules)
+    const posts = loadBlogPostsMdsvex(modules as Record<string, MdsvexModule>)
 
     const seo = getSeoContext()
     if (seo) {

@@ -3,6 +3,11 @@
     import { markedAlert } from '@humanspeak/svelte-markdown/extensions'
     import { AlertCircle, AlertTriangle, Info, Lightbulb, ShieldAlert } from '@lucide/svelte'
 
+    type AlertSnippetProps = {
+        alertType: 'note' | 'tip' | 'important' | 'warning' | 'caution'
+        text: string
+    }
+
     const markdown = `## GitHub Alerts
 
 GitHub-style alerts highlight critical information in documentation.
@@ -35,7 +40,7 @@ Regular markdown works alongside alerts: **bold**, *italic*, and \`inline code\`
 -->
 <div class="prose prose-sm dark:prose-invert mx-auto max-w-4xl px-6 py-6">
     <SvelteMarkdown source={markdown} extensions={[markedAlert()]}>
-        {#snippet alert(props)}
+        {#snippet alert(props: AlertSnippetProps)}
             <aside class="ga-alert ga-alert-{props.alertType}" role="note">
                 <span class="ga-alert-icon">
                     {#if props.alertType === 'note'}

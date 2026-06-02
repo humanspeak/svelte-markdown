@@ -2,6 +2,14 @@
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import { markedFootnote } from '@humanspeak/svelte-markdown/extensions'
 
+    type FootnoteRefProps = {
+        id: string
+    }
+
+    type FootnoteSectionProps = {
+        footnotes: { id: string; text: string }[]
+    }
+
     const markdown = `## Footnotes
 
 Footnotes let you add references without cluttering the main text.
@@ -28,13 +36,13 @@ When documenting APIs, footnotes[^api] help explain edge cases without breaking 
 -->
 <div class="prose prose-sm dark:prose-invert mx-auto max-w-4xl px-6 py-6">
     <SvelteMarkdown source={markdown} extensions={[markedFootnote()]}>
-        {#snippet footnoteRef(props)}
+        {#snippet footnoteRef(props: FootnoteRefProps)}
             <sup class="fn-ref">
                 <a href="#fn-{props.id}" id="fnref-{props.id}">[{props.id}]</a>
             </sup>
         {/snippet}
 
-        {#snippet footnoteSection(props)}
+        {#snippet footnoteSection(props: FootnoteSectionProps)}
             <section class="fn-section" role="doc-endnotes">
                 <h3 class="fn-section-title">Footnotes</h3>
                 <ol>

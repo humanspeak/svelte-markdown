@@ -103,12 +103,6 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs).
     let renderCount = $state(0)
     let droppedFrames = $state(0)
 
-    const avgRenderTime = $derived(renderCount > 0 ? totalRenderTime / renderCount : 0)
-    const progress = $derived(
-        chunks.length > 0 ? Math.round((chunkIndex / chunks.length) * 100) : 0
-    )
-    const chunkedStreamActive = $derived(streamMode === 'chunked' || streamMode === 'offset')
-
     let timeoutId: ReturnType<typeof setTimeout> | null = null
     let chunks: StreamingChunk[] = $state([])
     let chunkIndex = $state(0)
@@ -117,6 +111,12 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs).
     let sessionId = 0
     let previewEl: HTMLDivElement | undefined = $state()
     let sourceEl: HTMLPreElement | undefined = $state()
+
+    const avgRenderTime = $derived(renderCount > 0 ? totalRenderTime / renderCount : 0)
+    const progress = $derived(
+        chunks.length > 0 ? Math.round((chunkIndex / chunks.length) * 100) : 0
+    )
+    const chunkedStreamActive = $derived(streamMode === 'chunked' || streamMode === 'offset')
 
     const splitIntoChunks = (text: string, mode: typeof chunkMode): string[] => {
         if (mode === 'character') return text.split('')
