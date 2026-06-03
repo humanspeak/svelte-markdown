@@ -3,15 +3,14 @@
         CodeReferenceV2,
         ExampleV2,
         formatSheetLabel,
-        type DemoManifestEntry,
         type ExampleSection
     } from '@humanspeak/docs-kit'
+    import { demoCodeSample } from '$lib/demo-loaders'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import DefaultHeadings from '$lib/examples/linked-headings/demos/DefaultHeadings.svelte'
     import RendererHeadings from '$lib/examples/linked-headings/demos/RendererHeadings.svelte'
     import SnippetHeadings from '$lib/examples/linked-headings/demos/SnippetHeadings.svelte'
     import { Anchor, Code, Hash, Link, Sparkles, Wrench } from '@lucide/svelte'
-    import demoManifest from '$lib/demo-manifest.json'
 
     const seo = getSeoContext()
     if (seo) {
@@ -26,9 +25,6 @@
 
     const SOURCE_URL =
         'https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/'
-
-    const manifest = demoManifest as Record<string, DemoManifestEntry>
-
     const sections: ExampleSection[] = [
         {
             figId: 'FIG-001',
@@ -93,11 +89,11 @@
 {#snippet defaultCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'default-headings',
-                label: 'DefaultHeadings.svelte',
-                ...manifest['linked-headings/demos/DefaultHeadings.svelte']
-            }
+            demoCodeSample(
+                'linked-headings/demos/DefaultHeadings.svelte',
+                'default-headings',
+                'DefaultHeadings.svelte'
+            )
         ]}
         columns={1}
     />
@@ -126,20 +122,20 @@
 {/snippet}
 {#snippet rendererCode()}
     <!-- Two-cell grid: the consumer's call site on the left, the heading
-         renderer component on the right. Both come from the manifest so
-         editing either file updates the displayed code automatically. -->
+         renderer component on the right. Both code samples lazy-load from
+         generated docs-kit demo modules. -->
     <CodeReferenceV2
         samples={[
-            {
-                id: 'page-usage',
-                label: 'RendererHeadings.svelte',
-                ...manifest['linked-headings/demos/RendererHeadings.svelte']
-            },
-            {
-                id: 'linked-heading-component',
-                label: 'LinkedHeading.svelte',
-                ...manifest['linked-headings/demos/LinkedHeading.svelte']
-            }
+            demoCodeSample(
+                'linked-headings/demos/RendererHeadings.svelte',
+                'page-usage',
+                'RendererHeadings.svelte'
+            ),
+            demoCodeSample(
+                'linked-headings/demos/LinkedHeading.svelte',
+                'linked-heading-component',
+                'LinkedHeading.svelte'
+            )
         ]}
         columns={2}
     />
@@ -169,11 +165,11 @@
 {#snippet snippetCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'snippet-headings',
-                label: 'SnippetHeadings.svelte',
-                ...manifest['linked-headings/demos/SnippetHeadings.svelte']
-            }
+            demoCodeSample(
+                'linked-headings/demos/SnippetHeadings.svelte',
+                'snippet-headings',
+                'SnippetHeadings.svelte'
+            )
         ]}
         columns={1}
     />

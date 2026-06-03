@@ -3,14 +3,13 @@
         CodeReferenceV2,
         ExampleV2,
         formatSheetLabel,
-        type DemoManifestEntry,
         type ExampleSection
     } from '@humanspeak/docs-kit'
+    import { demoCodeSample } from '$lib/demo-loaders'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import ComponentRendered from '$lib/examples/footnotes/demos/ComponentRendered.svelte'
     import SnippetRendered from '$lib/examples/footnotes/demos/SnippetRendered.svelte'
     import { ArrowLeftRight, BookOpen, Code, Paintbrush, Puzzle } from '@lucide/svelte'
-    import demoManifest from '$lib/demo-manifest.json'
 
     const seo = getSeoContext()
     if (seo) {
@@ -30,9 +29,6 @@
 
     const SOURCE_URL =
         'https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/'
-
-    const manifest = demoManifest as Record<string, DemoManifestEntry>
-
     const sections: ExampleSection[] = [
         {
             figId: 'FIG-001',
@@ -92,11 +88,11 @@
 {#snippet componentCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'component-rendered',
-                label: 'ComponentRendered.svelte',
-                ...manifest['footnotes/demos/ComponentRendered.svelte']
-            }
+            demoCodeSample(
+                'footnotes/demos/ComponentRendered.svelte',
+                'component-rendered',
+                'ComponentRendered.svelte'
+            )
         ]}
         columns={1}
     />
@@ -127,11 +123,11 @@
 {#snippet snippetCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'snippet-rendered',
-                label: 'SnippetRendered.svelte',
-                ...manifest['footnotes/demos/SnippetRendered.svelte']
-            }
+            demoCodeSample(
+                'footnotes/demos/SnippetRendered.svelte',
+                'snippet-rendered',
+                'SnippetRendered.svelte'
+            )
         ]}
         columns={1}
     />

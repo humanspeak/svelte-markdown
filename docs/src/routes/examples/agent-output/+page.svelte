@@ -3,12 +3,11 @@
         CodeReferenceV2,
         ExampleV2,
         formatSheetLabel,
-        type DemoManifestEntry,
         type ExampleSection
     } from '@humanspeak/docs-kit'
+    import { demoCodeSample } from '$lib/demo-loaders'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import AgentConsole from '$lib/examples/agent-output/demos/AgentConsole.svelte'
-    import demoManifest from '$lib/demo-manifest.json'
     import { Shield, ShieldCheck, ShieldOff, Zap } from '@lucide/svelte'
 
     const seo = getSeoContext()
@@ -29,9 +28,6 @@
 
     const SOURCE_URL =
         'https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/'
-
-    const manifest = demoManifest as Record<string, DemoManifestEntry>
-
     const sections: ExampleSection[] = [
         {
             figId: 'FIG-001',
@@ -88,11 +84,11 @@
 {#snippet agentCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'agent-console',
-                label: 'AgentConsole.svelte',
-                ...manifest['agent-output/demos/AgentConsole.svelte']
-            }
+            demoCodeSample(
+                'agent-output/demos/AgentConsole.svelte',
+                'agent-console',
+                'AgentConsole.svelte'
+            )
         ]}
         columns={1}
     />

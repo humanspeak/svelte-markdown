@@ -18,7 +18,8 @@ export default defineConfig({
     // own file watcher — no chokidar process, no package.json scripts to
     // maintain.
     //   * `demoManifestPlugin`     scans `src/lib/examples/<...>/demos/*.svelte`
-    //     and writes pre-highlighted source into `src/lib/demo-manifest.json`.
+    //     and writes a lightweight source index into `src/lib/demo-manifest.json`
+    //     plus lazy `virtual:docs-kit/demo/*` loaders for highlighted code.
     //   * `sitemapManifestPlugin`  scans `src/routes/**/+page.{svelte,svx,md}`
     //     and writes `src/lib/sitemap-manifest.json` (the input to
     //     `sitemap.xml`).
@@ -53,7 +54,7 @@ export default defineConfig({
                 source: 'src/lib/compare-data.ts'
             }))
         }),
-        demoManifestPlugin(),
+        demoManifestPlugin({ split: true }),
         docMirrorsPlugin({ siteUrl: 'https://markdown.svelte.page' }),
         llmsFullPlugin({
             siteUrl: 'https://markdown.svelte.page',

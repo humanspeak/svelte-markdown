@@ -156,6 +156,7 @@ export const docsSections: NavSection[] = [
             { title: 'Headless Parser', href: '/docs/advanced/headless-parser', icon: Terminal },
             { title: 'Security', href: '/docs/advanced/security', icon: Lock },
             { title: 'Token Caching', href: '/docs/advanced/token-caching', icon: Zap },
+            { title: 'Tree Shaking', href: '/docs/advanced/tree-shaking', icon: Gauge },
             { title: 'Allow/Deny', href: '/docs/advanced/allow-deny', icon: Shield },
             { title: 'Marked Extensions', href: '/docs/advanced/marked-extensions', icon: Puzzle }
         ]
@@ -164,7 +165,7 @@ export const docsSections: NavSection[] = [
         title: 'Examples',
         icon: Code,
         items: [
-            { title: 'Overview', href: '/docs/examples', icon: Code },
+            { title: 'Overview', href: '/docs/examples', icon: Code, exact: true },
             { title: 'Basic Rendering', href: '/docs/examples/basic-rendering', icon: FileText },
             {
                 title: 'Custom Renderers',
@@ -190,7 +191,7 @@ export const docsSections: NavSection[] = [
         title: 'Interactive Demos',
         icon: Play,
         items: [
-            { title: 'All Examples', href: '/examples', icon: Play },
+            { title: 'All Examples', href: '/examples', icon: Play, exact: true },
             { title: 'Agent Output', href: '/examples/agent-output', icon: Bot },
             { title: 'Live Playground', href: '/examples/playground', icon: SquarePen },
             { title: 'Custom Renderers', href: '/examples/custom-renderers', icon: Paintbrush },
@@ -210,7 +211,7 @@ export const docsSections: NavSection[] = [
         title: 'Compare',
         icon: Swords,
         items: [
-            { title: 'All Comparisons', href: '/compare', icon: Swords },
+            { title: 'All Comparisons', href: '/compare', icon: Swords, exact: true },
             { title: 'vs MDsveX', href: '/compare/vs-mdsvex', icon: Swords },
             { title: 'vs Tiptap', href: '/compare/vs-tiptap', icon: Swords },
             { title: 'vs markdown-it', href: '/compare/vs-markdown-it', icon: Swords },

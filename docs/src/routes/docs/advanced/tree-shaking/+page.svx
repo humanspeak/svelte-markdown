@@ -1,0 +1,177 @@
+---
+title: Tree Shaking
+description: Import paths and bundler best practices for keeping @humanspeak/svelte-markdown bundles lean
+---
+
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Tree Shaking | Svelte Markdown'
+        seo.description = 'Import paths and bundler best practices for keeping @humanspeak/svelte-markdown bundles lean'
+        seo.ogTitle = 'Tree Shaking'
+        seo.ogTagline = 'Keep optional renderers and heavy peers out until you use them.'
+        seo.ogFeatures = ['Subpath Imports', 'Optional Peers', 'KaTeX', 'Mermaid', 'Bundle Checks']
+        seo.ogSlug = 'docs-advanced-tree-shaking'
+    }
+</script>
+
+# Tree Shaking
+
+`@humanspeak/svelte-markdown` is designed so the core markdown component does not force optional extension payloads into your app. The easiest way to keep that true in your own bundle is to import the narrowest entrypoint that matches what you actually render.
+
+## Recommended Imports
+
+For plain markdown, import only the component:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown/SvelteMarkdown'
+</script>
+
+<SvelteMarkdown source={markdown} />
+```
+
+Use the root package when you need helpers, types, sanitizer utilities, or renderer maps from the public API:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown, { allowHtmlOnly } from '@humanspeak/svelte-markdown'
+
+    const html = allowHtmlOnly(['strong', 'em', 'a', 'code'])
+</script>
+
+<SvelteMarkdown source={markdown} renderers={{ html }} />
+```
+
+For extensions, prefer the extension family subpath:
+
+```svelte
+<script lang="ts">
+    import { markedKatex, KatexRenderer } from '@humanspeak/svelte-markdown/extensions/katex'
+    import { markedMermaid, MermaidRenderer } from '@humanspeak/svelte-markdown/extensions/mermaid'
+</script>
+```
+
+The compatibility barrel still works:
+
+```ts
+import { markedKatex, KatexRenderer } from '@humanspeak/svelte-markdown/extensions'
+```
+
+Use it when convenience matters more than a visibly narrow import. For bundle-sensitive code, the family subpaths make your intent clearer to both people and bundlers.
+
+## Optional Peer Payloads
+
+The extension tokenizers are small parser helpers. The renderer components are where heavy optional peers enter.
+
+| Import | Pulls heavy peer into initial bundle? | Notes |
+|--------|---------------------------------------|-------|
+| `@humanspeak/svelte-markdown/SvelteMarkdown` | No | Core component only. |
+| `markedKatex` from `/extensions/katex` | No | Tokenizes math; does not import `katex`. |
+| `KatexRenderer` from `/extensions/katex` | Yes, `katex` | Uses `katex.renderToString()` synchronously. |
+| `markedMermaid` from `/extensions/mermaid` | No | Tokenizes Mermaid fences; does not import `mermaid`. |
+| `MermaidRenderer` from `/extensions/mermaid` | No initial `mermaid` chunk | Dynamically imports Mermaid in the browser. |
+
+This means you can parse math or diagrams without paying for the renderer until you actually import the renderer path. If you provide your own renderer or snippet, your imports decide what ships.
+
+## Environment Best Practices
+
+### SvelteKit and Vite
+
+Use ESM imports and leave dependency pre-bundling to Vite. Avoid importing every extension from the compatibility barrel in shared modules if a route only needs one family.
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown/SvelteMarkdown'
+    import { markedKatex, KatexRenderer } from '@humanspeak/svelte-markdown/extensions/katex'
+
+    const extensions = [markedKatex()]
+    const renderers = {
+        inlineKatex: KatexRenderer,
+        blockKatex: KatexRenderer
+    }
+</script>
+```
+
+If only one route needs KaTeX or Mermaid, import those renderers in that route or route-level component instead of a shared app shell.
+
+### SSR
+
+`KatexRenderer` is synchronous and works during SSR. `MermaidRenderer` is browser-only internally: it waits for mount, then dynamically imports Mermaid and renders the diagram. That keeps Mermaid out of the server render path and out of the initial client graph.
+
+For server-rendered pages that must avoid any client-side Mermaid work, use `markedMermaid()` with a custom placeholder renderer or snippet and hydrate a diagram component only where needed.
+
+### Custom Renderers and Snippets
+
+Tree shaking follows your imports. If a snippet imports `katex`, the page that owns the snippet pays for KaTeX:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown/SvelteMarkdown'
+    import { markedKatex } from '@humanspeak/svelte-markdown/extensions/katex'
+    import katex from 'katex'
+</script>
+
+<SvelteMarkdown source={markdown} extensions={[markedKatex()]}>
+    {#snippet inlineKatex(props)}
+        {@html katex.renderToString(props.text, { throwOnError: false })}
+    {/snippet}
+</SvelteMarkdown>
+```
+
+That is fine when the route needs math. Keep that import out of routes that do not.
+
+### Lazy Route Loading
+
+For apps with a documentation or content area, put markdown features behind route-level imports. A marketing page that renders plain markdown does not need to share the same module that imports math, diagrams, footnotes, and alerts.
+
+```ts
+// Good: math route owns its math renderer import.
+import { markedKatex, KatexRenderer } from '@humanspeak/svelte-markdown/extensions/katex'
+
+// Avoid in app-wide modules unless every page needs every extension.
+import {
+    AlertRenderer,
+    FootnoteRef,
+    FootnoteSection,
+    KatexRenderer,
+    MermaidRenderer
+} from '@humanspeak/svelte-markdown/extensions'
+```
+
+## Checking Your Bundle
+
+For Vite apps, inspect the production bundle after a build:
+
+```bash
+npm run build
+```
+
+For the most reliable report, add a Rollup visualizer plugin to your app build and confirm:
+
+- Plain markdown routes do not include KaTeX or Mermaid.
+- KaTeX appears only where `KatexRenderer`, `katex`, or a math snippet imports it.
+- Mermaid appears behind a dynamic chunk when using `MermaidRenderer`.
+
+As a quick heuristic, you can also search generated client assets for distinctive library strings. These text checks may need adjustment for your minifier or build output:
+
+```bash
+grep -R "KaTeX" .svelte-kit/output/client/_app
+grep -R "mermaid" .svelte-kit/output/client/_app
+```
+
+The package also has an internal verification script:
+
+```bash
+pnpm test:tree-shaking
+```
+
+That script builds small consumer entries and checks that the published subpaths behave as expected.
+
+## Related Pages
+
+- [Marked Extensions](/docs/advanced/marked-extensions) -- KaTeX, Mermaid, alerts, footnotes, and custom extension setup
+- [Token Caching](/docs/advanced/token-caching) -- parser cache behavior and extension identity
+- [SvelteMarkdown API](/docs/api/svelte-markdown) -- component props and public imports

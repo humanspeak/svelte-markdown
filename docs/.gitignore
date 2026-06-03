@@ -6,3 +6,5 @@ static/llms.txt
 static/llms-full.txt
 src/lib/sitemap-manifest.json
 src/lib/demo-manifest.json
+src/lib/demo-loaders.ts
+src/lib/demo-virtual.d.ts

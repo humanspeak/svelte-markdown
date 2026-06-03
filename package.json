@@ -62,9 +62,29 @@
             "types": "./dist/index.d.ts",
             "svelte": "./dist/index.js"
         },
+        "./SvelteMarkdown": {
+            "types": "./dist/SvelteMarkdown.svelte.d.ts",
+            "svelte": "./dist/SvelteMarkdown.svelte"
+        },
         "./extensions": {
             "types": "./dist/extensions/index.d.ts",
             "svelte": "./dist/extensions/index.js"
+        },
+        "./extensions/alert": {
+            "types": "./dist/extensions/alert/index.d.ts",
+            "svelte": "./dist/extensions/alert/index.js"
+        },
+        "./extensions/footnote": {
+            "types": "./dist/extensions/footnote/index.d.ts",
+            "svelte": "./dist/extensions/footnote/index.js"
+        },
+        "./extensions/katex": {
+            "types": "./dist/extensions/katex/index.d.ts",
+            "svelte": "./dist/extensions/katex/index.js"
+        },
+        "./extensions/mermaid": {
+            "types": "./dist/extensions/mermaid/index.d.ts",
+            "svelte": "./dist/extensions/mermaid/index.js"
         }
     },
     "svelte": "./dist/index.js",
@@ -98,6 +118,7 @@
         "test:e2e:report": "playwright show-report",
         "test:e2e:ui": "playwright test --ui",
         "test:only": "vitest run",
+        "test:tree-shaking": "node scripts/tree-shaking.mjs",
         "test:watch": "vitest"
     },
     "overrides": {
