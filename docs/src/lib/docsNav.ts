@@ -156,6 +156,7 @@ export const docsSections: NavSection[] = [
             { title: 'Headless Parser', href: '/docs/advanced/headless-parser', icon: Terminal },
             { title: 'Security', href: '/docs/advanced/security', icon: Lock },
             { title: 'Token Caching', href: '/docs/advanced/token-caching', icon: Zap },
+            { title: 'Tree Shaking', href: '/docs/advanced/tree-shaking', icon: Gauge },
             { title: 'Allow/Deny', href: '/docs/advanced/allow-deny', icon: Shield },
             { title: 'Marked Extensions', href: '/docs/advanced/marked-extensions', icon: Puzzle }
         ]
