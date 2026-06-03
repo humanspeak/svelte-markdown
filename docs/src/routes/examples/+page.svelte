@@ -68,6 +68,13 @@
                 'Live KaTeX math with the extensions prop. Try component renderers and snippet overrides.'
         },
         {
+            slug: 'reactive-extensions',
+            title: 'Reactive Extensions',
+            tag: 'EXTENSIONS',
+            description:
+                'Dynamically rebuild marked extensions from Svelte state without appending duplicate extensions.'
+        },
+        {
             slug: 'mermaid',
             title: 'Mermaid Diagrams',
             tag: 'EXTENSIONS',
