@@ -3,14 +3,13 @@
         CodeReferenceV2,
         ExampleV2,
         formatSheetLabel,
-        type DemoManifestEntry,
         type ExampleSection
     } from '@humanspeak/docs-kit'
+    import { demoCodeSample } from '$lib/demo-loaders'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import PrettierExtension from '$lib/examples/code-formatting/demos/PrettierExtension.svelte'
     import SnippetRendered from '$lib/examples/code-formatting/demos/SnippetRendered.svelte'
     import { Code, Package, Puzzle, Tag, Wrench } from '@lucide/svelte'
-    import demoManifest from '$lib/demo-manifest.json'
 
     const seo = getSeoContext()
     if (seo) {
@@ -25,9 +24,6 @@
 
     const SOURCE_URL =
         'https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/'
-
-    const manifest = demoManifest as Record<string, DemoManifestEntry>
-
     const sections: ExampleSection[] = [
         {
             figId: 'FIG-001',
@@ -88,11 +84,11 @@
 {#snippet extensionCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'prettier-extension',
-                label: 'PrettierExtension.svelte',
-                ...manifest['code-formatting/demos/PrettierExtension.svelte']
-            }
+            demoCodeSample(
+                'code-formatting/demos/PrettierExtension.svelte',
+                'prettier-extension',
+                'PrettierExtension.svelte'
+            )
         ]}
         columns={1}
     />
@@ -122,11 +118,11 @@
 {#snippet snippetCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'snippet-rendered',
-                label: 'SnippetRendered.svelte',
-                ...manifest['code-formatting/demos/SnippetRendered.svelte']
-            }
+            demoCodeSample(
+                'code-formatting/demos/SnippetRendered.svelte',
+                'snippet-rendered',
+                'SnippetRendered.svelte'
+            )
         ]}
         columns={1}
     />

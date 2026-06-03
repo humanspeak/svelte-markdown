@@ -3,14 +3,13 @@
         CodeReferenceV2,
         ExampleV2,
         formatSheetLabel,
-        type DemoManifestEntry,
         type ExampleSection
     } from '@humanspeak/docs-kit'
+    import { demoCodeSample } from '$lib/demo-loaders'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import ComponentRendered from '$lib/examples/marked-extensions/demos/ComponentRendered.svelte'
     import SnippetRendered from '$lib/examples/marked-extensions/demos/SnippetRendered.svelte'
     import { Code, Layers, Paintbrush, Puzzle, Sigma } from '@lucide/svelte'
-    import demoManifest from '$lib/demo-manifest.json'
 
     const seo = getSeoContext()
     if (seo) {
@@ -25,9 +24,6 @@
 
     const SOURCE_URL =
         'https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/'
-
-    const manifest = demoManifest as Record<string, DemoManifestEntry>
-
     const sections: ExampleSection[] = [
         {
             figId: 'FIG-001',
@@ -88,11 +84,11 @@
 {#snippet componentCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'component-rendered',
-                label: 'ComponentRendered.svelte',
-                ...manifest['marked-extensions/demos/ComponentRendered.svelte']
-            }
+            demoCodeSample(
+                'marked-extensions/demos/ComponentRendered.svelte',
+                'component-rendered',
+                'ComponentRendered.svelte'
+            )
         ]}
         columns={1}
     />
@@ -123,11 +119,11 @@
 {#snippet snippetCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'snippet-rendered',
-                label: 'SnippetRendered.svelte',
-                ...manifest['marked-extensions/demos/SnippetRendered.svelte']
-            }
+            demoCodeSample(
+                'marked-extensions/demos/SnippetRendered.svelte',
+                'snippet-rendered',
+                'SnippetRendered.svelte'
+            )
         ]}
         columns={1}
     />

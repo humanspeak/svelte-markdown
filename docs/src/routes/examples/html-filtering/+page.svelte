@@ -3,22 +3,14 @@
         CodeReferenceV2,
         ExampleV2,
         formatSheetLabel,
-        type DemoManifestEntry,
         type ExampleSection
     } from '@humanspeak/docs-kit'
+    import { demoCodeSample } from '$lib/demo-loaders'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import AllowAllHtml from '$lib/examples/html-filtering/demos/AllowAllHtml.svelte'
     import AllowOnlySafe from '$lib/examples/html-filtering/demos/AllowOnlySafe.svelte'
     import BlockAllHtml from '$lib/examples/html-filtering/demos/BlockAllHtml.svelte'
     import { AlertTriangle, ShieldCheck, ShieldOff, Sparkles, Filter, Ban } from '@lucide/svelte'
-    // The manifest is generated at build/dev start by `demoManifestPlugin`
-    // (registered in vite.config.ts). Each entry's key is the demo file's
-    // path relative to `src/lib/examples/`. Editing any demo file
-    // regenerates the manifest and Vite reloads the page — the rendered
-    // demo and the displayed code stay in lockstep with zero per-page
-    // bookkeeping.
-    import demoManifest from '$lib/demo-manifest.json'
-
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'HTML Filtering | Examples | Svelte Markdown'
@@ -35,13 +27,9 @@
 
     // ── Sheet configuration ────────────────────────────────────────────
     // One row per sheet section. Each row carries lede words for the left
-    // column and references the demo file in `manifestKey` — the demo
-    // component is mounted as the body, and the manifest entry is fed
-    // through CodeReferenceV2 as the toggleable code panel. Adding a new
-    // policy is one new demo file + one row here.
-
-    const manifest = demoManifest as Record<string, DemoManifestEntry>
-
+    // column and references the lazily loaded demo source for the
+    // toggleable CodeReferenceV2 panel. Adding a new policy is one new
+    // demo file + one row here.
     const sections: ExampleSection[] = [
         {
             figId: 'FIG-001',
@@ -106,11 +94,11 @@
 {#snippet allowAllCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'allow-all-html',
-                label: 'AllowAllHtml.svelte',
-                ...manifest['html-filtering/demos/AllowAllHtml.svelte']
-            }
+            demoCodeSample(
+                'html-filtering/demos/AllowAllHtml.svelte',
+                'allow-all-html',
+                'AllowAllHtml.svelte'
+            )
         ]}
         columns={1}
     />
@@ -141,11 +129,11 @@
 {#snippet allowSafeCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'allow-only-safe',
-                label: 'AllowOnlySafe.svelte',
-                ...manifest['html-filtering/demos/AllowOnlySafe.svelte']
-            }
+            demoCodeSample(
+                'html-filtering/demos/AllowOnlySafe.svelte',
+                'allow-only-safe',
+                'AllowOnlySafe.svelte'
+            )
         ]}
         columns={1}
     />
@@ -175,11 +163,11 @@
 {#snippet blockAllCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'block-all-html',
-                label: 'BlockAllHtml.svelte',
-                ...manifest['html-filtering/demos/BlockAllHtml.svelte']
-            }
+            demoCodeSample(
+                'html-filtering/demos/BlockAllHtml.svelte',
+                'block-all-html',
+                'BlockAllHtml.svelte'
+            )
         ]}
         columns={1}
     />

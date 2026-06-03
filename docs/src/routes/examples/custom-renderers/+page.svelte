@@ -3,14 +3,13 @@
         CodeReferenceV2,
         ExampleV2,
         formatSheetLabel,
-        type DemoManifestEntry,
         type ExampleSection
     } from '@humanspeak/docs-kit'
+    import { demoCodeSample } from '$lib/demo-loaders'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import DefaultRenderers from '$lib/examples/custom-renderers/demos/DefaultRenderers.svelte'
     import FilteredRenderers from '$lib/examples/custom-renderers/demos/FilteredRenderers.svelte'
     import { Filter, Layers, Sparkles, Wrench } from '@lucide/svelte'
-    import demoManifest from '$lib/demo-manifest.json'
 
     const seo = getSeoContext()
     if (seo) {
@@ -25,9 +24,6 @@
 
     const SOURCE_URL =
         'https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/'
-
-    const manifest = demoManifest as Record<string, DemoManifestEntry>
-
     const sections: ExampleSection[] = [
         {
             figId: 'FIG-001',
@@ -80,11 +76,11 @@
 {#snippet defaultCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'default-renderers',
-                label: 'DefaultRenderers.svelte',
-                ...manifest['custom-renderers/demos/DefaultRenderers.svelte']
-            }
+            demoCodeSample(
+                'custom-renderers/demos/DefaultRenderers.svelte',
+                'default-renderers',
+                'DefaultRenderers.svelte'
+            )
         ]}
         columns={1}
     />
@@ -114,11 +110,11 @@
 {#snippet filteredCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'filtered-renderers',
-                label: 'FilteredRenderers.svelte',
-                ...manifest['custom-renderers/demos/FilteredRenderers.svelte']
-            }
+            demoCodeSample(
+                'custom-renderers/demos/FilteredRenderers.svelte',
+                'filtered-renderers',
+                'FilteredRenderers.svelte'
+            )
         ]}
         columns={1}
     />

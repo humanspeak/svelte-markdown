@@ -3,14 +3,13 @@
         CodeReferenceV2,
         ExampleV2,
         formatSheetLabel,
-        type DemoManifestEntry,
         type ExampleSection
     } from '@humanspeak/docs-kit'
+    import { demoCodeSample } from '$lib/demo-loaders'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import DefaultRendering from '$lib/examples/snippet-overrides/demos/DefaultRendering.svelte'
     import WithSnippets from '$lib/examples/snippet-overrides/demos/WithSnippets.svelte'
     import { Code, Layers, Paintbrush, Sparkles } from '@lucide/svelte'
-    import demoManifest from '$lib/demo-manifest.json'
 
     const seo = getSeoContext()
     if (seo) {
@@ -25,9 +24,6 @@
 
     const SOURCE_URL =
         'https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/'
-
-    const manifest = demoManifest as Record<string, DemoManifestEntry>
-
     const sections: ExampleSection[] = [
         {
             figId: 'FIG-001',
@@ -80,11 +76,11 @@
 {#snippet defaultCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'default-rendering',
-                label: 'DefaultRendering.svelte',
-                ...manifest['snippet-overrides/demos/DefaultRendering.svelte']
-            }
+            demoCodeSample(
+                'snippet-overrides/demos/DefaultRendering.svelte',
+                'default-rendering',
+                'DefaultRendering.svelte'
+            )
         ]}
         columns={1}
     />
@@ -121,11 +117,11 @@
 {#snippet snippetsCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'with-snippets',
-                label: 'WithSnippets.svelte',
-                ...manifest['snippet-overrides/demos/WithSnippets.svelte']
-            }
+            demoCodeSample(
+                'snippet-overrides/demos/WithSnippets.svelte',
+                'with-snippets',
+                'WithSnippets.svelte'
+            )
         ]}
         columns={1}
     />

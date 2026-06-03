@@ -3,13 +3,12 @@
         CodeReferenceV2,
         ExampleV2,
         formatSheetLabel,
-        type DemoManifestEntry,
         type ExampleSection
     } from '@humanspeak/docs-kit'
+    import { demoCodeSample } from '$lib/demo-loaders'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import ReactiveExtensionConsole from '$lib/examples/reactive-extensions/demos/ReactiveExtensionConsole.svelte'
     import { Layers, ListRestart, MousePointerClick, Radar } from '@lucide/svelte'
-    import demoManifest from '$lib/demo-manifest.json'
 
     const seo = getSeoContext()
     if (seo) {
@@ -24,9 +23,6 @@
 
     const SOURCE_URL =
         'https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/'
-
-    const manifest = demoManifest as Record<string, DemoManifestEntry>
-
     const sections: ExampleSection[] = [
         {
             figId: 'FIG-001',
@@ -85,16 +81,16 @@
 {#snippet reactiveCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'reactive-extension-console',
-                label: 'ReactiveExtensionConsole.svelte',
-                ...manifest['reactive-extensions/demos/ReactiveExtensionConsole.svelte']
-            },
-            {
-                id: 'display-button-renderer',
-                label: 'DisplayButtonRenderer.svelte',
-                ...manifest['reactive-extensions/demos/DisplayButtonRenderer.svelte']
-            }
+            demoCodeSample(
+                'reactive-extensions/demos/ReactiveExtensionConsole.svelte',
+                'reactive-extension-console',
+                'ReactiveExtensionConsole.svelte'
+            ),
+            demoCodeSample(
+                'reactive-extensions/demos/DisplayButtonRenderer.svelte',
+                'display-button-renderer',
+                'DisplayButtonRenderer.svelte'
+            )
         ]}
         columns={2}
     />

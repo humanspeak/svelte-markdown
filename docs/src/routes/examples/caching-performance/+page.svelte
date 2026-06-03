@@ -3,12 +3,11 @@
         CodeReferenceV2,
         ExampleV2,
         formatSheetLabel,
-        type DemoManifestEntry,
         type ExampleSection
     } from '@humanspeak/docs-kit'
+    import { demoCodeSample } from '$lib/demo-loaders'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import CachingBenchmark from '$lib/examples/caching-performance/demos/CachingBenchmark.svelte'
-    import demoManifest from '$lib/demo-manifest.json'
     import { Gauge, Recycle, Zap } from '@lucide/svelte'
 
     const seo = getSeoContext()
@@ -24,9 +23,6 @@
 
     const SOURCE_URL =
         'https://github.com/humanspeak/svelte-markdown/blob/main/docs/src/lib/examples/'
-
-    const manifest = demoManifest as Record<string, DemoManifestEntry>
-
     const sections: ExampleSection[] = [
         {
             figId: 'FIG-001',
@@ -70,11 +66,11 @@
 {#snippet benchmarkCode()}
     <CodeReferenceV2
         samples={[
-            {
-                id: 'caching-benchmark',
-                label: 'CachingBenchmark.svelte',
-                ...manifest['caching-performance/demos/CachingBenchmark.svelte']
-            }
+            demoCodeSample(
+                'caching-performance/demos/CachingBenchmark.svelte',
+                'caching-benchmark',
+                'CachingBenchmark.svelte'
+            )
         ]}
         columns={1}
     />
