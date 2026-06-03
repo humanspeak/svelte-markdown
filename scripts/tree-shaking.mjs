@@ -1,11 +1,20 @@
 import { svelte } from '@sveltejs/vite-plugin-svelte'
-import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
+import { access, mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build } from 'vite'
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url))
+const distPath = join(repoRoot, 'dist')
+
+try {
+    await access(distPath)
+} catch {
+    throw new Error(
+        `Missing package build at ${distPath}. Run \`pnpm package\` from ${repoRoot} before \`pnpm test:tree-shaking\`.`
+    )
+}
 
 const cases = [
     {

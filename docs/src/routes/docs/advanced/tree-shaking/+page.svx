@@ -149,18 +149,18 @@ For Vite apps, inspect the production bundle after a build:
 npm run build
 ```
 
-Then search your generated client assets for optional peers:
-
-```bash
-grep -R "node_modules/katex" .svelte-kit/output/client
-grep -R "node_modules/mermaid" .svelte-kit/output/client
-```
-
-For a visual report, add a Rollup visualizer plugin to your app build and confirm:
+For the most reliable report, add a Rollup visualizer plugin to your app build and confirm:
 
 - Plain markdown routes do not include KaTeX or Mermaid.
 - KaTeX appears only where `KatexRenderer`, `katex`, or a math snippet imports it.
 - Mermaid appears behind a dynamic chunk when using `MermaidRenderer`.
+
+As a quick heuristic, you can also search generated client assets for distinctive library strings. These text checks may need adjustment for your minifier or build output:
+
+```bash
+grep -R "KaTeX" .svelte-kit/output/client/_app
+grep -R "mermaid" .svelte-kit/output/client/_app
+```
 
 The package also has an internal verification script:
 
