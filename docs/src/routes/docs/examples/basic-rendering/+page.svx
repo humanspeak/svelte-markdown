@@ -1,6 +1,6 @@
 ---
 title: Basic Rendering
-description: Common markdown rendering examples with @humanspeak/svelte-markdown
+description: Learn common @humanspeak/svelte-markdown rendering patterns for strings, token arrays, reactive updates, SvelteKit usage, and default output.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: Common markdown rendering examples with @humanspeak/svelte-markdown
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Basic Rendering Examples | Svelte Markdown'
-        seo.description = 'Common markdown rendering examples with @humanspeak/svelte-markdown'
+        seo.description = 'Learn common @humanspeak/svelte-markdown rendering patterns for strings, token arrays, reactive updates, SvelteKit usage, and default output.'
         seo.ogTitle = 'Basic Rendering'
         seo.ogTagline = 'Common markdown rendering patterns and examples.'
         seo.ogFeatures = ['String Input', 'Token Input', 'Reactive Updates', 'SvelteKit']

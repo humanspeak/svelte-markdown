@@ -12,8 +12,9 @@
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Live Playground | Examples | Svelte Markdown'
+        seo.h1 = { title: 'Live Playground' }
         seo.description =
-            'Interactive markdown playground with live preview. Edit markdown and HTML in real-time, powered by @humanspeak/svelte-markdown.'
+            'Try an interactive @humanspeak/svelte-markdown playground with live preview, editable markdown and HTML, renderer behavior, and Svelte 5 output.'
         seo.ogTitle = 'Live Playground'
         seo.ogTagline = 'Edit markdown and HTML with real-time preview.'
         seo.ogFeatures = ['Edit & Preview', 'Real-Time', 'Markdown + HTML', 'Full Editor']

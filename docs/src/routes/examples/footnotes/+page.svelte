@@ -14,8 +14,9 @@
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Footnotes | Examples | Svelte Markdown'
+        seo.h1 = { title: 'Footnotes' }
         seo.description =
-            'Academic-style footnotes in @humanspeak/svelte-markdown via the markedFootnote extension, rendered two ways: built-in FootnoteRef + FootnoteSection components vs inline Svelte 5 snippet overrides.'
+            'Render academic-style footnotes in @humanspeak/svelte-markdown with markedFootnote, using built-in components or inline Svelte 5 snippet overrides.'
         seo.ogTitle = 'Footnotes'
         seo.ogTagline = 'Component renderers vs snippet overrides on the markedFootnote extension.'
         seo.ogFeatures = [

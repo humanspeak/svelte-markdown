@@ -1,6 +1,6 @@
 ---
 title: Parsed Callback
-description: Examples of using the parsed callback prop to inspect and use token data
+description: Use the parsed callback prop in @humanspeak/svelte-markdown to inspect token data, build tables of contents, count words, and analyze content.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: Examples of using the parsed callback prop to inspect and use token
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Parsed Callback Examples | Svelte Markdown'
-        seo.description = 'Examples of using the parsed callback prop to inspect and use token data'
+        seo.description = 'Use the parsed callback prop in @humanspeak/svelte-markdown to inspect token data, build tables of contents, count words, and analyze content.'
         seo.ogTitle = 'Parsed Callback'
         seo.ogTagline = 'Inspect and use token data at parse time.'
         seo.ogFeatures = ['Token Inspector', 'Word Count', 'TOC Builder', 'Content Analysis']

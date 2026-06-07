@@ -15,8 +15,9 @@
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Linked Headings | Examples | Svelte Markdown'
+        seo.h1 = { title: 'Linked Headings' }
         seo.description =
-            'Three ways to add clickable anchor links to markdown headings with @humanspeak/svelte-markdown — default rendering, a dedicated heading component, and an inline Svelte 5 snippet.'
+            'Add clickable anchor links to markdown headings with @humanspeak/svelte-markdown using default output, a custom heading renderer, or Svelte 5 snippets.'
         seo.ogTitle = 'Linked Headings'
         seo.ogTagline = 'Default vs custom-renderer vs snippet — three takes on heading anchors.'
         seo.ogFeatures = ['Default Headings', 'Custom Renderer', 'Snippet Override']

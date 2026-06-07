@@ -1,6 +1,6 @@
 ---
 title: Migration Guide
-description: Migrate from svelte-markdown to @humanspeak/svelte-markdown for Svelte 5 with improved TypeScript support, caching, and new features
+description: Migrate from svelte-markdown to @humanspeak/svelte-markdown for Svelte 5 with TypeScript support, token caching, streaming, and new renderer APIs.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: Migrate from svelte-markdown to @humanspeak/svelte-markdown for Sve
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Migration Guide | Svelte Markdown'
-        seo.description = 'Migrate from svelte-markdown to @humanspeak/svelte-markdown for Svelte 5 with improved TypeScript support, caching, and new features'
+        seo.description = 'Migrate from svelte-markdown to @humanspeak/svelte-markdown for Svelte 5 with TypeScript support, token caching, streaming, and new renderer APIs.'
         seo.ogTitle = 'Migration Guide'
         seo.ogTagline = 'Upgrade from svelte-markdown to Svelte 5.'
         seo.ogFeatures = ['Svelte 5 Upgrade', 'API Changes', 'New Features', 'Step by Step']

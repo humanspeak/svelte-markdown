@@ -1,6 +1,6 @@
 ---
 title: LLM Streaming
-description: Render AI chat responses in real-time with token-by-token markdown streaming
+description: Render AI chat responses in real time with @humanspeak/svelte-markdown, using token-by-token streaming for ChatGPT-style Svelte app interfaces.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: Render AI chat responses in real-time with token-by-token markdown 
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'LLM Streaming | Svelte Markdown'
-        seo.description = 'Render AI chat responses in real-time with token-by-token markdown streaming. Build ChatGPT-style streaming UIs with SvelteMarkdown.'
+        seo.description = 'Render AI chat responses in real time with @humanspeak/svelte-markdown, using token-by-token streaming for ChatGPT-style Svelte app interfaces.'
         seo.ogTitle = 'LLM Streaming'
         seo.ogTagline = 'Real-time AI response rendering for Svelte apps.'
         seo.ogFeatures = ['Token Streaming', 'SSE Support', 'Sub-10ms Renders', 'Zero Config']

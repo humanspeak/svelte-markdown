@@ -13,8 +13,9 @@
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'AI Agent Output | Examples | Svelte Markdown'
+        seo.h1 = { title: 'AI Agent Output' }
         seo.description =
-            'Watch @humanspeak/svelte-markdown render streaming HTML from a simulated AI agent — with live sanitization that blocks javascript: URLs and on*= event handlers as they arrive.'
+            'Watch @humanspeak/svelte-markdown render streaming HTML from a simulated AI agent, with live sanitization blocking unsafe URLs and event handlers.'
         seo.ogTitle = 'AI Agent Output Demo'
         seo.ogTagline = 'Streaming agent HTML with live XSS sanitization.'
         seo.ogFeatures = [

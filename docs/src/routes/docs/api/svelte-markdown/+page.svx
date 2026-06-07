@@ -1,6 +1,6 @@
 ---
 title: SvelteMarkdown Component
-description: Complete API reference for the SvelteMarkdown component
+description: Use the SvelteMarkdown component API: props, renderers, snippets, extensions, parsed callbacks, inline mode, token input, and TypeScript types.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: Complete API reference for the SvelteMarkdown component
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'SvelteMarkdown Component API | Svelte Markdown'
-        seo.description = 'Complete API reference for the SvelteMarkdown component'
+        seo.description = 'Use the SvelteMarkdown component API: props, renderers, snippets, extensions, parsed callbacks, inline mode, token input, and TypeScript types.'
         seo.ogTitle = 'Component API'
         seo.ogTagline = 'Props, events, and configuration for SvelteMarkdown.'
         seo.ogFeatures = ['Props Reference', 'Event Callbacks', 'Token Input', 'Inline Mode']

@@ -1,6 +1,6 @@
 ---
 title: Inline Rendering
-description: Examples of using the isInline prop for inline markdown rendering
+description: Render inline markdown with @humanspeak/svelte-markdown using the isInline prop for span-friendly text, links, emphasis, and compact UI contexts.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: Examples of using the isInline prop for inline markdown rendering
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Inline Rendering Examples | Svelte Markdown'
-        seo.description = 'Examples of using the isInline prop for inline markdown rendering'
+        seo.description = 'Render inline markdown with @humanspeak/svelte-markdown using the isInline prop for span-friendly text, links, emphasis, and compact UI contexts.'
         seo.ogTitle = 'Inline Rendering'
         seo.ogTagline = 'Render markdown inline without block-level elements.'
         seo.ogFeatures = ['isInline Prop', 'No Block Elements', 'Inline Context', 'Span Friendly']

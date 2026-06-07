@@ -14,8 +14,9 @@
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Mermaid Diagrams | Examples | Svelte Markdown'
+        seo.h1 = { title: 'Mermaid Diagrams' }
         seo.description =
-            'Live Mermaid diagram rendering with @humanspeak/svelte-markdown via the markedMermaid extension. Two takes: built-in MermaidRenderer component vs an inline Svelte 5 snippet that wraps it with custom chrome.'
+            'Render live Mermaid diagrams in @humanspeak/svelte-markdown with markedMermaid, using a MermaidRenderer component or an inline Svelte 5 snippet.'
         seo.ogTitle = 'Mermaid Diagrams'
         seo.ogTagline = 'Async diagram rendering with editable markdown — component vs snippet.'
         seo.ogFeatures = [

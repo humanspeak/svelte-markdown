@@ -1,6 +1,6 @@
 ---
 title: Linked Headings Examples
-description: How to add clickable anchor links to markdown headings using snippet overrides and custom renderers
+description: Add clickable anchor links to markdown headings with @humanspeak/svelte-markdown using snippet overrides, custom renderers, and slugged IDs.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: How to add clickable anchor links to markdown headings using snippe
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Linked Headings Examples | Svelte Markdown'
-        seo.description = 'How to add clickable anchor links to markdown headings using snippet overrides and custom renderers'
+        seo.description = 'Add clickable anchor links to markdown headings with @humanspeak/svelte-markdown using snippet overrides, custom renderers, and slugged IDs.'
         seo.ogTitle = 'Linked Headings'
         seo.ogTagline = 'Clickable anchor links for headings.'
         seo.ogFeatures = ['Snippet Override', 'Custom Renderer', 'Hover Reveal', 'Permalink']

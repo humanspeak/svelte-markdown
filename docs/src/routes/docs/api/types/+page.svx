@@ -1,6 +1,6 @@
 ---
 title: Types & Exports
-description: All exported types, functions, constants, and utilities from @humanspeak/svelte-markdown
+description: Explore exported types, functions, constants, cache classes, renderer keys, and utility helpers from @humanspeak/svelte-markdown for Svelte 5.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: All exported types, functions, constants, and utilities from @human
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Types & Exports | Svelte Markdown'
-        seo.description = 'All exported types, functions, constants, and utilities from @humanspeak/svelte-markdown'
+        seo.description = 'Explore exported types, functions, constants, cache classes, renderer keys, and utility helpers from @humanspeak/svelte-markdown for Svelte 5.'
         seo.ogTitle = 'Types & Exports'
         seo.ogTagline = 'All exported types, functions, and utilities.'
         seo.ogFeatures = ['Type Safety', 'Utility Functions', 'Constants', 'Cache Classes']
