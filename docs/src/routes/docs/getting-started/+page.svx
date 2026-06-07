@@ -1,6 +1,6 @@
 ---
 title: Getting Started
-description: Get started with @humanspeak/svelte-markdown, a powerful markdown renderer for Svelte 5
+description: Get started fast with @humanspeak/svelte-markdown in Svelte 5: install the package, render markdown, enable TypeScript, and customize output.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: Get started with @humanspeak/svelte-markdown, a powerful markdown r
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Getting Started | Svelte Markdown'
-        seo.description = 'Get started with @humanspeak/svelte-markdown, a powerful markdown renderer for Svelte 5'
+        seo.description = 'Get started fast with @humanspeak/svelte-markdown in Svelte 5: install the package, render markdown, enable TypeScript, and customize output.'
         seo.ogTitle = 'Getting Started'
         seo.ogTagline = 'Install, configure, and render your first markdown in minutes.'
         seo.ogFeatures = ['Quick Install', 'Svelte 5', 'TypeScript', 'SvelteKit Ready']

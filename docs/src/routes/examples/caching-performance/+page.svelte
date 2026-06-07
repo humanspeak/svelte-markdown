@@ -13,8 +13,9 @@
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Caching Performance | Examples | Svelte Markdown'
+        seo.h1 = { title: 'Caching Performance' }
         seo.description =
-            'Explore the built-in LRU TokenCache in @humanspeak/svelte-markdown — measure cold vs warm render times, watch the cache size grow, and see the 50–200× speedup on repeat renders.'
+            'Explore the built-in LRU TokenCache in @humanspeak/svelte-markdown, measuring cold and warm render times plus repeat-render speedups in the demo.'
         seo.ogTitle = 'Caching Performance'
         seo.ogTagline = 'Measure the LRU token cache live — cold render vs cached render.'
         seo.ogFeatures = ['LRU Cache', '50–200× Speedup', 'Live Metrics', 'Render Log']

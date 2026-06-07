@@ -1,6 +1,6 @@
 ---
 title: Snippet Overrides
-description: Customize markdown rendering inline using Svelte 5 snippets — no separate files needed
+description: Customize markdown rendering inline with Svelte 5 snippets in @humanspeak/svelte-markdown, no separate renderer files required for common overrides.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: Customize markdown rendering inline using Svelte 5 snippets — no 
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Snippet Overrides | Svelte Markdown'
-        seo.description = 'Customize markdown rendering inline using Svelte 5 snippets — no separate files needed'
+        seo.description = 'Customize markdown rendering inline with Svelte 5 snippets in @humanspeak/svelte-markdown, no separate renderer files required for common overrides.'
         seo.ogTitle = 'Snippet Overrides'
         seo.ogTagline = 'Customize rendering inline with Svelte 5 snippets.'
         seo.ogFeatures = ['Svelte 5 Snippets', 'Inline Override', 'No Extra Files', 'Type Safe']

@@ -1,6 +1,6 @@
 ---
 title: Allow/Deny Filtering
-description: Control which markdown elements and HTML tags are rendered
+description: Control which markdown elements and HTML tags render in @humanspeak/svelte-markdown with allow-list and deny-list helpers for safer output in apps.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: Control which markdown elements and HTML tags are rendered
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Allow/Deny Filtering | Svelte Markdown'
-        seo.description = 'Control which markdown elements and HTML tags are rendered'
+        seo.description = 'Control which markdown elements and HTML tags render in @humanspeak/svelte-markdown with allow-list and deny-list helpers for safer output in apps.'
         seo.ogTitle = 'Allow/Deny'
         seo.ogTagline = 'Control which elements and HTML tags render.'
         seo.ogFeatures = ['Allowlist', 'Denylist', 'HTML Tags', 'Markdown Tokens']

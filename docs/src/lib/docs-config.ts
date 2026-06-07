@@ -7,7 +7,7 @@ export const docsConfig: DocsKitConfig = {
     repo: 'humanspeak/svelte-markdown',
     url: 'https://markdown.svelte.page',
     description:
-        'A powerful, customizable markdown and HTML renderer for Svelte 5 — built for rendering streaming AI agent output from Claude Code, ChatGPT, and agentic workflows. TypeScript-first, 24 renderers, 84 HTML tags, token caching, XSS-safe defaults, and allow/deny utilities.',
+        'Render markdown, raw HTML, and AI streams in Svelte 5 with @humanspeak/svelte-markdown: typed renderers, token caching, and safer HTML controls.',
     keywords: [
         'svelte',
         'markdown',

@@ -1,6 +1,6 @@
 ---
 title: HTML Renderers
-description: Documentation for all 69+ built-in HTML tag renderer components
+description: Browse all built-in HTML tag renderer components in @humanspeak/svelte-markdown, with tag coverage, override patterns, and allow/deny filtering.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: Documentation for all 69+ built-in HTML tag renderer components
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'HTML Renderers | Svelte Markdown'
-        seo.description = 'Documentation for all 69+ built-in HTML tag renderer components'
+        seo.description = 'Browse all built-in HTML tag renderer components in @humanspeak/svelte-markdown, with tag coverage, override patterns, and allow/deny filtering.'
         seo.ogTitle = 'HTML Renderers'
         seo.ogTagline = '69+ built-in HTML tag renderer components.'
         seo.ogFeatures = ['69+ HTML Tags', 'Allow/Deny', 'Custom Override', 'Secure Parsing']

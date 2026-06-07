@@ -36,7 +36,7 @@ export const competitors: Competitor[] = [
         name: 'MDsveX',
         tagline: 'Build-Time Preprocessor vs Runtime Component',
         description:
-            'MDsveX is the most popular Svelte markdown tool — a preprocessor that lets you write Svelte components inside .svx files at build time. @humanspeak/svelte-markdown renders markdown at runtime as a Svelte component.',
+            'Compare MDsveX and @humanspeak/svelte-markdown: build-time .svx preprocessing versus runtime Svelte 5 markdown rendering, caching, and HTML control.',
         website: 'https://mdsvex.pngwn.io',
         github: 'https://github.com/pngwn/MDsveX',
         npm: 'mdsvex',
@@ -148,7 +148,7 @@ export const competitors: Competitor[] = [
         name: 'Tiptap',
         tagline: 'Heavyweight Editor vs Lightweight Renderer',
         description:
-            'Tiptap is a headless rich text editor built on ProseMirror with Svelte support via svelte-tiptap. @humanspeak/svelte-markdown is a focused markdown renderer — not an editor.',
+            'Compare Tiptap and @humanspeak/svelte-markdown: a ProseMirror rich text editor versus a focused Svelte 5 markdown renderer for display-only content.',
         website: 'https://tiptap.dev',
         github: 'https://github.com/ueberdosis/tiptap',
         npm: '@tiptap/core',
@@ -222,7 +222,7 @@ export const competitors: Competitor[] = [
         name: 'markdown-it',
         tagline: 'Raw Parser vs Svelte Component',
         description:
-            'markdown-it is a fast, pluggable markdown parser that outputs raw HTML strings. @humanspeak/svelte-markdown wraps the marked parser in a native Svelte component with renderers, caching, and HTML control.',
+            'Compare markdown-it and @humanspeak/svelte-markdown: raw HTML string parsing versus typed Svelte 5 renderers with caching, snippets, and HTML control.',
         website: 'https://markdown-it.github.io',
         github: 'https://github.com/markdown-it/markdown-it',
         npm: 'markdown-it',
@@ -320,7 +320,7 @@ export const competitors: Competitor[] = [
         name: 'marked',
         tagline: 'The Engine Under Our Hood',
         description:
-            'marked is the markdown parser that powers @humanspeak/svelte-markdown. Using marked directly gives you a raw HTML string; we wrap it in a full Svelte component system with renderers, caching, and safety controls.',
+            'Compare marked and @humanspeak/svelte-markdown: direct markdown parsing versus a Svelte 5 component layer with renderers, caching, and safety controls.',
         website: 'https://marked.js.org',
         github: 'https://github.com/markedjs/marked',
         npm: 'marked',
@@ -415,7 +415,7 @@ export const competitors: Competitor[] = [
         name: 'Milkdown',
         tagline: 'Plugin-Driven Editor vs Focused Renderer',
         description:
-            'Milkdown is a plugin-driven WYSIWYG markdown editor built on ProseMirror + remark. @humanspeak/svelte-markdown is a lightweight rendering component — not an editor.',
+            'Compare Milkdown and @humanspeak/svelte-markdown: a ProseMirror markdown editor versus a lightweight Svelte 5 component for rendering markdown content.',
         website: 'https://milkdown.dev',
         github: 'https://github.com/Milkdown/milkdown',
         npm: '@milkdown/core',
@@ -495,7 +495,7 @@ export const competitors: Competitor[] = [
         name: 'svelte-exmarkdown',
         tagline: 'Two Runtime Renderers, Different Engines',
         description:
-            'svelte-exmarkdown is an extensible runtime markdown renderer built on unified/remark/rehype. @humanspeak/svelte-markdown is built on marked. Both render markdown as Svelte components at runtime.',
+            'Compare svelte-exmarkdown and @humanspeak/svelte-markdown: unified-based runtime rendering versus marked-powered Svelte 5 renderers and streaming support.',
         github: 'https://github.com/ssssota/svelte-exmarkdown',
         npm: 'svelte-exmarkdown',
         type: 'Runtime Renderer',
@@ -575,7 +575,7 @@ export const competitors: Competitor[] = [
         name: 'Carta',
         tagline: 'Editor + Viewer vs Pure Renderer',
         description:
-            'Carta (carta-md) is a lightweight Svelte markdown editor AND viewer powered by unified/remark/rehype. @humanspeak/svelte-markdown is a focused rendering component.',
+            'Compare Carta and @humanspeak/svelte-markdown: a Svelte markdown editor and viewer versus a focused Svelte 5 renderer with caching and HTML filtering.',
         website: 'https://beartocode.github.io/carta',
         github: 'https://github.com/BearToCode/carta',
         npm: 'carta-md',
@@ -653,7 +653,7 @@ export const competitors: Competitor[] = [
         name: 'ByteMD',
         tagline: 'Full Editor vs Pure Renderer',
         description:
-            'ByteMD is a hackable markdown editor originally built with Svelte by ByteDance. It compiles to framework-agnostic JavaScript. @humanspeak/svelte-markdown is a focused Svelte 5 rendering component.',
+            'Compare ByteMD and @humanspeak/svelte-markdown: a hackable markdown editor from ByteDance versus a focused Svelte 5 renderer for app content.',
         github: 'https://github.com/pd4d10/bytemd',
         npm: 'bytemd',
         type: 'Markdown Editor',
@@ -738,7 +738,7 @@ export const competitors: Competitor[] = [
         name: 'unified / remark',
         tagline: 'AST Pipeline vs Component Renderer',
         description:
-            'unified and remark form an AST-based content processing pipeline used under the hood by MDsveX, svelte-exmarkdown, and Carta. @humanspeak/svelte-markdown uses marked for a more straightforward parse-and-render approach.',
+            'Compare unified/remark and @humanspeak/svelte-markdown: AST content pipelines versus a direct marked-based Svelte 5 renderer with practical defaults.',
         website: 'https://unifiedjs.com',
         github: 'https://github.com/remarkjs/remark',
         npm: 'unified',
@@ -820,7 +820,7 @@ export const competitors: Competitor[] = [
         name: 'ProseMirror',
         tagline: 'Editor Toolkit vs Ready-Made Renderer',
         description:
-            'ProseMirror is the low-level editor framework that powers Tiptap and Milkdown. Using it directly with Svelte requires significant assembly. @humanspeak/svelte-markdown is a ready-to-use rendering component.',
+            'Compare ProseMirror and @humanspeak/svelte-markdown: low-level editor framework assembly versus a ready-to-use Svelte 5 markdown renderer for apps.',
         website: 'https://prosemirror.net',
         github: 'https://github.com/ProseMirror/prosemirror',
         npm: 'prosemirror-model',

@@ -1,6 +1,6 @@
 ---
 title: HTML Filtering Examples
-description: Practical examples of filtering HTML tags in markdown content
+description: Filter HTML tags in markdown content with @humanspeak/svelte-markdown examples for blocking all HTML, allow-listing tags, and deny-list rules.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: Practical examples of filtering HTML tags in markdown content
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'HTML Filtering Examples | Svelte Markdown'
-        seo.description = 'Practical examples of filtering HTML tags in markdown content'
+        seo.description = 'Filter HTML tags in markdown content with @humanspeak/svelte-markdown examples for blocking all HTML, allow-listing tags, and deny-list rules.'
         seo.ogTitle = 'HTML Filtering'
         seo.ogTagline = 'Control which HTML tags render from markdown.'
         seo.ogFeatures = ['Block All HTML', 'Allowlist Tags', 'Denylist Tags', 'Safe Rendering']

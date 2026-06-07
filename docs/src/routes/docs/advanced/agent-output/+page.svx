@@ -1,6 +1,6 @@
 ---
 title: Rendering AI Agent Output
-description: Render streaming HTML and markdown from Claude Code, ChatGPT, and agentic workflows with XSS-safe defaults, sanitization-aware streaming, and custom HTML tag support.
+description: Render streaming HTML and markdown from AI coding agents with @humanspeak/svelte-markdown, including XSS-safe defaults and custom HTML tag routing.
 ---
 
 <script>
@@ -10,7 +10,7 @@ description: Render streaming HTML and markdown from Claude Code, ChatGPT, and a
     if (seo) {
         seo.title = 'Rendering AI Agent Output | Svelte Markdown'
         seo.description =
-            'Render streaming HTML and markdown output from AI coding agents — Claude Code, ChatGPT, Codex, agentic workflows — with XSS-safe defaults, sanitization-aware streaming, and custom HTML tag routing.'
+            'Render streaming HTML and markdown from AI coding agents with @humanspeak/svelte-markdown, including XSS-safe defaults and custom HTML tag routing.'
         seo.ogTitle = 'Rendering AI Agent Output'
         seo.ogTagline = 'Built for streaming agent HTML and markdown.'
         seo.ogFeatures = [

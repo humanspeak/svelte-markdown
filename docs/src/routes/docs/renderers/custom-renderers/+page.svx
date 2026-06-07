@@ -1,6 +1,6 @@
 ---
 title: Custom Renderers
-description: Guide to creating custom renderer components for @humanspeak/svelte-markdown
+description: Create custom renderer components for @humanspeak/svelte-markdown, override built-ins, pass typed props, and tailor markdown output in Svelte 5.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: Guide to creating custom renderer components for @humanspeak/svelte
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Custom Renderers | Svelte Markdown'
-        seo.description = 'Guide to creating custom renderer components for @humanspeak/svelte-markdown'
+        seo.description = 'Create custom renderer components for @humanspeak/svelte-markdown, override built-ins, pass typed props, and tailor markdown output in Svelte 5.'
         seo.ogTitle = 'Custom Renderers'
         seo.ogTagline = 'Build your own Svelte renderer components.'
         seo.ogFeatures = ['Component Override', 'Full Control', 'Type Safe', 'Svelte 5']

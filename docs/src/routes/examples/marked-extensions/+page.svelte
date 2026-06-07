@@ -14,8 +14,9 @@
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Marked Extensions | Examples | Svelte Markdown'
+        seo.h1 = { title: 'Marked Extensions' }
         seo.description =
-            'Live KaTeX math rendering with @humanspeak/svelte-markdown via the markedKatex extension. Two takes: built-in KatexRenderer component vs an inline Svelte 5 snippet that calls katex.renderToString directly.'
+            'Render live KaTeX math in @humanspeak/svelte-markdown with markedKatex, using a built-in KatexRenderer component or an inline Svelte 5 snippet.'
         seo.ogTitle = 'Marked Extensions'
         seo.ogTagline = 'KaTeX math via the extensions prop — component vs snippet.'
         seo.ogFeatures = ['KaTeX Math', 'Live Preview', 'Component Renderer', 'Snippet Override']

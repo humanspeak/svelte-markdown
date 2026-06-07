@@ -29,7 +29,7 @@
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'svelte-markdown · streaming markdown + HTML renderer for Svelte 5'
-        seo.description = `A streaming-aware markdown + HTML renderer for Svelte 5. ${rendererKeys.length} renderers, ${htmlRendererKeys.length} HTML tags, allow/deny utilities, XSS-safe defaults, and a streaming mode tuned for LLM output. MIT, zero runtime deps.`
+        seo.description = `Render markdown, raw HTML, and LLM streams in Svelte 5 with ${rendererKeys.length} markdown renderers, ${htmlRendererKeys.length} HTML tag renderers, allow/deny utilities, and secure defaults.`
     }
 
     // ── Package stats are fetched from the npm registry at request

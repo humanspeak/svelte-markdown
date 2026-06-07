@@ -14,8 +14,9 @@
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Snippet Overrides | Examples | Svelte Markdown'
+        seo.h1 = { title: 'Snippet Overrides' }
         seo.description =
-            'Two renderings for @humanspeak/svelte-markdown — default output vs inline Svelte 5 snippet overrides customizing paragraphs, headings, links, blockquotes, list items, code blocks, and table cells.'
+            'Customize @humanspeak/svelte-markdown output with inline Svelte 5 snippet overrides for paragraphs, headings, links, blockquotes, lists, code, and tables.'
         seo.ogTitle = 'Snippet Overrides'
         seo.ogTagline = 'Default vs snippet-customized rendering — same source, two looks.'
         seo.ogFeatures = ['Default Rendering', 'Snippet Overrides', 'Svelte 5 Snippets']
