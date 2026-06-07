@@ -14,8 +14,9 @@
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Code Formatting | Examples | Svelte Markdown'
+        seo.h1 = { title: 'Code Formatting' }
         seo.description =
-            'Two ways to format code blocks in @humanspeak/svelte-markdown — the async marked-code-format walkTokens extension (Prettier-powered) and an inline {#snippet code} override.'
+            'Format code blocks in @humanspeak/svelte-markdown with an async marked-code-format walkTokens extension or an inline Svelte 5 code snippet override.'
         seo.ogTitle = 'Code Formatting'
         seo.ogTagline = 'walkTokens extension vs snippet override on code fences.'
         seo.ogFeatures = ['Prettier walkTokens', 'Snippet Override', 'Language Badge', 'Lazy Load']

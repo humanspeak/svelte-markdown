@@ -14,8 +14,9 @@
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'HTML Filtering | Examples | Svelte Markdown'
+        seo.h1 = { title: 'HTML Filtering' }
         seo.description =
-            'Three HTML filtering policies for @humanspeak/svelte-markdown — see the same markdown rendered under unrestricted, safe-only, and blocked policies side-by-side.'
+            'Compare HTML filtering policies in @humanspeak/svelte-markdown, rendering the same markdown with unrestricted, safe-only, and blocked tag rules.'
         seo.ogTitle = 'HTML Filtering'
         seo.ogTagline = 'Allow all, allow only safe, block all — three policies, three sheets.'
         seo.ogFeatures = ['Unrestricted', 'Safe Only', 'Blocked']

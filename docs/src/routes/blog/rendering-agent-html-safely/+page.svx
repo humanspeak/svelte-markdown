@@ -1,7 +1,7 @@
 ---
 title: Rendering Agent HTML Safely
 date: 2026-05-13
-description: Thariq’s post on the unreasonable effectiveness of HTML changed how we think about agent output. Here’s how to render it safely in Svelte 5 — every defense the library gives you, with worked examples and the known gaps to plan around.
+description: Render AI-generated HTML safely in Svelte 5 with @humanspeak/svelte-markdown, covering XSS defenses, sanitization hooks, examples, and known gaps.
 tags:
     - ai-agents
     - security
@@ -21,7 +21,7 @@ readingTime: 9
         title: 'Rendering Agent HTML Safely',
         date: '2026-05-13',
         description:
-            'Thariq’s post on the unreasonable effectiveness of HTML changed how we think about agent output. Here’s how to render it safely in Svelte 5 — every defense the library gives you, with worked examples and the known gaps to plan around.',
+            'Render AI-generated HTML safely in Svelte 5 with @humanspeak/svelte-markdown, covering XSS defenses, sanitization hooks, examples, and known gaps.',
         tags: ['ai-agents', 'security', 'streaming', 'xss', 'svelte-5'],
         author: 'Jason Kummerl',
         readingTime: 9

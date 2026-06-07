@@ -14,8 +14,9 @@
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Custom Renderers | Examples | Svelte Markdown'
+        seo.h1 = { title: 'Custom Renderers' }
         seo.description =
-            'Two renderer policies for @humanspeak/svelte-markdown — see the same markdown rendered with the default renderer set vs an allow-list via allowRenderersOnly.'
+            'Compare renderer policies in @humanspeak/svelte-markdown, rendering the same markdown with defaults and an allow-list via allowRenderersOnly.'
         seo.ogTitle = 'Custom Renderers'
         seo.ogTagline = 'Default vs filtered renderers — side by side.'
         seo.ogFeatures = ['Default Renderers', 'Filtered Renderers', 'allowRenderersOnly']

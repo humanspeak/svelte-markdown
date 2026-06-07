@@ -14,8 +14,9 @@
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'GitHub Alerts | Examples | Svelte Markdown'
+        seo.h1 = { title: 'GitHub Alerts' }
         seo.description =
-            'GitHub-style alert admonitions in @humanspeak/svelte-markdown — five severity levels (NOTE / TIP / IMPORTANT / WARNING / CAUTION) via the markedAlert extension, rendered two ways: built-in AlertRenderer component vs inline Svelte 5 snippet.'
+            'Render GitHub-style alert admonitions in @humanspeak/svelte-markdown with markedAlert, using AlertRenderer components or inline Svelte 5 snippets.'
         seo.ogTitle = 'GitHub Alerts'
         seo.ogTagline = 'Component renderer vs snippet override on the markedAlert extension.'
         seo.ogFeatures = [

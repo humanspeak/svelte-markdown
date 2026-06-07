@@ -13,8 +13,9 @@
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'LLM Streaming | Examples | Svelte Markdown'
+        seo.h1 = { title: 'LLM Streaming' }
         seo.description =
-            'Simulate real model streaming with @humanspeak/svelte-markdown — out-of-order offset patches, adjustable speed and jitter, live render metrics. See how SvelteMarkdown converges as ChatGPT / Claude / Gemini-style chunks arrive.'
+            'Simulate model streaming with @humanspeak/svelte-markdown: offset patches, speed and jitter controls, live metrics, and converging markdown output.'
         seo.ogTitle = 'LLM Streaming Demo'
         seo.ogTagline = 'Out-of-order offset patches with live render metrics.'
         seo.ogFeatures = [

@@ -1,6 +1,6 @@
 ---
 title: Tree Shaking
-description: Import paths and bundler best practices for keeping @humanspeak/svelte-markdown bundles lean
+description: Keep @humanspeak/svelte-markdown bundles lean with subpath imports, optional peer dependencies, and bundler practices for KaTeX and Mermaid.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: Import paths and bundler best practices for keeping @humanspeak/sve
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Tree Shaking | Svelte Markdown'
-        seo.description = 'Import paths and bundler best practices for keeping @humanspeak/svelte-markdown bundles lean'
+        seo.description = 'Keep @humanspeak/svelte-markdown bundles lean with subpath imports, optional peer dependencies, and bundler practices for KaTeX and Mermaid.'
         seo.ogTitle = 'Tree Shaking'
         seo.ogTagline = 'Keep optional renderers and heavy peers out until you use them.'
         seo.ogFeatures = ['Subpath Imports', 'Optional Peers', 'KaTeX', 'Mermaid', 'Bundle Checks']

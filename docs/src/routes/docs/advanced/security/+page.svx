@@ -1,6 +1,6 @@
 ---
 title: Security
-description: Security considerations, XSS protection, and sanitization guidance for @humanspeak/svelte-markdown
+description: Review security guidance for @humanspeak/svelte-markdown, including XSS protection, URL and attribute sanitization, HTML filtering, and safe usage.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: Security considerations, XSS protection, and sanitization guidance 
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Security | Svelte Markdown'
-        seo.description = 'Security considerations, XSS protection, and sanitization guidance for @humanspeak/svelte-markdown'
+        seo.description = 'Review security guidance for @humanspeak/svelte-markdown, including XSS protection, URL and attribute sanitization, HTML filtering, and safe usage.'
         seo.ogTitle = 'Security'
         seo.ogTagline = 'XSS protection and sanitization guidance.'
         seo.ogFeatures = ['XSS Protection', 'URL Sanitization', 'Attribute Sanitization', 'Secure Parsing', 'Best Practices']

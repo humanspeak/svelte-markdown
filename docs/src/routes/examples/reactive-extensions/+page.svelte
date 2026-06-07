@@ -13,8 +13,9 @@
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Reactive Extensions | Examples | Svelte Markdown'
+        seo.h1 = { title: 'Reactive Extensions' }
         seo.description =
-            'A live Svelte 5 example showing how to dynamically rebuild marked extensions for @humanspeak/svelte-markdown when extension state changes.'
+            'Build reactive marked extensions for @humanspeak/svelte-markdown in Svelte 5, dynamically rebuilding extension state without duplicate token handlers.'
         seo.ogTitle = 'Reactive Extensions'
         seo.ogTagline = 'Dynamic marked extension state without pushing duplicate extensions.'
         seo.ogFeatures = ['Svelte 5 Runes', 'Marked Extensions', 'Custom Tokens', 'Live Preview']

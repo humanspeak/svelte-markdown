@@ -1,6 +1,6 @@
 ---
 title: Headless Parser
-description: Direct access to the IncrementalParser for headless, non-Svelte, and server-side token streaming
+description: Use IncrementalParser without the Svelte component, powering headless agents, non-Svelte consumers, server pipelines, and streaming token updates.
 ---
 
 <script>
@@ -9,7 +9,7 @@ description: Direct access to the IncrementalParser for headless, non-Svelte, an
     const seo = getSeoContext()
     if (seo) {
         seo.title = 'Headless Parser | Svelte Markdown'
-        seo.description = 'Use IncrementalParser directly without the Svelte component — same streaming-aware engine, exposed as a plain class for headless agents, non-Svelte consumers, and server-side pipelines.'
+        seo.description = 'Use IncrementalParser without the Svelte component, powering headless agents, non-Svelte consumers, server pipelines, and streaming token updates.'
         seo.ogTitle = 'Headless Parser'
         seo.ogTagline = 'IncrementalParser as a standalone class — same engine, no component.'
         seo.ogFeatures = ['Headless API', 'Streaming Tokens', 'divergeAt Diffing', 'Framework-Agnostic']
