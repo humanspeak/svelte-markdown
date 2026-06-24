@@ -1,6 +1,8 @@
 import {
     demoManifestPlugin,
     docMirrorsPlugin,
+    exampleMirrorsPlugin,
+    indexNowPlugin,
     llmsFullPlugin,
     llmsPlugin,
     sitemapManifestPlugin,
@@ -12,6 +14,8 @@ import { defineConfig } from 'vite'
 
 import { competitors } from './src/lib/compare-data'
 import { docsConfig } from './src/lib/docs-config'
+
+const indexNowKey = '71d77690-dc98-4385-ac10-569e4ec5c303'
 
 export default defineConfig({
     // Three docs-kit plugins run on `buildStart` and rewatch via Vite's
@@ -29,6 +33,10 @@ export default defineConfig({
     //     Served verbatim at `https://markdown.svelte.page/docs/<slug>.md`
     //     so LLM crawlers (ChatGPT, Perplexity, Claude) can cite the
     //     source the way they prefer.
+    //   * `exampleMirrorsPlugin`   scans `src/routes/examples/**/+page.svelte`
+    //     plus `src/lib/examples/**/demos/*.svelte`, then emits
+    //     `static/examples.md` and `static/examples/<slug>.md` with the
+    //     live example prose, notes, and fenced Svelte demo source.
     //   * `llmsFullPlugin`         concatenates every per-page mirror into
     //     `static/llms-full.txt`, served at /llms-full.txt — the surface
     //     agentic LLMs (Claude Code, Cursor) reach for when they want the
@@ -56,6 +64,10 @@ export default defineConfig({
         }),
         demoManifestPlugin({ split: true }),
         docMirrorsPlugin({ siteUrl: 'https://markdown.svelte.page' }),
+        exampleMirrorsPlugin({
+            siteUrl: 'https://markdown.svelte.page',
+            sourceBaseUrl: 'https://github.com/humanspeak/svelte-markdown/blob/main/docs'
+        }),
         llmsFullPlugin({
             siteUrl: 'https://markdown.svelte.page',
             pkgName: '@humanspeak/svelte-markdown'
@@ -105,6 +117,11 @@ export default defineConfig({
                     ]
                 }))
             ]
+        }),
+        indexNowPlugin({
+            siteUrl: docsConfig.url,
+            key: indexNowKey,
+            productionMode: 'indexnow'
         }),
         tailwindcss(),
         sveltekit()
