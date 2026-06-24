@@ -2,8 +2,9 @@
 static/og-default.png
 static/twitter-default.png
 static/docs/
-static/llms.txt
-static/llms-full.txt
+static/examples.md
+static/examples/
+static/llms*.txt
 src/lib/sitemap-manifest.json
 src/lib/demo-manifest.json
 src/lib/demo-loaders.ts
