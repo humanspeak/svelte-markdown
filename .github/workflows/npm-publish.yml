@@ -439,25 +439,6 @@ jobs:
 
                   echo "bump=$BUMP_TYPE" >> $GITHUB_OUTPUT
 
-            - name: Refresh README ecosystem block
-              if: steps.publish-check.outputs.should_publish == 'true'
-              # Runs docs-kit's standalone, dependency-free updater straight from the
-              # private docs-kit repo — no npm publish, no install, no build. It
-              # rewrites the <!-- docs-kit:ecosystem --> table in README.md from the
-              # svelte.page roster. Everything here is best-effort: a failed fetch or
-              # a roster blip only logs a warning, never fails the release.
-              env:
-                  GH_PAT: ${{ secrets.ACTIONS_KEY }}
-              run: |
-                  UPDATER="$RUNNER_TEMP/update-ecosystem-readme.mjs"
-                  if curl -fsSL -H "Authorization: token $GH_PAT" \
-                      https://raw.githubusercontent.com/humanspeak/docs-kit/main/scripts/update-ecosystem-readme.mjs \
-                      -o "$UPDATER"; then
-                      node "$UPDATER" || echo "::warning::ecosystem updater errored; README left unchanged"
-                  else
-                      echo "::warning::could not fetch ecosystem updater; skipping README refresh"
-                  fi
-
             - name: Bump version
               if: steps.publish-check.outputs.should_publish == 'true'
               id: version
@@ -501,6 +482,21 @@ jobs:
                   # Escape special characters in PR title and URL
                   ESCAPED_TITLE=$(echo "$PR_TITLE" | sed 's/[`$"\]/\\&/g')
                   ESCAPED_URL=$(echo "$PR_URL" | sed 's/[`$"\]/\\&/g')
+
+                  # Refresh the managed README footer (the docs-kit ecosystem block +
+                  # standardized License/Credits). Runs AFTER `pnpm version` so the
+                  # working tree is clean when pnpm runs — pnpm version aborts on a
+                  # dirty tree. Fetched raw from the private docs-kit repo (no install,
+                  # no dependency here); reuses $GITHUB_TOKEN (ACTIONS_KEY) for auth.
+                  # Best-effort: a failed fetch or roster blip only warns.
+                  UPDATER="$RUNNER_TEMP/update-ecosystem-readme.mjs"
+                  if curl -fsSL -H "Authorization: token $GITHUB_TOKEN" \
+                      https://raw.githubusercontent.com/humanspeak/docs-kit/main/scripts/update-ecosystem-readme.mjs \
+                      -o "$UPDATER"; then
+                      node "$UPDATER" || echo "::warning::ecosystem updater errored; README left unchanged"
+                  else
+                      echo "::warning::could not fetch ecosystem updater; skipping README refresh"
+                  fi
 
                   # Commit the version changes (and any refreshed README ecosystem block)
                   git add package.json README.md
