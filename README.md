@@ -975,6 +975,25 @@ This package takes a defense-in-depth approach to security. The defaults below a
 - **`srcset` and other less common URL attributes are not sanitized.** Only the attributes listed above pass through `sanitizeUrl`. Provide a custom `sanitizeAttributes` if you need broader coverage.
 - **No built-in DOM sanitizer** — By design, the package does not bundle DOMPurify or similar. For untrusted input, layer a full sanitizer on top of the defaults above.
 
+<!-- docs-kit:ecosystem start -->
+
+## Svelte 5 ecosystem
+
+Part of the [Humanspeak](https://humanspeak.com) family of runes-native Svelte 5 packages:
+
+| Package | Description |
+| --- | --- |
+| **[@humanspeak/svelte-markdown](https://markdown.svelte.page)** — _this package_ | Runtime markdown renderer for Svelte |
+| [@humanspeak/svelte-virtual-list](https://virtuallist.svelte.page) | Virtual scrolling for Svelte |
+| [@humanspeak/svelte-motion](https://motion.svelte.page) | Framer Motion for Svelte 5 |
+| [@humanspeak/svelte-headless-table](https://table.svelte.page) | Headless data tables for Svelte |
+| [@humanspeak/svelte-diff-match-patch](https://diff.svelte.page) | Diff comparison for Svelte |
+| [@humanspeak/svelte-purify](https://purify.svelte.page) | HTML sanitisation for Svelte |
+| [@humanspeak/svelte-virtual-chat](https://virtualchat.svelte.page) | Virtual chat viewport for Svelte 5 |
+| [@humanspeak/memory-cache](https://memory.svelte.page) | In-memory cache for TypeScript |
+| [@humanspeak/svelte-json-view-lite](https://jsonview.svelte.page) | JSON tree viewer for Svelte 5 |
+| [@humanspeak/svelte-scoped-props](https://scoped.svelte.page) | Scoped class props for Svelte |
+
 ## License
 
 MIT © [Humanspeak, Inc.](LICENSE)
@@ -982,3 +1001,5 @@ MIT © [Humanspeak, Inc.](LICENSE)
 ## Credits
 
 Made with ❤️ by [Humanspeak](https://humanspeak.com)
+
+<!-- docs-kit:ecosystem end -->
