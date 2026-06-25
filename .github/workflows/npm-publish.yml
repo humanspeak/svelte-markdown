@@ -439,6 +439,25 @@ jobs:
 
                   echo "bump=$BUMP_TYPE" >> $GITHUB_OUTPUT
 
+            - name: Refresh README ecosystem block
+              if: steps.publish-check.outputs.should_publish == 'true'
+              # Runs docs-kit's standalone, dependency-free updater straight from the
+              # private docs-kit repo — no npm publish, no install, no build. It
+              # rewrites the <!-- docs-kit:ecosystem --> table in README.md from the
+              # svelte.page roster. Everything here is best-effort: a failed fetch or
+              # a roster blip only logs a warning, never fails the release.
+              env:
+                  GH_PAT: ${{ secrets.ACTIONS_KEY }}
+              run: |
+                  UPDATER="$RUNNER_TEMP/update-ecosystem-readme.mjs"
+                  if curl -fsSL -H "Authorization: token $GH_PAT" \
+                      https://raw.githubusercontent.com/humanspeak/docs-kit/main/scripts/update-ecosystem-readme.mjs \
+                      -o "$UPDATER"; then
+                      node "$UPDATER" || echo "::warning::ecosystem updater errored; README left unchanged"
+                  else
+                      echo "::warning::could not fetch ecosystem updater; skipping README refresh"
+                  fi
+
             - name: Bump version
               if: steps.publish-check.outputs.should_publish == 'true'
               id: version
@@ -483,8 +502,8 @@ jobs:
                   ESCAPED_TITLE=$(echo "$PR_TITLE" | sed 's/[`$"\]/\\&/g')
                   ESCAPED_URL=$(echo "$PR_URL" | sed 's/[`$"\]/\\&/g')
 
-                  # Commit the version changes
-                  git add package.json
+                  # Commit the version changes (and any refreshed README ecosystem block)
+                  git add package.json README.md
                   git commit -m "Bump version to ${NEW_VERSION} [skip ci]"
 
                   # Create an annotated tag with release notes
