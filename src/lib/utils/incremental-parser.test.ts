@@ -12,7 +12,7 @@ interface InternalParser {
     hasHtmlSpanMismatch: (token: Token) => boolean
     hasPotentialReferenceUse: (source: string) => boolean
     hasReferenceDefinition: (source: string) => boolean
-    appendIntroducesMatch: (source: string, matches: (candidate: string) => boolean) => boolean
+    appendIntroducesMatch: (source: string, matches: (_candidate: string) => boolean) => boolean
     canUseTailWindow: (
         source: string,
         boundary: { prefixCount: number; reparseOffset: number }

@@ -257,7 +257,7 @@ export class IncrementalParser {
      */
     private appendIntroducesMatch = (
         source: string,
-        matches: (candidate: string) => boolean
+        matches: (_candidate: string) => boolean
     ): boolean => {
         if (matches(source.slice(this.prevSource.length))) return true
 
