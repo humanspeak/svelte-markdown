@@ -238,6 +238,224 @@ describe('IncrementalParser', () => {
             expect(result.divergeAt).toBe(0)
         })
 
+        it('re-enables tail-window reparsing after a one-time shortcut definition re-lex', () => {
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = 'See [docs]\n\nTail'
+            const withDefinition = `${source}\n\n[docs]: /docs`
+            const appended = `${withDefinition}\n\nNext`
+
+            parser.update(source)
+            parser.update(withDefinition)
+            const internalParser = parser as unknown as {
+                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
+                canUseTailWindow: (
+                    source: string,
+                    boundary: { prefixCount: number; reparseOffset: number }
+                ) => boolean
+            }
+            const boundary = internalParser.getTailWindowBoundary()
+
+            expect(lexSpy.mock.calls[1]?.[0]).toBe(withDefinition)
+            expect(boundary.reparseOffset).toBeGreaterThan(0)
+            expect(internalParser.canUseTailWindow(appended, boundary)).toBe(true)
+
+            parser.update(appended)
+
+            expect(lexSpy.mock.calls[2]?.[0]).toBe(appended.slice(boundary.reparseOffset))
+            expect((lexSpy.mock.calls[2]?.[0] as string).length).toBeLessThan(appended.length)
+        })
+
+        it('keeps full reference syntax conservative until its definition arrives', () => {
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = 'See [docs][ref]\n\nTail'
+            const appended = `${source}\n\n[ref]: /docs`
+
+            parser.update(source)
+            const result = parser.update(appended)
+
+            expect(lexSpy.mock.calls[1]?.[0]).toBe(appended)
+            expect(result.divergeAt).toBe(0)
+        })
+
+        it('keeps tail-window reparsing enabled for inline links', () => {
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = 'See [docs](/docs)\n\nTail'
+            const appended = `${source}\n\nNext`
+
+            parser.update(source)
+            const internalParser = parser as unknown as {
+                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
+                canUseTailWindow: (
+                    source: string,
+                    boundary: { prefixCount: number; reparseOffset: number }
+                ) => boolean
+            }
+            const boundary = internalParser.getTailWindowBoundary()
+
+            expect(boundary.reparseOffset).toBeGreaterThan(0)
+            expect(source.slice(0, boundary.reparseOffset)).toContain('[docs](/docs)')
+            expect(internalParser.canUseTailWindow(appended, boundary)).toBe(true)
+
+            parser.update(appended)
+
+            expect(lexSpy.mock.calls[1]?.[0]).toBe(appended.slice(boundary.reparseOffset))
+            expect((lexSpy.mock.calls[1]?.[0] as string).length).toBeLessThan(appended.length)
+        })
+
+        it('does not permanently disable tail-window reparsing after closed HTML blocks', () => {
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = '<details><summary>One</summary><p>Body</p></details>\n\nTail'
+            const appended = `${source}\n\nNext`
+
+            parser.update(source)
+            const internalParser = parser as unknown as {
+                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
+                canUseTailWindow: (
+                    source: string,
+                    boundary: { prefixCount: number; reparseOffset: number }
+                ) => boolean
+            }
+            const boundary = internalParser.getTailWindowBoundary()
+
+            expect(boundary.reparseOffset).toBeGreaterThan(0)
+            expect(internalParser.canUseTailWindow(appended, boundary)).toBe(true)
+
+            parser.update(appended)
+
+            expect(lexSpy.mock.calls[1]?.[0]).toBe(appended.slice(boundary.reparseOffset))
+            expect((lexSpy.mock.calls[1]?.[0] as string).length).toBeLessThan(appended.length)
+        })
+
+        it('keeps tail-window reparsing enabled after multiple closed HTML blocks', () => {
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = '<div>One</div>\n\n<details><summary>Two</summary>Body</details>\n\nTail'
+            const appended = `${source}\n\nNext`
+
+            parser.update(source)
+            const internalParser = parser as unknown as {
+                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
+                canUseTailWindow: (
+                    source: string,
+                    boundary: { prefixCount: number; reparseOffset: number }
+                ) => boolean
+            }
+            const boundary = internalParser.getTailWindowBoundary()
+
+            expect(boundary.reparseOffset).toBeGreaterThan(0)
+            expect(internalParser.canUseTailWindow(appended, boundary)).toBe(true)
+
+            parser.update(appended)
+
+            expect(lexSpy.mock.calls[1]?.[0]).toBe(appended.slice(boundary.reparseOffset))
+            expect((lexSpy.mock.calls[1]?.[0] as string).length).toBeLessThan(appended.length)
+        })
+
+        it('keeps tail-window reparsing enabled after self-closing HTML tags', () => {
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = '<br/>\n\nTail'
+            const appended = `${source}\n\nNext`
+
+            parser.update(source)
+            const internalParser = parser as unknown as {
+                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
+                canUseTailWindow: (
+                    source: string,
+                    boundary: { prefixCount: number; reparseOffset: number }
+                ) => boolean
+            }
+            const boundary = internalParser.getTailWindowBoundary()
+
+            expect(boundary.reparseOffset).toBeGreaterThan(0)
+            expect(internalParser.canUseTailWindow(appended, boundary)).toBe(true)
+
+            parser.update(appended)
+
+            expect(lexSpy.mock.calls[1]?.[0]).toBe(appended.slice(boundary.reparseOffset))
+            expect((lexSpy.mock.calls[1]?.[0] as string).length).toBeLessThan(appended.length)
+        })
+
+        it('keeps tail-window reparsing disabled while HTML spans are still open', () => {
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = '<details><summary>One'
+            const appended = `${source} more`
+
+            parser.update(source)
+            const internalParser = parser as unknown as {
+                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
+                canUseTailWindow: (
+                    source: string,
+                    boundary: { prefixCount: number; reparseOffset: number }
+                ) => boolean
+            }
+            const boundary = internalParser.getTailWindowBoundary()
+
+            expect(boundary).toEqual({ prefixCount: 0, reparseOffset: 0 })
+            expect(internalParser.canUseTailWindow(appended, boundary)).toBe(false)
+
+            parser.update(appended)
+
+            expect(lexSpy.mock.calls[1]?.[0]).toBe(appended)
+        })
+
+        it('keeps tail-window reparsing enabled for shortcut-looking citations without definitions', () => {
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = 'Citation [1]\n\nTail'
+            const appended = `${source}\n\nNext`
+
+            parser.update(source)
+            const internalParser = parser as unknown as {
+                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
+                canUseTailWindow: (
+                    source: string,
+                    boundary: { prefixCount: number; reparseOffset: number }
+                ) => boolean
+            }
+            const boundary = internalParser.getTailWindowBoundary()
+
+            expect(boundary.reparseOffset).toBeGreaterThan(0)
+            expect(source.slice(0, boundary.reparseOffset)).toContain('[1]')
+            expect(internalParser.canUseTailWindow(appended, boundary)).toBe(true)
+
+            parser.update(appended)
+
+            expect(lexSpy.mock.calls[1]?.[0]).toBe(appended.slice(boundary.reparseOffset))
+            expect((lexSpy.mock.calls[1]?.[0] as string).length).toBeLessThan(appended.length)
+        })
+
+        it('keeps tail-window reparsing enabled for task lists without definitions', () => {
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = '- [ ] First task\n\nTail'
+            const appended = `${source}\n\nNext`
+
+            parser.update(source)
+            const internalParser = parser as unknown as {
+                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
+                canUseTailWindow: (
+                    source: string,
+                    boundary: { prefixCount: number; reparseOffset: number }
+                ) => boolean
+            }
+            const boundary = internalParser.getTailWindowBoundary()
+
+            expect(boundary.reparseOffset).toBeGreaterThan(0)
+            expect(source.slice(0, boundary.reparseOffset)).toContain('[ ]')
+            expect(internalParser.canUseTailWindow(appended, boundary)).toBe(true)
+
+            parser.update(appended)
+
+            expect(lexSpy.mock.calls[1]?.[0]).toBe(appended.slice(boundary.reparseOffset))
+            expect((lexSpy.mock.calls[1]?.[0] as string).length).toBeLessThan(appended.length)
+        })
+
         it('falls back to a full re-lex when walkTokens is configured', () => {
             const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
             const parser = new IncrementalParser({
