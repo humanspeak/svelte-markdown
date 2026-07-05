@@ -334,8 +334,7 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs).
                     bind:value={input}
                     class="ls-src ls-src-edit"
                     spellcheck="false"
-                    placeholder="Paste markdown to stream..."
-                ></textarea>
+                    placeholder="Paste markdown to stream..."></textarea>
             {/if}
         </div>
         <div class="ls-pane out">

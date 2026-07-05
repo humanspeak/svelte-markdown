@@ -86,8 +86,7 @@ classDiagram
             oninput={handleInput}
             class="md-editor"
             spellcheck="false"
-            placeholder="Type markdown with ```mermaid code blocks..."
-        ></textarea>
+            placeholder="Type markdown with ```mermaid code blocks..."></textarea>
     {/snippet}
     {#snippet right()}
         <div class="md-preview prose prose-sm dark:prose-invert max-w-none">

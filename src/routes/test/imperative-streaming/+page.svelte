@@ -621,8 +621,7 @@ Offset chunks let the component reconcile display state while callers stay dumb.
                 readonly
                 value={appendMirror}
                 data-testid="append-markdown-input"
-                placeholder="Imperative append chunks will be mirrored here..."
-            ></textarea>
+                placeholder="Imperative append chunks will be mirrored here..."></textarea>
         </section>
 
         <section class="panel">
@@ -739,8 +738,7 @@ Offset chunks let the component reconcile display state while callers stay dumb.
                 readonly
                 value={offsetMirror}
                 data-testid="offset-markdown-input"
-                placeholder="Offset-applied source state will be mirrored here..."
-            ></textarea>
+                placeholder="Offset-applied source state will be mirrored here..."></textarea>
         </section>
 
         <section class="panel">

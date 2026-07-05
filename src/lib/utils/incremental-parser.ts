@@ -96,8 +96,7 @@ export class IncrementalParser {
         this.options = options
 
         const exts = (options as Record<string, unknown>).extensions as
-            | { block?: unknown[]; inline?: unknown[] }
-            | undefined
+            { block?: unknown[]; inline?: unknown[] } | undefined
         const hasExtensionTokenizers =
             (exts?.block != null && exts.block.length > 0) ||
             (exts?.inline != null && exts.inline.length > 0)

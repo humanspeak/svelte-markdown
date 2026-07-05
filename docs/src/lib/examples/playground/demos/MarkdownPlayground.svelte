@@ -55,8 +55,7 @@ Happy coding! <span style="color: hotpink">♥</span>`
             oninput={handleInput}
             class="dk-pg-editor"
             spellcheck="false"
-            placeholder="Type your markdown here..."
-        ></textarea>
+            placeholder="Type your markdown here..."></textarea>
     {/snippet}
     {#snippet right()}
         <div class="dk-pg-preview prose prose-sm dark:prose-invert max-w-none">

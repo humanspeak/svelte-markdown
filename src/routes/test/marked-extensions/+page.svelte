@@ -40,8 +40,8 @@
 </script>
 
 <div class="container">
-    <textarea bind:value={htmlBody} placeholder="Enter markdown here" data-testid="markdown-input">
-    </textarea>
+    <textarea bind:value={htmlBody} placeholder="Enter markdown here" data-testid="markdown-input"
+    ></textarea>
     <div class="preview">
         <SvelteMarkdown {extensions} source={htmlBody} {renderers} />
     </div>

@@ -170,8 +170,7 @@ This demo renders the above markdown and tracks timing to show the caching effec
                 bind:value={input}
                 class="cp-editor"
                 spellcheck="false"
-                placeholder="Enter markdown to render..."
-            ></textarea>
+                placeholder="Enter markdown to render..."></textarea>
         </section>
 
         <section class="cp-card">

@@ -521,8 +521,7 @@ Happy coding! <span style="color: hotpink">♥</span>`
                             bind:value={editorText}
                             oninput={onEditorInput}
                             spellcheck="false"
-                            aria-label="Markdown source"
-                        ></textarea>
+                            aria-label="Markdown source"></textarea>
                     </div>
                     <div class="col preview">
                         <SvelteMarkdown source={playgroundSource} />

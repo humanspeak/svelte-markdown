@@ -17,13 +17,7 @@
     }
 
     type ExampleTag =
-        | 'DEMO'
-        | 'RENDERERS'
-        | 'SECURITY'
-        | 'PERFORMANCE'
-        | 'EXTENSIONS'
-        | 'SNIPPETS'
-        | 'STREAMING'
+        'DEMO' | 'RENDERERS' | 'SECURITY' | 'PERFORMANCE' | 'EXTENSIONS' | 'SNIPPETS' | 'STREAMING'
 
     type Example = {
         slug: string
