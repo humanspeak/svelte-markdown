@@ -67,7 +67,10 @@ const reuseStableNodeRows = <T extends ReusableStreamingNode>(
         const reusedRow = reuseStableNodeArray(previousRows[index], nextRows[index])
         if (reusedRow !== nextRows[index]) {
             reusedRows ??= nextRows.slice()
-            reusedRows[index] = reusedRow ?? nextRows[index]
+            // reuseStableNodeArray only returns undefined when nextRows[index]
+            // is undefined, which the `!== nextRows[index]` guard above rules
+            // out, so reusedRow is always a defined array here.
+            reusedRows[index] = reusedRow as T[]
         }
     }
 
@@ -91,13 +94,16 @@ const reuseStableNode = <T extends ReusableStreamingNode>(previousNode: T, nextN
         return nextNode
     }
 
-    return {
-        ...nextNode,
-        ...(tokens !== nextNode.tokens ? { tokens } : {}),
-        ...(items !== nextNode.items ? { items } : {}),
-        ...(header !== nextNode.header ? { header } : {}),
-        ...(rows !== nextNode.rows ? { rows } : {})
-    }
+    // Only reassign the child arrays that actually changed, so we never stamp
+    // an `undefined` key onto a node that never had one (a changed array is
+    // always defined). Copying once and mutating avoids the throwaway object
+    // literals a conditional spread would allocate.
+    const merged = { ...nextNode }
+    if (tokens !== nextNode.tokens) merged.tokens = tokens
+    if (items !== nextNode.items) merged.items = items
+    if (header !== nextNode.header) merged.header = header
+    if (rows !== nextNode.rows) merged.rows = rows
+    return merged
 }
 
 export const reuseStableStreamingTokens = (
@@ -106,12 +112,15 @@ export const reuseStableStreamingTokens = (
     divergeAt: number
 ): Token[] => {
     const reuseCount = Math.min(divergeAt, previousTokens.length, nextTokens.length)
-    let reusedTokens: Token[] | undefined
 
-    for (let index = 0; index < reuseCount; index++) {
-        reusedTokens ??= nextTokens.slice()
-        reusedTokens[index] = previousTokens[index]
-    }
+    // Indices [0, reuseCount) are byte-identical, so reuse the previous token
+    // objects to preserve Svelte component identity. Build the result in a
+    // single pass (reused prefix + fresh tail) rather than copying the whole
+    // next array and then overwriting the prefix.
+    let reusedTokens: Token[] | undefined =
+        reuseCount > 0
+            ? previousTokens.slice(0, reuseCount).concat(nextTokens.slice(reuseCount))
+            : undefined
 
     const tailIndex = reuseCount
     if (tailIndex < previousTokens.length && tailIndex < nextTokens.length) {

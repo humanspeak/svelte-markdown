@@ -75,9 +75,7 @@
     import { reuseStableStreamingTokens } from '$lib/utils/streaming-token-reuse.js'
 
     type StreamFlushHandle =
-        | { kind: 'raf'; id: number }
-        | { kind: 'timeout'; id: ReturnType<typeof setTimeout> }
-        | null
+        { kind: 'raf'; id: number } | { kind: 'timeout'; id: ReturnType<typeof setTimeout> } | null
 
     const STREAM_BATCH_FALLBACK_MS = 16
     const STREAM_BATCH_MAX_CHARS = 256
@@ -142,12 +140,10 @@
         !incrementalParser || lastOptionsSrc !== options || lastExtensionsSrc !== extensions
 
     const applyStreamingSource = (nextSource: string, forceNewParser = false) => {
-        let recreatedParser = false
         if (forceNewParser || hasStreamingParserConfigChanged()) {
             incrementalParser = new IncrementalParser(combinedOptions)
             lastOptionsSrc = options
             lastExtensionsSrc = extensions
-            recreatedParser = true
         }
 
         const parser = incrementalParser
@@ -162,10 +158,12 @@
         // block, leaving stale snippets in the DOM whenever a streamed
         // `</details>` collapsed several siblings into one nested token.
         // See #291.
-        streamTokens =
-            recreatedParser || !canReuse
-                ? newTokens
-                : reuseStableStreamingTokens(streamTokens, newTokens, divergeAt)
+        // A freshly (re)created parser has an empty prevSource and always
+        // reports canReuse=false on its first update, so that case needs no
+        // separate guard here.
+        streamTokens = canReuse
+            ? reuseStableStreamingTokens(streamTokens, newTokens, divergeAt)
+            : newTokens
     }
 
     const commitPendingAppendBuffer = () => {
