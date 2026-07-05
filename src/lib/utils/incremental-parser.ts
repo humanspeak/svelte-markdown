@@ -220,6 +220,20 @@ export class IncrementalParser {
         if (boundary.reparseOffset <= 0) return false
         if (referenceInvalidatesTail) return false
 
+        // A reference definition living in the reused prefix is invisible to a
+        // tail-only re-lex (marked's link map is per-lex), so any reference use
+        // in the tail slice would render unresolved. `]:` is the cheap, no-alloc
+        // prefilter for "a definition marker exists at all" — task lists and
+        // bare citations never hit it, so the O(n) slice + regex is paid only by
+        // documents that actually carry reference definitions.
+        if (this.prevSource.includes(']:')) {
+            const prefix = source.slice(0, boundary.reparseOffset)
+            const tail = source.slice(boundary.reparseOffset)
+            if (this.hasReferenceDefinition(prefix) && this.hasPotentialReferenceUse(tail)) {
+                return false
+            }
+        }
+
         return true
     }
 

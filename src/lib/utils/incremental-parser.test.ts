@@ -268,11 +268,11 @@ describe('IncrementalParser', () => {
             expect(result.canReuse).toBe(true)
         })
 
-        // KNOWN FAILING (#325 follow-up): a reference *definition* that already
-        // sits in the stable prefix is invisible to a tail-only re-lex, so a new
-        // shortcut *use* appended in the tail renders as plain text instead of a
-        // link. The tail-window reference gate only covers "use in prefix +
-        // definition in tail", not "definition in prefix + use in tail".
+        // (#325) A reference *definition* already in the stable prefix is
+        // invisible to a tail-only re-lex, so a shortcut *use* appended in the
+        // tail must force a full parse — otherwise it renders as plain text
+        // instead of a link. Guards the "definition in prefix + use in tail"
+        // direction (the mirror of "use in prefix + definition in tail").
         it('resolves shortcut references whose definition sits in the stable prefix', () => {
             const parser = new IncrementalParser(createDefaultOptions())
             const base = '[docs]: /docs\n\nIntro paragraph.\n\n'
