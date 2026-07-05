@@ -23,6 +23,7 @@
  @property {function} [parsed] - Callback function called with the parsed tokens
 -->
 <script lang="ts">
+    import { setContext } from 'svelte'
     /**
      * Component Evolution & Design Notes:
      *
@@ -70,6 +71,7 @@
     import { IncrementalParser } from '$lib/utils/incremental-parser.js'
     import { Slugger, type Token, type TokensList } from '$lib/utils/markdown-parser.js'
     import { parseAndCacheTokens, parseAndCacheTokensAsync } from '$lib/utils/parse-and-cache.js'
+    import { createRenderMetadata, RENDER_METADATA_CONTEXT } from '$lib/utils/render-metadata.js'
     import { defaultSanitizeAttributes, defaultSanitizeUrl } from '$lib/utils/sanitize.js'
     import { isStreamingOffsetChunk } from '$lib/utils/streaming.js'
     import { reuseStableStreamingTokens } from '$lib/utils/streaming-token-reuse.js'
@@ -99,6 +101,9 @@
     const extensionTokenNames = $derived(getExtensionTokenNames(extensions))
     const combinedOptions = $derived(buildParserOptions(options, extensions))
     const slugger = new Slugger()
+    const renderMetadata = createRenderMetadata()
+
+    setContext(RENDER_METADATA_CONTEXT, renderMetadata)
 
     // Detect if any extension requires async processing
     const hasAsyncExtension = $derived(getHasAsyncExtension(extensions))
@@ -459,13 +464,26 @@
     })
 
     // Unified tokens: streaming > sync > async
-    const tokens = $derived(
+    const rawTokens = $derived(
         streaming && !hasAsyncExtension
             ? streamTokens
             : hasAsyncExtension
               ? asyncTokens
               : syncTokens
     )
+
+    const tokens = $derived.by(() => {
+        if (!rawTokens) return rawTokens
+
+        const sourceForMetadata =
+            streaming && !hasAsyncExtension
+                ? streamSourceBuffer
+                : Array.isArray(source)
+                  ? undefined
+                  : (source as string)
+
+        return renderMetadata.prepareTokensForRender(rawTokens, combinedOptions, sourceForMetadata)
+    })
 
     $effect(() => {
         if (!tokens) return

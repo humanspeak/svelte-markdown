@@ -18,6 +18,8 @@ import type { SvelteMarkdownProps } from './types.js'
 import type { Renderers, Token } from './utils/markdown-parser.js'
 import { tokenCache } from './utils/token-cache.js'
 
+type TestListItemToken = Token & { text?: string }
+
 beforeEach(() => {
     tokenCache.clearAllTokens()
     vi.useFakeTimers()
@@ -124,7 +126,8 @@ const lastParsedTokens = (parsed: ReturnType<typeof vi.fn>) =>
     parsed.mock.calls.at(-1)?.[0] as Token[] | undefined
 
 const firstListToken = (tokens: Token[] | undefined) =>
-    tokens?.find((token) => token.type === 'list') as (Token & { items: Token[] }) | undefined
+    tokens?.find((token) => token.type === 'list') as
+        (Token & { items: TestListItemToken[] }) | undefined
 
 const firstTableToken = (tokens: Token[] | undefined) =>
     tokens?.find((token) => token.type === 'table') as

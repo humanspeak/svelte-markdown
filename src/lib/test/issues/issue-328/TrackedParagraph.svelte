@@ -22,10 +22,11 @@
     onMount(() => {
         if (!element) return
 
-        onParagraphMount?.(text, element)
+        const mountedElement = element
+        onParagraphMount?.(text, mountedElement)
 
         return () => {
-            onParagraphDestroy?.(text, element)
+            onParagraphDestroy?.(text, mountedElement)
         }
     })
 </script>
