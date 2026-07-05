@@ -181,17 +181,35 @@ export class IncrementalParser {
         }
     }
 
+    /**
+     * True when `source` contains reference-style link syntax that could
+     * resolve against a definition — either a full reference (`[text][id]`)
+     * or a shortcut (`[text]`). It says nothing about whether a matching
+     * definition exists; pair it with `hasReferenceDefinition` for that.
+     */
     private hasPotentialReferenceUse = (source: string): boolean => {
         if (!source.includes('[') || !source.includes(']')) return false
 
         return LINK_REFERENCE_RE.test(source) || SHORTCUT_REFERENCE_RE.test(source)
     }
 
+    /**
+     * True when `source` contains a link reference definition line
+     * (`[label]: url`). A definition can retroactively change how reference
+     * uses elsewhere in the document render, which is what makes it relevant
+     * to tail-window safety.
+     */
     private hasReferenceDefinition = (source: string): boolean => {
         if (!source.includes('[') || !source.includes(']')) return false
         return REFERENCE_DEFINITION_RE.test(source)
     }
 
+    /**
+     * True when appending to `prevSource` introduces a reference definition
+     * that was not already present — i.e. the definition lives entirely in the
+     * newly appended tail. Returns false for any update that is not a pure
+     * append of `prevSource`.
+     */
     private hasNewReferenceDefinition = (source: string): boolean => {
         if (!source.startsWith(this.prevSource)) return false
         return this.hasReferenceDefinition(source.slice(this.prevSource.length))
@@ -209,6 +227,14 @@ export class IncrementalParser {
     private appendedDefinitionInvalidatesTail = (source: string): boolean =>
         this.hasPotentialReferenceUse(this.prevSource) && this.hasNewReferenceDefinition(source)
 
+    /**
+     * Decides whether an update may reuse the stable token prefix and re-lex
+     * only the appended tail (`boundary.reparseOffset` onward) instead of the
+     * whole document. Returns false whenever that shortcut could diverge from a
+     * full parse: caller parser hooks are active, the update is not append-only,
+     * the boundary is empty, or reference syntax straddles the prefix/tail split
+     * in a way a tail-only re-lex cannot resolve.
+     */
     private canUseTailWindow = (
         source: string,
         boundary: TailWindowBoundary,
