@@ -29,6 +29,12 @@ interface TailWindowBoundary {
     reparseOffset: number
 }
 
+interface ParseSourceResult {
+    tokens: Token[]
+    tailTokens: Token[]
+    usedTailWindow: boolean
+}
+
 const CLOSED_FENCE_RE = /^ {0,3}(`{3,}|~{3,}).*\n[\s\S]*\n {0,3}\1[ \t]*\n*$/
 const LINK_REFERENCE_RE = /\[[^\]\n]+\]\[[^\]\n]*\]/
 const SHORTCUT_REFERENCE_RE = /\[[^\]\n]+\](?![[(])/ // Excludes inline links/images and full refs
@@ -87,6 +93,15 @@ export class IncrementalParser {
      *  on the hot path. */
     private prevHasHtmlSpanMismatch = false
 
+    /** Cached boundary for the next append-only update. Computed when
+     * parser state is committed so `getTailWindowBoundary` stays O(1). */
+    private prevTailWindowBoundary: TailWindowBoundary = { prefixCount: 0, reparseOffset: 0 }
+
+    /** Cached reference-syntax facts for `prevSource`. These avoid scanning
+     * the accumulated stream on every append. */
+    private prevHasPotentialReferenceUse = false
+    private prevHasReferenceDefinition = false
+
     /**
      * Creates a new incremental parser instance.
      *
@@ -108,37 +123,10 @@ export class IncrementalParser {
     }
 
     private getTailWindowBoundary = (): TailWindowBoundary => {
-        if (this.prevTokens.length === 0) {
-            return { prefixCount: 0, reparseOffset: 0 }
-        }
-
-        // (#291) If any previous HTML opening has no known source span,
-        // the tail-window prefix is unsound: `.raw` is only the opening
-        // tag itself, while children and the closing tag live elsewhere.
-        // Closed HTML tokens carry `sourceLength`, so only truly partial
-        // HTML needs to fall through to a full re-parse.
-        if (this.prevHasHtmlSpanMismatch) {
-            return { prefixCount: 0, reparseOffset: 0 }
-        }
-
-        let offset = 0
-        for (let i = 0; i < this.prevTokens.length - 1; i++) {
-            offset += this.getTokenSourceLength(this.prevTokens[i])
-        }
-
-        const lastToken = this.prevTokens[this.prevTokens.length - 1]
-
-        if (this.isStableAtSourceEnd(lastToken)) {
-            return {
-                prefixCount: this.prevTokens.length,
-                reparseOffset: this.prevSource.length
-            }
-        }
-
-        return {
-            prefixCount: this.prevTokens.length - 1,
-            reparseOffset: offset
-        }
+        // Precomputed at commit time by `getNextTailWindowBoundary` (which
+        // already collapses to the empty boundary on an HTML span mismatch),
+        // so the hot path is a single field read.
+        return this.prevTailWindowBoundary
     }
 
     /**
@@ -203,6 +191,33 @@ export class IncrementalParser {
     }
 
     /**
+     * True when `source` contains reference-style link syntax outside
+     * reference definition lines. Definition labels (`[docs]: /docs`) look
+     * like shortcut references to `SHORTCUT_REFERENCE_RE`, but they are not
+     * renderable uses and should not keep a stream reference-sensitive after
+     * the definition has already been handled.
+     *
+     * @param source - Markdown source or source slice to scan
+     * @returns `true` if a full or shortcut reference use appears on a
+     *   non-definition line
+     * @example
+     * ```typescript
+     * this.hasPotentialReferenceUseOutsideDefinitions('[docs]: /docs') // false
+     * this.hasPotentialReferenceUseOutsideDefinitions('see [docs]')     // true
+     * ```
+     */
+    private hasPotentialReferenceUseOutsideDefinitions = (source: string): boolean => {
+        if (!source.includes('[') || !source.includes(']')) return false
+
+        for (const line of source.split('\n')) {
+            if (REFERENCE_DEFINITION_RE.test(line)) continue
+            if (this.hasPotentialReferenceUse(line)) return true
+        }
+
+        return false
+    }
+
+    /**
      * True when `source` contains a link reference definition line
      * (`[label]: url`). A definition can retroactively change how reference
      * uses elsewhere in the document render, which is what makes it relevant
@@ -222,33 +237,64 @@ export class IncrementalParser {
     }
 
     /**
-     * True when appending to `prevSource` introduces a reference definition
-     * that was not already present — i.e. the definition lives entirely in the
-     * newly appended tail. Returns false for any update that is not a pure
-     * append of `prevSource`.
+     * True when an append-only update newly introduces text accepted by
+     * `matches`. Reference uses and definitions cannot span newlines, so a
+     * token split across the append boundary can only complete on the line
+     * that straddles it; checking the appended slice plus that single boundary
+     * line catches every case without rescanning the accumulated source.
+     * Assumes `source` starts with `prevSource` — callers guard the non-append
+     * case. (The one unbounded input is a document streamed as a single
+     * newline-free line, where the boundary line grows with the document.)
      *
-     * @param source - The full new source, expected to start with `prevSource`
-     * @returns `true` if the appended tail contains a new reference definition
+     * @param source - Full source string for an append-only update
+     * @param matches - Predicate identifying the reference syntax of interest
+     * @returns `true` if the append introduces a match not already present
      * @example
      * ```typescript
-     * // prevSource === 'see [docs]\n\n'
-     * this.hasNewReferenceDefinition('see [docs]\n\n[docs]: /d')  // true
-     * this.hasNewReferenceDefinition('see [docs]\n\nmore text')   // false
+     * // prevSource === 'see [do'
+     * this.appendIntroducesMatch('see [docs]', this.hasPotentialReferenceUseOutsideDefinitions) // true
+     * ```
+     */
+    private appendIntroducesMatch = (
+        source: string,
+        matches: (_candidate: string) => boolean
+    ): boolean => {
+        if (matches(source.slice(this.prevSource.length))) return true
+
+        const lineStart = this.prevSource.lastIndexOf('\n') + 1
+        // Already present on the boundary line before the append ⇒ not new.
+        if (matches(this.prevSource.slice(lineStart))) return false
+        return matches(source.slice(lineStart))
+    }
+
+    /**
+     * True when appending to `prevSource` introduces a reference definition
+     * that was not already present. Definitions can arrive wholly in the
+     * appended slice or be completed across the append boundary, such as
+     * `[do` followed by `cs]: /docs`. Returns false for any update that is not
+     * a pure append of `prevSource`.
+     *
+     * @param source - The full new source, expected to start with `prevSource`
+     * @returns `true` if the appended update adds a reference definition
+     * @example
+     * ```typescript
+     * // prevSource === '[do'
+     * this.hasNewReferenceDefinition('[docs]: /d') // true
      * ```
      */
     private hasNewReferenceDefinition = (source: string): boolean => {
         if (!source.startsWith(this.prevSource)) return false
-        return this.hasReferenceDefinition(source.slice(this.prevSource.length))
+        return this.appendIntroducesMatch(source, this.hasReferenceDefinition)
     }
 
     /**
      * True when a reference definition arriving in the appended tail can
      * retroactively change how existing reference-style uses in the stable
      * prefix render — the one case where an append-only stream is not safe
-     * to serve incrementally. Computed once per `update` and threaded through
-     * `parseSource`/`canUseTailWindow` so the hot path evaluates it a single
-     * time rather than recomputing the regexes for both the tail-window
-     * decision and the reuse decision.
+     * to serve incrementally. This is the standalone form used as
+     * `canUseTailWindow`'s default argument; the hot path in `update` computes
+     * the same value inline (reusing `appendAddsDefinition`) so the boundary
+     * scan runs a single time per update.
      *
      * @param source - The full new source string for this update
      * @returns `true` if a newly appended definition can change how the reused
@@ -260,7 +306,7 @@ export class IncrementalParser {
      * ```
      */
     private appendedDefinitionInvalidatesTail = (source: string): boolean =>
-        this.hasPotentialReferenceUse(this.prevSource) && this.hasNewReferenceDefinition(source)
+        this.prevHasPotentialReferenceUse && this.hasNewReferenceDefinition(source)
 
     /**
      * Decides whether an update may reuse the stable token prefix and re-lex
@@ -297,14 +343,11 @@ export class IncrementalParser {
 
         // A reference definition living in the reused prefix is invisible to a
         // tail-only re-lex (marked's link map is per-lex), so any reference use
-        // in the tail slice would render unresolved. `]:` is the cheap, no-alloc
-        // prefilter for "a definition marker exists at all" — task lists and
-        // bare citations never hit it, so the O(n) slice + regex is paid only by
-        // documents that actually carry reference definitions.
-        if (this.prevSource.includes(']:')) {
-            const prefix = source.slice(0, boundary.reparseOffset)
+        // in the tail slice would render unresolved. The cached definition flag
+        // keeps definition-free streams on the cheap path.
+        if (this.prevHasReferenceDefinition) {
             const tail = source.slice(boundary.reparseOffset)
-            if (this.hasReferenceDefinition(prefix) && this.hasPotentialReferenceUse(tail)) {
+            if (this.hasPotentialReferenceUseOutsideDefinitions(tail)) {
                 return false
             }
         }
@@ -316,13 +359,131 @@ export class IncrementalParser {
         source: string,
         boundary: TailWindowBoundary,
         referenceInvalidatesTail: boolean
-    ): Token[] => {
+    ): ParseSourceResult => {
         if (!this.canUseTailWindow(source, boundary, referenceInvalidatesTail)) {
-            return lexAndClean(source, this.options, false)
+            return {
+                tokens: lexAndClean(source, this.options, false),
+                tailTokens: [],
+                usedTailWindow: false
+            }
         }
 
         const tailTokens = lexAndClean(source.slice(boundary.reparseOffset), this.options, false)
-        return [...this.prevTokens.slice(0, boundary.prefixCount), ...tailTokens]
+        return {
+            tokens: [...this.prevTokens.slice(0, boundary.prefixCount), ...tailTokens],
+            tailTokens,
+            usedTailWindow: true
+        }
+    }
+
+    /**
+     * True when any token in `tokens` has an unknown HTML source span. Tail
+     * reparsing can reuse a prefix only when prefix token lengths still map to
+     * source offsets; unclosed HTML openings break that invariant.
+     *
+     * @param tokens - Tokens to inspect for unknown HTML spans
+     * @returns `true` if at least one token makes tail-window offsets unsafe
+     * @example
+     * ```typescript
+     * this.hasAnyHtmlSpanMismatch(tailTokens) // scan only the reparsed tail
+     * ```
+     */
+    private hasAnyHtmlSpanMismatch = (tokens: Token[]): boolean => {
+        return tokens.some(this.hasHtmlSpanMismatch)
+    }
+
+    /**
+     * Computes and caches the next stable-prefix boundary once per committed
+     * parser state. The hot-path `getTailWindowBoundary` then returns this
+     * object without summing every prefix token on every append.
+     *
+     * @param tokens - Latest token array after parsing the current source
+     * @param sourceLength - Character length of the current source
+     * @param hasHtmlSpanMismatch - Whether any current token has an unknown
+     *   source span
+     * @returns The prefix token count and source offset to reuse on the next
+     *   append-only update
+     * @example
+     * ```typescript
+     * this.prevTailWindowBoundary = this.getNextTailWindowBoundary(tokens, source.length, false)
+     * ```
+     */
+    private getNextTailWindowBoundary = (
+        tokens: Token[],
+        sourceLength: number,
+        hasHtmlSpanMismatch: boolean
+    ): TailWindowBoundary => {
+        // (#291) If any token is an HTML opening with no known source span,
+        // the tail-window prefix is unsound: `.raw` is only the opening tag
+        // itself, while children and the closing tag live elsewhere. Closed
+        // HTML tokens carry `sourceLength`, so only truly partial HTML forces
+        // the empty boundary that falls through to a full re-parse.
+        if (tokens.length === 0 || hasHtmlSpanMismatch) {
+            return { prefixCount: 0, reparseOffset: 0 }
+        }
+
+        const lastToken = tokens[tokens.length - 1]
+        if (this.isStableAtSourceEnd(lastToken)) {
+            return { prefixCount: tokens.length, reparseOffset: sourceLength }
+        }
+
+        return {
+            prefixCount: tokens.length - 1,
+            reparseOffset: sourceLength - this.getTokenSourceLength(lastToken)
+        }
+    }
+
+    /**
+     * Commits parser state and refreshes cached bookkeeping facts for the next
+     * update. When the current parse reused a stable prefix, only the reparsed
+     * tail is inspected for HTML span mismatches so append-only streaming stays
+     * proportional to the newly parsed region.
+     *
+     * @param source - Full source string for the just-completed update
+     * @param parseResult - Parsed tokens plus metadata describing whether the
+     *   tail-window shortcut was used
+     * @param isAppendOnly - Whether `source` appended to the previous source
+     * @param appendAddsDefinition - Whether the append introduced a reference
+     *   definition, already computed by `update` so the boundary scan is not
+     *   repeated here
+     * @returns Nothing; updates `prevSource`, `prevTokens`, and cached flags
+     * @example
+     * ```typescript
+     * this.updateCachedState(source, parseResult, isAppendOnly, appendAddsDefinition)
+     * ```
+     */
+    private updateCachedState = (
+        source: string,
+        parseResult: ParseSourceResult,
+        isAppendOnly: boolean,
+        appendAddsDefinition: boolean
+    ): void => {
+        // HTML-span-mismatch keys on `usedTailWindow` (a fact about the tokens,
+        // recomputed whenever the tail window is bypassed), while the reference
+        // facts key on `isAppendOnly` (facts about the source, which accumulate
+        // monotonically under a pure append regardless of parse strategy).
+        const hasHtmlSpanMismatch = parseResult.usedTailWindow
+            ? this.prevHasHtmlSpanMismatch || this.hasAnyHtmlSpanMismatch(parseResult.tailTokens)
+            : this.hasAnyHtmlSpanMismatch(parseResult.tokens)
+
+        // `isAppendOnly` already guarantees `source.startsWith(prevSource)`, so
+        // call `appendIntroducesMatch` directly rather than re-checking it.
+        this.prevHasPotentialReferenceUse = isAppendOnly
+            ? this.prevHasPotentialReferenceUse ||
+              this.appendIntroducesMatch(source, this.hasPotentialReferenceUseOutsideDefinitions)
+            : this.hasPotentialReferenceUseOutsideDefinitions(source)
+        this.prevHasReferenceDefinition = isAppendOnly
+            ? this.prevHasReferenceDefinition || appendAddsDefinition
+            : this.hasReferenceDefinition(source)
+
+        this.prevSource = source
+        this.prevTokens = parseResult.tokens
+        this.prevHasHtmlSpanMismatch = hasHtmlSpanMismatch
+        this.prevTailWindowBoundary = this.getNextTailWindowBoundary(
+            parseResult.tokens,
+            source.length,
+            hasHtmlSpanMismatch
+        )
     }
 
     /**
@@ -333,8 +494,17 @@ export class IncrementalParser {
      */
     update = (source: string): IncrementalUpdateResult => {
         const boundary = this.getTailWindowBoundary()
-        const referenceInvalidatesTail = this.appendedDefinitionInvalidatesTail(source)
-        const newTokens = this.parseSource(source, boundary, referenceInvalidatesTail)
+        const isAppendOnly = this.prevSource !== '' && source.startsWith(this.prevSource)
+        // Whether this append introduces a reference definition. Both the
+        // tail-window decision (via `referenceInvalidatesTail`) and the cached
+        // -state refresh need it, so compute the boundary scan once here. When
+        // `prevSource` is empty this is the first update, where no cached use
+        // exists yet, so `referenceInvalidatesTail` is false either way.
+        const appendAddsDefinition =
+            isAppendOnly && this.appendIntroducesMatch(source, this.hasReferenceDefinition)
+        const referenceInvalidatesTail = this.prevHasPotentialReferenceUse && appendAddsDefinition
+        const parseResult = this.parseSource(source, boundary, referenceInvalidatesTail)
+        const newTokens = parseResult.tokens
 
         // Apply walkTokens if configured
         if (typeof this.options.walkTokens === 'function') {
@@ -345,11 +515,9 @@ export class IncrementalParser {
         // so force a full rerender when definitions are present alongside
         // reference-style uses. Shortcut-looking text alone stays reusable.
         // The append-only case reuses `referenceInvalidatesTail` computed above.
-        const isAppendOnly = this.prevSource !== '' && source.startsWith(this.prevSource)
         const referenceSensitive = isAppendOnly
             ? referenceInvalidatesTail
-            : (this.hasReferenceDefinition(this.prevSource) ||
-                  this.hasReferenceDefinition(source)) &&
+            : (this.prevHasReferenceDefinition || this.hasReferenceDefinition(source)) &&
               (this.hasPotentialReferenceUse(this.prevSource) ||
                   this.hasPotentialReferenceUse(source))
         const canReuse = isAppendOnly && !referenceSensitive
@@ -377,9 +545,7 @@ export class IncrementalParser {
             }
         }
 
-        this.prevSource = source
-        this.prevTokens = newTokens
-        this.prevHasHtmlSpanMismatch = newTokens.some(this.hasHtmlSpanMismatch)
+        this.updateCachedState(source, parseResult, isAppendOnly, appendAddsDefinition)
         return { tokens: newTokens, divergeAt, canReuse }
     }
 }
