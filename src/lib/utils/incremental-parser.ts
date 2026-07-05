@@ -41,6 +41,8 @@ export interface IncrementalUpdateResult {
     tokens: Token[]
     /** Index of the first token that differs from the previous parse */
     divergeAt: number
+    /** Whether consumers can safely reuse stable token objects from the previous parse */
+    canReuse: boolean
 }
 
 /**
@@ -227,6 +229,8 @@ export class IncrementalParser {
         const referenceSensitive =
             this.hasAppendSensitiveReferenceSyntax(this.prevSource) ||
             this.hasAppendSensitiveReferenceSyntax(source)
+        const canReuse =
+            this.prevSource !== '' && source.startsWith(this.prevSource) && !referenceSensitive
 
         // Find first divergence point. We compare `.raw` for fast equality,
         // and for html tokens we also check the structural shape — an
@@ -254,6 +258,6 @@ export class IncrementalParser {
         this.prevSource = source
         this.prevTokens = newTokens
         this.prevHasHtmlSpanMismatch = newTokens.some(this.hasHtmlSpanMismatch)
-        return { tokens: newTokens, divergeAt }
+        return { tokens: newTokens, divergeAt, canReuse }
     }
 }

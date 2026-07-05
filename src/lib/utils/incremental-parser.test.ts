@@ -93,6 +93,34 @@ describe('IncrementalParser', () => {
             // heading + space are unchanged; paragraph diverges at index 2
             expect(r2.divergeAt).toBe(2)
         })
+
+        it('allows stable token reuse for append-only updates without reference syntax', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            parser.update('# Title\n\n')
+
+            const result = parser.update('# Title\n\nParagraph')
+
+            expect(result.canReuse).toBe(true)
+        })
+
+        it('disables stable token reuse when appended reference definitions can change links', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            parser.update('See [the docs][ref]')
+
+            const result = parser.update('See [the docs][ref]\n\n[ref]: https://example.com')
+
+            expect(result.canReuse).toBe(false)
+            expect(result.divergeAt).toBe(0)
+        })
+
+        it('disables stable token reuse for in-place source edits', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            parser.update('<div><span>abc</span></div>')
+
+            const result = parser.update('<div><span>xyz</span></div>')
+
+            expect(result.canReuse).toBe(false)
+        })
     })
 
     describe('Code Fences', () => {

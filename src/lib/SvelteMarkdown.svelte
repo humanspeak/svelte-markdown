@@ -72,6 +72,7 @@
     import { parseAndCacheTokens, parseAndCacheTokensAsync } from '$lib/utils/parse-and-cache.js'
     import { defaultSanitizeAttributes, defaultSanitizeUrl } from '$lib/utils/sanitize.js'
     import { isStreamingOffsetChunk } from '$lib/utils/streaming.js'
+    import { reuseStableStreamingTokens } from '$lib/utils/streaming-token-reuse.js'
 
     type StreamFlushHandle =
         | { kind: 'raf'; id: number }
@@ -141,16 +142,18 @@
         !incrementalParser || lastOptionsSrc !== options || lastExtensionsSrc !== extensions
 
     const applyStreamingSource = (nextSource: string, forceNewParser = false) => {
+        let recreatedParser = false
         if (forceNewParser || hasStreamingParserConfigChanged()) {
             incrementalParser = new IncrementalParser(combinedOptions)
             lastOptionsSrc = options
             lastExtensionsSrc = extensions
+            recreatedParser = true
         }
 
         const parser = incrementalParser
         if (!parser) return
 
-        const { tokens: newTokens } = parser.update(nextSource)
+        const { tokens: newTokens, divergeAt, canReuse } = parser.update(nextSource)
 
         // Replace the array reference rather than mutating per-index +
         // length. Under Svelte 5's reactive proxy, shrinking the array
@@ -159,7 +162,10 @@
         // block, leaving stale snippets in the DOM whenever a streamed
         // `</details>` collapsed several siblings into one nested token.
         // See #291.
-        streamTokens = newTokens
+        streamTokens =
+            recreatedParser || !canReuse
+                ? newTokens
+                : reuseStableStreamingTokens(streamTokens, newTokens, divergeAt)
     }
 
     const commitPendingAppendBuffer = () => {
