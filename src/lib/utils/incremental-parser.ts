@@ -123,15 +123,9 @@ export class IncrementalParser {
     }
 
     private getTailWindowBoundary = (): TailWindowBoundary => {
-        // (#291) If any previous HTML opening has no known source span,
-        // the tail-window prefix is unsound: `.raw` is only the opening
-        // tag itself, while children and the closing tag live elsewhere.
-        // Closed HTML tokens carry `sourceLength`, so only truly partial
-        // HTML needs to fall through to a full re-parse.
-        if (this.prevHasHtmlSpanMismatch) {
-            return { prefixCount: 0, reparseOffset: 0 }
-        }
-
+        // Precomputed at commit time by `getNextTailWindowBoundary` (which
+        // already collapses to the empty boundary on an HTML span mismatch),
+        // so the hot path is a single field read.
         return this.prevTailWindowBoundary
     }
 
@@ -243,33 +237,64 @@ export class IncrementalParser {
     }
 
     /**
-     * True when appending to `prevSource` introduces a reference definition
-     * that was not already present — i.e. the definition lives entirely in the
-     * newly appended tail. Returns false for any update that is not a pure
-     * append of `prevSource`.
+     * True when an append-only update newly introduces text accepted by
+     * `matches`. Reference uses and definitions cannot span newlines, so a
+     * token split across the append boundary can only complete on the line
+     * that straddles it; checking the appended slice plus that single boundary
+     * line catches every case without rescanning the accumulated source.
+     * Assumes `source` starts with `prevSource` — callers guard the non-append
+     * case. (The one unbounded input is a document streamed as a single
+     * newline-free line, where the boundary line grows with the document.)
      *
-     * @param source - The full new source, expected to start with `prevSource`
-     * @returns `true` if the appended tail contains a new reference definition
+     * @param source - Full source string for an append-only update
+     * @param matches - Predicate identifying the reference syntax of interest
+     * @returns `true` if the append introduces a match not already present
      * @example
      * ```typescript
-     * // prevSource === 'see [docs]\n\n'
-     * this.hasNewReferenceDefinition('see [docs]\n\n[docs]: /d')  // true
-     * this.hasNewReferenceDefinition('see [docs]\n\nmore text')   // false
+     * // prevSource === 'see [do'
+     * this.appendIntroducesMatch('see [docs]', this.hasPotentialReferenceUseOutsideDefinitions) // true
+     * ```
+     */
+    private appendIntroducesMatch = (
+        source: string,
+        matches: (candidate: string) => boolean
+    ): boolean => {
+        if (matches(source.slice(this.prevSource.length))) return true
+
+        const lineStart = this.prevSource.lastIndexOf('\n') + 1
+        // Already present on the boundary line before the append ⇒ not new.
+        if (matches(this.prevSource.slice(lineStart))) return false
+        return matches(source.slice(lineStart))
+    }
+
+    /**
+     * True when appending to `prevSource` introduces a reference definition
+     * that was not already present. Definitions can arrive wholly in the
+     * appended slice or be completed across the append boundary, such as
+     * `[do` followed by `cs]: /docs`. Returns false for any update that is not
+     * a pure append of `prevSource`.
+     *
+     * @param source - The full new source, expected to start with `prevSource`
+     * @returns `true` if the appended update adds a reference definition
+     * @example
+     * ```typescript
+     * // prevSource === '[do'
+     * this.hasNewReferenceDefinition('[docs]: /d') // true
      * ```
      */
     private hasNewReferenceDefinition = (source: string): boolean => {
         if (!source.startsWith(this.prevSource)) return false
-        return this.hasReferenceDefinition(source.slice(this.prevSource.length))
+        return this.appendIntroducesMatch(source, this.hasReferenceDefinition)
     }
 
     /**
      * True when a reference definition arriving in the appended tail can
      * retroactively change how existing reference-style uses in the stable
      * prefix render — the one case where an append-only stream is not safe
-     * to serve incrementally. Computed once per `update` and threaded through
-     * `parseSource`/`canUseTailWindow` so the hot path evaluates it a single
-     * time rather than recomputing the regexes for both the tail-window
-     * decision and the reuse decision.
+     * to serve incrementally. This is the standalone form used as
+     * `canUseTailWindow`'s default argument; the hot path in `update` computes
+     * the same value inline (reusing `appendAddsDefinition`) so the boundary
+     * scan runs a single time per update.
      *
      * @param source - The full new source string for this update
      * @returns `true` if a newly appended definition can change how the reused
@@ -388,6 +413,11 @@ export class IncrementalParser {
         sourceLength: number,
         hasHtmlSpanMismatch: boolean
     ): TailWindowBoundary => {
+        // (#291) If any token is an HTML opening with no known source span,
+        // the tail-window prefix is unsound: `.raw` is only the opening tag
+        // itself, while children and the closing tag live elsewhere. Closed
+        // HTML tokens carry `sourceLength`, so only truly partial HTML forces
+        // the empty boundary that falls through to a full re-parse.
         if (tokens.length === 0 || hasHtmlSpanMismatch) {
             return { prefixCount: 0, reparseOffset: 0 }
         }
@@ -413,28 +443,37 @@ export class IncrementalParser {
      * @param parseResult - Parsed tokens plus metadata describing whether the
      *   tail-window shortcut was used
      * @param isAppendOnly - Whether `source` appended to the previous source
+     * @param appendAddsDefinition - Whether the append introduced a reference
+     *   definition, already computed by `update` so the boundary scan is not
+     *   repeated here
      * @returns Nothing; updates `prevSource`, `prevTokens`, and cached flags
      * @example
      * ```typescript
-     * this.updateCachedState(source, parseResult, source.startsWith(this.prevSource))
+     * this.updateCachedState(source, parseResult, isAppendOnly, appendAddsDefinition)
      * ```
      */
     private updateCachedState = (
         source: string,
         parseResult: ParseSourceResult,
-        isAppendOnly: boolean
+        isAppendOnly: boolean,
+        appendAddsDefinition: boolean
     ): void => {
-        const appendedSource = isAppendOnly ? source.slice(this.prevSource.length) : source
+        // HTML-span-mismatch keys on `usedTailWindow` (a fact about the tokens,
+        // recomputed whenever the tail window is bypassed), while the reference
+        // facts key on `isAppendOnly` (facts about the source, which accumulate
+        // monotonically under a pure append regardless of parse strategy).
         const hasHtmlSpanMismatch = parseResult.usedTailWindow
             ? this.prevHasHtmlSpanMismatch || this.hasAnyHtmlSpanMismatch(parseResult.tailTokens)
             : this.hasAnyHtmlSpanMismatch(parseResult.tokens)
 
+        // `isAppendOnly` already guarantees `source.startsWith(prevSource)`, so
+        // call `appendIntroducesMatch` directly rather than re-checking it.
         this.prevHasPotentialReferenceUse = isAppendOnly
             ? this.prevHasPotentialReferenceUse ||
-              this.hasPotentialReferenceUseOutsideDefinitions(appendedSource)
+              this.appendIntroducesMatch(source, this.hasPotentialReferenceUseOutsideDefinitions)
             : this.hasPotentialReferenceUseOutsideDefinitions(source)
         this.prevHasReferenceDefinition = isAppendOnly
-            ? this.prevHasReferenceDefinition || this.hasReferenceDefinition(appendedSource)
+            ? this.prevHasReferenceDefinition || appendAddsDefinition
             : this.hasReferenceDefinition(source)
 
         this.prevSource = source
@@ -456,7 +495,14 @@ export class IncrementalParser {
     update = (source: string): IncrementalUpdateResult => {
         const boundary = this.getTailWindowBoundary()
         const isAppendOnly = this.prevSource !== '' && source.startsWith(this.prevSource)
-        const referenceInvalidatesTail = this.appendedDefinitionInvalidatesTail(source)
+        // Whether this append introduces a reference definition. Both the
+        // tail-window decision (via `referenceInvalidatesTail`) and the cached
+        // -state refresh need it, so compute the boundary scan once here. When
+        // `prevSource` is empty this is the first update, where no cached use
+        // exists yet, so `referenceInvalidatesTail` is false either way.
+        const appendAddsDefinition =
+            isAppendOnly && this.appendIntroducesMatch(source, this.hasReferenceDefinition)
+        const referenceInvalidatesTail = this.prevHasPotentialReferenceUse && appendAddsDefinition
         const parseResult = this.parseSource(source, boundary, referenceInvalidatesTail)
         const newTokens = parseResult.tokens
 
@@ -471,8 +517,7 @@ export class IncrementalParser {
         // The append-only case reuses `referenceInvalidatesTail` computed above.
         const referenceSensitive = isAppendOnly
             ? referenceInvalidatesTail
-            : (this.hasReferenceDefinition(this.prevSource) ||
-                  this.hasReferenceDefinition(source)) &&
+            : (this.prevHasReferenceDefinition || this.hasReferenceDefinition(source)) &&
               (this.hasPotentialReferenceUse(this.prevSource) ||
                   this.hasPotentialReferenceUse(source))
         const canReuse = isAppendOnly && !referenceSensitive
@@ -500,7 +545,7 @@ export class IncrementalParser {
             }
         }
 
-        this.updateCachedState(source, parseResult, isAppendOnly)
+        this.updateCachedState(source, parseResult, isAppendOnly, appendAddsDefinition)
         return { tokens: newTokens, divergeAt, canReuse }
     }
 }
