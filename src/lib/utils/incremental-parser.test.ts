@@ -333,6 +333,21 @@ describe('IncrementalParser', () => {
             expect(result.tokens).toEqual(full)
         })
 
+        it('resolves a full reference use split across the append boundary', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            // A full reference `[a][b]` (LINK_REFERENCE_RE, a different path
+            // than a shortcut `[docs]`) straddles the boundary: `See [a][` then
+            // `b]`. The definition arrives afterward and must force a full parse.
+            parser.update('See [a][')
+            parser.update('See [a][b]\n\nTail')
+            const final = 'See [a][b]\n\nTail\n\n[b]: /x'
+
+            const result = parser.update(final)
+            const full = parseAndCacheModule.lexAndClean(final, createDefaultOptions(), false)
+
+            expect(result.tokens).toEqual(full)
+        })
+
         it('keeps stable token reuse for appended definitions when no reference use exists', () => {
             const parser = new IncrementalParser(createDefaultOptions())
             // Definition labels look like shortcut references, but they are not
