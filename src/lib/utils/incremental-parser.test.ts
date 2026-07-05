@@ -3,6 +3,20 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { IncrementalParser } from './incremental-parser.js'
 import * as parseAndCacheModule from './parse-and-cache.js'
 
+/** Private surface of `IncrementalParser` exercised by the tail-window tests. */
+interface InternalParser {
+    prevSource: string
+    getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
+    canUseTailWindow: (
+        source: string,
+        boundary: { prefixCount: number; reparseOffset: number }
+    ) => boolean
+}
+
+/** Expose the private tail-window internals without repeating the cast per test. */
+const asInternalParser = (parser: IncrementalParser): InternalParser =>
+    parser as unknown as InternalParser
+
 describe('IncrementalParser', () => {
     const createDefaultOptions = (): SvelteMarkdownOptions => ({ gfm: true })
 
@@ -176,14 +190,7 @@ describe('IncrementalParser', () => {
             const parser = new IncrementalParser(createDefaultOptions())
 
             parser.update('# Title\n\nFirst paragraph')
-            const internalParser = parser as unknown as {
-                prevSource: string
-                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
-                canUseTailWindow: (
-                    source: string,
-                    boundary: { prefixCount: number; reparseOffset: number }
-                ) => boolean
-            }
+            const internalParser = asInternalParser(parser)
             const boundary = internalParser.getTailWindowBoundary()
 
             // heading + space are stable prefix (2 tokens), reparse from offset 9
@@ -247,13 +254,7 @@ describe('IncrementalParser', () => {
 
             parser.update(source)
             parser.update(withDefinition)
-            const internalParser = parser as unknown as {
-                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
-                canUseTailWindow: (
-                    source: string,
-                    boundary: { prefixCount: number; reparseOffset: number }
-                ) => boolean
-            }
+            const internalParser = asInternalParser(parser)
             const boundary = internalParser.getTailWindowBoundary()
 
             expect(lexSpy.mock.calls[1]?.[0]).toBe(withDefinition)
@@ -305,13 +306,7 @@ describe('IncrementalParser', () => {
             const appended = `${source}\n\nNext`
 
             parser.update(source)
-            const internalParser = parser as unknown as {
-                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
-                canUseTailWindow: (
-                    source: string,
-                    boundary: { prefixCount: number; reparseOffset: number }
-                ) => boolean
-            }
+            const internalParser = asInternalParser(parser)
             const boundary = internalParser.getTailWindowBoundary()
 
             expect(boundary.reparseOffset).toBeGreaterThan(0)
@@ -331,13 +326,7 @@ describe('IncrementalParser', () => {
             const appended = `${source}\n\nNext`
 
             parser.update(source)
-            const internalParser = parser as unknown as {
-                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
-                canUseTailWindow: (
-                    source: string,
-                    boundary: { prefixCount: number; reparseOffset: number }
-                ) => boolean
-            }
+            const internalParser = asInternalParser(parser)
             const boundary = internalParser.getTailWindowBoundary()
 
             expect(boundary.reparseOffset).toBeGreaterThan(0)
@@ -356,13 +345,7 @@ describe('IncrementalParser', () => {
             const appended = `${source}\n\nNext`
 
             parser.update(source)
-            const internalParser = parser as unknown as {
-                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
-                canUseTailWindow: (
-                    source: string,
-                    boundary: { prefixCount: number; reparseOffset: number }
-                ) => boolean
-            }
+            const internalParser = asInternalParser(parser)
             const boundary = internalParser.getTailWindowBoundary()
 
             expect(boundary.reparseOffset).toBeGreaterThan(0)
@@ -381,13 +364,7 @@ describe('IncrementalParser', () => {
             const appended = `${source}\n\nNext`
 
             parser.update(source)
-            const internalParser = parser as unknown as {
-                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
-                canUseTailWindow: (
-                    source: string,
-                    boundary: { prefixCount: number; reparseOffset: number }
-                ) => boolean
-            }
+            const internalParser = asInternalParser(parser)
             const boundary = internalParser.getTailWindowBoundary()
 
             expect(boundary.reparseOffset).toBeGreaterThan(0)
@@ -406,13 +383,7 @@ describe('IncrementalParser', () => {
             const appended = `${source} more`
 
             parser.update(source)
-            const internalParser = parser as unknown as {
-                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
-                canUseTailWindow: (
-                    source: string,
-                    boundary: { prefixCount: number; reparseOffset: number }
-                ) => boolean
-            }
+            const internalParser = asInternalParser(parser)
             const boundary = internalParser.getTailWindowBoundary()
 
             expect(boundary).toEqual({ prefixCount: 0, reparseOffset: 0 })
@@ -430,13 +401,7 @@ describe('IncrementalParser', () => {
             const appended = `${source}\n\nNext`
 
             parser.update(source)
-            const internalParser = parser as unknown as {
-                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
-                canUseTailWindow: (
-                    source: string,
-                    boundary: { prefixCount: number; reparseOffset: number }
-                ) => boolean
-            }
+            const internalParser = asInternalParser(parser)
             const boundary = internalParser.getTailWindowBoundary()
 
             expect(boundary.reparseOffset).toBeGreaterThan(0)
@@ -456,13 +421,7 @@ describe('IncrementalParser', () => {
             const appended = `${source}\n\nNext`
 
             parser.update(source)
-            const internalParser = parser as unknown as {
-                getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
-                canUseTailWindow: (
-                    source: string,
-                    boundary: { prefixCount: number; reparseOffset: number }
-                ) => boolean
-            }
+            const internalParser = asInternalParser(parser)
             const boundary = internalParser.getTailWindowBoundary()
 
             expect(boundary.reparseOffset).toBeGreaterThan(0)
