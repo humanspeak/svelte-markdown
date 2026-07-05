@@ -342,7 +342,7 @@ const hasMultipleTags = (html: string): boolean => {
 const expandHtmlBlockNested = (html: string): Token[] => {
     const root: Token[] = []
     const stack: Token[][] = [root]
-    const opens: { tag: string; opening: Token; childTokens: Token[] }[] = []
+    const opens: { tag: string; opening: Token; childTokens: Token[]; startIndex: number }[] = []
     let currentText = ''
 
     const flushText = () => {
@@ -379,7 +379,7 @@ const expandHtmlBlockNested = (html: string): Token[] => {
                 } as Token
                 stack[stack.length - 1].push(opening)
                 stack.push(childTokens)
-                opens.push({ tag: name, opening, childTokens })
+                opens.push({ tag: name, opening, childTokens, startIndex: parser.startIndex })
             },
             ontext: (text) => {
                 currentText += text
@@ -393,7 +393,12 @@ const expandHtmlBlockNested = (html: string): Token[] => {
                 stack.pop()
                 if (!implied) {
                     // Real `</tag>` in source — fully resolved nested token.
-                    ;(top.opening as Token & { tokens?: Token[] }).tokens = top.childTokens
+                    const resolvedOpening = top.opening as Token & {
+                        sourceLength?: number
+                        tokens?: Token[]
+                    }
+                    resolvedOpening.sourceLength = parser.endIndex - top.startIndex + 1
+                    resolvedOpening.tokens = top.childTokens
                 } else {
                     // Auto-closed by htmlparser2 at end-of-input — this
                     // opening tag is unclosed in the source. Leave `.tokens`
@@ -492,12 +497,21 @@ const pairFlatHtmlTokens = (tokens: Token[]): Token[] => {
             const startIndex = lastOpen.startIndex
             const innerTokens = result.splice(startIndex + 1, result.length - startIndex - 1)
             const openingToken = result.pop()!
+            const sourceLength =
+                openingToken.raw.length +
+                innerTokens.reduce((sum, innerToken) => {
+                    const sourceLength = (innerToken as Token & { sourceLength?: number })
+                        .sourceLength
+                    return sum + (sourceLength ?? innerToken.raw.length)
+                }, 0) +
+                token.raw.length
             result.push({
                 type: 'html',
                 raw: openingToken.raw,
                 tag: tagInfo.tag,
                 tokens: innerTokens,
-                attributes: extractAttributes(openingToken.raw)
+                attributes: extractAttributes(openingToken.raw),
+                sourceLength
             } as Token)
         }
     }

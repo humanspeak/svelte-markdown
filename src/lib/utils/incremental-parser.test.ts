@@ -260,10 +260,12 @@ describe('IncrementalParser', () => {
             expect(boundary.reparseOffset).toBeGreaterThan(0)
             expect(internalParser.canUseTailWindow(appended, boundary)).toBe(true)
 
-            parser.update(appended)
+            const result = parser.update(appended)
 
             expect(lexSpy.mock.calls[2]?.[0]).toBe(appended.slice(boundary.reparseOffset))
             expect((lexSpy.mock.calls[2]?.[0] as string).length).toBeLessThan(appended.length)
+            expect(result.divergeAt).toBeGreaterThan(0)
+            expect(result.canReuse).toBe(true)
         })
 
         it('keeps full reference syntax conservative until its definition arrives', () => {
