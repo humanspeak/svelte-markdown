@@ -19,16 +19,6 @@
     const ROLLING_WINDOW_MS = 10_000
     const LONG_TASK_THRESHOLD_MS = 50
 
-    // Dev-only Parser-instance counters that `Parser.svelte` writes into
-    // `window` when running outside production. Mirroring the shape here
-    // lets us read/reset them without `any` casts.
-    interface SVMWindow extends Window {
-        __svmParserCount?: number
-        __svmParserByType?: Record<string, number>
-    }
-    const svmWindow = (): SVMWindow | undefined =>
-        typeof window === 'undefined' ? undefined : (window as SVMWindow)
-
     // ---- Corpus generators ----------------------------------------------------
 
     const generateLarge = (sections: number, blocksPerSection: number): string => {
@@ -258,11 +248,6 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         renderOnlyMs: 0,
         domNodes: 0,
         charsPerSec: 0,
-        // Parser-instance allocation count (dev-only window counter,
-        // captured per scenario from `__svmParserCount` /
-        // `__svmParserByType` in Parser.svelte). Tracks render-cost
-        // drivers that wall-clock alone misses.
-        parserInstances: 0,
         // Per-scenario observer snapshots: filtered to the scenario's
         // time window, not the rolling-10s window. Catch the
         // longest-task / mutation / LoAF count attributable to *this*
@@ -352,7 +337,6 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             renderOnlyMs: 0,
             domNodes: 0,
             charsPerSec: 0,
-            parserInstances: 0,
             scenarioLongestTaskMs: 0,
             scenarioMutations: 0,
             scenarioLoafScriptMaxMs: 0,
@@ -373,28 +357,6 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             streamGapAvgMs: 0,
             streamGapP95Ms: 0,
             streamGapPeakMs: 0
-        }
-    }
-
-    /**
-     * Resets the dev-mode Parser-instance counter so a fresh scenario gets
-     * a clean total. The window globals are populated by the dev-only
-     * block at the top of `Parser.svelte` and stay 0/empty in production
-     * builds (Vite drops the block).
-     */
-    const resetParserCounter = () => {
-        const w = svmWindow()
-        if (!w) return
-        w.__svmParserCount = 0
-        w.__svmParserByType = {}
-    }
-
-    const readParserCounter = (): { total: number; byType: Record<string, number> } => {
-        const w = svmWindow()
-        if (!w) return { total: 0, byType: {} }
-        return {
-            total: w.__svmParserCount ?? 0,
-            byType: w.__svmParserByType ?? {}
         }
     }
 
@@ -493,7 +455,6 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         // Let any pending unmount mutations from `source = ''` settle so
         // they aren't attributed to *this* scenario's window.
         await tick()
-        resetParserCounter()
         const scenarioStart = performance.now()
         const paintPromise = waitForPaint()
         const tPaint0 = performance.now()
@@ -504,7 +465,6 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         await tick()
         const scenarioEnd = performance.now()
         const domNodes = previewEl ? previewEl.querySelectorAll('*').length : 0
-        const parserCounter = readParserCounter()
         const observerSnap = snapshotScenarioObservers(scenarioStart, scenarioEnd)
 
         const srcKb = round(corpus.length / 1024, 1)
@@ -523,7 +483,6 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             renderOnlyMs: round(Math.max(0, firstPaintMs - parseColdMs)),
             domNodes,
             charsPerSec,
-            parserInstances: parserCounter.total,
             scenarioLongestTaskMs: observerSnap.longestTaskMs,
             scenarioMutations: observerSnap.mutations,
             scenarioLoafScriptMaxMs: observerSnap.loafScriptMaxMs
@@ -779,7 +738,6 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         source = ''
         tokenCache.clearAllTokens()
         resetStat()
-        resetParserCounter()
         longTaskEntries = []
         rafIntervals = []
         mutationEvents = []
@@ -998,7 +956,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         scenario={scenario} srcKb={stat.srcKb} tokenCount={stat.tokenCount} parseColdMs={stat.parseColdMs}
         parseWarmMs={stat.parseWarmMs} lexMs={stat.lexMs} cleanupMs={stat.cleanupMs} hashMs={stat.hashMs}
         firstPaintMs={stat.firstPaintMs} renderOnlyMs={stat.renderOnlyMs} domNodes={stat.domNodes}
-        charsPerSec={stat.charsPerSec} parserInstances={stat.parserInstances} scenarioLongestTaskMs={stat.scenarioLongestTaskMs}
+        charsPerSec={stat.charsPerSec} scenarioLongestTaskMs={stat.scenarioLongestTaskMs}
         scenarioMutations={stat.scenarioMutations} scenarioLoafScriptMaxMs={stat.scenarioLoafScriptMaxMs}
         · cacheIters={stat.cacheIters} cacheTotalMs={stat.cacheTotalMs} cacheAvgMs={stat.cacheAvgMs} cacheP95Ms={stat.cacheP95Ms}
         cachePeakMs={stat.cachePeakMs} · streamChunks={stat.streamChunks} streamTotalMs={stat.streamTotalMs}

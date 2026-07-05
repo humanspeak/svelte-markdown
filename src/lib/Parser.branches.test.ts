@@ -34,18 +34,13 @@ const baseRenderers = {
 } as const
 
 /**
- * Helper to create a snippet override that renders a wrapper element with a data-testid,
- * and renders its children inside.
+ * Helper to wrap a single token shape as the root `tokens` array Parser now
+ * consumes. After the snippet-recursion refactor, Parser no longer accepts a
+ * `type` prop — instead every token (including the "root" one in these
+ * branch tests) flows through `renderToken` via the top-level `tokens` array.
  */
-function makeSnippet(testId: string) {
-    return createRawSnippet(() => ({
-        render: () => `<div data-testid="${testId}"></div>`,
-        setup(node: Element) {
-            // Access the children snippet from the props that will be set
-            // Since createRawSnippet doesn't get props with children,
-            // we just verify the element is mounted
-        }
-    }))
+function root(token: Record<string, unknown>): { tokens: Record<string, unknown>[] } {
+    return { tokens: [token] }
 }
 
 describe('Parser branch coverage', () => {
@@ -60,12 +55,14 @@ describe('Parser branch coverage', () => {
 
         const { container } = render(Parser, {
             props: {
-                type: 'table',
-                header,
-                rows,
-                align: ['left'],
+                ...root({
+                    type: 'table',
+                    header,
+                    rows,
+                    align: ['left']
+                }),
                 renderers
-            }
+            } as any
         })
 
         await vi.runAllTimersAsync()
@@ -108,13 +105,15 @@ describe('Parser branch coverage', () => {
 
         const { container } = render(Parser, {
             props: {
-                type: 'table',
-                header,
-                rows,
-                align: ['left'],
+                ...root({
+                    type: 'table',
+                    header,
+                    rows,
+                    align: ['left']
+                }),
                 renderers: baseRenderers,
                 snippetOverrides: { table: tableSnippet }
-            }
+            } as any
         })
 
         await vi.runAllTimersAsync()
@@ -132,13 +131,15 @@ describe('Parser branch coverage', () => {
 
         const { container } = render(Parser, {
             props: {
-                type: 'table',
-                header,
-                rows,
-                align: ['left'],
+                ...root({
+                    type: 'table',
+                    header,
+                    rows,
+                    align: ['left']
+                }),
                 renderers: baseRenderers,
                 snippetOverrides: { tablehead: theadSnippet }
-            }
+            } as any
         })
 
         await vi.runAllTimersAsync()
@@ -156,13 +157,15 @@ describe('Parser branch coverage', () => {
 
         const { container } = render(Parser, {
             props: {
-                type: 'table',
-                header,
-                rows,
-                align: ['left'],
+                ...root({
+                    type: 'table',
+                    header,
+                    rows,
+                    align: ['left']
+                }),
                 renderers: baseRenderers,
                 snippetOverrides: { tablebody: tbodySnippet }
-            }
+            } as any
         })
 
         await vi.runAllTimersAsync()
@@ -180,13 +183,15 @@ describe('Parser branch coverage', () => {
 
         const { container } = render(Parser, {
             props: {
-                type: 'table',
-                header,
-                rows,
-                align: ['left'],
+                ...root({
+                    type: 'table',
+                    header,
+                    rows,
+                    align: ['left']
+                }),
                 renderers: baseRenderers,
                 snippetOverrides: { tablerow: rowSnippet }
-            }
+            } as any
         })
 
         await vi.runAllTimersAsync()
@@ -206,13 +211,15 @@ describe('Parser branch coverage', () => {
 
         const { container } = render(Parser, {
             props: {
-                type: 'table',
-                header,
-                rows,
-                align: ['left'],
+                ...root({
+                    type: 'table',
+                    header,
+                    rows,
+                    align: ['left']
+                }),
                 renderers: baseRenderers,
                 snippetOverrides: { tablecell: cellSnippet }
-            }
+            } as any
         })
 
         await vi.runAllTimersAsync()
@@ -228,12 +235,14 @@ describe('Parser branch coverage', () => {
 
         const { container } = render(Parser, {
             props: {
-                type: 'list',
-                ordered: true,
-                items: [{ tokens: [{ type: 'text', raw: 'item', text: 'item' }] }],
+                ...root({
+                    type: 'list',
+                    ordered: true,
+                    items: [{ tokens: [{ type: 'text', raw: 'item', text: 'item' }] }]
+                }),
                 renderers: baseRenderers,
                 snippetOverrides: { list: listSnippet }
-            }
+            } as any
         })
 
         await vi.runAllTimersAsync()
@@ -248,12 +257,14 @@ describe('Parser branch coverage', () => {
 
         const { container } = render(Parser, {
             props: {
-                type: 'list',
-                ordered: false,
-                items: [{ tokens: [{ type: 'text', raw: 'item', text: 'item' }] }],
+                ...root({
+                    type: 'list',
+                    ordered: false,
+                    items: [{ tokens: [{ type: 'text', raw: 'item', text: 'item' }] }]
+                }),
                 renderers: baseRenderers,
                 snippetOverrides: { list: listSnippet }
-            }
+            } as any
         })
 
         await vi.runAllTimersAsync()
@@ -268,12 +279,14 @@ describe('Parser branch coverage', () => {
 
         const { container } = render(Parser, {
             props: {
-                type: 'list',
-                ordered: true,
-                items: [{ tokens: [{ type: 'text', raw: 'a', text: 'a' }] }],
+                ...root({
+                    type: 'list',
+                    ordered: true,
+                    items: [{ tokens: [{ type: 'text', raw: 'a', text: 'a' }] }]
+                }),
                 renderers: baseRenderers,
                 snippetOverrides: { orderedlistitem: itemSnippet }
-            }
+            } as any
         })
 
         await vi.runAllTimersAsync()
@@ -288,12 +301,14 @@ describe('Parser branch coverage', () => {
 
         const { container } = render(Parser, {
             props: {
-                type: 'list',
-                ordered: false,
-                items: [{ tokens: [{ type: 'text', raw: 'a', text: 'a' }] }],
+                ...root({
+                    type: 'list',
+                    ordered: false,
+                    items: [{ tokens: [{ type: 'text', raw: 'a', text: 'a' }] }]
+                }),
                 renderers: baseRenderers,
                 snippetOverrides: { unorderedlistitem: itemSnippet }
-            }
+            } as any
         })
 
         await vi.runAllTimersAsync()
@@ -308,11 +323,13 @@ describe('Parser branch coverage', () => {
 
         const { container } = render(Parser, {
             props: {
-                type: 'paragraph',
-                tokens: [{ type: 'text', raw: 'hello', text: 'hello' }],
+                ...root({
+                    type: 'paragraph',
+                    tokens: [{ type: 'text', raw: 'hello', text: 'hello' }]
+                }),
                 renderers: baseRenderers,
                 snippetOverrides: { paragraph: paraSnippet }
-            }
+            } as any
         })
 
         await vi.runAllTimersAsync()
@@ -327,13 +344,15 @@ describe('Parser branch coverage', () => {
 
         const { container } = render(Parser, {
             props: {
-                type: 'html',
-                tag: 'div',
-                raw: '<div>content</div>',
-                tokens: [{ type: 'text', raw: 'content', text: 'content' }],
+                ...root({
+                    type: 'html',
+                    tag: 'div',
+                    raw: '<div>content</div>',
+                    tokens: [{ type: 'text', raw: 'content', text: 'content' }]
+                }),
                 renderers: baseRenderers,
                 htmlSnippetOverrides: { div: divSnippet }
-            }
+            } as any
         })
 
         await vi.runAllTimersAsync()
@@ -348,13 +367,15 @@ describe('Parser branch coverage', () => {
 
         const { container } = render(Parser, {
             props: {
-                type: 'html',
-                tag: 'div',
-                raw: '<div></div>',
-                tokens: [],
+                ...root({
+                    type: 'html',
+                    tag: 'div',
+                    raw: '<div></div>',
+                    tokens: []
+                }),
                 renderers: baseRenderers,
                 htmlSnippetOverrides: { div: divSnippet }
-            }
+            } as any
         })
 
         await vi.runAllTimersAsync()
@@ -369,11 +390,13 @@ describe('Parser branch coverage', () => {
             delete renderers.unorderedlistitem
             const { container } = render(Parser, {
                 props: {
-                    type: 'list',
-                    ordered: false,
-                    items: [{ tokens: [{ type: 'text', raw: 'a', text: 'a' }] }],
+                    ...root({
+                        type: 'list',
+                        ordered: false,
+                        items: [{ tokens: [{ type: 'text', raw: 'a', text: 'a' }] }]
+                    }),
                     renderers
-                }
+                } as any
             })
             await vi.runAllTimersAsync()
             expect(container.querySelector('li')).toBeInTheDocument()
@@ -385,11 +408,13 @@ describe('Parser branch coverage', () => {
             delete renderers.orderedlistitem
             const { container } = render(Parser, {
                 props: {
-                    type: 'list',
-                    ordered: true,
-                    items: [{ tokens: [{ type: 'text', raw: 'b', text: 'b' }] }],
+                    ...root({
+                        type: 'list',
+                        ordered: true,
+                        items: [{ tokens: [{ type: 'text', raw: 'b', text: 'b' }] }]
+                    }),
                     renderers
-                }
+                } as any
             })
             await vi.runAllTimersAsync()
             expect(container.querySelector('li')).toBeInTheDocument()

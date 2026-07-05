@@ -50,9 +50,6 @@ function parseStats(s) {
         renderOnlyMs: num(grab('renderOnlyMs')),
         domNodes: num(grab('domNodes')),
         charsPerSec: num(grab('charsPerSec')),
-        // Dev-mode Parser-instance counter — the non-wall-clock signal
-        // that cracked open the original render investigation.
-        parserInstances: num(grab('parserInstances')),
         // Per-scenario observer snapshots (filtered to the scenario's
         // [start, end] window — not the rolling-10s aggregate below).
         scenarioLongestTaskMs: num(grab('scenarioLongestTaskMs')),
