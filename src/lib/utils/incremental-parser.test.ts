@@ -1,12 +1,17 @@
 import type { SvelteMarkdownOptions } from '$lib/types.js'
+import type { Token } from '$lib/utils/markdown-parser.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { IncrementalParser } from './incremental-parser.js'
 import * as parseAndCacheModule from './parse-and-cache.js'
 
 /** Private surface of `IncrementalParser` exercised by the tail-window tests. */
 interface InternalParser {
+    prevTokens: Token[]
     prevSource: string
     getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
+    hasHtmlSpanMismatch: (token: Token) => boolean
+    hasPotentialReferenceUse: (source: string) => boolean
+    hasReferenceDefinition: (source: string) => boolean
     canUseTailWindow: (
         source: string,
         boundary: { prefixCount: number; reparseOffset: number }
@@ -447,6 +452,138 @@ describe('IncrementalParser', () => {
             parser.update(appended)
 
             expect(lexSpy.mock.calls[1]?.[0]).toBe(appended)
+        })
+    })
+
+    describe('Streaming Bookkeeping Performance', () => {
+        it('does not rescan every stable prefix token to compute the tail-window offset', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = Array.from(
+                { length: 40 },
+                (_, index) => `# Heading ${index}\n\nParagraph ${index}`
+            ).join('\n\n')
+
+            parser.update(source)
+
+            const internalParser = asInternalParser(parser)
+            let sourceLengthReads = 0
+
+            for (const token of internalParser.prevTokens.slice(0, -1)) {
+                const sourceLength = token.raw.length
+                Object.defineProperty(token, 'sourceLength', {
+                    configurable: true,
+                    get() {
+                        sourceLengthReads++
+                        return sourceLength
+                    }
+                })
+            }
+
+            parser.update(`${source}\n\nAppended tail`)
+
+            expect(sourceLengthReads).toBeLessThanOrEqual(1)
+        })
+
+        it('does not rescan stable closed HTML tokens when updating span-mismatch state', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = `${Array.from(
+                { length: 40 },
+                (_, index) => `<div><span>HTML ${index}</span></div>`
+            ).join('\n\n')}\n\nTail`
+
+            parser.update(source)
+
+            const internalParser = asInternalParser(parser)
+            const originalHasHtmlSpanMismatch = internalParser.hasHtmlSpanMismatch
+            let spanMismatchChecks = 0
+
+            internalParser.hasHtmlSpanMismatch = (token) => {
+                spanMismatchChecks++
+                return originalHasHtmlSpanMismatch(token)
+            }
+
+            parser.update(`${source}\n\nAppended tail`)
+
+            expect(spanMismatchChecks).toBeLessThanOrEqual(3)
+        })
+
+        it('does not scan the full previous source for reference uses when no definitions exist', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = Array.from(
+                { length: 120 },
+                (_, index) => `Citation [${index}] and task - [ ] item ${index}.`
+            ).join('\n')
+
+            parser.update(source)
+
+            const internalParser = asInternalParser(parser)
+            const originalHasPotentialReferenceUse = internalParser.hasPotentialReferenceUse
+            const scannedLengths: number[] = []
+
+            internalParser.hasPotentialReferenceUse = (scannedSource) => {
+                scannedLengths.push(scannedSource.length)
+                return originalHasPotentialReferenceUse(scannedSource)
+            }
+
+            parser.update(`${source}\n\nPlain appended tail without definitions.`)
+
+            expect(Math.max(...scannedLengths)).toBeLessThan(source.length / 4)
+        })
+
+        it('keeps the tail-window offset correct across closed HTML source spans', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = '<div><section><p>Nested</p></section></div>\n\nTail'
+
+            parser.update(source)
+
+            const boundary = asInternalParser(parser).getTailWindowBoundary()
+
+            expect(boundary.reparseOffset).toBe(source.length - 'Tail'.length)
+            expect(source.slice(boundary.reparseOffset)).toBe('Tail')
+        })
+
+        it('keeps reference definitions in the prefix visible to appended shortcut uses', () => {
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = '[docs]: /docs\n\nIntro paragraph.\n\n'
+            const appended = `${source}See [docs] for details.`
+
+            parser.update(source)
+            const result = parser.update(appended)
+            const full = parseAndCacheModule.lexAndClean(appended, createDefaultOptions(), false)
+
+            expect(lexSpy.mock.calls[1]?.[0]).toBe(appended)
+            expect(result.tokens).toEqual(full)
+        })
+
+        it('does not rescan the stable prefix after a full-relex fallback has refreshed state', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = `${Array.from(
+                { length: 40 },
+                (_, index) => `# Heading ${index}\n\nParagraph with [docs] ${index}`
+            ).join('\n\n')}\n\nTail`
+            const withDefinition = `${source}\n\n[docs]: /docs`
+
+            parser.update(source)
+            parser.update(withDefinition)
+
+            const internalParser = asInternalParser(parser)
+            let sourceLengthReads = 0
+
+            for (const token of internalParser.prevTokens.slice(0, -1)) {
+                const sourceLength = token.raw.length
+                Object.defineProperty(token, 'sourceLength', {
+                    configurable: true,
+                    get() {
+                        sourceLengthReads++
+                        return sourceLength
+                    }
+                })
+            }
+
+            parser.update(`${withDefinition}\n\nAppended tail after fallback`)
+
+            expect(sourceLengthReads).toBeLessThanOrEqual(1)
         })
     })
 })
