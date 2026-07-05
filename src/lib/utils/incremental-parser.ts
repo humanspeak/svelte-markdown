@@ -19,6 +19,7 @@ import { lexAndClean } from '$lib/utils/parse-and-cache.js'
  * are surfaced here for the few places we need to read them.
  */
 type HtmlToken = Token & {
+    sourceLength?: number
     tag?: string
     tokens?: Token[]
 }
@@ -79,12 +80,11 @@ export class IncrementalParser {
     /** Whether caller-supplied parser hooks make tail-window reparsing unsafe */
     private tailWindowDisabled: boolean
 
-    /** True iff any token in `prevTokens` is an HTML opening (closed or
-     *  unclosed) whose `.raw` is shorter than its actual source span. The
-     *  tail-window's sum-of-raws offset arithmetic only works when token
-     *  raws sum to the source length; this flag detects when that
-     *  invariant is broken so we fall through to a full re-parse. Cached
-     *  to keep `getTailWindowBoundary` O(1) on the hot path. */
+    /** True iff any token in `prevTokens` is an HTML opening whose actual
+     *  source span is unknown. Closed HTML spans record `sourceLength`
+     *  during cleanup and remain safe for tail-window offset arithmetic;
+     *  unclosed spans do not. Cached to keep `getTailWindowBoundary` O(1)
+     *  on the hot path. */
     private prevHasHtmlSpanMismatch = false
 
     /**
@@ -112,21 +112,18 @@ export class IncrementalParser {
             return { prefixCount: 0, reparseOffset: 0 }
         }
 
-        // (#291) If any prev token is an HTML opening (closed or
-        // unclosed), the tail-window prefix is unsound: our offset
-        // accounting sums token raws, but an html opening token's
-        // `.raw` is only the opening tag itself — children and closing
-        // tag are tracked separately on `.tokens`. Sum-of-raws therefore
-        // underestimates the true source position once any html block
-        // has been parsed, so we fall through to a full re-parse
-        // instead of serving a corrupt prefix.
+        // (#291) If any previous HTML opening has no known source span,
+        // the tail-window prefix is unsound: `.raw` is only the opening
+        // tag itself, while children and the closing tag live elsewhere.
+        // Closed HTML tokens carry `sourceLength`, so only truly partial
+        // HTML needs to fall through to a full re-parse.
         if (this.prevHasHtmlSpanMismatch) {
             return { prefixCount: 0, reparseOffset: 0 }
         }
 
         let offset = 0
         for (let i = 0; i < this.prevTokens.length - 1; i++) {
-            offset += this.prevTokens[i].raw.length
+            offset += this.getTokenSourceLength(this.prevTokens[i])
         }
 
         const lastToken = this.prevTokens[this.prevTokens.length - 1]
@@ -145,13 +142,11 @@ export class IncrementalParser {
     }
 
     /**
-     * True for an HTML opening tag whose `.raw` is shorter than its
-     * actual source span. After token-cleanup, a non-self-closing html
-     * opening token's `.raw` is only the opening tag itself (e.g.
-     * `<div>`); its children and closing tag (if any) live on
-     * `.tokens`. The tail-window's `reparseOffset = sum(raws)` math is
-     * unsound any time such a token sits in `prevTokens`, regardless
-     * of whether the close has arrived yet.
+     * True for an HTML opening tag whose actual source span is unknown.
+     * After token cleanup, closed HTML tokens keep children on `.tokens`
+     * and record their full source span as `sourceLength`. Unclosed HTML
+     * openings have neither a full span nor a closing tag yet, so serving
+     * them as a stable tail-window prefix would corrupt the offset math.
      */
     private hasHtmlSpanMismatch = (token: Token): boolean => {
         if (token.type !== 'html') return false
@@ -159,7 +154,16 @@ export class IncrementalParser {
         if (!html.tag) return false
         if (html.raw.endsWith('/>')) return false
         if (html.raw.startsWith('</')) return false
-        return true
+        return html.sourceLength == null
+    }
+
+    /**
+     * Source characters this token consumed. Closed HTML tokens record
+     * their full span as `sourceLength` during cleanup; every other token's
+     * `.raw` already equals its source span, so we fall back to `raw.length`.
+     */
+    private getTokenSourceLength = (token: Token): number => {
+        return (token as HtmlToken).sourceLength ?? token.raw.length
     }
 
     private isStableAtSourceEnd = (token: Token): boolean => {
@@ -177,30 +181,143 @@ export class IncrementalParser {
         }
     }
 
-    private hasAppendSensitiveReferenceSyntax = (source: string): boolean => {
+    /**
+     * True when `source` contains reference-style link syntax that could
+     * resolve against a definition — either a full reference (`[text][id]`)
+     * or a shortcut (`[text]`). It says nothing about whether a matching
+     * definition exists; pair it with {@link hasReferenceDefinition} for that.
+     *
+     * @param source - Markdown source to scan
+     * @returns `true` if a full or shortcut reference use is present
+     * @example
+     * ```typescript
+     * this.hasPotentialReferenceUse('see [docs]')   // true  (shortcut)
+     * this.hasPotentialReferenceUse('see [a][b]')   // true  (full ref)
+     * this.hasPotentialReferenceUse('see [x](/y)')  // false (inline link)
+     * ```
+     */
+    private hasPotentialReferenceUse = (source: string): boolean => {
         if (!source.includes('[') || !source.includes(']')) return false
 
-        return (
-            LINK_REFERENCE_RE.test(source) ||
-            SHORTCUT_REFERENCE_RE.test(source) ||
-            REFERENCE_DEFINITION_RE.test(source)
-        )
+        return LINK_REFERENCE_RE.test(source) || SHORTCUT_REFERENCE_RE.test(source)
     }
 
-    private canUseTailWindow = (source: string, boundary: TailWindowBoundary): boolean => {
+    /**
+     * True when `source` contains a link reference definition line
+     * (`[label]: url`). A definition can retroactively change how reference
+     * uses elsewhere in the document render, which is what makes it relevant
+     * to tail-window safety.
+     *
+     * @param source - Markdown source to scan
+     * @returns `true` if a reference definition line is present
+     * @example
+     * ```typescript
+     * this.hasReferenceDefinition('[docs]: /docs')  // true
+     * this.hasReferenceDefinition('see [docs]')     // false
+     * ```
+     */
+    private hasReferenceDefinition = (source: string): boolean => {
+        if (!source.includes('[') || !source.includes(']')) return false
+        return REFERENCE_DEFINITION_RE.test(source)
+    }
+
+    /**
+     * True when appending to `prevSource` introduces a reference definition
+     * that was not already present — i.e. the definition lives entirely in the
+     * newly appended tail. Returns false for any update that is not a pure
+     * append of `prevSource`.
+     *
+     * @param source - The full new source, expected to start with `prevSource`
+     * @returns `true` if the appended tail contains a new reference definition
+     * @example
+     * ```typescript
+     * // prevSource === 'see [docs]\n\n'
+     * this.hasNewReferenceDefinition('see [docs]\n\n[docs]: /d')  // true
+     * this.hasNewReferenceDefinition('see [docs]\n\nmore text')   // false
+     * ```
+     */
+    private hasNewReferenceDefinition = (source: string): boolean => {
+        if (!source.startsWith(this.prevSource)) return false
+        return this.hasReferenceDefinition(source.slice(this.prevSource.length))
+    }
+
+    /**
+     * True when a reference definition arriving in the appended tail can
+     * retroactively change how existing reference-style uses in the stable
+     * prefix render — the one case where an append-only stream is not safe
+     * to serve incrementally. Computed once per `update` and threaded through
+     * `parseSource`/`canUseTailWindow` so the hot path evaluates it a single
+     * time rather than recomputing the regexes for both the tail-window
+     * decision and the reuse decision.
+     *
+     * @param source - The full new source string for this update
+     * @returns `true` if a newly appended definition can change how the reused
+     *   prefix renders, meaning the tail window must be bypassed
+     * @example
+     * ```typescript
+     * // prevSource === 'see [docs]\n\n' (a shortcut use already rendered)
+     * this.appendedDefinitionInvalidatesTail('see [docs]\n\n[docs]: /d') // true
+     * ```
+     */
+    private appendedDefinitionInvalidatesTail = (source: string): boolean =>
+        this.hasPotentialReferenceUse(this.prevSource) && this.hasNewReferenceDefinition(source)
+
+    /**
+     * Decides whether an update may reuse the stable token prefix and re-lex
+     * only the appended tail (`boundary.reparseOffset` onward) instead of the
+     * whole document. Returns false whenever that shortcut could diverge from a
+     * full parse: caller parser hooks are active, the update is not append-only,
+     * the boundary is empty, or reference syntax straddles the prefix/tail split
+     * in a way a tail-only re-lex cannot resolve.
+     *
+     * @param source - The full new source string for this update
+     * @param boundary - The stable-prefix boundary from `getTailWindowBoundary`
+     * @param referenceInvalidatesTail - Precomputed reference-safety flag;
+     *   defaults to `appendedDefinitionInvalidatesTail(source)` for standalone
+     *   callers that have not computed it already
+     * @returns `true` if the appended tail can be re-lexed in isolation
+     * @example
+     * ```typescript
+     * const boundary = this.getTailWindowBoundary()
+     * if (this.canUseTailWindow(source, boundary)) {
+     *     // safe to re-lex only source.slice(boundary.reparseOffset)
+     * }
+     * ```
+     */
+    private canUseTailWindow = (
+        source: string,
+        boundary: TailWindowBoundary,
+        referenceInvalidatesTail = this.appendedDefinitionInvalidatesTail(source)
+    ): boolean => {
         if (this.tailWindowDisabled) return false
         if (this.prevSource === '' || this.prevTokens.length === 0) return false
         if (!source.startsWith(this.prevSource)) return false
         if (boundary.reparseOffset <= 0) return false
+        if (referenceInvalidatesTail) return false
 
-        const stablePrefix = this.prevSource.slice(0, boundary.reparseOffset)
-        if (this.hasAppendSensitiveReferenceSyntax(stablePrefix)) return false
+        // A reference definition living in the reused prefix is invisible to a
+        // tail-only re-lex (marked's link map is per-lex), so any reference use
+        // in the tail slice would render unresolved. `]:` is the cheap, no-alloc
+        // prefilter for "a definition marker exists at all" — task lists and
+        // bare citations never hit it, so the O(n) slice + regex is paid only by
+        // documents that actually carry reference definitions.
+        if (this.prevSource.includes(']:')) {
+            const prefix = source.slice(0, boundary.reparseOffset)
+            const tail = source.slice(boundary.reparseOffset)
+            if (this.hasReferenceDefinition(prefix) && this.hasPotentialReferenceUse(tail)) {
+                return false
+            }
+        }
 
         return true
     }
 
-    private parseSource = (source: string, boundary: TailWindowBoundary): Token[] => {
-        if (!this.canUseTailWindow(source, boundary)) {
+    private parseSource = (
+        source: string,
+        boundary: TailWindowBoundary,
+        referenceInvalidatesTail: boolean
+    ): Token[] => {
+        if (!this.canUseTailWindow(source, boundary, referenceInvalidatesTail)) {
             return lexAndClean(source, this.options, false)
         }
 
@@ -216,7 +333,8 @@ export class IncrementalParser {
      */
     update = (source: string): IncrementalUpdateResult => {
         const boundary = this.getTailWindowBoundary()
-        const newTokens = this.parseSource(source, boundary)
+        const referenceInvalidatesTail = this.appendedDefinitionInvalidatesTail(source)
+        const newTokens = this.parseSource(source, boundary, referenceInvalidatesTail)
 
         // Apply walkTokens if configured
         if (typeof this.options.walkTokens === 'function') {
@@ -224,12 +342,17 @@ export class IncrementalParser {
         }
 
         // Reference definitions can change inline children without changing raw,
-        // so force a full rerender when reference syntax is present
-        const referenceSensitive =
-            this.hasAppendSensitiveReferenceSyntax(this.prevSource) ||
-            this.hasAppendSensitiveReferenceSyntax(source)
-        const canReuse =
-            this.prevSource !== '' && source.startsWith(this.prevSource) && !referenceSensitive
+        // so force a full rerender when definitions are present alongside
+        // reference-style uses. Shortcut-looking text alone stays reusable.
+        // The append-only case reuses `referenceInvalidatesTail` computed above.
+        const isAppendOnly = this.prevSource !== '' && source.startsWith(this.prevSource)
+        const referenceSensitive = isAppendOnly
+            ? referenceInvalidatesTail
+            : (this.hasReferenceDefinition(this.prevSource) ||
+                  this.hasReferenceDefinition(source)) &&
+              (this.hasPotentialReferenceUse(this.prevSource) ||
+                  this.hasPotentialReferenceUse(source))
+        const canReuse = isAppendOnly && !referenceSensitive
 
         // Find first divergence point. We compare `.raw` for fast equality,
         // and for html tokens we also check the structural shape — an
