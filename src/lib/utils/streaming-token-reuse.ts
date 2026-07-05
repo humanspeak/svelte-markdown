@@ -106,6 +106,28 @@ const reuseStableNode = <T extends ReusableStreamingNode>(previousNode: T, nextN
     return merged
 }
 
+/**
+ * Reuses stable token objects from a previous streaming parse to preserve
+ * component identity across incremental updates.
+ *
+ * Tokens before `divergeAt` are byte-identical and are reused wholesale by
+ * reference. The single token at `divergeAt`, when present in both arrays, is
+ * recursively inspected so unchanged nested structures can keep their previous
+ * object identity even when the parent token changed.
+ *
+ * @param previousTokens - Token array from the previous parse or render.
+ * @param nextTokens - Token array from the current parse.
+ * @param divergeAt - Index of the first token that differs between the arrays.
+ * @returns A token array combining reused previous objects and fresh next tokens.
+ *
+ * @example
+ * ```ts
+ * const { tokens, divergeAt, canReuse } = incrementalParser.update(nextSource)
+ * streamTokens = canReuse
+ *     ? reuseStableStreamingTokens(streamTokens, tokens, divergeAt)
+ *     : tokens
+ * ```
+ */
 export const reuseStableStreamingTokens = (
     previousTokens: Token[],
     nextTokens: Token[],
