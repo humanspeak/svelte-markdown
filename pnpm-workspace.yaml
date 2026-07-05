@@ -4,6 +4,7 @@ packages:
 
 allowBuilds:
     '@humanspeak/docs-kit': true
+    '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/30c325691f170eb5877519a4aac2f32015d02a5e': true
     esbuild: true
     sharp: true
     workerd: true

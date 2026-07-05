@@ -178,8 +178,7 @@ Swap the format below. The same source markdown reparses with the newest tokeniz
                     bind:value={source}
                     class="rx-editor"
                     spellcheck="false"
-                    aria-label="Markdown source"
-                ></textarea>
+                    aria-label="Markdown source"></textarea>
             {/snippet}
             {#snippet right()}
                 <div class="rx-preview prose prose-sm dark:prose-invert max-w-none">

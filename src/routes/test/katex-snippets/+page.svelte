@@ -63,8 +63,7 @@ Currency stays as text either way: $5,000 budget.
     <textarea
         bind:value={htmlBody}
         placeholder="Enter markdown with math here"
-        data-testid="markdown-input"
-    ></textarea>
+        data-testid="markdown-input"></textarea>
     <div class="preview" data-testid="preview">
         <SvelteMarkdown {extensions} source={htmlBody}>
             {#snippet inlineKatex(props: { text: string })}

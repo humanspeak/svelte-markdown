@@ -72,11 +72,10 @@
     import { parseAndCacheTokens, parseAndCacheTokensAsync } from '$lib/utils/parse-and-cache.js'
     import { defaultSanitizeAttributes, defaultSanitizeUrl } from '$lib/utils/sanitize.js'
     import { isStreamingOffsetChunk } from '$lib/utils/streaming.js'
+    import { reuseStableStreamingTokens } from '$lib/utils/streaming-token-reuse.js'
 
     type StreamFlushHandle =
-        | { kind: 'raf'; id: number }
-        | { kind: 'timeout'; id: ReturnType<typeof setTimeout> }
-        | null
+        { kind: 'raf'; id: number } | { kind: 'timeout'; id: ReturnType<typeof setTimeout> } | null
 
     const STREAM_BATCH_FALLBACK_MS = 16
     const STREAM_BATCH_MAX_CHARS = 256
@@ -150,7 +149,7 @@
         const parser = incrementalParser
         if (!parser) return
 
-        const { tokens: newTokens } = parser.update(nextSource)
+        const { tokens: newTokens, divergeAt, canReuse } = parser.update(nextSource)
 
         // Replace the array reference rather than mutating per-index +
         // length. Under Svelte 5's reactive proxy, shrinking the array
@@ -159,7 +158,12 @@
         // block, leaving stale snippets in the DOM whenever a streamed
         // `</details>` collapsed several siblings into one nested token.
         // See #291.
-        streamTokens = newTokens
+        // A freshly (re)created parser has an empty prevSource and always
+        // reports canReuse=false on its first update, so that case needs no
+        // separate guard here.
+        streamTokens = canReuse
+            ? reuseStableStreamingTokens(streamTokens, newTokens, divergeAt)
+            : newTokens
     }
 
     const commitPendingAppendBuffer = () => {

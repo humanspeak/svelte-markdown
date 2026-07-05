@@ -368,8 +368,7 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
             readonly
             value={source}
             data-testid="markdown-input"
-            placeholder="Streamed content will appear here..."
-        ></textarea>
+            placeholder="Streamed content will appear here..."></textarea>
     </div>
 
     <div class="preview" data-testid="preview" bind:this={previewEl}>

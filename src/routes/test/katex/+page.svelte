@@ -88,8 +88,7 @@ $5" must render as plain text either way.
     <textarea
         bind:value={htmlBody}
         placeholder="Enter markdown with math here"
-        data-testid="markdown-input"
-    ></textarea>
+        data-testid="markdown-input"></textarea>
     <div class="preview" data-testid="preview">
         <SvelteMarkdown {extensions} source={htmlBody} {renderers} />
     </div>

@@ -681,8 +681,7 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                     disabled={isStreaming}
                     class="border-border bg-background text-foreground focus:ring-brand-500/50 min-h-0 flex-1 resize-none rounded-lg border p-4 font-mono text-xs focus:ring-2 focus:outline-none disabled:opacity-60"
                     spellcheck="false"
-                    placeholder="Paste or type your markdown here..."
-                ></textarea>
+                    placeholder="Paste or type your markdown here..."></textarea>
             </div>
         </div>
 

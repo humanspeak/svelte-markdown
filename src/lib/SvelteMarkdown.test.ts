@@ -4,6 +4,7 @@ import type { MarkedExtension } from 'marked'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
 import type { SvelteMarkdownProps } from './types.js'
+import type { Token } from './utils/markdown-parser.js'
 import * as parseAndCacheModule from './utils/parse-and-cache.js'
 import { tokenCache } from './utils/token-cache.js'
 
@@ -361,6 +362,138 @@ describe('imperative streaming API', () => {
         expect(paragraphs[1].textContent).toBe('Paragraph two')
 
         lexSpy.mockRestore()
+    })
+
+    test('reuses stable token objects before the streaming divergence point after full re-lex fallback', async () => {
+        const parsed = vi.fn()
+        const options: SvelteMarkdownProps['options'] = {
+            walkTokens() {}
+        }
+        const initialSource = '# Stable heading\n\nFirst paragraph\n\n'
+        const nextSource = `${initialSource}Second paragraph`
+        const { rerender } = render(SvelteMarkdown, {
+            props: {
+                source: initialSource,
+                streaming: true,
+                options,
+                parsed
+            }
+        })
+        await flushStreamingBatch()
+
+        const firstTokens = parsed.mock.calls.at(-1)?.[0] as Token[]
+        expect(firstTokens.length).toBeGreaterThan(0)
+
+        await rerender({
+            source: nextSource,
+            streaming: true,
+            options,
+            parsed
+        })
+        await flushStreamingBatch()
+
+        const nextTokens = parsed.mock.calls.at(-1)?.[0] as Token[]
+        expect(nextTokens.length).toBeGreaterThan(firstTokens.length)
+
+        firstTokens.forEach((token, index) => {
+            expect(nextTokens[index]?.raw).toBe(token.raw)
+            expect(nextTokens[index]).toBe(token)
+        })
+    })
+
+    test('reuses stable list item objects inside a diverged streaming list token', async () => {
+        type ListItemToken = Token & { tokens?: Token[] }
+        type ListToken = Token & { items: ListItemToken[] }
+
+        const parsed = vi.fn()
+        const initialSource = '- One\n- Two\n'
+        const nextSource = `${initialSource}- Three`
+        const { rerender } = render(SvelteMarkdown, {
+            props: {
+                source: initialSource,
+                streaming: true,
+                parsed
+            }
+        })
+        await flushStreamingBatch()
+
+        const firstTokens = parsed.mock.calls.at(-1)?.[0] as Token[]
+        const firstList = firstTokens[0] as ListToken
+
+        await rerender({
+            source: nextSource,
+            streaming: true,
+            parsed
+        })
+        await flushStreamingBatch()
+
+        const nextTokens = parsed.mock.calls.at(-1)?.[0] as Token[]
+        const nextList = nextTokens[0] as ListToken
+
+        expect(nextList).not.toBe(firstList)
+        expect(nextList.items).toHaveLength(3)
+        expect(nextList.items[0]).toBe(firstList.items[0])
+        expect(nextList.items[1]).not.toBe(firstList.items[1])
+        expect(nextList.items[1].tokens?.[0]).toBe(firstList.items[1].tokens?.[0])
+    })
+
+    test('does not reuse stale tokens when appended reference definitions change inline links', async () => {
+        const initialSource = 'See [the docs][ref]'
+        const nextSource = `${initialSource}\n\n[ref]: https://example.com`
+        const { container, rerender } = render(SvelteMarkdown, {
+            props: {
+                source: initialSource,
+                streaming: true
+            }
+        })
+        await flushStreamingBatch()
+
+        expect(container.querySelector('a')).toBeNull()
+
+        await rerender({
+            source: nextSource,
+            streaming: true
+        })
+        await flushStreamingBatch()
+
+        const link = container.querySelector('a')
+        expect(link?.textContent).toBe('the docs')
+        expect(link?.getAttribute('href')).toBe('https://example.com')
+    })
+
+    test('does not reuse stale closed HTML tokens after offset-mode edits', async () => {
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        await act(() => component.resetStream('<div><span>abc</span></div>'))
+        expect(container.querySelector('span')?.textContent).toBe('abc')
+
+        await act(() => component.writeChunk({ value: 'xyz', offset: '<div><span>'.length }))
+        expect(container.querySelector('span')?.textContent).toBe('xyz')
+    })
+
+    test('does not reuse stale tokens after streaming parser options change', async () => {
+        const source = 'line one\nline two'
+        const { container, rerender } = render(SvelteMarkdown, {
+            props: {
+                source,
+                streaming: true,
+                options: { breaks: false }
+            }
+        })
+        await flushStreamingBatch()
+
+        expect(container.querySelector('br')).toBeNull()
+
+        await rerender({
+            source,
+            streaming: true,
+            options: { breaks: true }
+        })
+        await flushStreamingBatch()
+
+        expect(container.querySelector('br')).not.toBeNull()
     })
 
     test('writeChunk warns when streaming is false', async () => {

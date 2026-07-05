@@ -77,8 +77,7 @@ Markdown works alongside math: **bold**, *italic*, and inline \\(\\sum_{i=1}^{n}
             oninput={handleInput}
             class="me-editor"
             spellcheck="false"
-            placeholder="Type markdown with \(inline\) and \[block\] math..."
-        ></textarea>
+            placeholder="Type markdown with \(inline\) and \[block\] math..."></textarea>
     {/snippet}
     {#snippet right()}
         <div class="me-preview prose prose-sm dark:prose-invert max-w-none">

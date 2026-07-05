@@ -51,8 +51,7 @@ Regular markdown works alongside diagrams: **bold**, *italic*, and \`inline code
     <textarea
         bind:value={htmlBody}
         placeholder="Enter markdown with mermaid diagrams here"
-        data-testid="markdown-input"
-    ></textarea>
+        data-testid="markdown-input"></textarea>
     <div class="preview" data-testid="preview">
         <SvelteMarkdown {extensions} source={htmlBody} {renderers} />
     </div>
