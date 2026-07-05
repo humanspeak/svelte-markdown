@@ -41,6 +41,13 @@ const flushStreamingBatch = async () => {
 const headingIds = (container: HTMLElement) =>
     Array.from(container.querySelectorAll('h1,h2,h3,h4,h5,h6'), (heading) => heading.id)
 
+const headingTextsAndIds = (container: HTMLElement) =>
+    Array.from(container.querySelectorAll('h1,h2,h3,h4,h5,h6'), (heading) => ({
+        text: heading.textContent,
+        id: heading.id,
+        inBlockquote: heading.closest('blockquote') !== null
+    }))
+
 const renderStaticHeadingIds = async (source: string) => {
     const { container } = render(SvelteMarkdown, {
         props: { source }
@@ -68,6 +75,14 @@ const textToken = (text: string): Token =>
         type: 'text',
         raw: text,
         text
+    }) as Token
+
+const paragraphToken = (text: string, raw = text): Token =>
+    ({
+        type: 'paragraph',
+        raw,
+        text,
+        tokens: [textToken(text)]
     }) as Token
 
 const listItemToken = (text: string): Token =>
@@ -105,7 +120,43 @@ const tableToken = (rows: Array<Array<ReturnType<typeof tableCell>>>): Token =>
 const findBodyRow = (container: HTMLElement, text: string) =>
     Array.from(container.querySelectorAll('tbody tr')).find((row) => row.textContent === text)
 
+const lastParsedTokens = (parsed: ReturnType<typeof vi.fn>) =>
+    parsed.mock.calls.at(-1)?.[0] as Token[] | undefined
+
+const firstListToken = (tokens: Token[] | undefined) =>
+    tokens?.find((token) => token.type === 'list') as (Token & { items: Token[] }) | undefined
+
+const firstTableToken = (tokens: Token[] | undefined) =>
+    tokens?.find((token) => token.type === 'table') as
+        (Token & { rows: Array<Array<ReturnType<typeof tableCell>>> }) | undefined
+
 describe('SvelteMarkdown streaming stability (issue #328)', () => {
+    test('renders adjacent top-level tokens with repeated zero-length spans without duplicate-key crashes', async () => {
+        const tokens = [
+            paragraphToken('Alpha'),
+            { type: 'space', raw: '' } as Token,
+            { type: 'space', raw: '' } as Token,
+            paragraphToken('Beta'),
+            { type: 'space', raw: '' } as Token,
+            paragraphToken('Gamma')
+        ]
+
+        let container: HTMLElement | undefined
+
+        expect(() => {
+            ;({ container } = render(SvelteMarkdown, {
+                props: {
+                    source: tokens,
+                    streaming: true
+                }
+            }))
+        }).not.toThrow()
+
+        expect(container?.textContent).toContain('Alpha')
+        expect(container?.textContent).toContain('Beta')
+        expect(container?.textContent).toContain('Gamma')
+    })
+
     test('keeps generated heading ids stable after a full streaming reparse', async () => {
         const initialSource = '# Intro\n\nSee [docs][ref]'
         const nextSource = `${initialSource}\n\n[ref]: https://example.com`
@@ -129,6 +180,64 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(container.querySelector('h1')).toHaveAttribute('id', 'intro')
     })
 
+    test('keeps headerPrefix on precomputed heading ids across a streaming reparse', async () => {
+        const initialSource = '# Intro\n\nSee [docs][ref]'
+        const nextSource = `${initialSource}\n\n[ref]: https://example.com`
+
+        const { container, rerender } = render(SvelteMarkdown, {
+            props: {
+                source: initialSource,
+                streaming: true,
+                options: {
+                    headerPrefix: 'user-content-'
+                }
+            }
+        })
+        await flushStreamingBatch()
+
+        expect(container.querySelector('h1')).toHaveAttribute('id', 'user-content-intro')
+
+        await rerender({
+            source: nextSource,
+            streaming: true,
+            options: {
+                headerPrefix: 'user-content-'
+            }
+        })
+        await flushStreamingBatch()
+
+        expect(container.querySelector('h1')).toHaveAttribute('id', 'user-content-intro')
+    })
+
+    test('does not emit ids when headerIds is false during streaming reparses', async () => {
+        const initialSource = '# Intro\n\nSee [docs][ref]'
+        const nextSource = `${initialSource}\n\n[ref]: https://example.com`
+
+        const { container, rerender } = render(SvelteMarkdown, {
+            props: {
+                source: initialSource,
+                streaming: true,
+                options: {
+                    headerIds: false
+                }
+            }
+        })
+        await flushStreamingBatch()
+
+        expect(container.querySelector('h1')).not.toHaveAttribute('id')
+
+        await rerender({
+            source: nextSource,
+            streaming: true,
+            options: {
+                headerIds: false
+            }
+        })
+        await flushStreamingBatch()
+
+        expect(container.querySelector('h1')).not.toHaveAttribute('id')
+    })
+
     test('generates the same final heading ids regardless of streaming chunk boundaries', async () => {
         const finalSource = '# Intro\n\nSee [docs][ref]\n\n[ref]: https://example.com'
         const initialChunk = '# Intro\n\nSee [docs][ref]'
@@ -141,6 +250,35 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(staticIds).toEqual(['intro'])
         expect(singleFlushIds).toEqual(staticIds)
         expect(splitFlushIds).toEqual(staticIds)
+    })
+
+    test('dedupes nested and top-level headings in document order after a streaming reparse', async () => {
+        const initialSource = '> # Intro\n\n# Intro\n\nSee [docs][ref]'
+        const nextSource = `${initialSource}\n\n[ref]: https://example.com`
+
+        const { container, rerender } = render(SvelteMarkdown, {
+            props: {
+                source: initialSource,
+                streaming: true
+            }
+        })
+        await flushStreamingBatch()
+
+        expect(headingTextsAndIds(container)).toEqual([
+            { text: 'Intro', id: 'intro', inBlockquote: true },
+            { text: 'Intro', id: 'intro-1', inBlockquote: false }
+        ])
+
+        await rerender({
+            source: nextSource,
+            streaming: true
+        })
+        await flushStreamingBatch()
+
+        expect(headingTextsAndIds(container)).toEqual([
+            { text: 'Intro', id: 'intro', inBlockquote: true },
+            { text: 'Intro', id: 'intro-1', inBlockquote: false }
+        ])
     })
 
     test('keeps duplicate heading dedupe stable after a streaming reparse', async () => {
@@ -164,6 +302,59 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         await flushStreamingBatch()
 
         expect(headingIds(container)).toEqual(['intro', 'intro-1'])
+    })
+
+    test('keeps already-rendered top-level nodes mounted during append-only streaming', async () => {
+        const mounted: Array<{ text: string | undefined; element: HTMLParagraphElement }> = []
+        const destroyed: Array<{ text: string | undefined; element: HTMLParagraphElement }> = []
+        const { component, container } = render(SvelteMarkdown, {
+            props: {
+                source: '',
+                streaming: true,
+                renderers: {
+                    paragraph: TrackedParagraph
+                },
+                onParagraphMount: (text: string | undefined, element: HTMLParagraphElement) => {
+                    mounted.push({ text, element })
+                },
+                onParagraphDestroy: (text: string | undefined, element: HTMLParagraphElement) => {
+                    destroyed.push({ text, element })
+                }
+            } satisfies SvelteMarkdownProps & {
+                onParagraphMount: (text: string | undefined, element: HTMLParagraphElement) => void
+                onParagraphDestroy: (
+                    text: string | undefined,
+                    element: HTMLParagraphElement
+                ) => void
+            }
+        })
+
+        const chunks = [
+            'Intro paragraph',
+            '\n\nSecond paragraph',
+            '\n\n- Streamed list item',
+            '\n\nFinal paragraph'
+        ]
+        let introParagraph: Element | null = null
+
+        for (const chunk of chunks) {
+            await act(() => component.writeChunk(chunk))
+            await flushStreamingBatch()
+
+            const currentIntro = container.querySelector(
+                '[data-tracked-paragraph="Intro paragraph"]'
+            )
+            expect(currentIntro).toBeInstanceOf(HTMLParagraphElement)
+
+            if (introParagraph === null) {
+                introParagraph = currentIntro
+            } else {
+                expect(currentIntro).toBe(introParagraph)
+            }
+        }
+
+        expect(destroyed.some((entry) => entry.text === 'Intro paragraph')).toBe(false)
+        expect(mounted.filter((entry) => entry.text === 'Intro paragraph')).toHaveLength(1)
     })
 
     test('keeps a downstream paragraph mounted when an earlier token split preserves its source offset', async () => {
@@ -236,6 +427,39 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(itemAfter).toBe(itemBefore)
     })
 
+    test('keeps existing list item identity while streaming appends list siblings', async () => {
+        const parsed = vi.fn()
+        const { component, container } = render(SvelteMarkdown, {
+            props: {
+                source: '',
+                streaming: true,
+                parsed,
+                renderers: {
+                    listitem: TrackedListItem
+                }
+            }
+        })
+
+        await act(() => component.writeChunk('- One\n- More\n- Stable'))
+        await flushStreamingBatch()
+
+        const itemBefore = container.querySelector('[data-tracked-list-item="More"]')
+        const firstMoreToken = firstListToken(lastParsedTokens(parsed))?.items[1]
+
+        expect(itemBefore).toBeInstanceOf(HTMLLIElement)
+        expect(firstMoreToken?.text).toBe('More')
+
+        await act(() => component.writeChunk('\n- Tail'))
+        await flushStreamingBatch()
+
+        const itemAfter = container.querySelector('[data-tracked-list-item="More"]')
+        const nextMoreToken = firstListToken(lastParsedTokens(parsed))?.items[1]
+
+        expect(container.querySelectorAll('li')).toHaveLength(4)
+        expect(itemAfter).toBe(itemBefore)
+        expect(nextMoreToken).toBe(firstMoreToken)
+    })
+
     test('keeps a stable table body row mounted when a sibling row is inserted before it', async () => {
         const stableRow = [tableCell('More'), tableCell('Tail')]
         const insertedRow = [tableCell('Inserted'), tableCell('Row')]
@@ -255,5 +479,36 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         const rowAfter = findBodyRow(container, 'MoreTail')
         expect(findBodyRow(container, 'InsertedRow')).toBeInstanceOf(HTMLTableRowElement)
         expect(rowAfter).toBe(rowBefore)
+    })
+
+    test('keeps existing table row identity while streaming appends table rows', async () => {
+        const parsed = vi.fn()
+        const { component, container } = render(SvelteMarkdown, {
+            props: {
+                source: '',
+                streaming: true,
+                parsed
+            }
+        })
+
+        await act(() => component.writeChunk('| Label | Value |\n|---|---|\n| More | Tail |'))
+        await flushStreamingBatch()
+
+        const rowBefore = findBodyRow(container, 'MoreTail')
+        const firstRowToken = firstTableToken(lastParsedTokens(parsed))?.rows[0]
+
+        expect(rowBefore).toBeInstanceOf(HTMLTableRowElement)
+        expect(firstRowToken?.map((cell) => cell.text)).toEqual(['More', 'Tail'])
+
+        await act(() => component.writeChunk('\n| Last | Row |'))
+        await flushStreamingBatch()
+
+        const rowAfter = findBodyRow(container, 'MoreTail')
+        const nextRowToken = firstTableToken(lastParsedTokens(parsed))?.rows[0]
+
+        expect(findBodyRow(container, 'LastRow')).toBeInstanceOf(HTMLTableRowElement)
+        expect(rowAfter).toBe(rowBefore)
+        expect(nextRowToken?.[0]).toBe(firstRowToken?.[0])
+        expect(nextRowToken?.[1]).toBe(firstRowToken?.[1])
     })
 })
