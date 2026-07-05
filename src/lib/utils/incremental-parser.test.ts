@@ -291,6 +291,31 @@ describe('IncrementalParser', () => {
             expect(incremental.tokens).toEqual(full)
         })
 
+        it('falls back to a full re-lex when reference syntax is split across chunks', () => {
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            const options = createDefaultOptions()
+
+            const splitUseParser = new IncrementalParser(options)
+            splitUseParser.update('See [do')
+            splitUseParser.update('See [docs]\n\nTail')
+            const splitUseWithDefinition = 'See [docs]\n\nTail\n\n[docs]: /docs'
+
+            splitUseParser.update(splitUseWithDefinition)
+
+            expect(lexSpy.mock.calls[2]?.[0]).toBe(splitUseWithDefinition)
+
+            lexSpy.mockClear()
+
+            const splitDefinitionParser = new IncrementalParser(options)
+            splitDefinitionParser.update('See [docs]\n\nTail')
+            splitDefinitionParser.update('See [docs]\n\nTail\n\n[do')
+            const splitDefinition = 'See [docs]\n\nTail\n\n[docs]: /docs'
+
+            splitDefinitionParser.update(splitDefinition)
+
+            expect(lexSpy.mock.calls[2]?.[0]).toBe(splitDefinition)
+        })
+
         it('keeps full reference syntax conservative until its definition arrives', () => {
             const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
             const parser = new IncrementalParser(createDefaultOptions())
