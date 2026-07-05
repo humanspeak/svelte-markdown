@@ -121,7 +121,11 @@ export default defineConfig({
         indexNowPlugin({
             siteUrl: docsConfig.url,
             key: indexNowKey,
-            productionMode: 'indexnow'
+            productionMode: 'indexnow',
+            // IndexNow is a best-effort search-engine ping; a rejected submission
+            // (e.g. transient 403 UserForbiddedToAccessSite) must not fail the
+            // build and block the docs deploy. Log and continue instead.
+            failOnError: false
         }),
         tailwindcss(),
         sveltekit()
