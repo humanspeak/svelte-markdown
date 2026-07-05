@@ -12,6 +12,7 @@ interface InternalParser {
     hasHtmlSpanMismatch: (token: Token) => boolean
     hasPotentialReferenceUse: (source: string) => boolean
     hasReferenceDefinition: (source: string) => boolean
+    appendIntroducesMatch: (source: string, matches: (candidate: string) => boolean) => boolean
     canUseTailWindow: (
         source: string,
         boundary: { prefixCount: number; reparseOffset: number }
@@ -316,6 +317,38 @@ describe('IncrementalParser', () => {
             expect(lexSpy.mock.calls[2]?.[0]).toBe(splitDefinition)
         })
 
+        it('resolves a reference definition completed across several partial appends', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            // The `[docs]:` marker is built one character-run at a time, so the
+            // boundary-crossing line grows across three appends before it first
+            // parses as a definition.
+            parser.update('[d')
+            parser.update('[doc')
+            parser.update('[docs]: /x\n\n')
+            const final = '[docs]: /x\n\nSee [docs].'
+
+            const result = parser.update(final)
+            const full = parseAndCacheModule.lexAndClean(final, createDefaultOptions(), false)
+
+            expect(result.tokens).toEqual(full)
+        })
+
+        it('keeps stable token reuse for appended definitions when no reference use exists', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            // Definition labels look like shortcut references, but they are not
+            // renderable uses — appending another definition cannot change any
+            // rendered link, so the tail window stays usable.
+            const source = '[a]: /1\n\nIntro paragraph.\n\n'
+            parser.update(source)
+
+            const appended = `${source}[b]: /2`
+            const result = parser.update(appended)
+            const full = parseAndCacheModule.lexAndClean(appended, createDefaultOptions(), false)
+
+            expect(result.canReuse).toBe(true)
+            expect(result.tokens).toEqual(full)
+        })
+
         it('keeps full reference syntax conservative until its definition arrives', () => {
             const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
             const parser = new IncrementalParser(createDefaultOptions())
@@ -609,6 +642,52 @@ describe('IncrementalParser', () => {
             parser.update(`${withDefinition}\n\nAppended tail after fallback`)
 
             expect(sourceLengthReads).toBeLessThanOrEqual(1)
+        })
+
+        it('scans the definition boundary at most once per append', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            // A reference use is present but its definition has not arrived yet:
+            // the state where the tail-window decision and the cached-state
+            // refresh both need to know whether the append added a definition.
+            parser.update('See [docs]\n\n')
+
+            const internalParser = asInternalParser(parser)
+            const originalAppendIntroducesMatch = internalParser.appendIntroducesMatch
+            const definitionMatcher = internalParser.hasReferenceDefinition
+            let definitionBoundaryScans = 0
+
+            internalParser.appendIntroducesMatch = (scannedSource, matches) => {
+                if (matches === definitionMatcher) definitionBoundaryScans++
+                return originalAppendIntroducesMatch(scannedSource, matches)
+            }
+
+            parser.update('See [docs]\n\nmore streamed text')
+
+            expect(definitionBoundaryScans).toBe(1)
+        })
+
+        it('reuses the cached definition flag instead of rescanning prevSource on in-place edits', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = `${Array.from({ length: 60 }, (_, index) => `See [ref${index}]`).join(
+                '\n\n'
+            )}\n\n[ref0]: /a`
+
+            parser.update(source)
+
+            const internalParser = asInternalParser(parser)
+            const originalHasReferenceDefinition = internalParser.hasReferenceDefinition
+            const scannedLengths: number[] = []
+
+            internalParser.hasReferenceDefinition = (scannedSource) => {
+                scannedLengths.push(scannedSource.length)
+                return originalHasReferenceDefinition(scannedSource)
+            }
+
+            // Non-append (in-place) edit: the reference-sensitivity check must
+            // read the cached flag for the previous source rather than rescan it.
+            parser.update('Rewritten [ref0] content\n\n[ref0]: /b')
+
+            expect(Math.max(...scannedLengths)).toBeLessThan(source.length)
         })
     })
 })
