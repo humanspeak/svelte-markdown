@@ -268,6 +268,23 @@ describe('IncrementalParser', () => {
             expect(result.canReuse).toBe(true)
         })
 
+        // KNOWN FAILING (#325 follow-up): a reference *definition* that already
+        // sits in the stable prefix is invisible to a tail-only re-lex, so a new
+        // shortcut *use* appended in the tail renders as plain text instead of a
+        // link. The tail-window reference gate only covers "use in prefix +
+        // definition in tail", not "definition in prefix + use in tail".
+        it('resolves shortcut references whose definition sits in the stable prefix', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            const base = '[docs]: /docs\n\nIntro paragraph.\n\n'
+            parser.update(base)
+            const next = `${base}See [docs] for details.\n`
+
+            const incremental = parser.update(next)
+            const full = parseAndCacheModule.lexAndClean(next, createDefaultOptions(), false)
+
+            expect(incremental.tokens).toEqual(full)
+        })
+
         it('keeps full reference syntax conservative until its definition arrives', () => {
             const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
             const parser = new IncrementalParser(createDefaultOptions())

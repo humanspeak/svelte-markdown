@@ -157,8 +157,13 @@ export class IncrementalParser {
         return html.sourceLength == null
     }
 
+    /**
+     * Source characters this token consumed. Closed HTML tokens record
+     * their full span as `sourceLength` during cleanup; every other token's
+     * `.raw` already equals its source span, so we fall back to `raw.length`.
+     */
     private getTokenSourceLength = (token: Token): number => {
-        return (token as Token & { sourceLength?: number }).sourceLength ?? token.raw.length
+        return (token as HtmlToken).sourceLength ?? token.raw.length
     }
 
     private isStableAtSourceEnd = (token: Token): boolean => {
@@ -192,24 +197,38 @@ export class IncrementalParser {
         return this.hasReferenceDefinition(source.slice(this.prevSource.length))
     }
 
-    private canUseTailWindow = (source: string, boundary: TailWindowBoundary): boolean => {
+    /**
+     * True when a reference definition arriving in the appended tail can
+     * retroactively change how existing reference-style uses in the stable
+     * prefix render — the one case where an append-only stream is not safe
+     * to serve incrementally. Computed once per `update` and threaded through
+     * `parseSource`/`canUseTailWindow` so the hot path evaluates it a single
+     * time rather than recomputing the regexes for both the tail-window
+     * decision and the reuse decision.
+     */
+    private appendedDefinitionInvalidatesTail = (source: string): boolean =>
+        this.hasPotentialReferenceUse(this.prevSource) && this.hasNewReferenceDefinition(source)
+
+    private canUseTailWindow = (
+        source: string,
+        boundary: TailWindowBoundary,
+        referenceInvalidatesTail = this.appendedDefinitionInvalidatesTail(source)
+    ): boolean => {
         if (this.tailWindowDisabled) return false
         if (this.prevSource === '' || this.prevTokens.length === 0) return false
         if (!source.startsWith(this.prevSource)) return false
         if (boundary.reparseOffset <= 0) return false
-
-        if (
-            this.hasPotentialReferenceUse(this.prevSource) &&
-            this.hasNewReferenceDefinition(source)
-        ) {
-            return false
-        }
+        if (referenceInvalidatesTail) return false
 
         return true
     }
 
-    private parseSource = (source: string, boundary: TailWindowBoundary): Token[] => {
-        if (!this.canUseTailWindow(source, boundary)) {
+    private parseSource = (
+        source: string,
+        boundary: TailWindowBoundary,
+        referenceInvalidatesTail: boolean
+    ): Token[] => {
+        if (!this.canUseTailWindow(source, boundary, referenceInvalidatesTail)) {
             return lexAndClean(source, this.options, false)
         }
 
@@ -225,7 +244,8 @@ export class IncrementalParser {
      */
     update = (source: string): IncrementalUpdateResult => {
         const boundary = this.getTailWindowBoundary()
-        const newTokens = this.parseSource(source, boundary)
+        const referenceInvalidatesTail = this.appendedDefinitionInvalidatesTail(source)
+        const newTokens = this.parseSource(source, boundary, referenceInvalidatesTail)
 
         // Apply walkTokens if configured
         if (typeof this.options.walkTokens === 'function') {
@@ -235,10 +255,10 @@ export class IncrementalParser {
         // Reference definitions can change inline children without changing raw,
         // so force a full rerender when definitions are present alongside
         // reference-style uses. Shortcut-looking text alone stays reusable.
+        // The append-only case reuses `referenceInvalidatesTail` computed above.
         const isAppendOnly = this.prevSource !== '' && source.startsWith(this.prevSource)
         const referenceSensitive = isAppendOnly
-            ? this.hasPotentialReferenceUse(this.prevSource) &&
-              this.hasNewReferenceDefinition(source)
+            ? referenceInvalidatesTail
             : (this.hasReferenceDefinition(this.prevSource) ||
                   this.hasReferenceDefinition(source)) &&
               (this.hasPotentialReferenceUse(this.prevSource) ||
