@@ -185,7 +185,16 @@ export class IncrementalParser {
      * True when `source` contains reference-style link syntax that could
      * resolve against a definition — either a full reference (`[text][id]`)
      * or a shortcut (`[text]`). It says nothing about whether a matching
-     * definition exists; pair it with `hasReferenceDefinition` for that.
+     * definition exists; pair it with {@link hasReferenceDefinition} for that.
+     *
+     * @param source - Markdown source to scan
+     * @returns `true` if a full or shortcut reference use is present
+     * @example
+     * ```typescript
+     * this.hasPotentialReferenceUse('see [docs]')   // true  (shortcut)
+     * this.hasPotentialReferenceUse('see [a][b]')   // true  (full ref)
+     * this.hasPotentialReferenceUse('see [x](/y)')  // false (inline link)
+     * ```
      */
     private hasPotentialReferenceUse = (source: string): boolean => {
         if (!source.includes('[') || !source.includes(']')) return false
@@ -198,6 +207,14 @@ export class IncrementalParser {
      * (`[label]: url`). A definition can retroactively change how reference
      * uses elsewhere in the document render, which is what makes it relevant
      * to tail-window safety.
+     *
+     * @param source - Markdown source to scan
+     * @returns `true` if a reference definition line is present
+     * @example
+     * ```typescript
+     * this.hasReferenceDefinition('[docs]: /docs')  // true
+     * this.hasReferenceDefinition('see [docs]')     // false
+     * ```
      */
     private hasReferenceDefinition = (source: string): boolean => {
         if (!source.includes('[') || !source.includes(']')) return false
@@ -209,6 +226,15 @@ export class IncrementalParser {
      * that was not already present — i.e. the definition lives entirely in the
      * newly appended tail. Returns false for any update that is not a pure
      * append of `prevSource`.
+     *
+     * @param source - The full new source, expected to start with `prevSource`
+     * @returns `true` if the appended tail contains a new reference definition
+     * @example
+     * ```typescript
+     * // prevSource === 'see [docs]\n\n'
+     * this.hasNewReferenceDefinition('see [docs]\n\n[docs]: /d')  // true
+     * this.hasNewReferenceDefinition('see [docs]\n\nmore text')   // false
+     * ```
      */
     private hasNewReferenceDefinition = (source: string): boolean => {
         if (!source.startsWith(this.prevSource)) return false
@@ -223,6 +249,15 @@ export class IncrementalParser {
      * `parseSource`/`canUseTailWindow` so the hot path evaluates it a single
      * time rather than recomputing the regexes for both the tail-window
      * decision and the reuse decision.
+     *
+     * @param source - The full new source string for this update
+     * @returns `true` if a newly appended definition can change how the reused
+     *   prefix renders, meaning the tail window must be bypassed
+     * @example
+     * ```typescript
+     * // prevSource === 'see [docs]\n\n' (a shortcut use already rendered)
+     * this.appendedDefinitionInvalidatesTail('see [docs]\n\n[docs]: /d') // true
+     * ```
      */
     private appendedDefinitionInvalidatesTail = (source: string): boolean =>
         this.hasPotentialReferenceUse(this.prevSource) && this.hasNewReferenceDefinition(source)
@@ -234,6 +269,20 @@ export class IncrementalParser {
      * full parse: caller parser hooks are active, the update is not append-only,
      * the boundary is empty, or reference syntax straddles the prefix/tail split
      * in a way a tail-only re-lex cannot resolve.
+     *
+     * @param source - The full new source string for this update
+     * @param boundary - The stable-prefix boundary from `getTailWindowBoundary`
+     * @param referenceInvalidatesTail - Precomputed reference-safety flag;
+     *   defaults to `appendedDefinitionInvalidatesTail(source)` for standalone
+     *   callers that have not computed it already
+     * @returns `true` if the appended tail can be re-lexed in isolation
+     * @example
+     * ```typescript
+     * const boundary = this.getTailWindowBoundary()
+     * if (this.canUseTailWindow(source, boundary)) {
+     *     // safe to re-lex only source.slice(boundary.reparseOffset)
+     * }
+     * ```
      */
     private canUseTailWindow = (
         source: string,
