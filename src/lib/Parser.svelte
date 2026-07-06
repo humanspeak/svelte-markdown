@@ -21,6 +21,13 @@
         'track',
         'wbr'
     ])
+
+    /**
+     * Shared empty prop bag spread into non-heading dispatch. Hoisted so the
+     * common (non-heading) branch reuses one frozen object instead of
+     * allocating a fresh `{}` per dispatched token.
+     */
+    const NO_EXTRA_PROPS = Object.freeze({})
 </script>
 
 <script lang="ts">
@@ -248,7 +255,7 @@
                           renderMetadata.getPreparedHeadingId(token) ??
                           (token as { id?: string }).id
                   }
-                : {}}
+                : NO_EXTRA_PROPS}
         <Parser
             {...restProps}
             {...token}

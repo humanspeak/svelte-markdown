@@ -78,6 +78,7 @@ const getNodeSourceLength = (node: RenderMetadataNode) => {
 export const createRenderMetadata = (): RenderMetadata => {
     const renderKeys = new WeakMap<object, unknown>()
     const headingIds = new WeakMap<object, string | undefined>()
+    const sourceOffsets = new WeakMap<object, number>()
     let preparedHeadingNodes: RenderMetadataNode[] = []
     let previousSourceLessRoots: SourceLessRootRecord[] = []
 
@@ -97,13 +98,11 @@ export const createRenderMetadata = (): RenderMetadata => {
         return `${index}:${String(node)}`
     }
 
-    const getSourceOffset = (node: RenderMetadataNode): number | undefined => {
-        const renderKey = getRenderKey(node)
-        if (typeof renderKey !== 'string' || !renderKey.startsWith('src:')) return undefined
-
-        const offset = Number(renderKey.split(':')[1])
-        return Number.isFinite(offset) ? offset : undefined
-    }
+    // Source offsets are recorded as numbers when keys are assigned, so the
+    // streaming heading-seed loop can read them without re-parsing the `src:`
+    // key string on every prior heading each flush.
+    const getSourceOffset = (node: RenderMetadataNode): number | undefined =>
+        sourceOffsets.get(node)
 
     const assignSequentialSourceKeys = (
         nodes: RenderMetadataNode[] | undefined,
@@ -119,6 +118,7 @@ export const createRenderMetadata = (): RenderMetadata => {
             const node = nodes[index]
             const spanLength = getNodeSourceLength(node)
             const nodeOffset = absoluteOffset + cursor
+            sourceOffsets.set(node, nodeOffset)
 
             if (spanLength === 0) {
                 setRenderKey(node, `src:${nodeOffset}:zero:${index}`)
@@ -238,20 +238,18 @@ export const createRenderMetadata = (): RenderMetadata => {
         for (let index = startIndex; index < nodes.length; index++) {
             const node = nodes[index]
             if (node.type === 'heading') {
-                headingIds.set(
-                    node,
-                    options.headerIds && typeof node.text === 'string'
-                        ? `${options.headerPrefix}${slugger.slug(node.text)}`
-                        : undefined
-                )
+                seedHeadingSlugger(node, options, slugger)
                 nextHeadingNodes.push(node)
             }
 
             assignHeadingIds(asNodeArray(node.tokens), options, slugger, nextHeadingNodes)
             assignHeadingIds(asNodeArray(node.items), options, slugger, nextHeadingNodes)
             assignHeadingIds(asNodeArray(node.header), options, slugger, nextHeadingNodes)
-            for (const row of asNodeArray(node.rows) ?? []) {
-                assignHeadingIds(asNodeArray(row), options, slugger, nextHeadingNodes)
+            const rows = asNodeArray(node.rows)
+            if (rows) {
+                for (const row of rows) {
+                    assignHeadingIds(asNodeArray(row), options, slugger, nextHeadingNodes)
+                }
             }
         }
     }
