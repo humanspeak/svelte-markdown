@@ -879,7 +879,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             renderDurations.push(performance.now() - t0)
         }
         const wallMs = performance.now() - startWall
-        isStreaming = false
+        const completed = isStreaming && renderDurations.length === chunks.length
         const actualHeadingIds = getRenderedHeadingIds()
         const headingIdMismatches = countHeadingIdMismatches(actualHeadingIds, expectedHeadingIds)
         if (headingIdMismatches > 0) {
@@ -889,6 +889,13 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
                 headingIdMismatches
             })
         }
+
+        // writeChunk() updates the component's internal streaming buffer, not
+        // this page's `source` prop. Keep the final source before leaving
+        // streaming mode so the preview does not fall back to rendering ''.
+        if (completed) source = corpus
+        isStreaming = false
+        await tick()
 
         const renderTotal = renderDurations.reduce((sum, duration) => sum + duration, 0)
         stat = {
