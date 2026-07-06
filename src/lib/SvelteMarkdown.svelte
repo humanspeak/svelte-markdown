@@ -118,6 +118,8 @@
     let streamFlushHandle: StreamFlushHandle = null
     let streamInputMode: 'append' | 'offset' | null = null
     let streamTokens = $state<Token[]>([])
+    let streamRenderMetadataStartIndex = 0
+    let streamRenderMetadataStartOffset = 0
 
     const warnStreaming = (message: string) => {
         console.warn(`[svelte-markdown] ${message}`)
@@ -154,7 +156,7 @@
         const parser = incrementalParser
         if (!parser) return
 
-        const { tokens: newTokens, divergeAt, canReuse } = parser.update(nextSource)
+        const { tokens: newTokens, divergeAt, divergeOffset, canReuse } = parser.update(nextSource)
 
         // Replace the array reference rather than mutating per-index +
         // length. Under Svelte 5's reactive proxy, shrinking the array
@@ -169,6 +171,9 @@
         streamTokens = canReuse
             ? reuseStableStreamingTokens(streamTokens, newTokens, divergeAt)
             : newTokens
+        const canSkipRenderMetadataPrefix = canReuse && divergeOffset !== undefined
+        streamRenderMetadataStartIndex = canSkipRenderMetadataPrefix ? divergeAt : 0
+        streamRenderMetadataStartOffset = canSkipRenderMetadataPrefix ? divergeOffset : 0
     }
 
     const commitPendingAppendBuffer = () => {
@@ -212,6 +217,8 @@
         pendingStreamAppendBuffer = ''
         streamInputMode = null
         streamSourceBuffer = ''
+        streamRenderMetadataStartIndex = 0
+        streamRenderMetadataStartOffset = 0
     }
 
     const resetStreamingState = (nextSource = '') => {
@@ -475,14 +482,31 @@
     const tokens = $derived.by(() => {
         if (!rawTokens) return rawTokens
 
-        const sourceForMetadata =
-            streaming && !hasAsyncExtension
-                ? streamSourceBuffer
-                : Array.isArray(source)
-                  ? undefined
-                  : (source as string)
+        // This derived intentionally prepares WeakMap metadata before Parser
+        // renders. An $effect would run too late: keyed each blocks and
+        // heading props need the metadata during this render pass.
+        const sourceForMetadata = Array.isArray(source)
+            ? undefined
+            : streaming && !hasAsyncExtension
+              ? streamSourceBuffer
+              : (source as string)
 
-        return renderMetadata.prepareTokensForRender(rawTokens, combinedOptions, sourceForMetadata)
+        // In streaming mode, streamSourceBuffer is a plain let that changes
+        // in lockstep with streamTokens inside applyStreamingSource(). This
+        // derived is invalidated by rawTokens; the buffer read relies on that
+        // coupling so metadata sees the same source that produced the tokens.
+        const streamingStart =
+            streaming && !hasAsyncExtension
+                ? {
+                      startIndex: streamRenderMetadataStartIndex,
+                      startOffset: streamRenderMetadataStartOffset
+                  }
+                : {}
+
+        return renderMetadata.prepareTokensForRender(rawTokens, combinedOptions, {
+            source: sourceForMetadata,
+            ...streamingStart
+        })
     })
 
     $effect(() => {

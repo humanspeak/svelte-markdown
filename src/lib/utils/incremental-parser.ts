@@ -48,6 +48,8 @@ export interface IncrementalUpdateResult {
     tokens: Token[]
     /** Index of the first token that differs from the previous parse */
     divergeAt: number
+    /** Source offset where the divergent token begins, when known without scanning the stable prefix */
+    divergeOffset?: number
     /** Whether consumers can safely reuse stable token objects from the previous parse */
     canReuse: boolean
 }
@@ -529,6 +531,7 @@ export class IncrementalParser {
         // this check the streaming consumer would never see the partial-
         // to-closed transition. See #291.
         let divergeAt = 0
+        let divergeOffset = parseResult.usedTailWindow ? boundary.reparseOffset : undefined
         if (!referenceSensitive) {
             const minLen = Math.min(this.prevTokens.length, newTokens.length)
             while (divergeAt < minLen) {
@@ -541,11 +544,18 @@ export class IncrementalParser {
                     if ((prevKids === undefined) !== (nextKids === undefined)) break
                     if (prevKids && nextKids && prevKids.length !== nextKids.length) break
                 }
+                if (
+                    parseResult.usedTailWindow &&
+                    divergeOffset !== undefined &&
+                    divergeAt >= boundary.prefixCount
+                ) {
+                    divergeOffset += this.getTokenSourceLength(next)
+                }
                 divergeAt++
             }
         }
 
         this.updateCachedState(source, parseResult, isAppendOnly, appendAddsDefinition)
-        return { tokens: newTokens, divergeAt, canReuse }
+        return { tokens: newTokens, divergeAt, divergeOffset, canReuse }
     }
 }

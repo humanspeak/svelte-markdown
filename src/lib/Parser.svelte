@@ -241,10 +241,18 @@
             </svelte:element>
         {/if}
     {:else}
+        {@const headingIdProps =
+            token.type === 'heading'
+                ? {
+                      id:
+                          renderMetadata.getPreparedHeadingId(token) ??
+                          (token as { id?: string }).id
+                  }
+                : {}}
         <Parser
             {...restProps}
             {...token}
-            id={renderMetadata.getPreparedHeadingId(token) ?? (token as { id?: string }).id}
+            {...headingIdProps}
             {renderers}
             {snippetOverrides}
             {htmlSnippetOverrides}

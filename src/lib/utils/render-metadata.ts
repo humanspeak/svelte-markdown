@@ -2,8 +2,29 @@ import type { SvelteMarkdownOptions } from '$lib/types.js'
 import type { Token, TokensList } from '$lib/utils/markdown-parser.js'
 import Slugger from 'github-slugger'
 
+/**
+ * Per-SvelteMarkdown-instance render metadata.
+ *
+ * Stable render keys and precomputed heading ids are renderer concerns, not
+ * markdown-token data, so they live in WeakMaps keyed by token objects. This
+ * keeps caller-provided token arrays unmodified, avoids public property
+ * collisions, and lets multiple SvelteMarkdown instances render concurrently
+ * without sharing slug or key state.
+ *
+ * Source-backed renders use source offsets for keys. Append-only streaming can
+ * skip the stable top-level prefix by passing the parser's `divergeAt` and
+ * `divergeOffset`; reused-prefix tokens already have WeakMap keys from the
+ * previous render pass. Pre-parsed token arrays have no source, so root tokens
+ * use a root-slot fallback while nested tokens fall through to object identity.
+ *
+ * Heading ids are recomputed in document order every pass because duplicate
+ * heading slugs are global across nesting boundaries. That walk is intentional:
+ * it resets slugger state for the render pass before any Heading component
+ * renders.
+ */
 type RenderMetadataNode = Record<string, unknown> & {
     raw?: string
+    sourceLength?: number
     text?: string
     type?: string
     tokens?: unknown
@@ -12,11 +33,17 @@ type RenderMetadataNode = Record<string, unknown> & {
     rows?: unknown
 }
 
+export interface RenderPreparation {
+    source?: string
+    startIndex?: number
+    startOffset?: number
+}
+
 export interface RenderMetadata {
     prepareTokensForRender: (
         _tokens: Token[] | TokensList | undefined,
         _options: SvelteMarkdownOptions,
-        _source?: string
+        _preparation?: RenderPreparation
     ) => Token[] | TokensList | undefined
     getPreparedHeadingId: (_node: unknown) => string | undefined
     getStableNodeKey: (_node: unknown, _index: number) => unknown
@@ -34,9 +61,15 @@ const getNodeSpanText = (node: RenderMetadataNode) => {
     return ''
 }
 
+const getNodeSourceLength = (node: RenderMetadataNode) => {
+    if (typeof node.sourceLength === 'number') return node.sourceLength
+    return getNodeSpanText(node).length
+}
+
 export const createRenderMetadata = (): RenderMetadata => {
     const renderKeys = new WeakMap<object, unknown>()
     const headingIds = new WeakMap<object, string | undefined>()
+    let preparedHeadingNodes: RenderMetadataNode[] = []
 
     const setRenderKey = (node: object, value: unknown) => {
         renderKeys.set(node, value)
@@ -54,35 +87,37 @@ export const createRenderMetadata = (): RenderMetadata => {
         return `${index}:${String(node)}`
     }
 
+    const getSourceOffset = (node: RenderMetadataNode): number | undefined => {
+        const renderKey = getRenderKey(node)
+        if (typeof renderKey !== 'string' || !renderKey.startsWith('src:')) return undefined
+
+        const offset = Number(renderKey.split(':')[1])
+        return Number.isFinite(offset) ? offset : undefined
+    }
+
     const assignSequentialSourceKeys = (
         nodes: RenderMetadataNode[] | undefined,
-        source: string,
-        absoluteOffset = 0
+        absoluteOffset = 0,
+        startIndex = 0,
+        startOffset = 0
     ) => {
         if (!nodes) return
 
-        let searchOffset = 0
-        const zeroLengthCounts = new Map<number, number>()
+        let cursor = startOffset
 
-        for (const node of nodes) {
-            const spanText = getNodeSpanText(node)
-            const relativeStart =
-                spanText === ''
-                    ? searchOffset
-                    : source.indexOf(spanText, Math.min(searchOffset, source.length))
-            const start = relativeStart >= 0 ? relativeStart : searchOffset
-            const absoluteStart = absoluteOffset + start
+        for (let index = startIndex; index < nodes.length; index++) {
+            const node = nodes[index]
+            const spanLength = getNodeSourceLength(node)
+            const nodeOffset = absoluteOffset + cursor
 
-            if (spanText === '') {
-                const count = zeroLengthCounts.get(absoluteStart) ?? 0
-                zeroLengthCounts.set(absoluteStart, count + 1)
-                setRenderKey(node, `src:${absoluteStart}:zero:${count}`)
+            if (spanLength === 0) {
+                setRenderKey(node, `src:${nodeOffset}:zero:${index}`)
             } else {
-                setRenderKey(node, `src:${absoluteStart}`)
-                searchOffset = start + spanText.length
+                setRenderKey(node, `src:${nodeOffset}`)
             }
 
-            assignSourceKeysToChildren(node, spanText, absoluteStart)
+            assignSourceKeysToChildren(node, nodeOffset)
+            cursor += spanLength
         }
     }
 
@@ -97,68 +132,23 @@ export const createRenderMetadata = (): RenderMetadata => {
         }
     }
 
-    const assignSourceKeysToRows = (
-        rows: RenderMetadataNode[][] | undefined,
-        source: string,
-        absoluteOffset: number
-    ) => {
-        if (!rows) return
-
-        let searchOffset = 0
-
-        for (const row of rows) {
-            if (row.length === 0) {
-                setRenderKey(row, row)
-                continue
-            }
-
-            const firstCellSpan = getNodeSpanText(row[0])
-            const relativeStart =
-                firstCellSpan === ''
-                    ? searchOffset
-                    : source.indexOf(firstCellSpan, Math.min(searchOffset, source.length))
-            const rowStart = relativeStart >= 0 ? relativeStart : searchOffset
-
-            assignSequentialSourceKeys(row, source.slice(rowStart), absoluteOffset + rowStart)
-            setRenderKey(row, getStableNodeKey(row[0], 0))
-
-            const lastCell = row[row.length - 1]
-            const lastCellSpan = getNodeSpanText(lastCell)
-            const lastCellKey = getStableNodeKey(lastCell, row.length - 1)
-            const lastCellStart =
-                typeof lastCellKey === 'string' && lastCellKey.startsWith('src:')
-                    ? Number(lastCellKey.split(':')[1])
-                    : absoluteOffset + rowStart
-            searchOffset = Math.max(
-                rowStart + 1,
-                lastCellStart - absoluteOffset + lastCellSpan.length
-            )
-        }
-    }
-
-    const assignSourceKeysToChildren = (
-        node: RenderMetadataNode,
-        spanText: string,
-        absoluteOffset: number
-    ) => {
-        assignSequentialSourceKeys(asNodeArray(node.tokens), spanText, absoluteOffset)
-        assignSequentialSourceKeys(asNodeArray(node.items), spanText, absoluteOffset)
-        assignSequentialSourceKeys(asNodeArray(node.header), spanText, absoluteOffset)
-        assignSourceKeysToRows(
-            asNodeArray(node.rows) as RenderMetadataNode[][] | undefined,
-            spanText,
-            absoluteOffset
-        )
+    const assignSourceKeysToChildren = (node: RenderMetadataNode, absoluteOffset: number) => {
+        assignSequentialSourceKeys(asNodeArray(node.tokens), absoluteOffset)
+        assignSequentialSourceKeys(asNodeArray(node.items), absoluteOffset)
+        assignSequentialSourceKeys(asNodeArray(node.header), absoluteOffset)
     }
 
     const assignHeadingIds = (
         nodes: RenderMetadataNode[] | undefined,
         options: SvelteMarkdownOptions,
-        slugger: Slugger
+        slugger: Slugger,
+        nextHeadingNodes: RenderMetadataNode[],
+        startIndex = 0
     ) => {
         if (!nodes) return
 
-        for (const node of nodes) {
+        for (let index = startIndex; index < nodes.length; index++) {
+            const node = nodes[index]
             if (node.type === 'heading') {
                 headingIds.set(
                     node,
@@ -166,34 +156,77 @@ export const createRenderMetadata = (): RenderMetadata => {
                         ? `${options.headerPrefix}${slugger.slug(node.text)}`
                         : undefined
                 )
+                nextHeadingNodes.push(node)
             }
 
-            assignHeadingIds(asNodeArray(node.tokens), options, slugger)
-            assignHeadingIds(asNodeArray(node.items), options, slugger)
-            assignHeadingIds(asNodeArray(node.header), options, slugger)
+            assignHeadingIds(asNodeArray(node.tokens), options, slugger, nextHeadingNodes)
+            assignHeadingIds(asNodeArray(node.items), options, slugger, nextHeadingNodes)
+            assignHeadingIds(asNodeArray(node.header), options, slugger, nextHeadingNodes)
             for (const row of asNodeArray(node.rows) ?? []) {
-                assignHeadingIds(asNodeArray(row), options, slugger)
+                assignHeadingIds(asNodeArray(row), options, slugger, nextHeadingNodes)
             }
         }
+    }
+
+    const seedHeadingSlugger = (
+        node: RenderMetadataNode,
+        options: SvelteMarkdownOptions,
+        slugger: Slugger
+    ) => {
+        headingIds.set(
+            node,
+            options.headerIds && typeof node.text === 'string'
+                ? `${options.headerPrefix}${slugger.slug(node.text)}`
+                : undefined
+        )
+    }
+
+    const assignPreparedHeadingIds = (
+        nodes: RenderMetadataNode[],
+        options: SvelteMarkdownOptions,
+        preparation?: RenderPreparation
+    ) => {
+        const slugger = new Slugger()
+        const nextHeadingNodes: RenderMetadataNode[] = []
+
+        if (preparation?.source !== undefined && preparation.startOffset !== undefined) {
+            for (const heading of preparedHeadingNodes) {
+                const headingOffset = getSourceOffset(heading)
+                if (headingOffset === undefined || headingOffset >= preparation.startOffset) {
+                    continue
+                }
+
+                seedHeadingSlugger(heading, options, slugger)
+                nextHeadingNodes.push(heading)
+            }
+        }
+
+        assignHeadingIds(nodes, options, slugger, nextHeadingNodes, preparation?.startIndex ?? 0)
+        preparedHeadingNodes = nextHeadingNodes
     }
 
     return {
         prepareTokensForRender: (
             tokens: Token[] | TokensList | undefined,
             options: SvelteMarkdownOptions,
-            source?: string
+            preparation?: RenderPreparation
         ): Token[] | TokensList | undefined => {
             if (!tokens) return tokens
 
             const renderNodes = tokens as RenderMetadataNode[]
 
-            if (source !== undefined) {
-                assignSequentialSourceKeys(renderNodes, source)
+            if (preparation?.source !== undefined) {
+                assignSequentialSourceKeys(
+                    renderNodes,
+                    0,
+                    preparation.startIndex ?? 0,
+                    preparation.startOffset ?? 0
+                )
             } else {
                 assignRootFallbackKeys(renderNodes)
             }
 
-            assignHeadingIds(renderNodes, options, new Slugger())
+            assignPreparedHeadingIds(renderNodes, options, preparation)
 
             return tokens
         },
