@@ -72,6 +72,8 @@ function parseStats(s) {
         parseChunkAvgMs: num(grab('parseChunkAvgMs')),
         parseChunkP95Ms: num(grab('parseChunkP95Ms')),
         parseChunkPeakMs: num(grab('parseChunkPeakMs')),
+        headingCount: num(grab('headingCount')),
+        headingIdMismatches: num(grab('headingIdMismatches')),
         // Bursty-stream-only: inter-chunk gap distribution.
         streamGapAvgMs: num(grab('streamGapAvgMs')),
         streamGapP95Ms: num(grab('streamGapP95Ms')),
@@ -134,6 +136,12 @@ async function runStreamingBursty(page) {
     return runDocScenario(page, 'stream-bursty', { timeout: 120_000 })
 }
 
+async function runStreamingLarge(page) {
+    // Tight-loop ~50KB append stream. This catches accidental O(document)
+    // work per flush in the live Svelte render path.
+    return runDocScenario(page, 'stream-large', { timeout: 120_000 })
+}
+
 async function runAll(label, page) {
     console.log(`\n=== ${label} run ===`)
     const out = {}
@@ -170,6 +178,10 @@ async function runAll(label, page) {
     console.log('  → stream-bursty…')
     out.streamBursty = await runStreamingBursty(page)
     console.log('   ', JSON.stringify(out.streamBursty))
+
+    console.log('  → stream-large…')
+    out.streamLarge = await runStreamingLarge(page)
+    console.log('   ', JSON.stringify(out.streamLarge))
 
     return out
 }

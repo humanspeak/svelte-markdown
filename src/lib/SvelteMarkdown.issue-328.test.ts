@@ -12,6 +12,7 @@ import '@testing-library/jest-dom'
 import { act, render } from '@testing-library/svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
+import StableHeading from './test/issues/issue-328/StableHeading.svelte'
 import TrackedListItem from './test/issues/issue-328/TrackedListItem.svelte'
 import TrackedParagraph from './test/issues/issue-328/TrackedParagraph.svelte'
 import type { SvelteMarkdownProps } from './types.js'
@@ -70,6 +71,33 @@ const renderChunkedHeadingIds = async (chunks: string[]) => {
     }
 
     return headingIds(container)
+}
+
+const chunkSource = (source: string, chunkSize: number) => {
+    const chunks: string[] = []
+
+    for (let index = 0; index < source.length; index += chunkSize) {
+        chunks.push(source.slice(index, index + chunkSize))
+    }
+
+    return chunks
+}
+
+const buildLargeHeadingSource = (sections: number) => {
+    const out = ['# Intro\n\n']
+
+    for (let index = 0; index < sections; index++) {
+        out.push(`> # Intro\n\n`)
+        out.push(`## Details\n\n`)
+        out.push(`### Section ${index}\n\n`)
+        out.push(`Paragraph ${index} with [link ${index}](https://example.com/${index}).\n\n`)
+
+        if (index % 5 === 0) {
+            out.push(`#### Details\n\n`)
+        }
+    }
+
+    return out.join('')
 }
 
 const textToken = (text: string): Token =>
@@ -212,6 +240,47 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(container.querySelector('h1')).toHaveAttribute('id', 'user-content-intro')
     })
 
+    test('passes stable precomputed ids to custom heading renderers during streaming reparses', async () => {
+        const initialSource = '# Intro\n\nSee [docs][ref]'
+        const nextSource = `${initialSource}\n\n[ref]: https://example.com`
+
+        const { container, rerender } = render(SvelteMarkdown, {
+            props: {
+                source: initialSource,
+                streaming: true,
+                options: {
+                    headerPrefix: 'user-content-'
+                },
+                renderers: {
+                    heading: StableHeading
+                } satisfies Partial<Renderers>
+            }
+        })
+        await flushStreamingBatch()
+
+        expect(container.querySelector('[data-stable-heading-id]')).toHaveAttribute(
+            'data-stable-heading-id',
+            'user-content-intro'
+        )
+
+        await rerender({
+            source: nextSource,
+            streaming: true,
+            options: {
+                headerPrefix: 'user-content-'
+            },
+            renderers: {
+                heading: StableHeading
+            } satisfies Partial<Renderers>
+        })
+        await flushStreamingBatch()
+
+        expect(container.querySelector('[data-stable-heading-id]')).toHaveAttribute(
+            'data-stable-heading-id',
+            'user-content-intro'
+        )
+    })
+
     test('does not emit ids when headerIds is false during streaming reparses', async () => {
         const initialSource = '# Intro\n\nSee [docs][ref]'
         const nextSource = `${initialSource}\n\n[ref]: https://example.com`
@@ -254,6 +323,23 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(singleFlushIds).toEqual(staticIds)
         expect(splitFlushIds).toEqual(staticIds)
     })
+
+    test('matches static heading ids for a large streamed document', async () => {
+        const source = buildLargeHeadingSource(64)
+        const staticIds = await renderStaticHeadingIds(source)
+        const streamedIds = await renderChunkedHeadingIds(chunkSource(source, 137))
+
+        expect(staticIds.length).toBeGreaterThan(200)
+        expect(staticIds.slice(0, 5)).toEqual([
+            'intro',
+            'intro-1',
+            'details',
+            'section-0',
+            'details-1'
+        ])
+        expect(new Set(streamedIds).size).toBe(streamedIds.length)
+        expect(streamedIds).toEqual(staticIds)
+    }, 15_000)
 
     test('dedupes nested and top-level headings in document order after a streaming reparse', async () => {
         const initialSource = '> # Intro\n\n# Intro\n\nSee [docs][ref]'

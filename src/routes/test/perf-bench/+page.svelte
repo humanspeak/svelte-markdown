@@ -1,11 +1,16 @@
 <script lang="ts">
     import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
-    import type { HtmlSnippetProps, ParagraphSnippetProps, TextSnippetProps } from '$lib/types.js'
+    import type {
+        HtmlSnippetProps,
+        ParagraphSnippetProps,
+        StreamingChunk,
+        TextSnippetProps
+    } from '$lib/types.js'
+    import { Lexer, Slugger, type Token } from '$lib/utils/markdown-parser.js'
     import { parseAndCacheTokens } from '$lib/utils/parse-and-cache.js'
     import { benchmarkAppendStream } from '$lib/utils/stream-benchmark.js'
     import { hashString, tokenCache } from '$lib/utils/token-cache.js'
     import { shrinkHtmlTokens } from '$lib/utils/token-cleanup.js'
-    import { Lexer } from 'marked'
     import { onMount, tick } from 'svelte'
 
     /**
@@ -26,6 +31,20 @@
         __svmParserCount?: number
         __svmParserByType?: Record<string, number>
     }
+
+    interface ImperativeMarkdownHandle {
+        writeChunk: (_chunk: StreamingChunk) => void
+        resetStream: (_nextSource?: string) => void
+    }
+
+    type HeadingBenchNode = Token & {
+        text?: string
+        tokens?: HeadingBenchNode[]
+        items?: HeadingBenchNode[]
+        header?: HeadingBenchNode[]
+        rows?: HeadingBenchNode[][]
+    }
+
     const svmWindow = (): SVMWindow | undefined =>
         typeof window === 'undefined' ? undefined : (window as SVMWindow)
 
@@ -241,6 +260,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
 
     let source = $state('')
     let previewEl: HTMLDivElement | undefined = $state()
+    let markdown: ImperativeMarkdownHandle | undefined = $state()
     let scenario = $state<string>('idle')
 
     let stat = $state({
@@ -287,6 +307,8 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         parseChunkAvgMs: 0,
         parseChunkP95Ms: 0,
         parseChunkPeakMs: 0,
+        headingCount: 0,
+        headingIdMismatches: 0,
         // streaming jitter shape (only populated by the bursty stream
         // scenario): wall-clock distribution of inter-chunk gaps.
         streamGapAvgMs: 0,
@@ -339,6 +361,50 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         return Math.round(n * m) / m
     }
 
+    const asHeadingBenchNodes = (value: unknown): HeadingBenchNode[] =>
+        Array.isArray(value) ? (value as HeadingBenchNode[]) : []
+
+    const collectExpectedHeadingIds = (tokens: Token[], headerPrefix = '') => {
+        const slugger = new Slugger()
+        const ids: string[] = []
+
+        const visit = (nodes: HeadingBenchNode[]) => {
+            for (const node of nodes) {
+                if (node.type === 'heading' && typeof node.text === 'string') {
+                    ids.push(`${headerPrefix}${slugger.slug(node.text)}`)
+                }
+
+                visit(asHeadingBenchNodes(node.tokens))
+                visit(asHeadingBenchNodes(node.items))
+                visit(asHeadingBenchNodes(node.header))
+
+                for (const row of asHeadingBenchNodes(node.rows)) {
+                    visit(asHeadingBenchNodes(row))
+                }
+            }
+        }
+
+        visit(tokens as HeadingBenchNode[])
+        return ids
+    }
+
+    const getRenderedHeadingIds = () =>
+        Array.from(previewEl?.querySelectorAll('h1,h2,h3,h4,h5,h6') ?? [], (heading) => heading.id)
+
+    const countHeadingIdMismatches = (actual: string[], expected: string[]) => {
+        let mismatches = Math.abs(actual.length - expected.length)
+        const sharedLength = Math.min(actual.length, expected.length)
+
+        for (let index = 0; index < sharedLength; index++) {
+            if (actual[index] !== expected[index]) mismatches++
+        }
+
+        return mismatches
+    }
+
+    const waitForAnimationFrame = (): Promise<void> =>
+        new Promise((resolve) => requestAnimationFrame(() => resolve()))
+
     const resetStat = () => {
         stat = {
             srcKb: 0,
@@ -370,6 +436,8 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             parseChunkAvgMs: 0,
             parseChunkP95Ms: 0,
             parseChunkPeakMs: 0,
+            headingCount: 0,
+            headingIdMismatches: 0,
             streamGapAvgMs: 0,
             streamGapP95Ms: 0,
             streamGapPeakMs: 0
@@ -769,6 +837,78 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         scenario = 'stream-bursty-done'
     }
 
+    /**
+     * Large imperative append stream. This exercises the public writeChunk()
+     * path on a realistic document and verifies the final streamed heading IDs
+     * match a static token walk of the same source.
+     */
+    const runStreamingLarge = async () => {
+        if (isStreaming) return
+        scenario = 'stream-large'
+        resetStat()
+        useOverrides = false
+        source = ''
+        tokenCache.clearAllTokens()
+        isStreaming = true
+        await tick()
+        if (!markdown) {
+            throw new Error('stream-large could not bind the SvelteMarkdown instance')
+        }
+        markdown.resetStream()
+
+        const corpus = generateRealistic(120)
+        const chunks: string[] = []
+        const chunkSize = 512
+        for (let index = 0; index < corpus.length; index += chunkSize) {
+            chunks.push(corpus.slice(index, index + chunkSize))
+        }
+
+        const opts = { gfm: true, breaks: false, headerIds: true, headerPrefix: '' }
+        const bench = benchmarkAppendStream(chunks, opts)
+        const expectedHeadingIds = collectExpectedHeadingIds(new Lexer(opts).lex(corpus), '')
+        const renderDurations: number[] = []
+
+        const startWall = performance.now()
+        for (const chunk of chunks) {
+            if (!isStreaming) break
+            const t0 = performance.now()
+            markdown.writeChunk(chunk)
+            await waitForAnimationFrame()
+            await tick()
+            if (!isStreaming) break
+            renderDurations.push(performance.now() - t0)
+        }
+        const wallMs = performance.now() - startWall
+        isStreaming = false
+        const actualHeadingIds = getRenderedHeadingIds()
+        const headingIdMismatches = countHeadingIdMismatches(actualHeadingIds, expectedHeadingIds)
+        if (headingIdMismatches > 0) {
+            console.error('stream-large heading id mismatch', {
+                expected: expectedHeadingIds.slice(0, 10),
+                actual: actualHeadingIds.slice(0, 10),
+                headingIdMismatches
+            })
+        }
+
+        const renderTotal = renderDurations.reduce((sum, duration) => sum + duration, 0)
+        stat = {
+            ...stat,
+            srcKb: round(corpus.length / 1024, 1),
+            streamChunks: chunks.length,
+            streamTotalMs: round(renderTotal),
+            streamAvgMs: round(renderTotal / chunks.length, 3),
+            streamP95Ms: round(percentile(renderDurations, 0.95), 3),
+            streamPeakMs: round(Math.max(...renderDurations), 3),
+            chunksPerSec: round((chunks.length / wallMs) * 1000, 1),
+            parseChunkAvgMs: round(bench.totalParseMs / bench.chunkCount, 3),
+            parseChunkP95Ms: round(bench.p95ParseMs, 3),
+            parseChunkPeakMs: round(bench.peakParseMs, 3),
+            headingCount: expectedHeadingIds.length,
+            headingIdMismatches
+        }
+        scenario = 'stream-large-done'
+    }
+
     const clear = () => {
         if (streamHandle !== null) {
             clearTimeout(streamHandle)
@@ -991,6 +1131,13 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         >
             {isStreaming ? 'Streaming…' : 'Stream bursty'}
         </button>
+        <button
+            data-testid="stream-large"
+            onclick={() => runStreamingLarge()}
+            disabled={isStreaming}
+        >
+            {isStreaming ? 'Streaming…' : 'Stream large'}
+        </button>
         <button data-testid="clear" onclick={clear}>Clear</button>
     </div>
 
@@ -1004,8 +1151,9 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         cachePeakMs={stat.cachePeakMs} · streamChunks={stat.streamChunks} streamTotalMs={stat.streamTotalMs}
         streamAvgMs={stat.streamAvgMs} streamP95Ms={stat.streamP95Ms} streamPeakMs={stat.streamPeakMs}
         chunksPerSec={stat.chunksPerSec} parseChunkAvgMs={stat.parseChunkAvgMs} parseChunkP95Ms={stat.parseChunkP95Ms}
-        parseChunkPeakMs={stat.parseChunkPeakMs} streamGapAvgMs={stat.streamGapAvgMs} streamGapP95Ms={stat.streamGapP95Ms}
-        streamGapPeakMs={stat.streamGapPeakMs} · longestTaskMs={longTaskSupported
+        parseChunkPeakMs={stat.parseChunkPeakMs} headingCount={stat.headingCount}
+        headingIdMismatches={stat.headingIdMismatches} streamGapAvgMs={stat.streamGapAvgMs}
+        streamGapP95Ms={stat.streamGapP95Ms} streamGapPeakMs={stat.streamGapPeakMs} · longestTaskMs={longTaskSupported
             ? displayLongestTaskMs
             : 'n/a'}
         longTasks10s={longTaskSupported ? displayLongTaskCount : 'n/a'} rafP95Ms={displayRafP95Ms}
@@ -1039,6 +1187,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
                 fast-path benchmarks would miss.
             -->
             <SvelteMarkdown
+                bind:this={markdown}
                 {source}
                 streaming={isStreaming}
                 paragraph={overrideParagraphSnippet}
@@ -1046,7 +1195,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
                 html_div={overrideHtmlDivSnippet}
             />
         {:else}
-            <SvelteMarkdown {source} streaming={isStreaming} />
+            <SvelteMarkdown bind:this={markdown} {source} streaming={isStreaming} />
         {/if}
     </div>
 </div>
