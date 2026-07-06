@@ -446,6 +446,45 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(mounted.filter((entry) => entry.text === 'Intro paragraph')).toHaveLength(1)
     })
 
+    test('keeps a stable root token mounted when a sibling is inserted before it', async () => {
+        const stableParagraph = paragraphToken('More')
+        const insertedParagraph = paragraphToken('Inserted')
+        const mounted: Array<{ text: string | undefined; element: HTMLParagraphElement }> = []
+        const destroyed: Array<{ text: string | undefined; element: HTMLParagraphElement }> = []
+
+        const props = {
+            source: [stableParagraph],
+            renderers: {
+                paragraph: TrackedParagraph
+            } satisfies Partial<Renderers>,
+            onParagraphMount: (text: string | undefined, element: HTMLParagraphElement) => {
+                mounted.push({ text, element })
+            },
+            onParagraphDestroy: (text: string | undefined, element: HTMLParagraphElement) => {
+                destroyed.push({ text, element })
+            }
+        } satisfies SvelteMarkdownProps & {
+            onParagraphMount: (text: string | undefined, element: HTMLParagraphElement) => void
+            onParagraphDestroy: (text: string | undefined, element: HTMLParagraphElement) => void
+        }
+
+        const { container, rerender } = render(SvelteMarkdown, { props })
+        const paragraphBefore = container.querySelector('[data-tracked-paragraph="More"]')
+
+        expect(paragraphBefore).toBeInstanceOf(HTMLParagraphElement)
+
+        await rerender({
+            ...props,
+            source: [insertedParagraph, stableParagraph]
+        })
+
+        const paragraphAfter = container.querySelector('[data-tracked-paragraph="More"]')
+        expect(container.querySelector('p')?.textContent).toBe('Inserted')
+        expect(paragraphAfter).toBe(paragraphBefore)
+        expect(destroyed.some((entry) => entry.text === 'More')).toBe(false)
+        expect(mounted.filter((entry) => entry.text === 'More')).toHaveLength(1)
+    })
+
     test('keeps a downstream paragraph mounted when an earlier token split preserves its source offset', async () => {
         const initialSource = 'Intro\n-  \n\nMore'
         const nextSource = 'Intro\n- T\n\nMore'

@@ -14,8 +14,11 @@ import Slugger from 'github-slugger'
  * Source-backed renders use source offsets for keys. Append-only streaming can
  * skip the stable top-level prefix by passing the parser's `divergeAt` and
  * `divergeOffset`; reused-prefix tokens already have WeakMap keys from the
- * previous render pass. Pre-parsed token arrays have no source, so root tokens
- * use a root-slot fallback while nested tokens fall through to object identity.
+ * previous render pass. Pre-parsed token arrays have no source offsets, so
+ * root tokens use object-based fallback keys. If a caller recreates a root
+ * wrapper while reusing nested token objects, the wrapper inherits its prior
+ * key from that nested identity; otherwise root and nested tokens both fall
+ * through to object identity.
  *
  * Heading ids are recomputed in document order every pass because duplicate
  * heading slugs are global across nesting boundaries. That walk is intentional:
@@ -31,6 +34,12 @@ type RenderMetadataNode = Record<string, unknown> & {
     items?: unknown
     header?: unknown
     rows?: unknown
+}
+
+interface SourceLessRootRecord {
+    key: unknown
+    identities: Set<object>
+    type?: string
 }
 
 export interface RenderPreparation {
@@ -70,6 +79,7 @@ export const createRenderMetadata = (): RenderMetadata => {
     const renderKeys = new WeakMap<object, unknown>()
     const headingIds = new WeakMap<object, string | undefined>()
     let preparedHeadingNodes: RenderMetadataNode[] = []
+    let previousSourceLessRoots: SourceLessRootRecord[] = []
 
     const setRenderKey = (node: object, value: unknown) => {
         renderKeys.set(node, value)
@@ -121,15 +131,93 @@ export const createRenderMetadata = (): RenderMetadata => {
         }
     }
 
-    const assignRootFallbackKeys = (nodes: RenderMetadataNode[] | undefined) => {
-        if (!nodes) return
+    const collectSourceLessIdentities = (value: unknown, identities = new Set<object>()) => {
+        if (typeof value !== 'object' || value === null) return identities
 
-        for (let index = 0; index < nodes.length; index++) {
-            const node = nodes[index]
-            if (getRenderKey(node) === undefined) {
-                setRenderKey(node, `root:${index}:${node.type ?? 'token'}`)
+        identities.add(value)
+
+        if (Array.isArray(value)) {
+            for (const item of value) {
+                collectSourceLessIdentities(item, identities)
+            }
+            return identities
+        }
+
+        const node = value as RenderMetadataNode
+        collectSourceLessIdentities(node.tokens, identities)
+        collectSourceLessIdentities(node.items, identities)
+        collectSourceLessIdentities(node.header, identities)
+        collectSourceLessIdentities(node.rows, identities)
+
+        return identities
+    }
+
+    const countIdentityOverlap = (a: Set<object>, b: Set<object>) => {
+        let count = 0
+        const [smaller, larger] = a.size <= b.size ? [a, b] : [b, a]
+
+        for (const identity of smaller) {
+            if (larger.has(identity)) count++
+        }
+
+        return count
+    }
+
+    const findPreviousSourceLessRoot = (
+        node: RenderMetadataNode,
+        identities: Set<object>,
+        usedPreviousRoots: Set<number>
+    ) => {
+        let bestIndex = -1
+        let bestScore = 0
+
+        for (let index = 0; index < previousSourceLessRoots.length; index++) {
+            if (usedPreviousRoots.has(index)) continue
+
+            const previous = previousSourceLessRoots[index]
+            if (previous.type !== node.type) continue
+
+            const score = countIdentityOverlap(identities, previous.identities)
+            if (score > bestScore) {
+                bestIndex = index
+                bestScore = score
             }
         }
+
+        return bestIndex === -1
+            ? undefined
+            : { index: bestIndex, record: previousSourceLessRoots[bestIndex] }
+    }
+
+    const assignSourceLessRootKeys = (nodes: RenderMetadataNode[] | undefined) => {
+        if (!nodes) {
+            previousSourceLessRoots = []
+            return
+        }
+
+        const nextRoots: SourceLessRootRecord[] = []
+        const usedPreviousRoots = new Set<number>()
+
+        for (const node of nodes) {
+            const identities = collectSourceLessIdentities(node)
+            const existingKey = getRenderKey(node)
+            const previous =
+                existingKey === undefined
+                    ? findPreviousSourceLessRoot(node, identities, usedPreviousRoots)
+                    : undefined
+            const key = existingKey ?? previous?.record.key ?? node
+
+            if (previous) usedPreviousRoots.add(previous.index)
+            if (existingKey === undefined) setRenderKey(node, key)
+
+            nextRoots.push({
+                key,
+                identities,
+                type: node.type
+            })
+        }
+
+        previousSourceLessRoots = nextRoots
     }
 
     const assignSourceKeysToChildren = (node: RenderMetadataNode, absoluteOffset: number) => {
@@ -216,6 +304,7 @@ export const createRenderMetadata = (): RenderMetadata => {
             const renderNodes = tokens as RenderMetadataNode[]
 
             if (preparation?.source !== undefined) {
+                previousSourceLessRoots = []
                 assignSequentialSourceKeys(
                     renderNodes,
                     0,
@@ -223,7 +312,7 @@ export const createRenderMetadata = (): RenderMetadata => {
                     preparation.startOffset ?? 0
                 )
             } else {
-                assignRootFallbackKeys(renderNodes)
+                assignSourceLessRootKeys(renderNodes)
             }
 
             assignPreparedHeadingIds(renderNodes, options, preparation)
