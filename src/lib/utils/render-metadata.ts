@@ -75,6 +75,30 @@ const getNodeSourceLength = (node: RenderMetadataNode) => {
     return getNodeSpanText(node).length
 }
 
+/**
+ * Creates a per-`SvelteMarkdown`-instance render metadata helper. State
+ * (render keys, precomputed heading ids, source offsets, and cross-pass
+ * bookkeeping) is captured in the returned closure via WeakMaps keyed by token
+ * objects, so each component instance gets isolated metadata and caller token
+ * arrays are never mutated. See the module overview above for the keying and
+ * heading-id strategy.
+ *
+ * @returns A {@link RenderMetadata} whose methods precompute per-pass metadata
+ *   (`prepareTokensForRender`) and read it back during render
+ *   (`getPreparedHeadingId`, `getStableNodeKey`, `getStableRowKey`).
+ * @example
+ * ```ts
+ * const metadata = createRenderMetadata()
+ * // Streaming append: skip the stable prefix via the parser's diverge point.
+ * const tokens = metadata.prepareTokensForRender(rawTokens, options, {
+ *     source,
+ *     startIndex,
+ *     startOffset
+ * })
+ * const key = metadata.getStableNodeKey(tokens?.[0], 0)
+ * const id = metadata.getPreparedHeadingId(tokens?.[0])
+ * ```
+ */
 export const createRenderMetadata = (): RenderMetadata => {
     const renderKeys = new WeakMap<object, unknown>()
     const headingIds = new WeakMap<object, string | undefined>()
