@@ -21,6 +21,13 @@
         'track',
         'wbr'
     ])
+
+    /**
+     * Shared empty prop bag spread into non-heading dispatch. Hoisted so the
+     * common (non-heading) branch reuses one frozen object instead of
+     * allocating a fresh `{}` per dispatched token.
+     */
+    const NO_EXTRA_PROPS = Object.freeze({})
 </script>
 
 <script lang="ts">
@@ -71,8 +78,10 @@
      *
      */
 
+    import { getContext, hasContext, setContext } from 'svelte'
     import Parser from '$lib/Parser.svelte'
     import Html from '$lib/renderers/html/index.js'
+    import type { AnySnippet } from '$lib/utils/component-props.js'
     import {
         defaultRenderers,
         type Renderers,
@@ -87,9 +96,11 @@
         type SanitizeAttributesFn,
         type SanitizeUrlFn
     } from '$lib/utils/sanitize.js'
-
-    // trunk-ignore(eslint/@typescript-eslint/no-explicit-any)
-    type AnySnippet = (..._args: any[]) => any
+    import {
+        createRenderMetadata,
+        RENDER_METADATA_CONTEXT,
+        type RenderMetadata
+    } from '$lib/utils/render-metadata.js'
 
     interface Props<T extends Renderers = Renderers> {
         type?: string
@@ -119,6 +130,15 @@
     }: Props & {
         [key: string]: unknown
     } = $props()
+
+    const hasRenderMetadataContext = hasContext(RENDER_METADATA_CONTEXT)
+    const renderMetadata = hasRenderMetadataContext
+        ? getContext<RenderMetadata>(RENDER_METADATA_CONTEXT)
+        : createRenderMetadata()
+
+    if (!hasRenderMetadataContext) {
+        setContext(RENDER_METADATA_CONTEXT, renderMetadata)
+    }
 
     /**
      * Dev-only Parser-instance counter. Exposed via `window.__svmParserCount`
@@ -221,16 +241,25 @@
         {:else}
             <svelte:element this={htmlTok.tag} {...sanitizedAttrs}>
                 {#if htmlTok.tokens && htmlTok.tokens.length}
-                    {#each htmlTok.tokens as childToken, i (i)}
+                    {#each htmlTok.tokens as childToken, i (renderMetadata.getStableNodeKey(childToken, i))}
                         {@render dispatch(childToken, restProps)}
                     {/each}
                 {/if}
             </svelte:element>
         {/if}
     {:else}
+        {@const headingIdProps =
+            token.type === 'heading'
+                ? {
+                      id:
+                          renderMetadata.getPreparedHeadingId(token) ??
+                          (token as { id?: string }).id
+                  }
+                : NO_EXTRA_PROPS}
         <Parser
             {...restProps}
             {...token}
+            {...headingIdProps}
             {renderers}
             {snippetOverrides}
             {htmlSnippetOverrides}
@@ -243,7 +272,7 @@
 {#if !type}
     {#if tokens}
         {@const { text: _text, raw: _raw, tokens: _tokens, ...parserRest } = rest}
-        {#each tokens as token, index (index)}
+        {#each tokens as token, index (renderMetadata.getStableNodeKey(token, index))}
             {@render dispatch(token, parserRest)}
         {/each}
     {/if}
@@ -260,10 +289,10 @@
                 {#if renderers.tablehead}
                     {#snippet theadContent()}
                         {#snippet headerRowContent()}
-                            {#each header ?? [] as headerItem, i (i)}
+                            {#each header ?? [] as headerItem, i (renderMetadata.getStableNodeKey(headerItem, i))}
                                 {@const { align: _align, ...cellRest } = sanitizedRest}
                                 {#snippet headerCellContent()}
-                                    {#each headerItem.tokens ?? [] as headerCellToken, k (k)}
+                                    {#each headerItem.tokens ?? [] as headerCellToken, k (renderMetadata.getStableNodeKey(headerCellToken, k))}
                                         {@render dispatch(headerCellToken, {})}
                                     {/each}
                                 {/snippet}
@@ -306,12 +335,12 @@
                 {/if}
                 {#if renderers.tablebody}
                     {#snippet tbodyContent()}
-                        {#each rows ?? [] as row, i (i)}
+                        {#each rows ?? [] as row, i (renderMetadata.getStableRowKey(row, i))}
                             {#snippet bodyRowContent()}
-                                {#each row ?? [] as cells, j (j)}
+                                {#each row ?? [] as cells, j (renderMetadata.getStableNodeKey(cells, j))}
                                     {@const { align: _align, ...cellRest } = sanitizedRest}
                                     {#snippet bodyCellContent()}
-                                        {#each cells.tokens ?? [] as cellToken, index (index)}
+                                        {#each cells.tokens ?? [] as cellToken, index (renderMetadata.getStableNodeKey(cellToken, index))}
                                             {@render dispatch(cellToken, cellRest)}
                                         {/each}
                                     {/snippet}
@@ -372,12 +401,12 @@
             {#snippet orderedListContent()}
                 {@const { items: _items, ...parserRest } = sanitizedRest}
                 {@const items = (_items as Props[] | undefined) ?? []}
-                {#each items as item, index (index)}
+                {#each items as item, index (renderMetadata.getStableNodeKey(item, index))}
                     {@const OrderedListComponent = renderers.orderedlistitem || renderers.listitem}
                     {@const orderedItemSnippet =
                         snippetOverrides['orderedlistitem'] || snippetOverrides['listitem']}
                     {#snippet orderedItemContent()}
-                        {#each item.tokens ?? [] as itemToken, k (k)}
+                        {#each item.tokens ?? [] as itemToken, k (renderMetadata.getStableNodeKey(itemToken, k))}
                             {@render dispatch(itemToken, parserRest)}
                         {/each}
                     {/snippet}
@@ -401,13 +430,13 @@
             {#snippet unorderedListContent()}
                 {@const { items: _items, ...parserRest } = sanitizedRest}
                 {@const items = (_items as Props[] | undefined) ?? []}
-                {#each items as item, index (index)}
+                {#each items as item, index (renderMetadata.getStableNodeKey(item, index))}
                     {@const UnorderedListComponent =
                         renderers.unorderedlistitem || renderers.listitem}
                     {@const unorderedItemSnippet =
                         snippetOverrides['unorderedlistitem'] || snippetOverrides['listitem']}
                     {#snippet unorderedItemContent()}
-                        {#each item.tokens ?? [] as itemToken, k (k)}
+                        {#each item.tokens ?? [] as itemToken, k (renderMetadata.getStableNodeKey(itemToken, k))}
                             {@render dispatch(itemToken, parserRest)}
                         {/each}
                     {/snippet}
@@ -438,7 +467,7 @@
         {#if htmlSnippet}
             {#snippet htmlSnippetChildren()}
                 {#if tokens && (tokens as Token[]).length}
-                    {#each tokens as childToken, index (index)}
+                    {#each tokens as childToken, index (renderMetadata.getStableNodeKey(childToken, index))}
                         {@render dispatch(childToken, localRestForChildren)}
                     {/each}
                 {:else}
@@ -454,7 +483,7 @@
             {#if HtmlComponent}
                 <HtmlComponent {...sanitizedRest}>
                     {#if tokens && (tokens as Token[]).length}
-                        {#each tokens as childToken, index (index)}
+                        {#each tokens as childToken, index (renderMetadata.getStableNodeKey(childToken, index))}
                             {@render dispatch(childToken, localRestForChildren)}
                         {/each}
                     {:else}
@@ -467,7 +496,7 @@
                 Object.entries(localRest).filter(([key]) => key !== 'tokens')
             )}
             {@const fallbackTokens = (tokens as Token[]) ?? ([] as Token[])}
-            {#each fallbackTokens as fallbackToken, index (index)}
+            {#each fallbackTokens as fallbackToken, index (renderMetadata.getStableNodeKey(fallbackToken, index))}
                 {@render dispatch(fallbackToken, fallbackRest)}
             {/each}
         {/if}
@@ -478,7 +507,7 @@
         {#snippet renderChildren()}
             {#if tokens}
                 {@const { text: _text, raw: _raw, ...parserRest } = sanitizedRest}
-                {#each tokens as childToken, index (index)}
+                {#each tokens as childToken, index (renderMetadata.getStableNodeKey(childToken, index))}
                     {@render dispatch(childToken, parserRest)}
                 {/each}
             {:else}

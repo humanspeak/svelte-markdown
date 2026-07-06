@@ -8,6 +8,7 @@ heading text via `github-slugger`, optionally prefixed by `options.headerPrefix`
 @prop {number} depth - Heading level (1–6).
 @prop {string} raw - Original markdown source of the heading line.
 @prop {string} text - Plain-text content used for slug generation.
+@prop {string} [id] - Precomputed heading id for the current render pass.
 @prop {SvelteMarkdownOptions} options - Parser options (controls ID generation).
 @prop {(val: string) => string} slug - Slugger function for generating heading IDs.
 @prop {Snippet} [children] - Rendered inline content of the heading.
@@ -20,14 +21,25 @@ heading text via `github-slugger`, optionally prefixed by `options.headerPrefix`
         depth: number
         raw: string
         text: string
+        id?: string
         options: SvelteMarkdownOptions
-        slug: (val: string) => string // trunk-ignore(eslint/no-unused-vars)
+        slug: (_val: string) => string
         children?: Snippet
     }
 
-    const { depth, raw, text, options, slug, children }: Props = $props()
+    const {
+        depth,
+        raw,
+        text,
+        id: precomputedId = undefined,
+        options,
+        slug,
+        children
+    }: Props = $props()
 
-    const id = $derived(options.headerIds ? options.headerPrefix + slug(text) : undefined)
+    const id = $derived(
+        options.headerIds ? (precomputedId ?? `${options.headerPrefix}${slug(text)}`) : undefined
+    )
 </script>
 
 {#if depth === 1}

@@ -1,7 +1,8 @@
 import { defaultRenderers } from '$lib/utils/markdown-parser.js'
 import { rendererKeysInternal } from '$lib/utils/rendererKeys.js'
+import type { Snippet } from 'svelte'
 
-type AnySnippet = (..._args: unknown[]) => unknown
+export type AnySnippet = Snippet<[Record<string, unknown>]>
 
 type RestProps = Record<string, unknown>
 

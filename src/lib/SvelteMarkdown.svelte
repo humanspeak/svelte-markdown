@@ -23,6 +23,7 @@
  @property {function} [parsed] - Callback function called with the parsed tokens
 -->
 <script lang="ts">
+    import { setContext } from 'svelte'
     /**
      * Component Evolution & Design Notes:
      *
@@ -70,6 +71,7 @@
     import { IncrementalParser } from '$lib/utils/incremental-parser.js'
     import { Slugger, type Token, type TokensList } from '$lib/utils/markdown-parser.js'
     import { parseAndCacheTokens, parseAndCacheTokensAsync } from '$lib/utils/parse-and-cache.js'
+    import { createRenderMetadata, RENDER_METADATA_CONTEXT } from '$lib/utils/render-metadata.js'
     import { defaultSanitizeAttributes, defaultSanitizeUrl } from '$lib/utils/sanitize.js'
     import { isStreamingOffsetChunk } from '$lib/utils/streaming.js'
     import { reuseStableStreamingTokens } from '$lib/utils/streaming-token-reuse.js'
@@ -99,6 +101,9 @@
     const extensionTokenNames = $derived(getExtensionTokenNames(extensions))
     const combinedOptions = $derived(buildParserOptions(options, extensions))
     const slugger = new Slugger()
+    const renderMetadata = createRenderMetadata()
+
+    setContext(RENDER_METADATA_CONTEXT, renderMetadata)
 
     // Detect if any extension requires async processing
     const hasAsyncExtension = $derived(getHasAsyncExtension(extensions))
@@ -113,6 +118,8 @@
     let streamFlushHandle: StreamFlushHandle = null
     let streamInputMode: 'append' | 'offset' | null = null
     let streamTokens = $state<Token[]>([])
+    let streamRenderMetadataStartIndex = 0
+    let streamRenderMetadataStartOffset = 0
 
     const warnStreaming = (message: string) => {
         console.warn(`[svelte-markdown] ${message}`)
@@ -149,7 +156,7 @@
         const parser = incrementalParser
         if (!parser) return
 
-        const { tokens: newTokens, divergeAt, canReuse } = parser.update(nextSource)
+        const { tokens: newTokens, divergeAt, divergeOffset, canReuse } = parser.update(nextSource)
 
         // Replace the array reference rather than mutating per-index +
         // length. Under Svelte 5's reactive proxy, shrinking the array
@@ -164,6 +171,9 @@
         streamTokens = canReuse
             ? reuseStableStreamingTokens(streamTokens, newTokens, divergeAt)
             : newTokens
+        const canSkipRenderMetadataPrefix = canReuse && divergeOffset !== undefined
+        streamRenderMetadataStartIndex = canSkipRenderMetadataPrefix ? divergeAt : 0
+        streamRenderMetadataStartOffset = canSkipRenderMetadataPrefix ? divergeOffset : 0
     }
 
     const commitPendingAppendBuffer = () => {
@@ -207,6 +217,8 @@
         pendingStreamAppendBuffer = ''
         streamInputMode = null
         streamSourceBuffer = ''
+        streamRenderMetadataStartIndex = 0
+        streamRenderMetadataStartOffset = 0
     }
 
     const resetStreamingState = (nextSource = '') => {
@@ -459,13 +471,43 @@
     })
 
     // Unified tokens: streaming > sync > async
-    const tokens = $derived(
+    const rawTokens = $derived(
         streaming && !hasAsyncExtension
             ? streamTokens
             : hasAsyncExtension
               ? asyncTokens
               : syncTokens
     )
+
+    const tokens = $derived.by(() => {
+        if (!rawTokens) return rawTokens
+
+        // This derived intentionally prepares WeakMap metadata before Parser
+        // renders. An $effect would run too late: keyed each blocks and
+        // heading props need the metadata during this render pass.
+        const sourceForMetadata = Array.isArray(source)
+            ? undefined
+            : streaming && !hasAsyncExtension
+              ? streamSourceBuffer
+              : (source as string)
+
+        // In streaming mode, streamSourceBuffer is a plain let that changes
+        // in lockstep with streamTokens inside applyStreamingSource(). This
+        // derived is invalidated by rawTokens; the buffer read relies on that
+        // coupling so metadata sees the same source that produced the tokens.
+        const streamingStart =
+            streaming && !hasAsyncExtension
+                ? {
+                      startIndex: streamRenderMetadataStartIndex,
+                      startOffset: streamRenderMetadataStartOffset
+                  }
+                : {}
+
+        return renderMetadata.prepareTokensForRender(rawTokens, combinedOptions, {
+            source: sourceForMetadata,
+            ...streamingStart
+        })
+    })
 
     $effect(() => {
         if (!tokens) return
