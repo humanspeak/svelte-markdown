@@ -6,9 +6,21 @@
 > done, update this plan's status row in
 > `.agents/.plans/streaming-component-hardening/README.md`.
 >
-> **Drift check (run first)**: `git diff --stat 939f154..HEAD -- src/lib/utils/token-cleanup.ts`
+> **Drift check (run first)**: `git diff --stat 256a49f..HEAD -- src/lib/utils/token-cleanup.ts`
 > If it changed, compare the "Current state" excerpts against the live code; on
 > a mismatch, treat it as a STOP condition.
+>
+> **Revision 2026-07-07 (guard)**: The identity-preservation cleanup work (Steps
+> 1–3) is implemented and verified at the token-cleanup layer. Amendment adds
+> Step 4 + a Done criterion requiring an **end-to-end remount assertion**: the
+> plan's stated intent is "unchanged rows/items keep their DOM," but the original
+> Done criteria only assert object identity at the cleanup layer and never
+> exercise the DOM consequence. Identity is keyed to the DOM via
+> `getStableNodeKey` (`render-metadata.ts:116`, which returns the token object
+> itself as the Svelte `{#each}` key) — so a fresh object = a new key = a
+> destroy/recreate of that item's subtree, losing focus/scroll/selection/
+> transition/media state. That effect must be proven, not assumed. `Planned at`
+> re-stamped `939f154` → `256a49f` (source byte-identical between them).
 
 ## Status
 
@@ -17,7 +29,7 @@
 - **Risk**: MED
 - **Depends on**: none (but coordinates with 011 — see Maintenance notes)
 - **Category**: perf
-- **Planned at**: commit `939f154`, 2026-07-07
+- **Planned at**: commit `256a49f`, 2026-07-07 (re-stamped from `939f154` on amend; source unchanged)
 
 ## Why this matters
 
@@ -133,6 +145,7 @@ keeps all existing `token-cleanup` tests green.
 | Cleanup   | `pnpm test:only src/lib/utils/token-cleanup.test.ts`                                                  | all pass            |
 | Streaming | `pnpm test:only src/lib/utils/streaming-token-reuse.test.ts src/lib/utils/incremental-parser.test.ts` | all pass            |
 | All unit  | `pnpm test:only`                                                                                      | all pass            |
+| Remount   | run the file holding the new remount assertion (Step 4)                                               | all pass            |
 | Lint      | `trunk fmt && trunk check`                                                                            | exit 0              |
 
 ## Scope
@@ -142,6 +155,12 @@ keeps all existing `token-cleanup` tests green.
 - `src/lib/utils/token-cleanup.ts` — the list/table branches of `shrinkHtmlTokens`
   (and a small `tokensShallowEqual` helper if Strategy A).
 - `src/lib/utils/token-cleanup.test.ts` — add identity-preservation tests.
+- One test file for the Step 4 **remount assertion** — either a component-level
+  test under `src/lib/` (e.g. a `SvelteMarkdown.*.test.ts` driving a streaming
+  update) or a Playwright test under `tests/`. Adding this file (only) is in
+  scope; do not modify `render-metadata.ts` or the reuse walk to make it pass —
+  if the assertion fails, that is a STOP condition, not license to touch the
+  render layer.
 
 **Out of scope**:
 
@@ -194,6 +213,29 @@ expansion still happen on first clean.
 - `pnpm test:only` → all pass.
 - `trunk fmt && trunk check` → exit 0.
 
+### Step 4: Prove the DOM consequence (remount assertion)
+
+The point of Steps 1–3 is that unchanged streaming rows/items **keep their DOM**,
+because identity flows to the Svelte `{#each}` key via `getStableNodeKey`
+(`render-metadata.ts:116`). Steps 1–3 only prove the _precondition_ (object
+identity at the cleanup layer). Add ONE test that proves the _effect_:
+
+Render `SvelteMarkdown` with a streaming list (or table), then push an
+append-only update that grows a **later** item while leaving an earlier item
+unchanged. Assert the earlier item's DOM node is the **same node instance**
+across the update — i.e. it was not destroyed and recreated. Concretely, grab a
+reference to the earlier `<li>` (or a marker/DOM node inside it) before the
+update and assert `after === before` (same element reference), or stamp
+component-local state / a `data-*` attribute and assert it survives. A remount
+would replace the node and drop the stamp.
+
+Do **not** touch `render-metadata.ts` or the reuse walk to make this pass. If the
+node _is_ remounted, the identity chain has a gap above the cleanup layer — STOP
+and report (it likely belongs to plan 011), do not paper over it here.
+
+**Verify**: the new remount test passes; `pnpm test:only` (and, if the test is a
+Playwright test, `pnpm test:e2e`) stays green.
+
 ## Test plan
 
 - New tests in `token-cleanup.test.ts`: (1) unchanged list items keep identity
@@ -201,7 +243,11 @@ expansion still happen on first clean.
   object for that item but not its siblings; (3) same two for table body cells;
   (4) `listItemIndex` is present and correct after clean; (5) items/cells with no
   `tokens` still get `[]`.
-- Structural pattern: existing cases in `token-cleanup.test.ts`.
+- **Remount test (Step 4)**: a streaming update that grows a later item asserts
+  an earlier, unchanged item's DOM node survives (same element reference / a
+  stamped attribute persists) rather than being destroyed and recreated.
+- Structural pattern: existing cases in `token-cleanup.test.ts`; for the remount
+  test, an existing `SvelteMarkdown.*.test.ts` or `tests/imperative-streaming.test.ts`.
 - Verification: `pnpm test:only` → all pass.
 
 ## Done criteria
@@ -212,6 +258,9 @@ ALL must hold:
 - [ ] `pnpm test:only` exits 0; new identity tests pass.
 - [ ] Cleaning a list/table twice with unchanged children preserves item/cell
       object identity (asserted by test).
+- [ ] **Remount assertion (Step 4)**: a streaming append that grows a later item
+      leaves an earlier unchanged item's DOM node intact (same element reference /
+      persisted stamp), proving the identity preservation actually keeps the DOM.
 - [ ] `listItemIndex` remains correct on all list items after clean.
 - [ ] No files outside the in-scope list are modified (`git status`).
 - [ ] The batch `README.md` status row for 003 is updated.

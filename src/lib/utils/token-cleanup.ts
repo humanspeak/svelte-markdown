@@ -520,6 +520,104 @@ const pairFlatHtmlTokens = (tokens: Token[]): Token[] => {
 }
 
 /**
+ * A list item token annotated with its zero-based position within the parent
+ * list, stamped by {@link cleanListItem} so renderers can key on a stable index.
+ */
+interface IndexedListItem extends Tokens.ListItem {
+    listItemIndex?: number
+}
+
+/**
+ * Shallow structural equality for two token arrays, comparing length and
+ * per-index reference identity (not deep value equality). Used to detect when a
+ * recursive clean produced no change, so the caller can preserve the original
+ * object identity instead of allocating a fresh one.
+ *
+ * Acts as a type guard: a truthy result narrows `left` to `Token[]`.
+ *
+ * @param {Token[] | undefined} left - The original token array (may be undefined).
+ * @param {Token[]} right - The freshly cleaned token array to compare against.
+ * @returns {boolean} `true` when both arrays have the same length and each
+ *   element is reference-equal; `false` otherwise (including when `left` is undefined).
+ *
+ * @example
+ * const a = [{ type: 'text', raw: 'x', text: 'x' }]
+ * tokensShallowEqual(a, [...a]) // true — same element references
+ * tokensShallowEqual(a, [{ type: 'text', raw: 'x', text: 'x' }]) // false — new reference
+ */
+const tokensShallowEqual = (left: Token[] | undefined, right: Token[]): left is Token[] => {
+    if (!left || left.length !== right.length) return false
+
+    return left.every((token, index) => token === right[index])
+}
+
+/**
+ * Cleans a single list item's nested tokens while preserving object identity
+ * across streaming clean passes. Returns the original `item` reference when it
+ * already carries the correct `listItemIndex` and its cleaned tokens are
+ * reference-equal to the input (no nested change); otherwise returns a new
+ * object with the stamped index and cleaned tokens.
+ *
+ * Preserving identity lets the render layer keep the item's DOM node mounted
+ * instead of remounting it on every streaming flush.
+ *
+ * @param {Tokens.ListItem} item - The list item token to clean.
+ * @param {number} index - The item's zero-based position within the parent list.
+ * @returns {IndexedListItem} The original item when unchanged, otherwise a new
+ *   cleaned item stamped with `listItemIndex`.
+ *
+ * @example
+ * const item = list.items[0]
+ * const cleaned = cleanListItem(item, 0)
+ * // cleaned === item when nothing nested changed on a re-clean
+ */
+const cleanListItem = (item: Tokens.ListItem, index: number): IndexedListItem => {
+    const cleanedTokens = item.tokens ? shrinkHtmlTokens(item.tokens) : []
+    const indexedItem = item as IndexedListItem
+
+    if (indexedItem.listItemIndex === index && tokensShallowEqual(item.tokens, cleanedTokens)) {
+        return indexedItem
+    }
+
+    return {
+        ...item,
+        listItemIndex: index,
+        tokens: cleanedTokens
+    }
+}
+
+/**
+ * Cleans a single table cell's nested tokens while preserving object identity
+ * across streaming clean passes. Returns the original `cell` reference when its
+ * cleaned tokens are reference-equal to the input (no nested change); otherwise
+ * returns a new object with the cleaned tokens.
+ *
+ * Preserving identity lets the render layer keep the cell's DOM node mounted
+ * instead of remounting it on every streaming flush.
+ *
+ * @param {Tokens.TableCell} cell - The table header or body cell to clean.
+ * @returns {Tokens.TableCell} The original cell when unchanged, otherwise a new
+ *   cleaned cell.
+ *
+ * @example
+ * const cell = table.rows[0][0]
+ * const cleaned = cleanTableCell(cell)
+ * // cleaned === cell when nothing nested changed on a re-clean
+ */
+const cleanTableCell = (cell: Tokens.TableCell): Tokens.TableCell => {
+    const cleanedTokens = cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
+
+    if (tokensShallowEqual(cell.tokens, cleanedTokens)) {
+        return cell
+    }
+
+    return {
+        ...cell,
+        tokens: cleanedTokens
+    }
+}
+
+/**
  * Primary entry point for HTML token processing. Transforms flat token arrays
  * into properly nested structures while preserving HTML semantics.
  *
@@ -556,26 +654,16 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
             t.tokens = shrinkHtmlTokens(t.tokens)
             expanded.push(token)
         } else if (token.type === 'list') {
-            token.items = token.items.map((item: Tokens.ListItem, index: number) => ({
-                ...item,
-                listItemIndex: index,
-                tokens: item.tokens ? shrinkHtmlTokens(item.tokens) : []
-            }))
+            token.items = token.items.map(cleanListItem)
             expanded.push(token)
         } else if (token.type === 'table') {
             const tableToken = token as Tokens.Table
             if (tableToken.header) {
-                tableToken.header = tableToken.header.map((cell: Tokens.TableCell) => ({
-                    ...cell,
-                    tokens: cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
-                }))
+                tableToken.header = tableToken.header.map(cleanTableCell)
             }
             if (tableToken.rows) {
                 tableToken.rows = tableToken.rows.map((row: Tokens.TableCell[]) =>
-                    row.map((cell: Tokens.TableCell) => ({
-                        ...cell,
-                        tokens: cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
-                    }))
+                    row.map(cleanTableCell)
                 )
             }
             expanded.push(token)
