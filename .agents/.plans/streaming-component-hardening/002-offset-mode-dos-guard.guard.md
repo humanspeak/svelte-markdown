@@ -46,3 +46,13 @@ Flake — flagged, not attributed:
 - Done criterion 2 requires a clean `pnpm test:only`. First full run this checkpoint reported `1 failed / 929 passed` (930 total); the failing test scrolled off before capture. Re-ran the full suite **6 more times → 930/930 every time** (incl. attempts to force it). Could not reproduce or name it. ~1-in-7.
 - Not attributable to the clamp: the change has no async/timing surface, is behaviour-preserving on the exercised path, and its deterministic unit test passes 100%. Reads as a pre-existing environmental/timing flake (heavy jsdom + rAF/timer; env setup 400–750s under load).
 - Action: reported to operator. Before `final`: pin the flaky test's identity (e.g. capture a full log on a red run, or run serially with `--no-file-parallelism`) so Done criterion 2 rests on a green suite that stays green — do not wave it through on "passed 6/7". Clamp work still **uncommitted**.
+
+## Checkpoint 4 — 2026-07-07 16:27 — PASS (close-out)
+
+`5f57063`, clean tree · full close-out gate. Wrote `002-offset-mode-dos-guard.guard-report.md`.
+
+- All six done criteria re-run and reproduced: `pnpm check` 0 errors; `pnpm test:only` 6/6 green (`930 passed`); `STREAM_MAX_OFFSET_GAP` grep; excessive-gap test asserts no-alloc/no-throw; scope audit clean; README row DONE.
+- Scope audit (`git diff ff081773...HEAD`): 5 source files (all revised in-scope) + guard artifacts only. Drift `e057852..HEAD` = the clamp, nothing else.
+- Spirit met: `' '.repeat` DoS hazard closed at both entry points (writeChunk reject + apply-side clamp); normal offset streaming byte-identical.
+- Flake resolved as non-blocking: the single red run never recurred across 12 subsequent full runs; no async surface in this work; not attributable to 002. Logged as a residual-risk follow-up (quarantine the flaky test) in the report — out of 002's scope/origin.
+- Action: **PASS**. Integrating via `commit`/`pr` skills (source already committed; committing report + this log entry, then opening the PR). Merge remains the operator's.
