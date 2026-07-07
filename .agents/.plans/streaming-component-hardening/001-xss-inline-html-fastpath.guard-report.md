@@ -2,7 +2,7 @@
 
 **Recommendation: PASS** — the default-config inline-HTML XSS is closed; every done criterion reproduced green against the corrected lint gate.
 **Reviewed at** `ea7a31a` · 2026-07-07 14:42 · **Plan planned at** `939f154`
-**Integrated** — commit `<filled after commit skill>` · PR `<filled after pr skill>` · via the `commit` / `pr` skills
+**Integrated** — executor fix commits `596480c` / `9fae0ae` / `ea7a31a`; guard artifacts + plan amendment commit `aa1d55a` · PR https://github.com/humanspeak/svelte-markdown/pull/342 · via the `commit` / `pr` skills. Merge is the operator's call.
 
 ## Done criteria
 
