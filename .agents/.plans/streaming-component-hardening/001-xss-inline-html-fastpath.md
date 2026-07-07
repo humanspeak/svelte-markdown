@@ -100,7 +100,7 @@ live in `src/lib/SvelteMarkdown.test.ts`.
 | Typecheck | `pnpm check`                                    | exit 0, 0 errors    |
 | Unit test | `pnpm test:only`                                | all pass            |
 | One file  | `pnpm test:only src/lib/SvelteMarkdown.test.ts` | all pass            |
-| Lint      | `pnpm lint`                                     | exit 0              |
+| Lint      | `trunk fmt && trunk check`                      | exit 0              |
 
 ## Scope
 
@@ -186,7 +186,7 @@ including the new cases.
 **Verify**:
 
 - `pnpm test:only` → all pass.
-- `pnpm lint` → exit 0.
+- `trunk fmt && trunk check` → exit 0.
 
 ## Test plan
 

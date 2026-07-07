@@ -82,7 +82,7 @@ match header cells.
 | Typecheck | `pnpm check`                                              | exit 0, 0 errors    |
 | 328 tests | `pnpm test:only src/lib/SvelteMarkdown.issue-328.test.ts` | all pass            |
 | All unit  | `pnpm test:only`                                          | all pass            |
-| Lint      | `pnpm lint`                                               | exit 0              |
+| Lint      | `trunk fmt && trunk check`                                | exit 0              |
 
 ## Scope
 
@@ -152,7 +152,7 @@ const assignSourceKeysToChildren = (node: RenderMetadataNode, absoluteOffset: nu
 
 ### Step 3: Typecheck + lint
 
-**Verify**: `pnpm check` → exit 0; `pnpm lint` → exit 0.
+**Verify**: `pnpm check` → exit 0; `trunk fmt && trunk check` → exit 0.
 
 ## Test plan
 

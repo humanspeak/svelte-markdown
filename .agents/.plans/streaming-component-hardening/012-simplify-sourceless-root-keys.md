@@ -79,7 +79,7 @@ The three tests that MUST keep passing (in
 | Typecheck | `pnpm check`                                              | exit 0, 0 errors    |
 | 328 tests | `pnpm test:only src/lib/SvelteMarkdown.issue-328.test.ts` | all pass            |
 | All unit  | `pnpm test:only`                                          | all pass            |
-| Lint      | `pnpm lint`                                               | exit 0              |
+| Lint      | `trunk fmt && trunk check`                                | exit 0              |
 
 ## Scope
 
@@ -155,7 +155,7 @@ Confirm `previousSourceLessRoots` no longer retains per-root full-subtree `Set`s
 (inspect the new cross-pass state — it should hold representative identities or
 nothing, not whole-subtree sets).
 
-**Verify**: `pnpm check` → 0; `pnpm test:only` → all pass; `pnpm lint` → 0.
+**Verify**: `pnpm check` → 0; `pnpm test:only` → all pass; `trunk fmt && trunk check` → 0.
 
 ## Test plan
 
@@ -166,7 +166,7 @@ nothing, not whole-subtree sets).
 
 ## Done criteria (if simplifying)
 
-- [ ] `pnpm check` exits 0; `pnpm test:only` exits 0; `pnpm lint` exits 0.
+- [ ] `pnpm check` exits 0; `pnpm test:only` exits 0; `trunk fmt && trunk check` exits 0.
 - [ ] The three existing source-less identity tests still pass, plus the new edge
       cases.
 - [ ] `previousSourceLessRoots` no longer retains full-subtree identity `Set`s

@@ -100,7 +100,7 @@ identity rule is correct on its own.
 | Parser    | `pnpm test:only src/lib/utils/incremental-parser.test.ts src/lib/utils/incremental-parser.nested-html.test.ts`                         | all pass            |
 | Streaming | `pnpm test:only src/lib/SvelteMarkdown.test.ts src/lib/SvelteMarkdown.streaming-html.test.ts src/lib/SvelteMarkdown.issue-328.test.ts` | all pass            |
 | All unit  | `pnpm test:only`                                                                                                                       | all pass            |
-| Lint      | `pnpm lint`                                                                                                                            | exit 0              |
+| Lint      | `trunk fmt && trunk check`                                                                                                             | exit 0              |
 
 ## Scope
 
@@ -190,7 +190,7 @@ behavior exactly (render-metadata depends on it).
 Remove now-unused exports. Confirm nothing in `src/lib/index.ts` exported the
 removed symbols (they are internal — verify with grep).
 
-**Verify**: `pnpm check` → 0; `pnpm test:only` → all pass; `pnpm lint` → 0;
+**Verify**: `pnpm check` → 0; `pnpm test:only` → all pass; `trunk fmt && trunk check` → 0;
 `grep -rn "reuseStableStreamingTokens\|canReuse\|divergeAt" src/lib` shows no
 stale references (except any intentionally kept internal usage you documented).
 
@@ -209,7 +209,7 @@ stale references (except any intentionally kept internal usage you documented).
 
 ALL must hold:
 
-- [ ] `pnpm check` exits 0; `pnpm test:only` exits 0; `pnpm lint` exits 0.
+- [ ] `pnpm check` exits 0; `pnpm test:only` exits 0; `trunk fmt && trunk check` exits 0.
 - [ ] The 5 repro cases from issue #331 exist and pass.
 - [ ] A single identity predicate governs both the parser divergence and the node
       merge (one function, both call sites).

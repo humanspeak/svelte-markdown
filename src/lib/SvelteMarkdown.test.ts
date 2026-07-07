@@ -3,6 +3,7 @@ import { act, render, screen } from '@testing-library/svelte'
 import type { MarkedExtension } from 'marked'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
+import ClickRenderer from './test/snippets/ClickRenderer.svelte'
 import type { SvelteMarkdownProps } from './types.js'
 import type { Token } from './utils/markdown-parser.js'
 import * as parseAndCacheModule from './utils/parse-and-cache.js'
@@ -816,6 +817,77 @@ describe('testing default renderers', () => {
             expect(emElement.nodeName).toBe('EM')
             expect(emElement.parentElement?.nodeName).toBe('SPAN')
             expect(emElement.parentElement?.parentElement?.nodeName).toBe('DIV')
+        })
+
+        test('drops unknown script tags in the default configuration', () => {
+            const { container } = render(SvelteMarkdown, {
+                source: '<script>alert(1)</script>'
+            })
+
+            expect(container.querySelector('script')).toBeNull()
+            expect(container.textContent).toContain('alert(1)')
+        })
+
+        test('drops unknown style tags in the default configuration', () => {
+            const { container } = render(SvelteMarkdown, {
+                source: '<style>*{color:red}</style>'
+            })
+
+            expect(container.querySelector('style')).toBeNull()
+            expect(container.textContent).toContain('*{color:red}')
+        })
+
+        test('drops unknown meta refresh tags in the default configuration', () => {
+            const { container } = render(SvelteMarkdown, {
+                source: '<meta http-equiv="refresh" content="0;url=https://example.com">'
+            })
+
+            expect(container.querySelector('meta')).toBeNull()
+        })
+
+        test('drops unknown base tags in the default configuration', () => {
+            const { container } = render(SvelteMarkdown, {
+                source: '<base href="https://example.com/">'
+            })
+
+            expect(container.querySelector('base')).toBeNull()
+        })
+
+        test('renders script tags with an explicitly approved custom renderer', () => {
+            const { container } = render(SvelteMarkdown, {
+                source: '<script>alert(1)</script>',
+                renderers: {
+                    html: {
+                        script: ClickRenderer
+                    }
+                }
+            })
+
+            const customScriptElement = container.querySelector(
+                '[data-testid="custom-tag-component"]'
+            )
+            expect(customScriptElement).toBeInTheDocument()
+            expect(customScriptElement?.textContent).toBe('alert(1)')
+            expect(container.querySelector('script')).toBeNull()
+        })
+
+        test('continues to render supported div tags', () => {
+            const { container } = render(SvelteMarkdown, {
+                source: '<div>ok</div>'
+            })
+
+            const divElement = container.firstElementChild
+            expect(divElement).toBeInTheDocument()
+            expect(divElement?.nodeName).toBe('DIV')
+            expect(divElement?.textContent).toBe('ok')
+        })
+
+        test('continues to render supported iframe tags', () => {
+            const { container } = render(SvelteMarkdown, {
+                source: '<iframe></iframe>'
+            })
+
+            expect(container.querySelector('iframe')).toBeInTheDocument()
         })
 
         test('renders html with attributes', () => {

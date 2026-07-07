@@ -81,7 +81,7 @@ source_, not accumulate deltas. Design accordingly (see Step 2).
 | Typecheck | `pnpm check`                                    | exit 0, 0 errors    |
 | Stream    | `pnpm test:only src/lib/SvelteMarkdown.test.ts` | all pass            |
 | All unit  | `pnpm test:only`                                | all pass            |
-| Lint      | `pnpm lint`                                     | exit 0              |
+| Lint      | `trunk fmt && trunk check`                      | exit 0              |
 
 ## Scope
 
@@ -178,7 +178,7 @@ same frame ends with the shorter source rendered (reset wins, no stale flush);
 renders the array. Confirm the `$effect` cleanup (`cancelScheduledAppendFlush`
 at lines 371-375) still cancels everything on unmount.
 
-**Verify**: `pnpm test:only` → all pass; `pnpm check` → exit 0; `pnpm lint` → 0.
+**Verify**: `pnpm test:only` → all pass; `pnpm check` → exit 0; `trunk fmt && trunk check` → 0.
 
 ## Test plan
 

@@ -69,13 +69,13 @@ published `src/lib`. See Step 3 for handling that importer.
 
 ## Commands you will need
 
-| Purpose     | Command                   | Expected on success |
-| ----------- | ------------------------- | ------------------- |
-| Grep usage  | `grep -rn "<symbol>" src` | (see steps)         |
-| Typecheck   | `pnpm check`              | exit 0, 0 errors    |
-| All unit    | `pnpm test:only`          | all pass            |
-| Build (pkg) | `pnpm build`              | exit 0              |
-| Lint        | `pnpm lint`               | exit 0              |
+| Purpose     | Command                    | Expected on success |
+| ----------- | -------------------------- | ------------------- |
+| Grep usage  | `grep -rn "<symbol>" src`  | (see steps)         |
+| Typecheck   | `pnpm check`               | exit 0, 0 errors    |
+| All unit    | `pnpm test:only`           | all pass            |
+| Build (pkg) | `pnpm build`               | exit 0              |
+| Lint        | `trunk fmt && trunk check` | exit 0              |
 
 ## Scope
 
@@ -158,7 +158,7 @@ work (the packaging concern is secondary to not breaking the dev harness).
 - `pnpm test:only` → all pass.
 - `pnpm build` → exit 0 (confirms the package still builds without the deleted
   files).
-- `pnpm lint` → exit 0.
+- `trunk fmt && trunk check` → exit 0.
 
 ## Test plan
 
@@ -175,7 +175,7 @@ ALL must hold:
       → no matches.
 - [ ] `grep -rn "stream-benchmark" src` → no matches (or documented stop).
 - [ ] `pnpm check` exits 0; `pnpm test:only` exits 0; `pnpm build` exits 0;
-      `pnpm lint` exits 0.
+      `trunk fmt && trunk check` exits 0.
 - [ ] Only in-scope files modified/deleted (`git status`) — at most one file
       outside `src/lib` (`src/routes/test/perf-bench/+page.svelte`).
 - [ ] The batch `README.md` status row for 008 is updated.
