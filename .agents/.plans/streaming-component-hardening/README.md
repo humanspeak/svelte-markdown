@@ -14,7 +14,7 @@ remains).
 
 | Plan | Title                                                                                        | Priority | Effort | Risk | Depends on         | Status |
 | ---- | -------------------------------------------------------------------------------------------- | -------- | ------ | ---- | ------------------ | ------ |
-| 001  | Inline-HTML fast path stops rendering unknown/dangerous tags (XSS)                           | P1       | S      | LOW  | —                  | TODO   |
+| 001  | Inline-HTML fast path stops rendering unknown/dangerous tags (XSS)                           | P1       | S      | LOW  | —                  | DONE   |
 | 002  | Offset-mode streaming rejects unbounded gaps (RangeError/DoS)                                | P1       | S      | LOW  | —                  | TODO   |
 | 003  | `shrinkHtmlTokens` preserves list-item / table-cell identity                                 | P2       | M      | MED  | —                  | TODO   |
 | 004  | Source-offset render keys extend to table body cells (`rows`)                                | P2       | S      | MED  | —                  | TODO   |

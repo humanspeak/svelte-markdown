@@ -222,6 +222,7 @@
         token.type === 'html' &&
         !!htmlTok.tag &&
         !!renderers.html &&
+        htmlTok.tag in Html &&
         renderers.html[htmlTok.tag] === Html[htmlTok.tag] &&
         !htmlSnippetOverrides[htmlTok.tag]}
     {#if token.type === 'space' && inlineSpaceOk}
