@@ -148,4 +148,17 @@ describe('streaming chunk utilities', () => {
     it('pads gaps for offset chunks', () => {
         expect(applyStreamingOffsetChunk('ab', { value: 'XY', offset: 4 })).toBe('ab  XY')
     })
+
+    it('clamps direct offset padding to the maximum gap', () => {
+        expect(
+            applyStreamingOffsetChunk(
+                'ab',
+                {
+                    value: 'XY',
+                    offset: 100
+                },
+                { maxOffsetGap: 3 }
+            )
+        ).toBe('ab   XY')
+    })
 })

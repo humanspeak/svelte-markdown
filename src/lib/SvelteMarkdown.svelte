@@ -311,7 +311,9 @@
     }
 
     const applyOffsetChunk = (chunk: StreamingOffsetChunk) => {
-        streamSourceBuffer = applyStreamingOffsetChunk(streamSourceBuffer, chunk)
+        streamSourceBuffer = applyStreamingOffsetChunk(streamSourceBuffer, chunk, {
+            maxOffsetGap: STREAM_MAX_OFFSET_GAP
+        })
         applyStreamingSource(streamSourceBuffer)
     }
 

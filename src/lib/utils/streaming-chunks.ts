@@ -17,6 +17,10 @@ export interface StreamingChunkInstructionOptions {
     maxOffsetGap?: number
 }
 
+export interface ApplyStreamingOffsetChunkOptions {
+    maxOffsetGap?: number
+}
+
 /**
  * Checks whether a streaming chunk uses offset-based patching.
  *
@@ -104,11 +108,15 @@ export const shouldFlushStreamingAppendBuffer = (
 
 export const applyStreamingOffsetChunk = (
     source: string,
-    { value, offset }: StreamingOffsetChunk
+    { value, offset }: StreamingOffsetChunk,
+    { maxOffsetGap = STREAM_MAX_OFFSET_GAP }: ApplyStreamingOffsetChunkOptions = {}
 ) => {
-    const padded = offset > source.length ? source + ' '.repeat(offset - source.length) : source
-    const prefix = padded.slice(0, offset)
-    const suffix = padded.slice(offset + value.length)
+    const gap = Math.max(0, offset - source.length)
+    const boundedGap = Math.min(gap, Math.max(0, maxOffsetGap))
+    const effectiveOffset = offset > source.length ? source.length + boundedGap : offset
+    const padded = boundedGap > 0 ? source + ' '.repeat(boundedGap) : source
+    const prefix = padded.slice(0, effectiveOffset)
+    const suffix = padded.slice(effectiveOffset + value.length)
 
     return prefix + value + suffix
 }
