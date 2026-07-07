@@ -5,6 +5,46 @@ import { isHtmlOpenTag, parseHtmlBlock, shrinkHtmlTokens } from './token-cleanup
 type TestListItem = Token & { tokens: Token[]; listItemIndex: number }
 type TestTableCell = Token & { tokens: Token[] }
 
+/** Fresh two-item `list` token fixture for identity-preservation tests. */
+const buildListTokens = (): Token[] => [
+    {
+        type: 'list',
+        raw: '- first\n- second',
+        items: [
+            {
+                type: 'list_item',
+                raw: '- first',
+                text: 'first',
+                tokens: [{ type: 'text', raw: 'first', text: 'first' }]
+            },
+            {
+                type: 'list_item',
+                raw: '- second',
+                text: 'second',
+                tokens: [{ type: 'text', raw: 'second', text: 'second' }]
+            }
+        ]
+    }
+]
+
+/** Fresh single-row `table` token fixture for identity-preservation tests. */
+const buildTableTokens = (): Token[] => [
+    {
+        type: 'table',
+        raw: '| A | B |\n| - | - |\n| first | second |',
+        header: [
+            { text: 'A', tokens: [{ type: 'text', raw: 'A', text: 'A' }] },
+            { text: 'B', tokens: [{ type: 'text', raw: 'B', text: 'B' }] }
+        ],
+        rows: [
+            [
+                { text: 'first', tokens: [{ type: 'text', raw: 'first', text: 'first' }] },
+                { text: 'second', tokens: [{ type: 'text', raw: 'second', text: 'second' }] }
+            ]
+        ]
+    }
+]
+
 describe('Token Cleanup Utilities', () => {
     describe('isHtmlOpenTag', () => {
         it('should correctly identify opening HTML tags', () => {
@@ -340,26 +380,7 @@ describe('Token Cleanup Utilities', () => {
         })
 
         it('should preserve unchanged list item identity across clean passes', () => {
-            const tokens: Token[] = [
-                {
-                    type: 'list',
-                    raw: '- first\n- second',
-                    items: [
-                        {
-                            type: 'list_item',
-                            raw: '- first',
-                            text: 'first',
-                            tokens: [{ type: 'text', raw: 'first', text: 'first' }]
-                        },
-                        {
-                            type: 'list_item',
-                            raw: '- second',
-                            text: 'second',
-                            tokens: [{ type: 'text', raw: 'second', text: 'second' }]
-                        }
-                    ]
-                }
-            ]
+            const tokens = buildListTokens()
 
             const firstClean = shrinkHtmlTokens(tokens)
             const firstList = firstClean[0] as Token & { items: TestListItem[] }
@@ -378,26 +399,7 @@ describe('Token Cleanup Utilities', () => {
         })
 
         it('should preserve unchanged sibling list item identity when another item changes', () => {
-            const tokens: Token[] = [
-                {
-                    type: 'list',
-                    raw: '- first\n- second',
-                    items: [
-                        {
-                            type: 'list_item',
-                            raw: '- first',
-                            text: 'first',
-                            tokens: [{ type: 'text', raw: 'first', text: 'first' }]
-                        },
-                        {
-                            type: 'list_item',
-                            raw: '- second',
-                            text: 'second',
-                            tokens: [{ type: 'text', raw: 'second', text: 'second' }]
-                        }
-                    ]
-                }
-            ]
+            const tokens = buildListTokens()
 
             const firstClean = shrinkHtmlTokens(tokens)
             const firstList = firstClean[0] as Token & { items: TestListItem[] }
@@ -423,34 +425,7 @@ describe('Token Cleanup Utilities', () => {
         })
 
         it('should preserve unchanged table body cell identity across clean passes', () => {
-            const tokens: Token[] = [
-                {
-                    type: 'table',
-                    raw: '| A | B |\n| - | - |\n| first | second |',
-                    header: [
-                        {
-                            text: 'A',
-                            tokens: [{ type: 'text', raw: 'A', text: 'A' }]
-                        },
-                        {
-                            text: 'B',
-                            tokens: [{ type: 'text', raw: 'B', text: 'B' }]
-                        }
-                    ],
-                    rows: [
-                        [
-                            {
-                                text: 'first',
-                                tokens: [{ type: 'text', raw: 'first', text: 'first' }]
-                            },
-                            {
-                                text: 'second',
-                                tokens: [{ type: 'text', raw: 'second', text: 'second' }]
-                            }
-                        ]
-                    ]
-                }
-            ]
+            const tokens = buildTableTokens()
 
             const firstClean = shrinkHtmlTokens(tokens)
             const firstTable = firstClean[0] as Token & {
@@ -469,34 +444,7 @@ describe('Token Cleanup Utilities', () => {
         })
 
         it('should preserve unchanged sibling table body cell identity when another cell changes', () => {
-            const tokens: Token[] = [
-                {
-                    type: 'table',
-                    raw: '| A | B |\n| - | - |\n| first | second |',
-                    header: [
-                        {
-                            text: 'A',
-                            tokens: [{ type: 'text', raw: 'A', text: 'A' }]
-                        },
-                        {
-                            text: 'B',
-                            tokens: [{ type: 'text', raw: 'B', text: 'B' }]
-                        }
-                    ],
-                    rows: [
-                        [
-                            {
-                                text: 'first',
-                                tokens: [{ type: 'text', raw: 'first', text: 'first' }]
-                            },
-                            {
-                                text: 'second',
-                                tokens: [{ type: 'text', raw: 'second', text: 'second' }]
-                            }
-                        ]
-                    ]
-                }
-            ]
+            const tokens = buildTableTokens()
 
             const firstClean = shrinkHtmlTokens(tokens)
             const firstTable = firstClean[0] as Token & {
