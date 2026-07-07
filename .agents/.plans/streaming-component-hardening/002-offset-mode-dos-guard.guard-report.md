@@ -2,7 +2,7 @@
 
 **Recommendation: PASS** — DoS hazard eliminated at two layers, all six done criteria reproduced green; the one anomalous test-suite flake is unreproducible and not attributable to this work.
 **Reviewed at** `5f57063` · 2026-07-07 16:23 · **Plan planned at** `e057852` (amended; originally `939f154`)
-**Integrated** — branch `advisor/002-offset-mode-dos-guard` @ `a2e0123` · PR https://github.com/humanspeak/svelte-markdown/pull/343 · via the `commit` / `pr` skills. Merge remains the operator's.
+**Integrated** — branch `advisor/002-offset-mode-dos-guard` @ `a2e0123` · PR <https://github.com/humanspeak/svelte-markdown/pull/343> · via the `commit` / `pr` skills. Merge remains the operator's.
 
 ## Done criteria
 
