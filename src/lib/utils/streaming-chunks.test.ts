@@ -5,7 +5,8 @@ import {
     commitStreamingAppendBuffer,
     getStreamingChunkInstruction,
     shouldFlushStreamingAppendBuffer,
-    STREAM_BATCH_MAX_CHARS
+    STREAM_BATCH_MAX_CHARS,
+    STREAM_MAX_OFFSET_GAP
 } from './streaming-chunks.js'
 
 describe('streaming chunk utilities', () => {
@@ -81,6 +82,60 @@ describe('streaming chunk utilities', () => {
             kind: 'drop',
             message:
                 'append mode active, offset chunk dropped. Call resetStream() before switching streaming input modes.'
+        })
+    })
+
+    it('drops offset chunks that open a gap over the maximum', () => {
+        expect(
+            getStreamingChunkInstruction(
+                { value: 'Hello', offset: STREAM_MAX_OFFSET_GAP + 1 },
+                null
+            )
+        ).toEqual({
+            kind: 'drop',
+            message:
+                `offset chunk skipped: offset ${STREAM_MAX_OFFSET_GAP + 1} is more than ` +
+                `${STREAM_MAX_OFFSET_GAP} chars beyond the current buffer length (0).`
+        })
+    })
+
+    it('allows offset chunks exactly at the maximum gap boundary', () => {
+        const chunk = { value: 'Hello', offset: STREAM_MAX_OFFSET_GAP + 5 }
+
+        expect(
+            getStreamingChunkInstruction(chunk, null, {
+                currentBufferLength: 5
+            })
+        ).toEqual({
+            kind: 'offset',
+            chunk,
+            nextMode: 'offset'
+        })
+    })
+
+    it('keeps mode-mismatch warnings ahead of excessive-gap warnings', () => {
+        expect(
+            getStreamingChunkInstruction(
+                { value: 'Hello', offset: STREAM_MAX_OFFSET_GAP + 1 },
+                'append'
+            )
+        ).toEqual({
+            kind: 'drop',
+            message:
+                'append mode active, offset chunk dropped. Call resetStream() before switching streaming input modes.'
+        })
+    })
+
+    it('keeps invalid-offset warnings ahead of excessive-gap warnings', () => {
+        expect(
+            getStreamingChunkInstruction(
+                { value: 'Hello', offset: Number.MAX_SAFE_INTEGER + 1 },
+                null
+            )
+        ).toEqual({
+            kind: 'drop',
+            message:
+                'Invalid offset chunk passed to writeChunk(); offset must be a non-negative safe integer.'
         })
     })
 

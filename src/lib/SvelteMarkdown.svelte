@@ -80,6 +80,7 @@
         getStreamingChunkInstruction,
         shouldFlushStreamingAppendBuffer,
         STREAM_BATCH_FALLBACK_MS,
+        STREAM_MAX_OFFSET_GAP,
         type StreamingInputMode
     } from '$lib/utils/streaming-chunks.js'
     import { reuseStableStreamingTokens } from '$lib/utils/streaming-token-reuse.js'
@@ -317,7 +318,10 @@
     export function writeChunk(chunk: StreamingChunk): void {
         if (!canUseImperativeStreaming('writeChunk')) return
 
-        const instruction = getStreamingChunkInstruction(chunk, streamInputMode)
+        const instruction = getStreamingChunkInstruction(chunk, streamInputMode, {
+            currentBufferLength: streamSourceBuffer.length,
+            maxOffsetGap: STREAM_MAX_OFFSET_GAP
+        })
         if (instruction.kind === 'drop') {
             warnStreaming(instruction.message)
             return

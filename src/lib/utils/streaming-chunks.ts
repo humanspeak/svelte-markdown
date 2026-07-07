@@ -2,6 +2,8 @@ import type { StreamingChunk, StreamingOffsetChunk } from '$lib/types.js'
 
 export const STREAM_BATCH_FALLBACK_MS = 16
 export const STREAM_BATCH_MAX_CHARS = 256
+// Largest gap an offset chunk may open before it is treated as malformed.
+export const STREAM_MAX_OFFSET_GAP = 1_000_000
 
 export type StreamingInputMode = 'append' | 'offset' | null
 
@@ -9,6 +11,11 @@ export type StreamingChunkInstruction =
     | { kind: 'append'; value: string; nextMode: 'append' }
     | { kind: 'offset'; chunk: StreamingOffsetChunk; nextMode: 'offset' }
     | { kind: 'drop'; message: string }
+
+export interface StreamingChunkInstructionOptions {
+    currentBufferLength?: number
+    maxOffsetGap?: number
+}
 
 /**
  * Checks whether a streaming chunk uses offset-based patching.
@@ -21,7 +28,11 @@ export const isStreamingOffsetChunk = (chunk: StreamingChunk): chunk is Streamin
 
 export const getStreamingChunkInstruction = (
     chunk: StreamingChunk,
-    currentMode: StreamingInputMode
+    currentMode: StreamingInputMode,
+    {
+        currentBufferLength = 0,
+        maxOffsetGap = STREAM_MAX_OFFSET_GAP
+    }: StreamingChunkInstructionOptions = {}
 ): StreamingChunkInstruction => {
     if (typeof chunk === 'string') {
         if (currentMode === 'offset') {
@@ -56,6 +67,16 @@ export const getStreamingChunkInstruction = (
             kind: 'drop',
             message:
                 'append mode active, offset chunk dropped. Call resetStream() before switching streaming input modes.'
+        }
+    }
+
+    if (chunk.offset - currentBufferLength > maxOffsetGap) {
+        return {
+            kind: 'drop',
+            message:
+                `offset chunk skipped: offset ${chunk.offset} is more than ` +
+                `${maxOffsetGap} chars beyond the current buffer length ` +
+                `(${currentBufferLength}).`
         }
     }
 
