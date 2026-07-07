@@ -150,6 +150,9 @@ const tableToken = (rows: Array<Array<ReturnType<typeof tableCell>>>): Token =>
 const findBodyRow = (container: HTMLElement, text: string) =>
     Array.from(container.querySelectorAll('tbody tr')).find((row) => row.textContent === text)
 
+const findBodyCell = (container: HTMLElement, text: string) =>
+    Array.from(container.querySelectorAll('tbody td')).find((cell) => cell.textContent === text)
+
 const lastParsedTokens = (parsed: ReturnType<typeof vi.fn>) =>
     parsed.mock.calls.at(-1)?.[0] as Token[] | undefined
 
@@ -668,5 +671,33 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(rowAfter).toBe(rowBefore)
         expect(nextRowToken?.[0]).toBe(firstRowToken?.[0])
         expect(nextRowToken?.[1]).toBe(firstRowToken?.[1])
+    })
+
+    test('keeps unchanged table body cell DOM mounted while a later cell grows during streaming', async () => {
+        const initialSource = '| Label | Value |\n|---|---|\n| Anchor | Grow |'
+        const nextSource = '| Label | Value |\n|---|---|\n| Anchor | Growing |'
+        const { container, rerender } = render(SvelteMarkdown, {
+            props: {
+                source: initialSource,
+                streaming: true
+            }
+        })
+        await flushStreamingBatch()
+
+        const cellBefore = findBodyCell(container, 'Anchor')
+        expect(cellBefore).toBeInstanceOf(HTMLTableCellElement)
+        cellBefore?.setAttribute('data-remount-probe', 'kept')
+
+        await rerender({
+            source: nextSource,
+            streaming: true
+        })
+        await flushStreamingBatch()
+
+        const cellAfter = findBodyCell(container, 'Anchor')
+
+        expect(findBodyCell(container, 'Growing')).toBeInstanceOf(HTMLTableCellElement)
+        expect(cellAfter).toBe(cellBefore)
+        expect(cellAfter).toHaveAttribute('data-remount-probe', 'kept')
     })
 })
