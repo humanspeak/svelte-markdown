@@ -28,3 +28,21 @@ Minor note (not blocking): extraction made `applyStreamingOffsetChunk` a public 
 - Rationale: operator directed pulling functions out of the main component; the plan's original two-file scope predated that instruction — plan wrong about reality, not work wrong about the plan. No standard was lowered: the guard's cap/message/no-throw behaviour and all done-criteria are unchanged and still verified.
 - Batch `README.md`: row is status-only (already DONE) with no scope column — no edit needed.
 - Action: plan amended with operator agreement; logged. Remaining before `final`: `applyStreamingOffsetChunk` public-export clamp (operator opted not to fold into the plan now — tracked here only), and a clean `final` close-out pass.
+
+## Checkpoint 3 — 2026-07-07 16:03 — ON TRACK (flaky suite to pin before final)
+
+Uncommitted working tree over `e1a87ed`. Executor addressing the Checkpoint 1 open item: the Step 3 belt-and-suspenders clamp on the now-public `applyStreamingOffsetChunk`.
+
+Clamp change — on track:
+
+- `streaming-chunks.ts:105-121`: `applyStreamingOffsetChunk` gains a third `{ maxOffsetGap = STREAM_MAX_OFFSET_GAP }` arg; pads `boundedGap = min(gap, max(0, maxOffsetGap))` instead of the raw `offset - source.length`. Directly caps the `' '.repeat` that was the original DoS hazard — this is exactly plan Step 3's intent, now warranted because extraction made the fn a public export.
+- Behaviour-preserving on the real path: for `gap ≤ maxOffsetGap`, `boundedGap == gap` and `effectiveOffset == offset` → byte-identical output. Confirmed against existing `'ab  XY'` gap test and the in-range/overwrite component tests (all green every run). `SvelteMarkdown.svelte:313-316` passes `maxOffsetGap: STREAM_MAX_OFFSET_GAP` explicitly (redundant with the default, harmless).
+- New test genuine: `streaming-chunks.test.ts:152` asserts `applyStreamingOffsetChunk('ab', {value:'XY', offset:100}, {maxOffsetGap:3}) === 'ab   XY'` — real clamp assertion, not hollow. `streaming-chunks.test.ts` → 17/17.
+- Scope: all three touched files (`streaming-chunks.ts`, `streaming-chunks.test.ts`, `SvelteMarkdown.svelte`) are inside the revised in-scope list. In-scope.
+- `pnpm check` → 0 errors.
+
+Flake — flagged, not attributed:
+
+- Done criterion 2 requires a clean `pnpm test:only`. First full run this checkpoint reported `1 failed / 929 passed` (930 total); the failing test scrolled off before capture. Re-ran the full suite **6 more times → 930/930 every time** (incl. attempts to force it). Could not reproduce or name it. ~1-in-7.
+- Not attributable to the clamp: the change has no async/timing surface, is behaviour-preserving on the exercised path, and its deterministic unit test passes 100%. Reads as a pre-existing environmental/timing flake (heavy jsdom + rAF/timer; env setup 400–750s under load).
+- Action: reported to operator. Before `final`: pin the flaky test's identity (e.g. capture a full log on a red run, or run serially with `--no-file-parallelism`) so Done criterion 2 rests on a green suite that stays green — do not wave it through on "passed 6/7". Clamp work still **uncommitted**.
