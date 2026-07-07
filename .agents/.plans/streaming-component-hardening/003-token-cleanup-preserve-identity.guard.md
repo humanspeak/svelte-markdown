@@ -48,3 +48,16 @@ Amendment applied to `003-token-cleanup-preserve-identity.md`:
 `README.md` row 003 flipped **DONE → IN PROGRESS** ("cleanup + identity tests done; Step 4 remount assertion pending") — with an unmet Done criterion, DONE was no longer honest.
 
 No source code touched. Action: plan amended with operator agreement; back to the operator to have the executor pick up the revised plan and add the Step 4 test. `final` close-out deferred until Step 4 lands and its Done criterion is verified.
+
+## Checkpoint 3 — 2026-07-07 18:42 — final — PASS
+
+Close-out + integration gate over `17b9a14` + working tree. Executor landed the Step 4 remount test.
+
+Step 4 verified genuine, not gamed:
+
+- `SvelteMarkdown.issue-328.test.ts:591` "keeps unchanged list item DOM mounted while a later item grows during streaming" — streams `- Anchor\n- Grow`, stamps `data-remount-probe=kept` on the live "Anchor" `<li>`, appends `ing` (Grow → Growing), then asserts `itemAfter).toBe(itemBefore)` (same element) **and** `toHaveAttribute('data-remount-probe','kept')`. A hand-set DOM attribute cannot survive a Svelte destroy/recreate, so this conclusively proves the node was never remounted — the plan's actual intent, proven end-to-end. Uses the pre-existing `TrackedListItem.svelte` (`<li data-tracked-list-item={text}>`); no new source component.
+- STOP respected: the render layer was NOT touched to make it pass. `git diff --stat main...HEAD` source = `token-cleanup.ts`, `token-cleanup.test.ts`, `SvelteMarkdown.issue-328.test.ts` only — no `render-metadata.ts` / reuse-walk edit. The cleanup-layer fix alone carries the DOM guarantee.
+
+All done criteria reproduced in-tree: `pnpm check` → 0 errors (4 pre-existing warnings); `pnpm test:only` → 145 files / **935** tests pass (934 + the new remount test); `SvelteMarkdown.issue-328.test.ts` → 17/17; `trunk check` on the test → no issues. Drift clean; no tampering (executor touched only the README status row it is instructed to update; plan `.md` + guard log left to guard).
+
+Verdict: **PASS.** Wrote close-out report `003-...guard-report.md`. Integrating the Step-4 verified work (remount test + README) via the `commit` and `pr` skills; report's Integrated line records the commit SHA + PR URL. Merge remains the operator's call.
