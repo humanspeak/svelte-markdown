@@ -248,6 +248,17 @@ export const createRenderMetadata = (): RenderMetadata => {
         assignSequentialSourceKeys(asNodeArray(node.tokens), absoluteOffset)
         assignSequentialSourceKeys(asNodeArray(node.items), absoluteOffset)
         assignSequentialSourceKeys(asNodeArray(node.header), absoluteOffset)
+        const rows = asNodeArray(node.rows)
+        if (rows) {
+            for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+                const row = rows[rowIndex]
+                // Body cell keys intentionally mirror header cells below.
+                // Rows need their own key space because getStableRowKey()
+                // otherwise derives duplicate row keys from first-cell keys.
+                setRenderKey(row, `src:${absoluteOffset}:row:${rowIndex}`)
+                assignSequentialSourceKeys(asNodeArray(row), absoluteOffset)
+            }
+        }
     }
 
     const assignHeadingIds = (

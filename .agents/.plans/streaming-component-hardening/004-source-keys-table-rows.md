@@ -6,6 +6,15 @@
 >
 > **Drift check (run first)**: `git diff --stat 939f154..HEAD -- src/lib/utils/render-metadata.ts`
 > On any change, compare "Current state" excerpts to live code; mismatch ⇒ STOP.
+>
+> **Revision 2026-07-07 (guard)**: The original step-2 "Target shape" (plain
+> `absoluteOffset` for every row) is **wrong** — it makes every row's first cell
+> key to `src:${absoluteOffset}`, and `getStableRowKey` derives a row's key from
+> its first cell (`row[0]`) when the row has no key of its own, so all body rows
+> collapse to duplicate row keys. Corrected below: assign each row an explicit
+> distinct render key, and give the row's cells plain `absoluteOffset`. Cell keys
+> must stay row-index-independent so a row inserted before an existing one does
+> not remount that row's cells.
 
 ## Status
 
@@ -14,7 +23,9 @@
 - **Risk**: MED
 - **Depends on**: none
 - **Category**: perf
-- **Planned at**: commit `939f154`, 2026-07-07
+- **Planned at**: commit `939f154`, 2026-07-07 (held per the batch README's
+  drift-check directive; `render-metadata.ts` is byte-identical at `939f154` and the
+  current HEAD, so the drift baseline is unchanged by this amendment)
 
 ## Why this matters
 
@@ -72,8 +83,18 @@ raw source is not a simple concatenation of cell `.raw`), so summing cell
 collision-free key derived from the row/cell position under the table's base
 offset. Header cells already go through `assignSequentialSourceKeys` with the
 same caveat and work in practice because the keys only need to be stable across
-flushes, not accurate offsets. Mirror the header treatment exactly so body cells
-match header cells.
+flushes, not accurate offsets. Give body cells the same plain-`absoluteOffset`
+treatment header cells get.
+
+**Row-key dependency (surfaced during execution, Revision 2026-07-07)**: rows are
+keyed separately via `getStableRowKey`
+(`src/lib/utils/render-metadata.ts:358-362`), which returns a row's own render key
+if one is set and otherwise derives the row key from its **first cell**
+(`getStableNodeKey(row[0], index)`). If body cells are keyed with plain
+`absoluteOffset` and rows are given no key of their own, every row's first cell
+keys to `src:${absoluteOffset}` → all body rows derive **duplicate** row keys.
+Therefore each row must also be assigned an explicit, per-row-distinct render key
+(`setRenderKey(row, ...)`) so row identity does not depend on first-cell keys.
 
 ## Commands you will need
 
@@ -123,9 +144,11 @@ case FAILS, existing cases PASS.
 ### Step 2: Walk `rows` in `assignSourceKeysToChildren`
 
 Extend `assignSourceKeysToChildren` to iterate `asNodeArray(node.rows)` and, for
-each row, assign sequential source keys to that row's cells under
-`absoluteOffset`, mirroring the header treatment and `assignHeadingIds`'s row
-loop. Target shape:
+each row: (1) assign the **row** an explicit, per-row-distinct render key (see the
+"Row-key dependency" note in Current state above — without this, `getStableRowKey`
+derives duplicate row keys from first cells), and (2) assign sequential source
+keys to that row's cells under plain `absoluteOffset` (row-index-independent, so an
+inserted-before row does not remount an existing row's cells). Target shape:
 
 ```ts
 const assignSourceKeysToChildren = (node: RenderMetadataNode, absoluteOffset: number) => {
@@ -134,7 +157,11 @@ const assignSourceKeysToChildren = (node: RenderMetadataNode, absoluteOffset: nu
     assignSequentialSourceKeys(asNodeArray(node.header), absoluteOffset)
     const rows = asNodeArray(node.rows)
     if (rows) {
-        for (const row of rows) {
+        for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+            const row = rows[rowIndex]
+            // Rows need their own key space: getStableRowKey() otherwise derives
+            // duplicate row keys from first-cell keys. Cells mirror the header.
+            setRenderKey(row, `src:${absoluteOffset}:row:${rowIndex}`)
             assignSequentialSourceKeys(asNodeArray(row), absoluteOffset)
         }
     }
@@ -168,6 +195,10 @@ ALL must hold:
 - [ ] `pnpm check` exits 0.
 - [ ] `pnpm test:only` exits 0; the new body-cell identity test passes.
 - [ ] `assignSourceKeysToChildren` walks `node.rows` (grep shows the `rows` loop).
+- [ ] Each row is given an explicit distinct render key (`setRenderKey(row, ...)`);
+      body rows do not collapse to duplicate `getStableRowKey` keys. Covered in the
+      source-backed path by `issue-328.test.ts` "keeps existing table row identity
+      while streaming appends table rows".
 - [ ] No files outside the in-scope list are modified (`git status`).
 - [ ] The batch `README.md` status row for 004 is updated.
 
@@ -185,4 +216,12 @@ ALL must hold:
 
 - If a future change makes cell keys carry _accurate_ source offsets, revisit the
   offset caveat above — today the keys only need to be stable and unique.
-- Reviewer should confirm header cells and body cells now key the same way.
+- Reviewer should confirm header and body **cells** get the same plain-`absoluteOffset`
+  cell treatment, and that each **row** additionally carries its own explicit render
+  key (`src:${absoluteOffset}:row:${rowIndex}`) so `getStableRowKey` does not fall
+  back to first-cell derivation.
+- Known limitation: the row key is position-based (`rowIndex`), so a row _inserted
+  before_ an existing row in the source-backed path remounts it. Rows have no
+  meaningful per-row source offset (see the offset caveat), and streaming normally
+  appends rather than inserts. A source-backed row-inserted-before identity test
+  would pin this behavior if it ever matters.
