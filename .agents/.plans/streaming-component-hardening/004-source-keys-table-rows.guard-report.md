@@ -2,7 +2,7 @@
 
 **Recommendation: PASS** — body cells + rows now carry stable source-derived render keys; all done criteria reproduced green, diff serves the plan's intent, scope clean.
 **Reviewed at** `826950d` (working tree: uncommitted `render-metadata.ts` fix + README flip) · 2026-07-07 19:42 · **Plan planned at** `939f154`
-**Integrated** — fix commit `522e462` · PR `<pending>` · via the `commit` / `pr` skills
+**Integrated** — fix commit `522e462` · guard-record commit `2008804` · PR <https://github.com/humanspeak/svelte-markdown/pull/345> · via the `commit` / `pr` skills
 
 ## Done criteria
 
