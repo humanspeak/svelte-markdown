@@ -837,6 +837,22 @@ describe('testing default renderers', () => {
             expect(container.textContent).toContain('*{color:red}')
         })
 
+        test('drops unknown meta refresh tags in the default configuration', () => {
+            const { container } = render(SvelteMarkdown, {
+                source: '<meta http-equiv="refresh" content="0;url=https://example.com">'
+            })
+
+            expect(container.querySelector('meta')).toBeNull()
+        })
+
+        test('drops unknown base tags in the default configuration', () => {
+            const { container } = render(SvelteMarkdown, {
+                source: '<base href="https://example.com/">'
+            })
+
+            expect(container.querySelector('base')).toBeNull()
+        })
+
         test('renders script tags with an explicitly approved custom renderer', () => {
             const { container } = render(SvelteMarkdown, {
                 source: '<script>alert(1)</script>',
