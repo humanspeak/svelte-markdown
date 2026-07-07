@@ -78,7 +78,7 @@ line 133 and `vitest.setup.ts`).
 | Unit only    | `pnpm test:only`                                | all pass                                          |
 | One file     | `pnpm test:only src/lib/SvelteMarkdown.test.ts` | all pass                                          |
 | Typecheck    | `pnpm check`                                    | exit 0                                            |
-| Lint         | `pnpm lint`                                     | exit 0                                            |
+| Lint         | `trunk fmt && trunk check`                      | exit 0                                            |
 
 ## Scope
 
@@ -160,7 +160,7 @@ the new fallback test.
 
 ### Step 4: Full suite + lint
 
-**Verify**: `pnpm check` → 0; `pnpm test:only` → all pass; `pnpm lint` → 0;
+**Verify**: `pnpm check` → 0; `pnpm test:only` → all pass; `trunk fmt && trunk check` → 0;
 `pnpm test` → passes with thresholds enforced.
 
 ## Test plan
@@ -180,7 +180,7 @@ ALL must hold:
       the chosen floor).
 - [ ] `package.json` has `"engines": { "node": ">=22" }`.
 - [ ] New rAF-fallback test(s) pass and restore `requestAnimationFrame`.
-- [ ] `pnpm check` exits 0; `pnpm test:only` exits 0; `pnpm lint` exits 0.
+- [ ] `pnpm check` exits 0; `pnpm test:only` exits 0; `trunk fmt && trunk check` exits 0.
 - [ ] No files outside the in-scope list are modified (`git status`).
 - [ ] The batch `README.md` status row for 010 is updated.
 

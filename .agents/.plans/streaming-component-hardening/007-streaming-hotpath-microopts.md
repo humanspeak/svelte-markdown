@@ -87,7 +87,7 @@ fact is available at the `update` call site and can be threaded down.
 | Reuse     | `pnpm test:only src/lib/utils/streaming-token-reuse.test.ts` | all pass            |
 | Parser    | `pnpm test:only src/lib/utils/incremental-parser.test.ts`    | all pass            |
 | All unit  | `pnpm test:only`                                             | all pass            |
-| Lint      | `pnpm lint`                                                  | exit 0              |
+| Lint      | `trunk fmt && trunk check`                                   | exit 0              |
 
 ## Scope
 
@@ -138,7 +138,7 @@ check). The resulting tail-window decision must be identical to today.
 
 ### Step 3: Full suite
 
-**Verify**: `pnpm check` → 0; `pnpm test:only` → all pass; `pnpm lint` → 0.
+**Verify**: `pnpm check` → 0; `pnpm test:only` → all pass; `trunk fmt && trunk check` → 0.
 
 ## Test plan
 

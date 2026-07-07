@@ -53,17 +53,18 @@ languageOptions: {
 
 Conventions: **never** use `eslint-disable` comments; use Trunk inline ignores
 `// trunk-ignore(eslint/rule-name)` when a suppression is genuinely needed
-(CLAUDE.md, "Code Style & Linting"). Lint is run via `pnpm lint`
-(`prettier --check . && eslint .`). CI runs on Node 22/24.
+(CLAUDE.md, "Code Style & Linting"). Formatting and linting run via Trunk:
+`trunk fmt` (formatters, incl. prettier) then `trunk check` (eslint et al.).
+CI runs on Node 22/24.
 
 ## Commands you will need
 
-| Purpose     | Command              | Expected on success |
-| ----------- | -------------------- | ------------------- |
-| Lint        | `pnpm lint`          | exit 0              |
-| ESLint only | `pnpm exec eslint .` | exit 0              |
-| Typecheck   | `pnpm check`         | exit 0              |
-| All unit    | `pnpm test:only`     | all pass            |
+| Purpose     | Command                    | Expected on success |
+| ----------- | -------------------------- | ------------------- |
+| Lint        | `trunk fmt && trunk check` | exit 0              |
+| ESLint only | `pnpm exec eslint .`       | exit 0              |
+| Typecheck   | `pnpm check`               | exit 0              |
+| All unit    | `pnpm test:only`           | all pass            |
 
 ## Scope
 
@@ -124,7 +125,7 @@ files or explodes the lint time unacceptably, **STOP and report** with the error
 (`svelte-eslint-parser` `parserOptions.parser`), which may exceed this plan's
 risk budget.
 
-**Verify**: `pnpm lint` → exit 0 with the new rules active.
+**Verify**: `trunk fmt && trunk check` → exit 0 with the new rules active.
 
 ### Step 3: Prove a floating promise is now caught (guard)
 
@@ -136,17 +137,17 @@ actually wired to type info, not silently inactive. Document the result in your
 report (do not commit the scratch change).
 
 **Verify**: ESLint flags the scratch floating promise; after revert,
-`pnpm lint` → exit 0.
+`trunk fmt && trunk check` → exit 0.
 
 ### Step 4: Full suite
 
-**Verify**: `pnpm check` → 0; `pnpm test:only` → all pass; `pnpm lint` → 0.
+**Verify**: `pnpm check` → 0; `pnpm test:only` → all pass; `trunk fmt && trunk check` → 0.
 
 ## Test plan
 
 - No new unit tests (this is tooling). The guard is Step 3 (rule provably active)
   plus a green `pnpm test:only` after any violation fixes.
-- Verification: `pnpm lint` → exit 0; `pnpm test:only` → all pass.
+- Verification: `trunk fmt && trunk check` → exit 0; `pnpm test:only` → all pass.
 
 ## Done criteria
 
@@ -156,7 +157,7 @@ ALL must hold:
       `eslint.config.mjs`.
 - [ ] `no-floating-promises` is active and provably catches a floating promise
       (Step 3), then reverted.
-- [ ] `pnpm lint` exits 0 (all surfaced violations fixed or justified via Trunk
+- [ ] `trunk fmt && trunk check` exits 0 (all surfaced violations fixed or justified via Trunk
       inline ignore — never `eslint-disable`).
 - [ ] `pnpm check` exits 0; `pnpm test:only` exits 0.
 - [ ] No `eslint-disable` comments introduced (`grep -rn "eslint-disable" src`

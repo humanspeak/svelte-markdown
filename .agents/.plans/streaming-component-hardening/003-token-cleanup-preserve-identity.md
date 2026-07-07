@@ -133,7 +133,7 @@ keeps all existing `token-cleanup` tests green.
 | Cleanup   | `pnpm test:only src/lib/utils/token-cleanup.test.ts`                                                  | all pass            |
 | Streaming | `pnpm test:only src/lib/utils/streaming-token-reuse.test.ts src/lib/utils/incremental-parser.test.ts` | all pass            |
 | All unit  | `pnpm test:only`                                                                                      | all pass            |
-| Lint      | `pnpm lint`                                                                                           | exit 0              |
+| Lint      | `trunk fmt && trunk check`                                                                            | exit 0              |
 
 ## Scope
 
@@ -192,7 +192,7 @@ expansion still happen on first clean.
 
 - `pnpm check` → exit 0.
 - `pnpm test:only` → all pass.
-- `pnpm lint` → exit 0.
+- `trunk fmt && trunk check` → exit 0.
 
 ## Test plan
 

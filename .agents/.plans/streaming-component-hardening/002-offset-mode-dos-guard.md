@@ -79,7 +79,7 @@ that file (see the `flushStreamingBatch` helper near line 125).
 | Typecheck | `pnpm check`                                    | exit 0, 0 errors    |
 | One file  | `pnpm test:only src/lib/SvelteMarkdown.test.ts` | all pass            |
 | All unit  | `pnpm test:only`                                | all pass            |
-| Lint      | `pnpm lint`                                     | exit 0              |
+| Lint      | `trunk fmt && trunk check`                      | exit 0              |
 
 ## Scope
 

@@ -10,6 +10,14 @@ This batch **absorbs and supersedes** the open GitHub issues listed under
 before planning (except #332, whose main asks already shipped — only a residual
 remains).
 
+> **Revision 2026-07-07 (guard):** All plans' lint gate changed from `pnpm lint`
+> to `trunk fmt && trunk check`. `pnpm lint` runs `prettier --check . && eslint .`,
+> which fails on pre-existing `docs/**` formatting unrelated to any plan's scope;
+> this repo lints via Trunk (`trunk fmt` to format, `trunk check` to lint). The
+> `Planned at` SHA is intentionally left at `939f154` for every plan — this is a
+> tooling-command correction only and does not change any plan's source baseline,
+> so the drift checks must keep pointing at the original audited commit.
+
 ## Execution order & status
 
 | Plan | Title                                                                                        | Priority | Effort | Risk | Depends on         | Status |
@@ -111,6 +119,6 @@ These came out of this audit and were **not** open issues before:
 - Typecheck: `pnpm check`
 - Unit tests (no coverage): `pnpm test:only` (or `pnpm test:only <file>`)
 - Unit tests + coverage gate: `pnpm test`
-- Lint: `pnpm lint`
+- Lint: `trunk fmt && trunk check`
 - Package build: `pnpm build`
 - E2E (not usually needed per-plan): `pnpm test:e2e`

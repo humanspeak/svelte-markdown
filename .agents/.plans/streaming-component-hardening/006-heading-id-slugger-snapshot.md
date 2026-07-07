@@ -105,7 +105,7 @@ wrong id to save time.
 | Typecheck | `pnpm check`                                              | exit 0, 0 errors    |
 | 328 tests | `pnpm test:only src/lib/SvelteMarkdown.issue-328.test.ts` | all pass            |
 | All unit  | `pnpm test:only`                                          | all pass            |
-| Lint      | `pnpm lint`                                               | exit 0              |
+| Lint      | `trunk fmt && trunk check`                                | exit 0              |
 
 ## Scope
 
@@ -170,7 +170,7 @@ that the number of `slug()` calls per flush is proportional to the tail, not the
 full heading count. If no such harness exists, skip this step — do not build a
 timing-based test (flaky).
 
-**Verify**: `pnpm check` → 0; `pnpm lint` → 0; `pnpm test:only` → all pass.
+**Verify**: `pnpm check` → 0; `trunk fmt && trunk check` → 0; `pnpm test:only` → all pass.
 
 ## Test plan
 
