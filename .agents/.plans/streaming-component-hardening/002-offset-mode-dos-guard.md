@@ -9,6 +9,15 @@
 > **Drift check (run first)**: `git diff --stat 939f154..HEAD -- src/lib/SvelteMarkdown.svelte`
 > If it changed since this plan was written, compare the "Current state"
 > excerpts against the live code; on a mismatch, treat it as a STOP condition.
+>
+> Revision 2026-07-07: scope broadened by operator direction. The offset guard
+> was delivered inside an authorized extraction of the streaming chunk helpers
+> out of `SvelteMarkdown.svelte` into `src/lib/utils/streaming-chunks.ts`
+> (`writeChunk` now delegates to `getStreamingChunkInstruction`; the
+> `' '.repeat` padding moved to `applyStreamingOffsetChunk`). In-scope list and
+> Done criterion 5 updated below to match; `Planned at` re-stamped to the
+> post-refactor HEAD. The guard's behaviour (cap, warn message, no-throw) is
+> unchanged from the original steps.
 
 ## Status
 
@@ -17,7 +26,7 @@
 - **Risk**: LOW
 - **Depends on**: none
 - **Category**: bug (denial-of-service hardening)
-- **Planned at**: commit `939f154`, 2026-07-07
+- **Planned at**: commit `e057852` (amended 2026-07-07; originally `939f154`)
 
 ## Why this matters
 
@@ -83,10 +92,18 @@ that file (see the `flushStreamingBatch` helper near line 125).
 
 ## Scope
 
-**In scope**:
+**In scope** (broadened by the 2026-07-07 revision — the offset guard rides
+along with the operator-directed helper extraction):
 
-- `src/lib/SvelteMarkdown.svelte` — add a bound on the offset gap.
-- `src/lib/SvelteMarkdown.test.ts` — add a test for the rejected-gap path.
+- `src/lib/SvelteMarkdown.svelte` — bound the offset gap; `writeChunk` delegates
+  to the extracted helpers.
+- `src/lib/SvelteMarkdown.test.ts` — test for the rejected-gap path.
+- `src/lib/utils/streaming-chunks.ts` — new module holding the extracted chunk
+  helpers, the `STREAM_MAX_OFFSET_GAP` bound, and the gap guard.
+- `src/lib/utils/streaming-chunks.test.ts` — unit tests for the extracted
+  helpers and the gap guard.
+- `src/lib/utils/streaming.ts` — re-exports `isStreamingOffsetChunk` from the
+  new module (no behaviour change).
 
 **Out of scope**:
 
@@ -194,7 +211,7 @@ ALL must hold:
       constant and its use in the guard.
 - [ ] A `writeChunk` with `offset` far beyond the buffer no longer allocates a
       giant string (asserted by test) and does not throw.
-- [ ] No files outside the in-scope list are modified (`git status`).
+- [ ] No files outside the (revised) in-scope list are modified (`git status`).
 - [ ] The batch `README.md` status row for 002 is updated.
 
 ## STOP conditions
