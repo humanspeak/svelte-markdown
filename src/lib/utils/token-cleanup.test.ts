@@ -2,6 +2,9 @@ import type { Token } from 'marked'
 import { describe, expect, it } from 'vitest'
 import { isHtmlOpenTag, parseHtmlBlock, shrinkHtmlTokens } from './token-cleanup.js'
 
+type TestListItem = Token & { tokens: Token[]; listItemIndex: number }
+type TestTableCell = Token & { tokens: Token[] }
+
 describe('Token Cleanup Utilities', () => {
     describe('isHtmlOpenTag', () => {
         it('should correctly identify opening HTML tags', () => {
@@ -334,6 +337,190 @@ describe('Token Cleanup Utilities', () => {
             expect(table.header[0].tokens).toEqual([])
             expect(Array.isArray(table.rows)).toBe(true)
             expect(table.rows[0][0].tokens).toEqual([])
+        })
+
+        it('should preserve unchanged list item identity across clean passes', () => {
+            const tokens: Token[] = [
+                {
+                    type: 'list',
+                    raw: '- first\n- second',
+                    items: [
+                        {
+                            type: 'list_item',
+                            raw: '- first',
+                            text: 'first',
+                            tokens: [{ type: 'text', raw: 'first', text: 'first' }]
+                        },
+                        {
+                            type: 'list_item',
+                            raw: '- second',
+                            text: 'second',
+                            tokens: [{ type: 'text', raw: 'second', text: 'second' }]
+                        }
+                    ]
+                }
+            ]
+
+            const firstClean = shrinkHtmlTokens(tokens)
+            const firstList = firstClean[0] as Token & { items: TestListItem[] }
+            const firstItem = firstList.items[0]
+            const secondItem = firstList.items[1]
+
+            const secondClean = shrinkHtmlTokens(firstClean)
+            const secondList = secondClean[0] as Token & {
+                items: TestListItem[]
+            }
+
+            expect(secondList.items[0]).toBe(firstItem)
+            expect(secondList.items[1]).toBe(secondItem)
+            expect(secondList.items[0].listItemIndex).toBe(0)
+            expect(secondList.items[1].listItemIndex).toBe(1)
+        })
+
+        it('should preserve unchanged sibling list item identity when another item changes', () => {
+            const tokens: Token[] = [
+                {
+                    type: 'list',
+                    raw: '- first\n- second',
+                    items: [
+                        {
+                            type: 'list_item',
+                            raw: '- first',
+                            text: 'first',
+                            tokens: [{ type: 'text', raw: 'first', text: 'first' }]
+                        },
+                        {
+                            type: 'list_item',
+                            raw: '- second',
+                            text: 'second',
+                            tokens: [{ type: 'text', raw: 'second', text: 'second' }]
+                        }
+                    ]
+                }
+            ]
+
+            const firstClean = shrinkHtmlTokens(tokens)
+            const firstList = firstClean[0] as Token & { items: TestListItem[] }
+            const changedItem = firstList.items[0]
+            const unchangedItem = firstList.items[1]
+            changedItem.tokens = [
+                { type: 'html', raw: '<strong>', text: '<strong>' },
+                { type: 'text', raw: 'first', text: 'first' },
+                { type: 'html', raw: '</strong>', text: '</strong>' }
+            ]
+
+            const secondClean = shrinkHtmlTokens(firstClean)
+            const secondList = secondClean[0] as Token & {
+                items: TestListItem[]
+            }
+
+            expect(secondList.items[0]).not.toBe(changedItem)
+            expect(secondList.items[0].tokens[0]).toMatchObject({
+                type: 'html',
+                tag: 'strong'
+            })
+            expect(secondList.items[1]).toBe(unchangedItem)
+        })
+
+        it('should preserve unchanged table body cell identity across clean passes', () => {
+            const tokens: Token[] = [
+                {
+                    type: 'table',
+                    raw: '| A | B |\n| - | - |\n| first | second |',
+                    header: [
+                        {
+                            text: 'A',
+                            tokens: [{ type: 'text', raw: 'A', text: 'A' }]
+                        },
+                        {
+                            text: 'B',
+                            tokens: [{ type: 'text', raw: 'B', text: 'B' }]
+                        }
+                    ],
+                    rows: [
+                        [
+                            {
+                                text: 'first',
+                                tokens: [{ type: 'text', raw: 'first', text: 'first' }]
+                            },
+                            {
+                                text: 'second',
+                                tokens: [{ type: 'text', raw: 'second', text: 'second' }]
+                            }
+                        ]
+                    ]
+                }
+            ]
+
+            const firstClean = shrinkHtmlTokens(tokens)
+            const firstTable = firstClean[0] as Token & {
+                rows: TestTableCell[][]
+            }
+            const firstCell = firstTable.rows[0][0]
+            const secondCell = firstTable.rows[0][1]
+
+            const secondClean = shrinkHtmlTokens(firstClean)
+            const secondTable = secondClean[0] as Token & {
+                rows: TestTableCell[][]
+            }
+
+            expect(secondTable.rows[0][0]).toBe(firstCell)
+            expect(secondTable.rows[0][1]).toBe(secondCell)
+        })
+
+        it('should preserve unchanged sibling table body cell identity when another cell changes', () => {
+            const tokens: Token[] = [
+                {
+                    type: 'table',
+                    raw: '| A | B |\n| - | - |\n| first | second |',
+                    header: [
+                        {
+                            text: 'A',
+                            tokens: [{ type: 'text', raw: 'A', text: 'A' }]
+                        },
+                        {
+                            text: 'B',
+                            tokens: [{ type: 'text', raw: 'B', text: 'B' }]
+                        }
+                    ],
+                    rows: [
+                        [
+                            {
+                                text: 'first',
+                                tokens: [{ type: 'text', raw: 'first', text: 'first' }]
+                            },
+                            {
+                                text: 'second',
+                                tokens: [{ type: 'text', raw: 'second', text: 'second' }]
+                            }
+                        ]
+                    ]
+                }
+            ]
+
+            const firstClean = shrinkHtmlTokens(tokens)
+            const firstTable = firstClean[0] as Token & {
+                rows: TestTableCell[][]
+            }
+            const changedCell = firstTable.rows[0][0]
+            const unchangedCell = firstTable.rows[0][1]
+            changedCell.tokens = [
+                { type: 'html', raw: '<em>', text: '<em>' },
+                { type: 'text', raw: 'first', text: 'first' },
+                { type: 'html', raw: '</em>', text: '</em>' }
+            ]
+
+            const secondClean = shrinkHtmlTokens(firstClean)
+            const secondTable = secondClean[0] as Token & {
+                rows: TestTableCell[][]
+            }
+
+            expect(secondTable.rows[0][0]).not.toBe(changedCell)
+            expect(secondTable.rows[0][0].tokens[0]).toMatchObject({
+                type: 'html',
+                tag: 'em'
+            })
+            expect(secondTable.rows[0][1]).toBe(unchangedCell)
         })
 
         it('should keep html token unchanged when it does not contain a tag', () => {

@@ -519,6 +519,42 @@ const pairFlatHtmlTokens = (tokens: Token[]): Token[] => {
     return result
 }
 
+type IndexedListItem = Tokens.ListItem & { listItemIndex?: number }
+
+const tokensShallowEqual = (left: Token[] | undefined, right: Token[]): left is Token[] => {
+    if (!left || left.length !== right.length) return false
+
+    return left.every((token, index) => token === right[index])
+}
+
+const cleanListItem = (item: Tokens.ListItem, index: number): IndexedListItem => {
+    const cleanedTokens = item.tokens ? shrinkHtmlTokens(item.tokens) : []
+    const indexedItem = item as IndexedListItem
+
+    if (indexedItem.listItemIndex === index && tokensShallowEqual(item.tokens, cleanedTokens)) {
+        return indexedItem
+    }
+
+    return {
+        ...item,
+        listItemIndex: index,
+        tokens: cleanedTokens
+    }
+}
+
+const cleanTableCell = (cell: Tokens.TableCell): Tokens.TableCell => {
+    const cleanedTokens = cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
+
+    if (tokensShallowEqual(cell.tokens, cleanedTokens)) {
+        return cell
+    }
+
+    return {
+        ...cell,
+        tokens: cleanedTokens
+    }
+}
+
 /**
  * Primary entry point for HTML token processing. Transforms flat token arrays
  * into properly nested structures while preserving HTML semantics.
@@ -556,26 +592,16 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
             t.tokens = shrinkHtmlTokens(t.tokens)
             expanded.push(token)
         } else if (token.type === 'list') {
-            token.items = token.items.map((item: Tokens.ListItem, index: number) => ({
-                ...item,
-                listItemIndex: index,
-                tokens: item.tokens ? shrinkHtmlTokens(item.tokens) : []
-            }))
+            token.items = token.items.map(cleanListItem)
             expanded.push(token)
         } else if (token.type === 'table') {
             const tableToken = token as Tokens.Table
             if (tableToken.header) {
-                tableToken.header = tableToken.header.map((cell: Tokens.TableCell) => ({
-                    ...cell,
-                    tokens: cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
-                }))
+                tableToken.header = tableToken.header.map(cleanTableCell)
             }
             if (tableToken.rows) {
                 tableToken.rows = tableToken.rows.map((row: Tokens.TableCell[]) =>
-                    row.map((cell: Tokens.TableCell) => ({
-                        ...cell,
-                        tokens: cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
-                    }))
+                    row.map(cleanTableCell)
                 )
             }
             expanded.push(token)
