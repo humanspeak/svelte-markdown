@@ -20,7 +20,7 @@ jobs:
         if: github.event_name == 'push' || github.event_name == 'schedule' || github.event.pull_request.head.repo.full_name != github.repository
 
         steps:
-            - uses: actions/checkout@v6 # zizmor: ignore[unpinned-uses]
+            - uses: actions/checkout@v7 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
                   fetch-depth: 0
