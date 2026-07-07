@@ -588,6 +588,36 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(nextMoreToken).toBe(firstMoreToken)
     })
 
+    test('keeps unchanged list item DOM mounted while a later item grows during streaming', async () => {
+        const { component, container } = render(SvelteMarkdown, {
+            props: {
+                source: '',
+                streaming: true,
+                renderers: {
+                    listitem: TrackedListItem
+                }
+            }
+        })
+
+        await act(() => component.writeChunk('- Anchor\n- Grow'))
+        await flushStreamingBatch()
+
+        const itemBefore = container.querySelector('[data-tracked-list-item="Anchor"]')
+        expect(itemBefore).toBeInstanceOf(HTMLLIElement)
+        itemBefore?.setAttribute('data-remount-probe', 'kept')
+
+        await act(() => component.writeChunk('ing'))
+        await flushStreamingBatch()
+
+        const itemAfter = container.querySelector('[data-tracked-list-item="Anchor"]')
+
+        expect(container.querySelector('[data-tracked-list-item="Growing"]')).toBeInstanceOf(
+            HTMLLIElement
+        )
+        expect(itemAfter).toBe(itemBefore)
+        expect(itemAfter).toHaveAttribute('data-remount-probe', 'kept')
+    })
+
     test('keeps a stable table body row mounted when a sibling row is inserted before it', async () => {
         const stableRow = [tableCell('More'), tableCell('Tail')]
         const insertedRow = [tableCell('Inserted'), tableCell('Row')]
