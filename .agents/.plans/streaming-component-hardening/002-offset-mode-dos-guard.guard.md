@@ -55,4 +55,4 @@ Flake — flagged, not attributed:
 - Scope audit (`git diff ff081773...HEAD`): 5 source files (all revised in-scope) + guard artifacts only. Drift `e057852..HEAD` = the clamp, nothing else.
 - Spirit met: `' '.repeat` DoS hazard closed at both entry points (writeChunk reject + apply-side clamp); normal offset streaming byte-identical.
 - Flake resolved as non-blocking: the single red run never recurred across 12 subsequent full runs; no async surface in this work; not attributable to 002. Logged as a residual-risk follow-up (quarantine the flaky test) in the report — out of 002's scope/origin.
-- Action: **PASS**. Integrating via `commit`/`pr` skills (source already committed; committing report + this log entry, then opening the PR). Merge remains the operator's.
+- Action: **PASS**. Integrated via `commit`/`pr` skills → PR https://github.com/humanspeak/svelte-markdown/pull/343 (base `main`, labels bug/security/javascript). Branch pushed with upstream set to itself (no push-to-main trap). Merge remains the operator's.
