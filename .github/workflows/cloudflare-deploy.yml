@@ -29,7 +29,7 @@ jobs:
         name: Deploy
         steps:
             - name: Checkout
-              uses: actions/checkout@v6 # zizmor: ignore[unpinned-uses]
+              uses: actions/checkout@v7 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
 
@@ -79,7 +79,7 @@ jobs:
 
             - name: Upload Wrangler logs
               if: always()
-              uses: actions/upload-artifact@v4 # zizmor: ignore[unpinned-uses]
+              uses: actions/upload-artifact@v7 # zizmor: ignore[unpinned-uses]
               with:
                   name: wrangler-logs
                   path: ~/.config/.wrangler/logs/*.log
