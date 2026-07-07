@@ -28,10 +28,10 @@
         "runed": "^0.37.1"
     },
     "devDependencies": {
-        "@cloudflare/workers-types": "^5.20260703.1",
+        "@cloudflare/workers-types": "^5.20260705.1",
         "@eslint/compat": "^2.1.0",
         "@eslint/js": "^10.0.1",
-        "@humanspeak/svelte-motion": "^0.7.12",
+        "@humanspeak/svelte-motion": "^0.7.13",
         "@icons-pack/svelte-simple-icons": "^7.2.0",
         "@lucide/svelte": "^1.23.0",
         "@sveltejs/adapter-cloudflare": "^7.2.9",
