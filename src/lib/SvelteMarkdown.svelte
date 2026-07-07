@@ -73,14 +73,20 @@
     import { parseAndCacheTokens, parseAndCacheTokensAsync } from '$lib/utils/parse-and-cache.js'
     import { createRenderMetadata, RENDER_METADATA_CONTEXT } from '$lib/utils/render-metadata.js'
     import { defaultSanitizeAttributes, defaultSanitizeUrl } from '$lib/utils/sanitize.js'
-    import { isStreamingOffsetChunk } from '$lib/utils/streaming.js'
+    import {
+        applyStreamingOffsetChunk,
+        appendStreamingChunk,
+        commitStreamingAppendBuffer,
+        getStreamingChunkInstruction,
+        shouldFlushStreamingAppendBuffer,
+        STREAM_BATCH_FALLBACK_MS,
+        STREAM_MAX_OFFSET_GAP,
+        type StreamingInputMode
+    } from '$lib/utils/streaming-chunks.js'
     import { reuseStableStreamingTokens } from '$lib/utils/streaming-token-reuse.js'
 
     type StreamFlushHandle =
         { kind: 'raf'; id: number } | { kind: 'timeout'; id: ReturnType<typeof setTimeout> } | null
-
-    const STREAM_BATCH_FALLBACK_MS = 16
-    const STREAM_BATCH_MAX_CHARS = 256
 
     const {
         source = [],
@@ -116,7 +122,7 @@
     let streamSourceBuffer = ''
     let pendingStreamAppendBuffer = ''
     let streamFlushHandle: StreamFlushHandle = null
-    let streamInputMode: 'append' | 'offset' | null = null
+    let streamInputMode: StreamingInputMode = null
     let streamTokens = $state<Token[]>([])
     let streamRenderMetadataStartIndex = 0
     let streamRenderMetadataStartOffset = 0
@@ -177,10 +183,11 @@
     }
 
     const commitPendingAppendBuffer = () => {
-        if (pendingStreamAppendBuffer === '') return false
+        const result = commitStreamingAppendBuffer(streamSourceBuffer, pendingStreamAppendBuffer)
+        if (!result.committed) return false
 
-        streamSourceBuffer += pendingStreamAppendBuffer
-        pendingStreamAppendBuffer = ''
+        streamSourceBuffer = result.sourceBuffer
+        pendingStreamAppendBuffer = result.pendingBuffer
 
         return true
     }
@@ -293,9 +300,9 @@
     }
 
     const applyAppendChunk = (value: string) => {
-        pendingStreamAppendBuffer += value
+        pendingStreamAppendBuffer = appendStreamingChunk(pendingStreamAppendBuffer, value)
 
-        if (pendingStreamAppendBuffer.length >= STREAM_BATCH_MAX_CHARS) {
+        if (shouldFlushStreamingAppendBuffer(pendingStreamAppendBuffer)) {
             flushPendingAppendChunks()
             return
         }
@@ -303,63 +310,33 @@
         scheduleAppendFlush()
     }
 
-    const applyOffsetChunk = ({ value, offset }: StreamingOffsetChunk) => {
-        const padded =
-            offset > streamSourceBuffer.length
-                ? streamSourceBuffer + ' '.repeat(offset - streamSourceBuffer.length)
-                : streamSourceBuffer
-        const prefix = padded.slice(0, offset)
-        const suffix = padded.slice(offset + value.length)
-
-        streamSourceBuffer = prefix + value + suffix
+    const applyOffsetChunk = (chunk: StreamingOffsetChunk) => {
+        streamSourceBuffer = applyStreamingOffsetChunk(streamSourceBuffer, chunk, {
+            maxOffsetGap: STREAM_MAX_OFFSET_GAP
+        })
         applyStreamingSource(streamSourceBuffer)
     }
 
     export function writeChunk(chunk: StreamingChunk): void {
         if (!canUseImperativeStreaming('writeChunk')) return
 
-        if (typeof chunk === 'string') {
-            if (streamInputMode === 'offset') {
-                warnStreaming(
-                    'offset mode active, string chunk dropped. Call resetStream() before switching streaming input modes.'
-                )
-                return
-            }
-
-            if (streamInputMode === null) {
-                streamInputMode = 'append'
-            }
-
-            applyAppendChunk(chunk)
+        const instruction = getStreamingChunkInstruction(chunk, streamInputMode, {
+            currentBufferLength: streamSourceBuffer.length,
+            maxOffsetGap: STREAM_MAX_OFFSET_GAP
+        })
+        if (instruction.kind === 'drop') {
+            warnStreaming(instruction.message)
             return
         }
 
-        if (!isStreamingOffsetChunk(chunk) || typeof chunk.value !== 'string') {
-            warnStreaming(
-                'Invalid chunk object passed to writeChunk(); expected { value: string, offset: number }.'
-            )
+        streamInputMode = instruction.nextMode
+
+        if (instruction.kind === 'append') {
+            applyAppendChunk(instruction.value)
             return
         }
 
-        if (!Number.isSafeInteger(chunk.offset) || chunk.offset < 0) {
-            warnStreaming(
-                'Invalid offset chunk passed to writeChunk(); offset must be a non-negative safe integer.'
-            )
-            return
-        }
-
-        if (streamInputMode === 'append') {
-            warnStreaming(
-                'append mode active, offset chunk dropped. Call resetStream() before switching streaming input modes.'
-            )
-            return
-        }
-
-        if (streamInputMode === null) {
-            streamInputMode = 'offset'
-        }
-
-        applyOffsetChunk(chunk)
+        applyOffsetChunk(instruction.chunk)
     }
 
     export function resetStream(nextSource = ''): void {

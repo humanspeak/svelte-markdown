@@ -242,6 +242,33 @@ describe('imperative streaming API', () => {
         expect(container.querySelector('p')?.textContent).toBe('ab  XY')
     })
 
+    test('drops offset chunks that open an excessive gap', async () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        await act(() => component.writeChunk({ value: 'x', offset: 5_000_000 }))
+
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('offset chunk skipped'))
+        expect((container.textContent ?? '').length).toBeLessThan(100)
+
+        warnSpy.mockRestore()
+    })
+
+    test('applies in-range offset chunks at the current buffer end', async () => {
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        await act(() => {
+            component.writeChunk({ value: 'Hello', offset: 0 })
+            component.writeChunk({ value: ' World', offset: 'Hello'.length })
+        })
+
+        expect(container.querySelector('p')?.textContent).toBe('Hello World')
+    })
+
     test('overwrites existing characters instead of inserting in offset mode', async () => {
         const { component, container } = render(SvelteMarkdown, {
             props: { source: '', streaming: true }
