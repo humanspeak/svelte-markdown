@@ -36,6 +36,15 @@ type RenderMetadataNode = Record<string, unknown> & {
     rows?: unknown
 }
 
+type SluggerOccurrences = Slugger['occurrences']
+
+type PreparedHeadingSnapshot = {
+    offset: number
+    occurrences: SluggerOccurrences
+}
+
+type HeadingSluggerSignature = Pick<SvelteMarkdownOptions, 'headerIds' | 'headerPrefix'>
+
 interface SourceLessRootRecord {
     key: unknown
     identities: Set<object>
@@ -75,6 +84,20 @@ const getNodeSourceLength = (node: RenderMetadataNode) => {
     return getNodeSpanText(node).length
 }
 
+const cloneSluggerOccurrences = (occurrences: SluggerOccurrences): SluggerOccurrences => ({
+    ...occurrences
+})
+
+const getHeadingSluggerSignature = (options: SvelteMarkdownOptions): HeadingSluggerSignature => ({
+    headerIds: options.headerIds,
+    headerPrefix: options.headerPrefix
+})
+
+const headingSluggerSignaturesMatch = (
+    a: HeadingSluggerSignature | undefined,
+    b: HeadingSluggerSignature
+) => a !== undefined && a.headerIds === b.headerIds && a.headerPrefix === b.headerPrefix
+
 /**
  * Creates a per-`SvelteMarkdown`-instance render metadata helper. State
  * (render keys, precomputed heading ids, source offsets, and cross-pass
@@ -104,6 +127,8 @@ export const createRenderMetadata = (): RenderMetadata => {
     const headingIds = new WeakMap<object, string | undefined>()
     const sourceOffsets = new WeakMap<object, number>()
     let preparedHeadingNodes: RenderMetadataNode[] = []
+    let preparedHeadingSnapshots: Array<PreparedHeadingSnapshot | undefined> = []
+    let preparedHeadingSignature: HeadingSluggerSignature | undefined
     let previousSourceLessRoots: SourceLessRootRecord[] = []
 
     const setRenderKey = (node: object, value: unknown) => {
@@ -266,6 +291,7 @@ export const createRenderMetadata = (): RenderMetadata => {
         options: SvelteMarkdownOptions,
         slugger: Slugger,
         nextHeadingNodes: RenderMetadataNode[],
+        nextHeadingSnapshots: Array<PreparedHeadingSnapshot | undefined>,
         startIndex = 0
     ) => {
         if (!nodes) return
@@ -274,16 +300,40 @@ export const createRenderMetadata = (): RenderMetadata => {
             const node = nodes[index]
             if (node.type === 'heading') {
                 seedHeadingSlugger(node, options, slugger)
-                nextHeadingNodes.push(node)
+                rememberPreparedHeading(node, slugger, nextHeadingNodes, nextHeadingSnapshots)
             }
 
-            assignHeadingIds(asNodeArray(node.tokens), options, slugger, nextHeadingNodes)
-            assignHeadingIds(asNodeArray(node.items), options, slugger, nextHeadingNodes)
-            assignHeadingIds(asNodeArray(node.header), options, slugger, nextHeadingNodes)
+            assignHeadingIds(
+                asNodeArray(node.tokens),
+                options,
+                slugger,
+                nextHeadingNodes,
+                nextHeadingSnapshots
+            )
+            assignHeadingIds(
+                asNodeArray(node.items),
+                options,
+                slugger,
+                nextHeadingNodes,
+                nextHeadingSnapshots
+            )
+            assignHeadingIds(
+                asNodeArray(node.header),
+                options,
+                slugger,
+                nextHeadingNodes,
+                nextHeadingSnapshots
+            )
             const rows = asNodeArray(node.rows)
             if (rows) {
                 for (const row of rows) {
-                    assignHeadingIds(asNodeArray(row), options, slugger, nextHeadingNodes)
+                    assignHeadingIds(
+                        asNodeArray(row),
+                        options,
+                        slugger,
+                        nextHeadingNodes,
+                        nextHeadingSnapshots
+                    )
                 }
             }
         }
@@ -302,6 +352,87 @@ export const createRenderMetadata = (): RenderMetadata => {
         )
     }
 
+    const rememberPreparedHeading = (
+        node: RenderMetadataNode,
+        slugger: Slugger,
+        nextHeadingNodes: RenderMetadataNode[],
+        nextHeadingSnapshots: Array<PreparedHeadingSnapshot | undefined>
+    ) => {
+        nextHeadingNodes.push(node)
+
+        const headingOffset = getSourceOffset(node)
+        nextHeadingSnapshots.push(
+            headingOffset === undefined
+                ? undefined
+                : {
+                      offset: headingOffset,
+                      occurrences: cloneSluggerOccurrences(slugger.occurrences)
+                  }
+        )
+    }
+
+    const getPreparedHeadingPrefixCount = (startOffset: number) => {
+        let prefixCount = 0
+
+        for (const heading of preparedHeadingNodes) {
+            const headingOffset = getSourceOffset(heading)
+            if (headingOffset === undefined) return undefined
+            if (headingOffset >= startOffset) break
+
+            const snapshot = preparedHeadingSnapshots[prefixCount]
+            if (!snapshot || snapshot.offset !== headingOffset) return undefined
+
+            prefixCount++
+        }
+
+        return prefixCount
+    }
+
+    const restorePreparedHeadingSluggerSnapshot = (
+        slugger: Slugger,
+        options: SvelteMarkdownOptions,
+        startOffset: number,
+        nextHeadingNodes: RenderMetadataNode[],
+        nextHeadingSnapshots: Array<PreparedHeadingSnapshot | undefined>
+    ) => {
+        const currentSignature = getHeadingSluggerSignature(options)
+        if (!headingSluggerSignaturesMatch(preparedHeadingSignature, currentSignature)) {
+            return false
+        }
+
+        const prefixCount = getPreparedHeadingPrefixCount(startOffset)
+        if (prefixCount === undefined) return false
+
+        nextHeadingNodes.push(...preparedHeadingNodes.slice(0, prefixCount))
+        nextHeadingSnapshots.push(...preparedHeadingSnapshots.slice(0, prefixCount))
+
+        if (prefixCount === 0) return true
+
+        const snapshot = preparedHeadingSnapshots[prefixCount - 1]
+        if (!snapshot) return false
+
+        slugger.occurrences = cloneSluggerOccurrences(snapshot.occurrences)
+        return true
+    }
+
+    const replayPreparedHeadingPrefix = (
+        slugger: Slugger,
+        options: SvelteMarkdownOptions,
+        startOffset: number,
+        nextHeadingNodes: RenderMetadataNode[],
+        nextHeadingSnapshots: Array<PreparedHeadingSnapshot | undefined>
+    ) => {
+        for (const heading of preparedHeadingNodes) {
+            const headingOffset = getSourceOffset(heading)
+            if (headingOffset === undefined || headingOffset >= startOffset) {
+                continue
+            }
+
+            seedHeadingSlugger(heading, options, slugger)
+            rememberPreparedHeading(heading, slugger, nextHeadingNodes, nextHeadingSnapshots)
+        }
+    }
+
     const assignPreparedHeadingIds = (
         nodes: RenderMetadataNode[],
         options: SvelteMarkdownOptions,
@@ -309,21 +440,39 @@ export const createRenderMetadata = (): RenderMetadata => {
     ) => {
         const slugger = new Slugger()
         const nextHeadingNodes: RenderMetadataNode[] = []
+        const nextHeadingSnapshots: Array<PreparedHeadingSnapshot | undefined> = []
 
         if (preparation?.source !== undefined && preparation.startOffset !== undefined) {
-            for (const heading of preparedHeadingNodes) {
-                const headingOffset = getSourceOffset(heading)
-                if (headingOffset === undefined || headingOffset >= preparation.startOffset) {
-                    continue
-                }
+            const restored = restorePreparedHeadingSluggerSnapshot(
+                slugger,
+                options,
+                preparation.startOffset,
+                nextHeadingNodes,
+                nextHeadingSnapshots
+            )
 
-                seedHeadingSlugger(heading, options, slugger)
-                nextHeadingNodes.push(heading)
+            if (!restored) {
+                replayPreparedHeadingPrefix(
+                    slugger,
+                    options,
+                    preparation.startOffset,
+                    nextHeadingNodes,
+                    nextHeadingSnapshots
+                )
             }
         }
 
-        assignHeadingIds(nodes, options, slugger, nextHeadingNodes, preparation?.startIndex ?? 0)
+        assignHeadingIds(
+            nodes,
+            options,
+            slugger,
+            nextHeadingNodes,
+            nextHeadingSnapshots,
+            preparation?.startIndex ?? 0
+        )
         preparedHeadingNodes = nextHeadingNodes
+        preparedHeadingSnapshots = nextHeadingSnapshots
+        preparedHeadingSignature = getHeadingSluggerSignature(options)
     }
 
     return {

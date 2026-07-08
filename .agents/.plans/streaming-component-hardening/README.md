@@ -27,7 +27,7 @@ remains).
 | 003  | `shrinkHtmlTokens` preserves list-item / table-cell identity                                 | P2       | M      | MED  | —                  | DONE   |
 | 004  | Source-offset render keys extend to table body cells (`rows`)                                | P2       | S      | MED  | —                  | DONE   |
 | 005  | Prop-driven streaming batches through the rAF scheduler (#327)                               | P2       | M      | MED  | —                  | DONE   |
-| 006  | Heading-id dedup snapshots slugger occurrences (#337)                                        | P3       | M      | MED  | —                  | TODO   |
+| 006  | Heading-id dedup snapshots slugger occurrences (#337)                                        | P3       | M      | MED  | —                  | DONE   |
 | 007  | Streaming hot-path micro-opts: single-pass reuse array + dedupe `startsWith` (#332 residual) | P3       | S      | LOW  | —                  | TODO   |
 | 008  | Remove dead legacy HTML-pairing code + bench module                                          | P2       | S      | LOW  | —                  | TODO   |
 | 009  | Lint test files + enable type-aware promise rules                                            | P2       | M      | MED  | 008 (soft)         | TODO   |
@@ -75,7 +75,7 @@ old issues and use these plans instead):
 | #331 (fold token reuse, one identity rule) | Superseded by **011** — verified still-live.                                                                                                                                              |
 | #332 (redundant per-update string scans)   | Main asks already shipped (`prevHasPotentialReferenceUse`/`prevHasReferenceDefinition` caching). Only the double `startsWith` remains → **007 Part B**. Effectively close-as-mostly-done. |
 | #333 (generic child-node reuse walk)       | Superseded by **011** — verified still-live.                                                                                                                                              |
-| #337 (O(N²) heading-id dedup)              | Superseded by **006** — verified still-live.                                                                                                                                              |
+| #337 (O(N²) heading-id dedup)              | Superseded by **006** — verified still-live; resolved-pending-merge on `advisor/006-heading-id-slugger-snapshot`.                                                                         |
 | #339 (simplify source-less root matching)  | Superseded by **012** — verified still-live; note 012 may recommend "reject/keep".                                                                                                        |
 
 ## New findings not previously tracked as issues
