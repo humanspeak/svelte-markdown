@@ -1,0 +1,24 @@
+# Guard log — 005 prop-path-raf-batching
+
+## Checkpoint 1 — 2026-07-08 — ON TRACK (red-phase: failing tests verified)
+
+Base `970a016` (merge-base with `main`) · branch `advisor/005-prop-path-raf-batching` · scope of this checkpoint: **Step 1 + Step 3 tests only** (the red/failing phase). No source change yet — expected for TDD red phase. Snapshot committed via the `commit` skill as `57c82b2` (`test(streaming): add red tests for prop-path rAF batching (plan 005)`). First checkpoint.
+
+Operator scope for this run: "checking that the red tests meet the criteria." Judged the tests as a contract, not the (not-yet-written) implementation.
+
+**The four new tests fail — and fail on the batching assertion, not on setup/compile.** Reproduced in-tree with `pnpm test:only src/lib/SvelteMarkdown.test.ts` → `4 failed | 76 passed`. Failure sites verified individually:
+
+- **T1 `batches append-only source prop updates into one parser update per frame`** (`SvelteMarkdown.test.ts:395`) — fails at `expect(lexSpy).toHaveBeenCalledTimes(0)` → **got 3** (`:413`). Three same-frame append-only prop rerenders (`'Hello '`→`'Hello W'`→`'Hello World'`) each lex synchronously today. This is precisely the "five parse+diff+render passes, four invisible" waste named in the plan's _Why this matters_. Also asserts post-flush `toHaveBeenCalledTimes(1)` + final text `'Hello World'`, so it can only go green with real batch-and-apply, not by suppressing lex.
+- **T2 `non-append source prop updates cancel a pending append-only prop flush`** (`:418`) — fails at `expect(container.textContent).not.toContain('Invisible')` → got `'SeedInvisible'` (`:433`). Encodes the reset-wins race the plan flags as "where batching bugs hide" (Step 3a); asserts final state after flush too (`'Reset'`, no `'Invisible'`).
+- **T3 `token-array source prop updates cancel a pending append-only prop flush`** (`:437`) — fails at `not.toContain('pending')` → got `'Seed pending'` (`:461`). Covers Step 3b (token-array switch cancels pending).
+- **T4 `unmount cancels pending append-only source prop flushes`** (`:466`) — fails at `toHaveBeenCalledTimes(0)` → **got 1** (`:486`). Covers test-plan #4 (`$effect` cleanup cancels the pending flush).
+
+**Not false-reds.** Each test's setup phase passes: initial render + `flushStreamingBatch()` yields exactly `1` lex and correct text before the batching assertions. That proves the harness plumbing the tests depend on is correctly wired — `flushStreamingBatch` (`:126`, fake-timer + stubbed rAF→`setTimeout(…,16)`), `parseAndCacheModule.lexAndClean` spy (`:9`), and `Token` (`:8`) all resolve. So the four failures isolate the missing batching behavior, nothing else. 76 pre-existing tests unaffected.
+
+**Coverage vs plan.** The four tests map 1:1 onto the plan's Test plan (batch-once / reset-wins / token-array-cancel / unmount-cancel) and cover both assertable Done criteria (N-appends⇒one-lex; non-append not clobbered by stale flush). T1 asserts a _stronger_ contract than Step 1's minimum ("called once for the batch") by pinning 0-synchronous-then-1-after-flush — an improvement, not drift.
+
+**Scope clean.** Only `src/lib/SvelteMarkdown.test.ts` modified (in scope). No source, no plan file, no README touched. Plan file untampered. README row 005 still `TODO` — correct: the README flip + `pnpm check`/lint gates are green-phase Done criteria, not due yet.
+
+**Baseline note for the next (green) checkpoint — not a red-phase problem.** The plan's drift check (`git diff --stat 939f154..HEAD -- SvelteMarkdown.svelte`) shows the file changed since `Planned-at` (85 lines, from plans 003/004 landing). Per the batch README standing directive (README:13-19) `Planned at` is intentionally pinned at `939f154`, so a non-empty drift diff is expected and not a STOP here. The excerpts Step 2 edits still match live code semantically — `syncStreamingSourceFromProp` (`SvelteMarkdown.svelte:244`), `isAppendOnly` (`:261`), `applyStreamingSource(nextStr, !isAppendOnly)` (`:276`) — only line numbers shifted from the plan's `237-270`/`179-213` ranges. The executor should re-confirm the batching-helper excerpts (`scheduleAppendFlush`/`flushPendingAppendChunks`/`cancelScheduledAppendFlush`) at their new line numbers before wiring the shared `streamFlushHandle`, and honor the STOP condition if unifying the two schedulers gets racy.
+
+Verdict: **ON TRACK.** The red tests are genuine, fail for the right reasons, and faithfully encode the plan's intent — a sound foundation for Step 2. Next gate is the green implementation checkpoint (re-run all Done criteria: `pnpm check`, full `pnpm test:only`, `trunk fmt && trunk check`, README row, #327 note), then `guard 5 final` as the integration gate. No PR at this checkpoint (not `final`; work is red by design).
