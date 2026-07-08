@@ -49,3 +49,26 @@ Base `970a016` (merge-base with `main`) · branch `advisor/005-prop-path-raf-bat
 **Baseline-drift note (carried from ckpt 1, still not a blocker).** `git diff --stat 939f154..HEAD -- SvelteMarkdown.svelte` = 142 lines (cumulative: plans 003/004 + this 61-line change). Per the batch README standing directive (README:13-19) `Planned at` stays pinned at `939f154`; the edit-target excerpts matched live code at ckpt 1 and the executor built on the correct helpers. Not a real drift.
 
 Verdict: **ON TRACK.** Every Done criterion holds, reproduced in-tree; the implementation is faithful to _Why this matters_ (append-only prop growth now coalesces to one parse/frame) and to the plan's preferred unified-scheduler design; no STOP condition tripped; scope clean; plan untampered. The work appears merge-ready. Next and final gate: **`guard hardening 5 final`** — the strict close-out + integration gate (re-run all criteria, full scope audit, write the close-out report, and on PASS open the PR via the `pr` skill). No PR opened here (this is a step checkpoint, not `final`).
+
+## Checkpoint 3 — 2026-07-08 — ON TRACK (post-review CR test-strengthening; PASS still stands)
+
+Base `970a016` (merge-base with `main`) · branch `advisor/005-prop-path-raf-batching` · re-checkpoint after the `guard final` PASS (close-out report `68f9cae`; note the `final` pass wrote the report but did not append a log entry, so this is the log's third checkpoint) and PR #346, to account for **one post-review commit** the close-out report predates. Tree already clean — nothing to snapshot; the commit under review is `d35be43` (`test(streaming): assert zero lex on token-array cancellation (CR #346)`), authored in response to a single CodeRabbit nitpick and already pushed to #346.
+
+**What changed and why.** CodeRabbit (ASSERTIVE profile, self-tagged `nitpick / 🔵 Trivial / 💤 Low value`) suggested the token-array cancellation test (T3) assert `lexAndClean` call count directly, for parity with T1/T4, rather than inferring cancellation only from rendered text. `d35be43` does exactly that.
+
+**Additive, not a weakening — verified line-by-line (`git show d35be43`).** The diff keeps **every** prior assertion (`not.toContain('pending')` ×2, the `'Array source'` text checks) and adds: a `vi.spyOn(parseAndCacheModule, 'lexAndClean')`, a `lexSpy.mockClear()` after the initial flush, `expect(lexSpy).toHaveBeenCalledTimes(0)` after the token-array source supersedes the discarded `'Seed pending'` buffer, and a `try/finally` + `mockRestore()` wrapper matching the T1/T4 idiom in this file. Nothing was removed or relaxed.
+
+**Not gamed — the new assertion is real and passes for the right reason.** After `mockClear`, no lex should occur: `'Seed pending'` schedules a batched flush (0 synchronous lex), and the token-array rerender hits the `Array.isArray` branch (`SvelteMarkdown.svelte:262-267`) which `teardownStreamingBuffers()` (cancels the pending flush + clears `pendingStreamFullSource`) then sets `streamTokens` directly — token arrays bypass `lexAndClean` entirely. So `0` is meaningful (it would be non-zero if the discarded buffer leaked a parse or the pending flush weren't cancelled), directly asserting Step 3b's intent instead of inferring it.
+
+**Done criteria — all re-reproduced in-tree at `d35be43`:**
+
+- `pnpm check` → **0 errors** (4 pre-existing/unrelated warnings).
+- `pnpm test:only` (full) → **940/940 pass, 145 files** — count unchanged (T3 strengthened, not added/removed).
+- `trunk fmt && trunk check` (test file) → **✔ No issues**.
+- Four batching tests still pass individually (`SvelteMarkdown.test.ts` — batch-once / non-append / token-array / unmount).
+
+**Scope clean, plan untampered.** `d35be43` touches only `src/lib/SvelteMarkdown.test.ts` (in scope). `git show d35be43 -- 005-…md` empty (plan untouched). No source-behavior change — `SvelteMarkdown.svelte` byte-identical to the reviewed snapshot `71d0a03`.
+
+**Reconciliation with the close-out report (`68f9cae`).** The report's Spirit section cited "test file byte-identical to the red-phase commit (`git diff 57c82b2 HEAD` empty)" as evidence the tests weren't gamed — true for the **reviewed snapshot `71d0a03`**, which is what the report is stamped at (`Reviewed at 71d0a03`). `d35be43` now makes the test file differ from the red phase by this one **additive** assertion, so that specific byte-identical check no longer holds at HEAD. This does **not** invalidate the PASS: the report is a point-in-time close-out of `71d0a03`, the change is strictly strengthening, and the anti-gaming conclusion is reinforced (a spy asserting `0`), not undermined. The report is intentionally **not** rewritten (this is a step checkpoint, not a `final` re-run); this log entry is the durable record of the post-review delta. If a merger wants the report's evidence line to match HEAD exactly, a `guard hardening 5 final` re-run would overwrite it.
+
+Verdict: **ON TRACK.** The post-review CR fix is a faithful, in-scope, additive test-strengthening; all Done criteria still hold at `d35be43`; no source behavior changed; plan untampered. The PASS from Checkpoint 3 stands and PR #346 remains merge-ready.
