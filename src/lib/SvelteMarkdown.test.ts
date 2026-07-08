@@ -443,6 +443,7 @@ describe('imperative streaming API', () => {
     })
 
     test('token-array source prop updates cancel a pending append-only prop flush', async () => {
+        const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
         const tokenSource: Token[] = [
             {
                 type: 'paragraph',
@@ -454,20 +455,27 @@ describe('imperative streaming API', () => {
         const { container, rerender } = render(SvelteMarkdown, {
             props: { source: 'Seed', streaming: true }
         })
-        await flushStreamingBatch()
 
-        await rerender({ source: 'Seed pending', streaming: true })
+        try {
+            await flushStreamingBatch()
+            lexSpy.mockClear()
 
-        expect(container.textContent).not.toContain('pending')
+            await rerender({ source: 'Seed pending', streaming: true })
 
-        await rerender({ source: tokenSource, streaming: true })
+            expect(container.textContent).not.toContain('pending')
 
-        expect(container.querySelector('p')?.textContent).toBe('Array source')
+            await rerender({ source: tokenSource, streaming: true })
 
-        await flushStreamingBatch()
+            expect(container.querySelector('p')?.textContent).toBe('Array source')
 
-        expect(container.querySelector('p')?.textContent).toBe('Array source')
-        expect(container.textContent).not.toContain('pending')
+            await flushStreamingBatch()
+
+            expect(container.querySelector('p')?.textContent).toBe('Array source')
+            expect(container.textContent).not.toContain('pending')
+            expect(lexSpy).toHaveBeenCalledTimes(0)
+        } finally {
+            lexSpy.mockRestore()
+        }
     })
 
     test('unmount cancels pending append-only source prop flushes', async () => {
