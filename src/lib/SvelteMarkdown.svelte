@@ -121,6 +121,7 @@
     let lastSourceProp: typeof source | undefined
     let streamSourceBuffer = ''
     let pendingStreamAppendBuffer = ''
+    let pendingStreamFullSource: string | null = null
     let streamFlushHandle: StreamFlushHandle = null
     let streamInputMode: StreamingInputMode = null
     let streamTokens = $state<Token[]>([])
@@ -137,7 +138,7 @@
         lastExtensionsSrc = undefined
     }
 
-    const cancelScheduledAppendFlush = () => {
+    const cancelScheduledStreamFlush = () => {
         if (!streamFlushHandle) return
 
         if (streamFlushHandle.kind === 'raf' && typeof cancelAnimationFrame === 'function') {
@@ -192,21 +193,35 @@
         return true
     }
 
-    const flushPendingAppendChunks = (forceNewParser = false) => {
-        cancelScheduledAppendFlush()
+    const flushPendingStreamChanges = (forceNewParser = false) => {
+        cancelScheduledStreamFlush()
+
+        if (pendingStreamFullSource !== null) {
+            const nextSource = pendingStreamFullSource
+            pendingStreamFullSource = null
+            pendingStreamAppendBuffer = ''
+            streamSourceBuffer = nextSource
+            applyStreamingSource(nextSource, forceNewParser)
+            return
+        }
 
         if (!commitPendingAppendBuffer()) return
 
         applyStreamingSource(streamSourceBuffer, forceNewParser)
     }
 
-    const scheduleAppendFlush = () => {
-        if (streamFlushHandle || pendingStreamAppendBuffer === '') return
+    const scheduleStreamFlush = () => {
+        if (
+            streamFlushHandle ||
+            (pendingStreamAppendBuffer === '' && pendingStreamFullSource === null)
+        ) {
+            return
+        }
 
         if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
             const id = window.requestAnimationFrame(() => {
                 streamFlushHandle = null
-                flushPendingAppendChunks()
+                flushPendingStreamChanges()
             })
             streamFlushHandle = { kind: 'raf', id }
             return
@@ -214,14 +229,15 @@
 
         const id = setTimeout(() => {
             streamFlushHandle = null
-            flushPendingAppendChunks()
+            flushPendingStreamChanges()
         }, STREAM_BATCH_FALLBACK_MS)
         streamFlushHandle = { kind: 'timeout', id }
     }
 
     const teardownStreamingBuffers = () => {
-        cancelScheduledAppendFlush()
+        cancelScheduledStreamFlush()
         pendingStreamAppendBuffer = ''
+        pendingStreamFullSource = null
         streamInputMode = null
         streamSourceBuffer = ''
         streamRenderMetadataStartIndex = 0
@@ -262,7 +278,15 @@
             incrementalParser !== undefined &&
             streamSourceBuffer !== '' &&
             nextStr !== '' &&
+            nextStr.length > streamSourceBuffer.length &&
             nextStr.startsWith(streamSourceBuffer)
+
+        if (isAppendOnly) {
+            pendingStreamAppendBuffer = ''
+            pendingStreamFullSource = nextStr
+            scheduleStreamFlush()
+            return
+        }
 
         teardownStreamingBuffers()
 
@@ -300,14 +324,18 @@
     }
 
     const applyAppendChunk = (value: string) => {
+        if (pendingStreamFullSource !== null) {
+            flushPendingStreamChanges()
+        }
+
         pendingStreamAppendBuffer = appendStreamingChunk(pendingStreamAppendBuffer, value)
 
         if (shouldFlushStreamingAppendBuffer(pendingStreamAppendBuffer)) {
-            flushPendingAppendChunks()
+            flushPendingStreamChanges()
             return
         }
 
-        scheduleAppendFlush()
+        scheduleStreamFlush()
     }
 
     const applyOffsetChunk = (chunk: StreamingOffsetChunk) => {
@@ -319,6 +347,10 @@
 
     export function writeChunk(chunk: StreamingChunk): void {
         if (!canUseImperativeStreaming('writeChunk')) return
+
+        if (pendingStreamFullSource !== null) {
+            flushPendingStreamChanges()
+        }
 
         const instruction = getStreamingChunkInstruction(chunk, streamInputMode, {
             currentBufferLength: streamSourceBuffer.length,
@@ -347,7 +379,7 @@
 
     $effect(() => {
         return () => {
-            cancelScheduledAppendFlush()
+            cancelScheduledStreamFlush()
         }
     })
 
@@ -375,8 +407,13 @@
         }
 
         if (hasStreamingParserConfigChanged()) {
+            if (pendingStreamFullSource !== null) {
+                flushPendingStreamChanges(true)
+                return
+            }
+
             if (pendingStreamAppendBuffer !== '') {
-                flushPendingAppendChunks(true)
+                flushPendingStreamChanges(true)
                 return
             }
 
