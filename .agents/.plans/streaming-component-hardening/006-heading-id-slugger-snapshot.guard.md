@@ -59,3 +59,20 @@ Base `a926055` (merge-base with `main`) · branch `advisor/006-heading-id-slugge
 **Baseline-drift note (still not a blocker).** `git diff --stat 939f154..HEAD -- render-metadata.ts` is non-empty (plan 004's table-cell keys + this change), but per the batch README standing directive `Planned at` stays pinned at `939f154`; the Step-2 edit targets matched live code and the executor built on the correct heading-path helpers.
 
 Verdict: **ON TRACK — appears merge-ready.** Every Done criterion holds, reproduced in-tree; the implementation delivers _Why this matters_ (heading-id dedup is now O(tail): the O(H·N) replay signature `50` collapsed to `4`) with byte-identical output (944/944, no expected-id change), via the plan's preferred conservative snapshot-with-replay-fallback design; no STOP condition tripped; scope clean; plan untampered; tests unweakened. Next and final gate: **`guard 6 final`** — the strict close-out + integration gate (re-run all criteria, full scope audit, write the close-out report, and on PASS open the PR via the `pr` skill). No PR opened here (this is a step checkpoint, not `final`).
+
+## Checkpoint 3 — 2026-07-08 — PASS (`final`: close-out + integration gate)
+
+Base `a926055` (merge-base with `main`) · branch `advisor/006-heading-id-slugger-snapshot` · reviewed at source snapshot `50d4ddc` · working tree already clean (nothing new to snapshot; work committed at ckpt 2). Strict close-out. Close-out report written to `006-heading-id-slugger-snapshot.guard-report.md`.
+
+**All Done criteria re-run from scratch and reproduced at `50d4ddc`:** `pnpm check` → 0 errors; `pnpm test:only` (full) → **944/944, 145 files**; `trunk check src/lib/utils/render-metadata.ts src/lib/SvelteMarkdown.issue-328.test.ts` → ✔ No issues; README row 006 `DONE` + #337 noted.
+
+**Strict adversarial pass — nothing new surfaced:**
+
+- **Not gamed:** test file byte-identical to red-phase `c0f5fdc` (`git diff c0f5fdc..50d4ddc -- …issue-328.test.ts` empty); **no `.skip`/`.only`/`todo`** in the file; equivalence test pins concrete ids `['intro','intro-1','intro-2','intro-3']` **and** `chunkedIds === staticIds` (not a tautology).
+- **Output-identical:** every pre-existing #328 heading test unchanged → STOP "expected ids changed" not tripped.
+- **Correctness rests on the fallback:** read the full source diff (`a926055...HEAD -- render-metadata.ts`). `restore` returns false (→ full replay) on signature mismatch, any undefined/mismatched prefix offset, or missing snapshot (`render-metadata.ts:391-416`); `occurrences` is typed (`Slugger['occurrences']`), not guessed — github-slugger STOP condition satisfied. Snapshots are per-heading clones taken after slugging, and the restored map is itself a clone, so cross-pass reference sharing can't corrupt state. Reasoned through the source-less-pass and `headerIds=false` paths — both fall back safely.
+- **Scope clean, plan untampered:** source diff lands only on type defs / closure state / heading-id functions; out-of-scope helpers untouched; plan file no diff.
+
+**Integration:** PR **[#348](https://github.com/humanspeak/svelte-markdown/pull/348)** opened into `main` via the `pr` skill (labels performance/javascript/enhancement, assignee jaysin586, body verified on the right PR, `Closes #337`). Branch pushed with upstream repointed to itself (not `main` — push-to-main trap avoided). Merging remains the operator's call; guard does not merge.
+
+Verdict: **PASS.** Plan 006 delivered faithfully to intent and letter — O(tail) heading-id dedup with byte-identical output, conservative snapshot-with-replay-fallback, all Done criteria reproduced, tests unweakened, scope clean, plan untampered. Close-out report is the single merge-decision artifact.
