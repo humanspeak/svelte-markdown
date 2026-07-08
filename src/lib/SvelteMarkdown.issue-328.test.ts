@@ -10,6 +10,7 @@
 
 import '@testing-library/jest-dom'
 import { act, render } from '@testing-library/svelte'
+import Slugger from 'github-slugger'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
 import StableHeading from './test/issues/issue-328/StableHeading.svelte'
@@ -99,6 +100,9 @@ const buildLargeHeadingSource = (sections: number) => {
 
     return out.join('')
 }
+
+const buildDuplicateHeadingSource = (count: number) =>
+    Array.from({ length: count }, () => '## Intro\n\n').join('')
 
 const textToken = (text: string): Token =>
     ({
@@ -325,6 +329,103 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(staticIds).toEqual(['intro'])
         expect(singleFlushIds).toEqual(staticIds)
         expect(splitFlushIds).toEqual(staticIds)
+    })
+
+    test('matches static duplicate heading ids when duplicates stream across chunks', async () => {
+        const finalSource = [
+            '## Intro',
+            'Paragraph between duplicates.',
+            '## Intro',
+            '> ## Intro',
+            '### Intro'
+        ].join('\n\n')
+
+        const staticIds = await renderStaticHeadingIds(finalSource)
+        const chunkedIds = await renderChunkedHeadingIds([
+            '## Intro\n\nParagraph',
+            ' between duplicates.\n\n## Intro\n\n',
+            '> ## Intro\n\n### Intro'
+        ])
+
+        expect(staticIds).toEqual(['intro', 'intro-1', 'intro-2', 'intro-3'])
+        expect(chunkedIds).toEqual(staticIds)
+    })
+
+    test('does not re-slug stable prefix headings when appending non-heading text', async () => {
+        const slugSpy = vi.spyOn(Slugger.prototype, 'slug')
+
+        try {
+            const prefix = buildDuplicateHeadingSource(12)
+            const { component } = render(SvelteMarkdown, {
+                props: {
+                    source: '',
+                    streaming: true
+                }
+            })
+            await act(() => component.writeChunk(prefix))
+            await flushStreamingBatch()
+
+            slugSpy.mockClear()
+
+            await act(() => component.writeChunk('A trailing paragraph with no headings.\n'))
+            await flushStreamingBatch()
+
+            expect(slugSpy).toHaveBeenCalledTimes(0)
+        } finally {
+            slugSpy.mockRestore()
+        }
+    })
+
+    test('slugs only the newly appended heading after a stable heading prefix', async () => {
+        const slugSpy = vi.spyOn(Slugger.prototype, 'slug')
+
+        try {
+            const prefix = buildDuplicateHeadingSource(16)
+            const { component, container } = render(SvelteMarkdown, {
+                props: {
+                    source: '',
+                    streaming: true
+                }
+            })
+            await act(() => component.writeChunk(prefix))
+            await flushStreamingBatch()
+
+            slugSpy.mockClear()
+
+            await act(() => component.writeChunk('## Tail\n\n'))
+            await flushStreamingBatch()
+
+            expect(slugSpy).toHaveBeenCalledTimes(1)
+            expect(headingIds(container).at(-1)).toBe('tail')
+        } finally {
+            slugSpy.mockRestore()
+        }
+    })
+
+    test('keeps slugger work proportional to newly appended headings across repeated flushes', async () => {
+        const slugSpy = vi.spyOn(Slugger.prototype, 'slug')
+
+        try {
+            const { component } = render(SvelteMarkdown, {
+                props: {
+                    source: '',
+                    streaming: true
+                }
+            })
+            await act(() => component.writeChunk(buildDuplicateHeadingSource(10)))
+            await flushStreamingBatch()
+
+            slugSpy.mockClear()
+
+            for (let index = 0; index < 4; index++) {
+                await act(() => component.writeChunk(`## Tail ${index}\n\n`))
+                await flushStreamingBatch()
+            }
+
+            expect(slugSpy).toHaveBeenCalledTimes(4)
+        } finally {
+            slugSpy.mockRestore()
+        }
     })
 
     test('matches static heading ids for a large streamed document', async () => {
