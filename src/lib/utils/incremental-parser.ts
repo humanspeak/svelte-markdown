@@ -269,6 +269,9 @@ export class IncrementalParser {
         return matches(source.slice(lineStart))
     }
 
+    private isAppendOnlyUpdate = (source: string): boolean =>
+        this.prevSource !== '' && source.startsWith(this.prevSource)
+
     /**
      * True when appending to `prevSource` introduces a reference definition
      * that was not already present. Definitions can arrive wholly in the
@@ -320,6 +323,8 @@ export class IncrementalParser {
      *
      * @param source - The full new source string for this update
      * @param boundary - The stable-prefix boundary from `getTailWindowBoundary`
+     * @param isAppendOnly - Precomputed append-only fact from `update`; direct
+     *   helper callers may omit it to compute the same fact locally
      * @param referenceInvalidatesTail - Precomputed reference-safety flag;
      *   defaults to `appendedDefinitionInvalidatesTail(source)` for standalone
      *   callers that have not computed it already
@@ -335,11 +340,12 @@ export class IncrementalParser {
     private canUseTailWindow = (
         source: string,
         boundary: TailWindowBoundary,
+        isAppendOnly = this.isAppendOnlyUpdate(source),
         referenceInvalidatesTail = this.appendedDefinitionInvalidatesTail(source)
     ): boolean => {
         if (this.tailWindowDisabled) return false
         if (this.prevSource === '' || this.prevTokens.length === 0) return false
-        if (!source.startsWith(this.prevSource)) return false
+        if (!isAppendOnly) return false
         if (boundary.reparseOffset <= 0) return false
         if (referenceInvalidatesTail) return false
 
@@ -360,9 +366,10 @@ export class IncrementalParser {
     private parseSource = (
         source: string,
         boundary: TailWindowBoundary,
+        isAppendOnly: boolean,
         referenceInvalidatesTail: boolean
     ): ParseSourceResult => {
-        if (!this.canUseTailWindow(source, boundary, referenceInvalidatesTail)) {
+        if (!this.canUseTailWindow(source, boundary, isAppendOnly, referenceInvalidatesTail)) {
             return {
                 tokens: lexAndClean(source, this.options, false),
                 tailTokens: [],
@@ -496,7 +503,7 @@ export class IncrementalParser {
      */
     update = (source: string): IncrementalUpdateResult => {
         const boundary = this.getTailWindowBoundary()
-        const isAppendOnly = this.prevSource !== '' && source.startsWith(this.prevSource)
+        const isAppendOnly = this.isAppendOnlyUpdate(source)
         // Whether this append introduces a reference definition. Both the
         // tail-window decision (via `referenceInvalidatesTail`) and the cached
         // -state refresh need it, so compute the boundary scan once here. When
@@ -505,7 +512,12 @@ export class IncrementalParser {
         const appendAddsDefinition =
             isAppendOnly && this.appendIntroducesMatch(source, this.hasReferenceDefinition)
         const referenceInvalidatesTail = this.prevHasPotentialReferenceUse && appendAddsDefinition
-        const parseResult = this.parseSource(source, boundary, referenceInvalidatesTail)
+        const parseResult = this.parseSource(
+            source,
+            boundary,
+            isAppendOnly,
+            referenceInvalidatesTail
+        )
         const newTokens = parseResult.tokens
 
         // Apply walkTokens if configured

@@ -135,14 +135,23 @@ export const reuseStableStreamingTokens = (
 ): Token[] => {
     const reuseCount = Math.min(divergeAt, previousTokens.length, nextTokens.length)
 
+    let reusedTokens: Token[] | undefined
+
     // Indices [0, reuseCount) are byte-identical, so reuse the previous token
-    // objects to preserve Svelte component identity. Build the result in a
-    // single pass (reused prefix + fresh tail) rather than copying the whole
-    // next array and then overwriting the prefix.
-    let reusedTokens: Token[] | undefined =
-        reuseCount > 0
-            ? previousTokens.slice(0, reuseCount).concat(nextTokens.slice(reuseCount))
-            : undefined
+    // objects to preserve Svelte component identity. Allocate only when there
+    // is something to reuse, then fill the reused prefix and fresh tail without
+    // intermediate slice arrays.
+    if (reuseCount > 0) {
+        reusedTokens = new Array<Token>(nextTokens.length)
+
+        for (let index = 0; index < reuseCount; index++) {
+            reusedTokens[index] = previousTokens[index]
+        }
+
+        for (let index = reuseCount; index < nextTokens.length; index++) {
+            reusedTokens[index] = nextTokens[index]
+        }
+    }
 
     const tailIndex = reuseCount
     if (tailIndex < previousTokens.length && tailIndex < nextTokens.length) {
