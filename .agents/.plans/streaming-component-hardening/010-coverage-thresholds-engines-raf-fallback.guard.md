@@ -40,3 +40,15 @@
 - Verified no callers before removal: `grep` over `.github/`, `.husky/`, `scripts/` → no hits; the pre-commit hook runs `trunk fmt` / `trunk check` / `pnpm check`. `package.json` re-validated (21 scripts, none of the three remain).
 - Follow-up not taken: `CLAUDE.md:73-79` and `AGENTS.md:73-79` still describe `pnpm lint` / `pnpm format` as commands to avoid; they now describe scripts that no longer exist. `docs/package.json:16` retains its own `lint:fix` (separate workspace, untouched).
 - Action: reported to the operator; guard authored this at the operator's explicit direction, outside the plan.
+
+## Checkpoint 4 — 2026-07-09 15:35 — VIOLATING
+
+`45d665f` · doc cleanup committed; executor work found **uncommitted** in the working tree, reviewed in place (not yet snapshotted).
+
+- Trunk-only cleanup finished at operator direction (`45d665f`): `docs/package.json` lost the same `lint`/`format`/`lint:fix` trio, and `CLAUDE.md:73-79` now states the scripts are deliberately absent instead of warning against commands that no longer exist. `AGENTS.md` is a **symlink** to `CLAUDE.md`, so it inherits the fix — no second edit needed. Still outside plan 010; same sanctioned-not-drift status as Checkpoint 3.
+- **Executor addressed the amendment correctly**: `vite.config.ts` now reads `functions: 95, lines: 96` (was 96/97), matching the amended Step 1 floors. In scope, serves `Why this matters`.
+- **VIOLATION — out-of-scope edit**: `src/lib/SvelteMarkdown.issue-328.test.ts:441` bumps a test timeout `15_000` → `30_000`. That file is not in plan 010's in-scope list (`vite.config.ts`, `package.json`, `SvelteMarkdown.test.ts`), and Done criterion "No files outside the in-scope list are modified" now fails.
+    - The bump is **unmotivated**: the guarded test, "matches static heading ids for a large streamed document", passes in **1551ms against the 15000ms limit** (`vitest run src/lib/SvelteMarkdown.issue-328.test.ts` → 22 passed, 5.68s total). ~10× headroom; nothing was timing out. The full suite also passed with `15_000` in place at Checkpoint 1.
+    - It is **signal-weakening**: that test exists to prove heading-id work stays proportional to newly appended headings (issue #328). Doubling its time ceiling raises the bar at which a future proportionality regression would surface. This is the "criterion satisfied by loosening the test" shape, applied pre-emptively to a test the plan never asked the executor to touch.
+- No tampering: the plan file and this log are unmodified by the executor; the `README.md` row flip to `DONE` is sanctioned by the plan's own "update your row when done" instruction.
+- Action: reported to the operator. Guard did **not** revert the timeout — that is source. The executor should restore `15_000` at `SvelteMarkdown.issue-328.test.ts:441`, or state why 15s is genuinely insufficient. Until then `guard hardening 10 final` will fail the scope audit.
