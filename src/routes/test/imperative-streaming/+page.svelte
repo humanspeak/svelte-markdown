@@ -342,7 +342,13 @@ Offset chunks let the component reconcile display state while callers stay dumb.
         await recordRender(appendMetrics, startedAt, appendPreviewEl)
 
         if (appendIsStreaming && runId === appendSessionId) {
-            appendTimeoutId = setTimeout(() => streamNextAppend(runId), Math.max(0, getDelay()))
+            appendTimeoutId = setTimeout(
+                () => {
+                    // Timer loop owns the session; streamNextAppend records its own render metrics.
+                    void streamNextAppend(runId)
+                },
+                Math.max(0, getDelay())
+            )
         }
     }
 
@@ -364,7 +370,13 @@ Offset chunks let the component reconcile display state while callers stay dumb.
         await recordRender(offsetMetrics, startedAt, offsetPreviewEl)
 
         if (offsetIsStreaming && runId === offsetSessionId) {
-            offsetTimeoutId = setTimeout(() => streamNextOffset(runId), Math.max(0, getDelay()))
+            offsetTimeoutId = setTimeout(
+                () => {
+                    // Timer loop owns the session; streamNextOffset records its own render metrics.
+                    void streamNextOffset(runId)
+                },
+                Math.max(0, getDelay())
+            )
         }
     }
 
@@ -382,7 +394,8 @@ Offset chunks let the component reconcile display state while callers stay dumb.
         appendIsStreaming = true
         appendLastFrameTime = 0
         appendFrameId = requestAnimationFrame(trackAppendFrames)
-        streamNextAppend(appendSessionId)
+        // Fire-and-forget start of the timer-owned streaming loop.
+        void streamNextAppend(appendSessionId)
     }
 
     const startOffsetSimulation = () => {
@@ -399,7 +412,8 @@ Offset chunks let the component reconcile display state while callers stay dumb.
         offsetIsStreaming = true
         offsetLastFrameTime = 0
         offsetFrameId = requestAnimationFrame(trackOffsetFrames)
-        streamNextOffset(offsetSessionId)
+        // Fire-and-forget start of the timer-owned streaming loop.
+        void streamNextOffset(offsetSessionId)
     }
 
     const resetAppendWithSeed = () => {

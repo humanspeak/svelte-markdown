@@ -38,4 +38,4 @@ export type HtmlKey = keyof typeof Html & string
  *
  * Re-exported publicly as `htmlRendererKeys`.
  */
-export const htmlRendererKeysInternal = Object.keys(Html) as HtmlKey[]
+export const htmlRendererKeysInternal = Object.keys(Html)

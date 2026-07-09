@@ -23,7 +23,7 @@ test.describe('Edge Cases', () => {
 ## مرحبا بالعالم
 ### Привет, мир!
 #### ¡Hòla, món!
-##### Zero-width space: [​]
+##### Zero-width space: [\u200b]
 ###### Emojis: 🌈 🚀 🎨
 `
         await textarea.fill(specialContent)

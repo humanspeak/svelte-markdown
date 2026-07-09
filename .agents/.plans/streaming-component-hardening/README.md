@@ -18,6 +18,12 @@ remains).
 > tooling-command correction only and does not change any plan's source baseline,
 > so the drift checks must keep pointing at the original audited commit.
 
+> **Revision 2026-07-09 (guard):** Plan 009 retained four `pnpm exec eslint .`
+> invocations that the 2026-07-07 revision missed; these are now Trunk commands.
+> Raw ESLint is forbidden by CLAUDE.md. Use `trunk check` for changed files and
+> `trunk check --all` for a full-repo pass (574 files in ~39s under 009's
+> type-aware config). `Planned at` SHAs remain unchanged for the reason above.
+
 ## Execution order & status
 
 | Plan | Title                                                                                        | Priority | Effort | Risk | Depends on         | Status |
@@ -30,7 +36,7 @@ remains).
 | 006  | Heading-id dedup snapshots slugger occurrences (#337)                                        | P3       | M      | MED  | —                  | DONE   |
 | 007  | Streaming hot-path micro-opts: single-pass reuse array + dedupe `startsWith` (#332 residual) | P3       | S      | LOW  | —                  | DONE   |
 | 008  | Remove dead legacy HTML-pairing code + bench module                                          | P2       | S      | LOW  | —                  | DONE   |
-| 009  | Lint test files + enable type-aware promise rules                                            | P2       | M      | MED  | 008 (soft)         | TODO   |
+| 009  | Lint test files + enable type-aware promise rules                                            | P2       | M      | MED  | 008 (soft)         | DONE   |
 | 010  | Coverage thresholds + `engines` + rAF-fallback test                                          | P3       | S      | LOW  | —                  | TODO   |
 | 011  | Unify streaming token-reuse identity + generic child walk (#331, #333)                       | P2       | L      | HIGH | 003,005,007 (soft) | TODO   |
 | 012  | Simplify source-less root-key matching (#339) — investigate-then-shrink                      | P3       | M      | MED  | 004 (soft)         | TODO   |

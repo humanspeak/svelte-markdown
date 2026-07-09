@@ -203,7 +203,13 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
         }
 
         if (isStreaming && runId === sessionId) {
-            timeoutId = setTimeout(() => streamNext(runId), Math.max(0, getDelay()))
+            timeoutId = setTimeout(
+                () => {
+                    // Timer loop owns the session; streamNext records its own render metrics.
+                    void streamNext(runId)
+                },
+                Math.max(0, getDelay())
+            )
         }
     }
 
@@ -221,7 +227,8 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
         isStreaming = true
         lastFrameTime = 0
         rafId = requestAnimationFrame(trackFrames)
-        streamNext(sessionId)
+        // Fire-and-forget start of the timer-owned streaming loop.
+        void streamNext(sessionId)
     }
 
     const stop = () => {

@@ -218,7 +218,8 @@ describe('IncrementalParser', () => {
 
             expect(lexSpy).toHaveBeenCalledTimes(2)
             expect(lexSpy.mock.calls[1]?.[0]).toBe('First paragraph\n\nSecond paragraph')
-            expect((lexSpy.mock.calls[1]?.[0] as string).length).toBeLessThan(
+            const reparsedTail = lexSpy.mock.calls[1]?.[0] ?? ''
+            expect(reparsedTail.length).toBeLessThan(
                 '# Title\n\nFirst paragraph\n\nSecond paragraph'.length
             )
         })
@@ -270,7 +271,8 @@ describe('IncrementalParser', () => {
             const result = parser.update(appended)
 
             expect(lexSpy.mock.calls[2]?.[0]).toBe(appended.slice(boundary.reparseOffset))
-            expect((lexSpy.mock.calls[2]?.[0] as string).length).toBeLessThan(appended.length)
+            const reparsedTail = lexSpy.mock.calls[2]?.[0] ?? ''
+            expect(reparsedTail.length).toBeLessThan(appended.length)
             expect(result.divergeAt).toBeGreaterThan(0)
             expect(result.canReuse).toBe(true)
         })

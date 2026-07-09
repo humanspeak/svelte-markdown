@@ -537,7 +537,10 @@ export class IncrementalParser {
 
         // Apply walkTokens if configured
         if (typeof this.options.walkTokens === 'function') {
-            newTokens.forEach(this.options.walkTokens)
+            for (const token of newTokens) {
+                // Incremental parsing is sync; async callbacks use the async parse path.
+                void this.options.walkTokens(token)
+            }
         }
 
         // Reference definitions can change inline children without changing raw,

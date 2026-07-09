@@ -47,7 +47,7 @@
     }
 
     const svmWindow = (): SVMWindow | undefined =>
-        typeof window === 'undefined' ? undefined : (window as SVMWindow)
+        typeof window === 'undefined' ? undefined : window
 
     // ---- Corpus generators ----------------------------------------------------
 
@@ -708,8 +708,12 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
                     return
                 }
                 renderDurations.push(performance.now() - t0)
-                streamHandle = setTimeout(step, baseDelay)
+                streamHandle = setTimeout(() => {
+                    // Timer loop resolves the surrounding Promise when streaming ends.
+                    void step()
+                }, baseDelay)
             }
+            // Fire-and-forget start of the timer-owned streaming loop.
             void step()
         })
         const wallMs = performance.now() - startWall
@@ -828,8 +832,12 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
                 // leave the final iteration's gap as 0.
                 const gap = chunkDelays[idx - 1] ?? 0
                 gapDurations.push(gap)
-                streamHandle = setTimeout(step, gap)
+                streamHandle = setTimeout(() => {
+                    // Timer loop resolves the surrounding Promise when streaming ends.
+                    void step()
+                }, gap)
             }
+            // Fire-and-forget start of the timer-owned streaming loop.
             void step()
         })
         const wallMs = performance.now() - startWall

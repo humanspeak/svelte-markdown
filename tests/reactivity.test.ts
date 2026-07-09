@@ -132,11 +132,11 @@ test.describe('SvelteMarkdown', () => {
         await page.waitForSelector('h1')
 
         // Verify the text content is rendered correctly
-        const paragraph = await page.locator('p').first()
+        const paragraph = page.locator('p').first()
         await expect(paragraph).toHaveText('Some text!!!')
 
         // Verify the HTML tag is rendered correctly
-        const heading = await page.locator('h1')
+        const heading = page.locator('h1')
         await expect(heading).toHaveText('Something')
 
         // Verify the order of elements

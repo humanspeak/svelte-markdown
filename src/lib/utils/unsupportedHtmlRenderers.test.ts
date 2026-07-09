@@ -56,14 +56,14 @@ describe('unsupported HTML negative tests', () => {
     })
 
     it('allowHtmlOnly with all invalid tags maps every key to UnsupportedHTML', () => {
-        const map = allowHtmlOnly(['fake-tag-1', 'fake-tag-2'] as any)
+        const map = allowHtmlOnly(['fake-tag-1', 'fake-tag-2'])
         for (const key of htmlRendererKeysInternal) {
             expect(map[key], `${key} should be UnsupportedHTML`).toBe(UnsupportedHTML)
         }
     })
 
     it('excludeHtmlOnly with invalid tags silently ignores them', () => {
-        const map = excludeHtmlOnly(['not-a-tag'] as any)
+        const map = excludeHtmlOnly(['not-a-tag'])
         for (const key of htmlRendererKeysInternal) {
             expect(map[key], `${key} should be default`).toBe(Html[key])
         }
