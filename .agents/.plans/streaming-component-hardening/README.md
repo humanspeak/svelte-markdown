@@ -37,7 +37,7 @@ remains).
 | 007  | Streaming hot-path micro-opts: single-pass reuse array + dedupe `startsWith` (#332 residual) | P3       | S      | LOW  | —                  | DONE   |
 | 008  | Remove dead legacy HTML-pairing code + bench module                                          | P2       | S      | LOW  | —                  | DONE   |
 | 009  | Lint test files + enable type-aware promise rules                                            | P2       | M      | MED  | 008 (soft)         | DONE   |
-| 010  | Coverage thresholds + `engines` + rAF-fallback test                                          | P3       | S      | LOW  | —                  | TODO   |
+| 010  | Coverage thresholds + `engines` + rAF-fallback test                                          | P3       | S      | LOW  | —                  | DONE   |
 | 011  | Unify streaming token-reuse identity + generic child walk (#331, #333)                       | P2       | L      | HIGH | 003,005,007 (soft) | TODO   |
 | 012  | Simplify source-less root-key matching (#339) — investigate-then-shrink                      | P3       | M      | MED  | 004 (soft)         | TODO   |
 

@@ -4,8 +4,28 @@
 > conditions. Update this plan's row in
 > `.agents/.plans/streaming-component-hardening/README.md` when done.
 >
-> **Drift check (run first)**: `git diff --stat 939f154..HEAD -- vite.config.ts package.json src/lib/SvelteMarkdown.svelte`
+> **Drift check (run first)**: `git diff --stat 7a64121..HEAD -- vite.config.ts package.json src/lib/SvelteMarkdown.svelte`
 > On any change, compare "Current state" facts to live code; mismatch ⇒ STOP.
+>
+> Revision 2026-07-09: (1) corrected the stale `scheduleAppendFlush` /
+> `flushPendingAppendChunks` excerpt — plans 007–009 renamed these to
+> `scheduleStreamFlush` / `flushPendingStreamChanges` after this plan was first
+> written, so the original excerpt tripped the drift STOP for a purely cosmetic
+> reason; (2) Step 1 now requires ≥1 point of slack under measured coverage
+> rather than a bare integer round-down, because `functions: 96` against a
+> measured 96.19% left only one uncovered function of headroom. Re-stamped
+> `Planned at` to `fbc1ea5`.
+>
+> Revision 2026-07-09 (second): brought
+> `src/lib/SvelteMarkdown.issue-328.test.ts` into scope for a per-test timeout
+> raise (`15_000` → `30_000`). Execution surfaced a constraint this plan could not
+> have known: under v8 coverage instrumentation the test "matches static heading
+> ids for a large streamed document" runs **13.5s against its 15s budget** (~3.1s
+> standalone), so `pnpm test` — a Done criterion — fails intermittently on the
+> timeout before ever reaching the coverage gate. The timeout is a harness limit,
+> not an assertion; raising it loosens nothing the test verifies (the #328
+> proportionality guarantee is asserted by a separate 26ms test). Re-stamped
+> `Planned at` to `7a64121`.
 
 ## Status
 
@@ -14,7 +34,7 @@
 - **Risk**: LOW
 - **Depends on**: none
 - **Category**: tests / dx
-- **Planned at**: commit `939f154`, 2026-07-07
+- **Planned at**: commit `7a64121`, 2026-07-07 (amended twice 2026-07-09)
 
 ## Why this matters
 
@@ -26,9 +46,9 @@ Three small, independent hygiene fixes bundled because each is trivial:
 2. **No `engines` field.** CI runs Node 22/24 and Volta pins 24, but the package
    gives consumers no supported-Node signal.
 3. **The rAF-absent streaming fallback is untested.** When
-   `window.requestAnimationFrame` is not a function, `scheduleAppendFlush` falls
+   `window.requestAnimationFrame` is not a function, `scheduleStreamFlush` falls
    back to `setTimeout(…, STREAM_BATCH_FALLBACK_MS)` and
-   `cancelScheduledAppendFlush` takes its `kind:'timeout'` branch. Every existing
+   `cancelScheduledStreamFlush` takes its `kind:'timeout'` branch. Every existing
    streaming test stubs rAF as a function, so this SSR-ish path (and its cancel
    branch) has no behavioral coverage.
 
@@ -45,30 +65,44 @@ coverage: {
 
 `package.json` — no `engines` key; `volta.node` is `24.15.0`.
 
-`src/lib/SvelteMarkdown.svelte:196-213` fallback path:
+`src/lib/SvelteMarkdown.svelte:219-241` fallback path:
 
 ```ts
-const scheduleAppendFlush = () => {
-    if (streamFlushHandle || pendingStreamAppendBuffer === '') return
+const scheduleStreamFlush = () => {
+    if (
+        streamFlushHandle ||
+        (pendingStreamAppendBuffer === '' && pendingStreamFullSource === null)
+    ) {
+        return
+    }
+
     if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
         const id = window.requestAnimationFrame(() => {
             streamFlushHandle = null
-            flushPendingAppendChunks()
+            flushPendingStreamChanges()
         })
         streamFlushHandle = { kind: 'raf', id }
         return
     }
+
     const id = setTimeout(() => {
         streamFlushHandle = null
-        flushPendingAppendChunks()
+        flushPendingStreamChanges()
     }, STREAM_BATCH_FALLBACK_MS)
     streamFlushHandle = { kind: 'timeout', id } // <-- untested branch
 }
 ```
 
-`STREAM_BATCH_FALLBACK_MS` is `16` (`src/lib/SvelteMarkdown.svelte:82`). Existing
-streaming tests stub `requestAnimationFrame` (see `SvelteMarkdown.test.ts` near
-line 133 and `vitest.setup.ts`).
+The matching cancel branch is `cancelScheduledStreamFlush` at
+`src/lib/SvelteMarkdown.svelte:147-157`; unmount reaches it through the `$effect`
+teardown at `src/lib/SvelteMarkdown.svelte:411-415`, which cancels the handle but
+does **not** clear `pendingStreamAppendBuffer` — that is what makes a
+"no late flush" assertion meaningful rather than vacuous.
+
+`STREAM_BATCH_FALLBACK_MS` is `16` (`src/lib/utils/streaming-chunks.ts:3`).
+Existing streaming tests stub `requestAnimationFrame` (see `SvelteMarkdown.test.ts`
+near line 133 and `vitest.setup.ts`), and that `describe` already restores it via
+`afterEach(() => vi.unstubAllGlobals())` at `SvelteMarkdown.test.ts:143-145`.
 
 ## Commands you will need
 
@@ -88,12 +122,19 @@ line 133 and `vitest.setup.ts`).
 - `package.json` — add `engines`.
 - `src/lib/SvelteMarkdown.test.ts` (or a new streaming test file) — the
   rAF-fallback test.
+- `src/lib/SvelteMarkdown.issue-328.test.ts` — **per-test timeout only**. Raise
+  the `15_000` timeout on "matches static heading ids for a large streamed
+  document" to `30_000`; enabling coverage pushes it to ~13.5s of its 15s budget,
+  so it flakes before the coverage gate is reached. Nothing else in this file may
+  change: no assertions, no fixtures, no other timeouts.
 
 **Out of scope**:
 
 - Changing the fallback logic itself — only test it.
+- Raising any other test's timeout. If a second test proves marginal under
+  coverage, STOP and report — do not generalize this exemption.
 - Raising thresholds above current actual coverage (that would fail CI without
-  adding tests; pick a threshold at or just below measured coverage — see Step 1).
+  adding tests; pick a threshold ≥1 point below measured coverage — see Step 1).
 
 ## Git workflow
 
@@ -106,8 +147,11 @@ line 133 and `vitest.setup.ts`).
 ### Step 1: Measure current coverage, then set thresholds at a safe floor
 
 Run `pnpm test` and read the coverage. Add a `thresholds` object to the coverage
-config set **at or just below** the current measured numbers (round down to avoid
-flakiness — e.g. if lines are 93%, set 90). Also add `'text-summary'` to the
+config set **below** the current measured numbers, with **at least 1 full
+percentage point of slack on every metric**. A bare integer round-down is not
+enough: measured `functions` of 96.19% floored to `96` leaves room for exactly one
+new uncovered function before CI breaks, which makes the gate a tripwire for
+unrelated work rather than a rot detector. Also add `'text-summary'` to the
 reporters so a console summary prints locally. Target shape:
 
 ```ts
@@ -118,13 +162,22 @@ coverage: {
 }
 ```
 
+Measured at `fbc1ea5` — statements 95.98%, branches 90.00%, functions 96.19%,
+lines 97.69%. That yields these floors (each ≥1 point of slack):
+
+```ts
+thresholds: { statements: 95, branches: 89, functions: 95, lines: 96 }
+```
+
 Do not invent 90 if actual coverage is lower — set the floor to reality so CI
 goes green now, and note the gap in your report. CLAUDE.md's 90% is the aspiration;
-gating below-current is worse than gating at-current.
+gating below-current is worse than gating at-current. Note that branches currently
+sit at exactly 90.00%, so the aspiration is met on every metric today.
 
-**Verify**: `pnpm test` → passes and prints a coverage summary; deliberately
-lowering a source line's coverage would now fail (spot-check by reading the
-printed thresholds).
+**Verify**: `pnpm test` → passes and prints a coverage summary. Confirm the gate
+is live rather than inert config by forcing a failure without editing any file:
+`pnpm exec vitest run --coverage --coverage.thresholds.lines=100` → must print
+`ERROR: Coverage for lines (…) does not meet global threshold (100%)`.
 
 ### Step 2: Add the `engines` field
 
@@ -175,9 +228,10 @@ the new fallback test.
 ALL must hold:
 
 - [ ] `vite.config.ts` coverage has `thresholds` (4 keys) and a `text-summary`
-      reporter.
+      reporter, with every floor ≥1 percentage point below its measured value.
 - [ ] `pnpm test` prints a coverage summary and enforces thresholds (passes at
-      the chosen floor).
+      the chosen floor); forcing `--coverage.thresholds.lines=100` fails, proving
+      the gate is live.
 - [ ] `package.json` has `"engines": { "node": ">=22" }`.
 - [ ] New rAF-fallback test(s) pass and restore `requestAnimationFrame`.
 - [ ] `pnpm check` exits 0; `pnpm test:only` exits 0; `trunk fmt && trunk check` exits 0.
@@ -186,8 +240,10 @@ ALL must hold:
 
 ## STOP conditions
 
-- `vite.config.ts` / `package.json` / `scheduleAppendFlush` don't match the
-  excerpts (drift).
+- `vite.config.ts` / `package.json` / `scheduleStreamFlush` don't match the
+  excerpts (drift). A pure identifier rename with the same branch structure is
+  **not** a material mismatch — report it and continue; only a behavioural
+  difference in the raf/timeout scheduling is a genuine STOP.
 - Current coverage is far below 90% and setting an honest floor would look alarming
   — still set the honest floor, but report the number prominently so the team can
   decide whether to invest in raising it (do not fudge thresholds upward).
@@ -198,7 +254,15 @@ ALL must hold:
 ## Maintenance notes
 
 - If Node <22 must be supported later, adjust both `engines` and CI together.
-- Reviewer should confirm the threshold floor matches measured coverage (not an
-  aspirational number that happens to pass today by luck).
+- Reviewer should confirm the threshold floor sits ≥1 point below measured
+  coverage — neither an aspirational number that happens to pass today by luck,
+  nor a floor pinned so tightly to today's figure that one uncovered helper
+  reds the build.
 - The rAF-fallback test documents the SSR/non-browser scheduling contract; keep it
   if the fallback logic is ever refactored.
+- The `30_000` timeout on issue-328's "matches static heading ids for a large
+  streamed document" exists because **v8 coverage instrumentation roughly
+  quadruples that test's runtime** (~3.1s standalone → ~13.5s under `pnpm test`).
+  Don't trim it back toward the measured time — the margin is the point. If the
+  test ever needs a third raise, treat that as a signal the streamed-heading path
+  has regressed, not as a timeout problem.

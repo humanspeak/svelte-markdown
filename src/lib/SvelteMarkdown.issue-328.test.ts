@@ -438,7 +438,7 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         ])
         expect(new Set(streamedIds).size).toBe(streamedIds.length)
         expect(streamedIds).toEqual(staticIds)
-    }, 15_000)
+    }, 30_000)
 
     test('dedupes nested and top-level headings in document order after a streaming reparse', async () => {
         const initialSource = '> # Intro\n\n# Intro\n\nSee [docs][ref]'

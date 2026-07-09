@@ -7,6 +7,7 @@ import ClickRenderer from './test/snippets/ClickRenderer.svelte'
 import type { SvelteMarkdownProps } from './types.js'
 import type { Token } from './utils/markdown-parser.js'
 import * as parseAndCacheModule from './utils/parse-and-cache.js'
+import { STREAM_BATCH_FALLBACK_MS } from './utils/streaming-chunks.js'
 import { tokenCache } from './utils/token-cache.js'
 
 type DisplayButtonToken = {
@@ -194,6 +195,47 @@ describe('imperative streaming API', () => {
         expect(container.querySelector('p')?.textContent).toBe('Hello World')
 
         lexSpy.mockRestore()
+    })
+
+    test('uses timeout fallback when requestAnimationFrame is unavailable', async () => {
+        vi.stubGlobal('requestAnimationFrame', undefined)
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        await act(() => component.writeChunk('Timeout fallback'))
+
+        expect(container.querySelector('p')).toBeNull()
+
+        await act(async () => {
+            await vi.advanceTimersByTimeAsync(STREAM_BATCH_FALLBACK_MS)
+        })
+
+        expect(container.querySelector('p')?.textContent).toBe('Timeout fallback')
+    })
+
+    test('cancels timeout fallback flushes on unmount', async () => {
+        vi.stubGlobal('requestAnimationFrame', undefined)
+        const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+        const { component, unmount } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        try {
+            await act(() => component.writeChunk('Late flush'))
+
+            expect(lexSpy).toHaveBeenCalledTimes(0)
+
+            unmount()
+
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(STREAM_BATCH_FALLBACK_MS)
+            })
+
+            expect(lexSpy).toHaveBeenCalledTimes(0)
+        } finally {
+            lexSpy.mockRestore()
+        }
     })
 
     test('flushes append chunks immediately when the batch size threshold is exceeded', async () => {

@@ -11,9 +11,6 @@
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
         "deploy": "pnpm run build:indexnow && wrangler deploy",
         "dev": "vite dev",
-        "format": "prettier --write .",
-        "lint": "prettier --check . && eslint .",
-        "lint:fix": "pnpm run format && eslint . --fix",
         "preview": "vite preview"
     },
     "dependencies": {

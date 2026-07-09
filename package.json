@@ -103,9 +103,6 @@
         "dev": "vite dev",
         "dev:all": "mprocs",
         "dev:pkg": "svelte-kit sync && svelte-package --watch",
-        "format": "prettier --write .",
-        "lint": "prettier --check . && eslint .",
-        "lint:fix": "pnpm run format && eslint . --fix",
         "package": "svelte-kit sync && svelte-package && publint",
         "perf:bench": "node scripts/perf-bench.mjs",
         "prepare": "husky",
@@ -186,6 +183,9 @@
         }
     },
     "packageManager": "pnpm@11.9.0",
+    "engines": {
+        "node": ">=22"
+    },
     "volta": {
         "node": "24.15.0"
     },

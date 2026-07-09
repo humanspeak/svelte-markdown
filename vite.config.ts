@@ -15,7 +15,13 @@ export default defineConfig({
         environment: 'jsdom',
         setupFiles: ['vitest.setup.ts'],
         coverage: {
-            reporter: 'lcov',
+            reporter: ['lcov', 'text-summary'],
+            thresholds: {
+                statements: 95,
+                branches: 89,
+                functions: 95,
+                lines: 96
+            },
             exclude: [
                 'docs/**',
                 '.trunk/**',

@@ -70,16 +70,14 @@ trunk check --fix     # Lint changed files and auto-fix
 
 ## Code Style & Linting
 
-**Always use `trunk fmt` and `trunk check` to format and lint. Do not run `pnpm lint`, `pnpm format`, `npx prettier`, or `npx eslint` directly.**
+**Always use `trunk fmt` and `trunk check` to format and lint. Do not invoke Prettier or ESLint directly (`npx prettier`, `npx eslint`).**
 
 Trunk is the source of truth (see `.trunk/trunk.yaml`); it orchestrates Prettier and ESLint with the repo's config and, critically, **only operates on files changed relative to the upstream branch**. The raw tools behave differently and will mislead you:
 
-- `pnpm lint` runs `prettier --check . && eslint .` across the **whole repo**, which flags ~34 pre-existing unformatted files (generated `docs/static/**/*.md`, `pnpm-lock.yaml`). These are not your changes — don't try to fix them.
-- Because that command is `&&`-chained, the Prettier failure means **ESLint never runs**, so a green-looking mental model is wrong either way.
-- `pnpm format` (`prettier --write .`) would rewrite all those unrelated files and pollute the diff. Never run it.
+- There are deliberately **no `lint` / `format` / `lint:fix` scripts** in `package.json` or `docs/package.json`. They were removed, not forgotten — a whole-repo `prettier --check . && eslint .` flags ~34 pre-existing unformatted generated files (`docs/static/**/*.md`, `pnpm-lock.yaml`) that are not your changes, and `prettier --write .` rewrites them and pollutes the diff. Don't re-add them.
 - Passing files to `npx prettier` explicitly fails on `.svx` ("No parser could be inferred"); Trunk handles the repo's file types correctly.
 
-To check only what you changed: `trunk check --fix` (this is what the Husky pre-commit hook runs, followed by `pnpm check` for svelte-check types).
+To check only what you changed: `trunk check --fix` (this is what the Husky pre-commit hook runs, followed by `pnpm check` for svelte-check types). For a full-repo pass, use `trunk check --all`.
 
 - **Husky** pre-commit hooks run `trunk fmt`, then `trunk check --fix`, then `pnpm check`
 - Code style enforces camelCase, prefer-const, no-var
