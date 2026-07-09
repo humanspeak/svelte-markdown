@@ -125,6 +125,7 @@ export const parseAndCacheTokensAsync = async (
         const marked = new Marked()
         marked.defaults = { ...marked.defaults, ...options }
         const results = marked.walkTokens(cleanedTokens, options.walkTokens)
+        // trunk-ignore(eslint/@typescript-eslint/await-thenable): Marked types hide async walkTokens returns.
         await Promise.all(results)
     }
 

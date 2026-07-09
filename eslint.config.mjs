@@ -92,7 +92,7 @@ export default [
                 }
             ],
 
-            '@typescript-eslint/await-thenable': 'off',
+            '@typescript-eslint/await-thenable': ['error'],
             '@typescript-eslint/no-floating-promises': ['error'],
             '@typescript-eslint/no-misused-promises': ['error'],
             '@typescript-eslint/no-unnecessary-type-assertion': 'off',
