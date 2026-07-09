@@ -4,7 +4,7 @@
 > conditions. Update this plan's row in
 > `.agents/.plans/streaming-component-hardening/README.md` when done.
 >
-> **Drift check (run first)**: `git diff --stat fbc1ea5..HEAD -- vite.config.ts package.json src/lib/SvelteMarkdown.svelte`
+> **Drift check (run first)**: `git diff --stat 7a64121..HEAD -- vite.config.ts package.json src/lib/SvelteMarkdown.svelte`
 > On any change, compare "Current state" facts to live code; mismatch ⇒ STOP.
 >
 > Revision 2026-07-09: (1) corrected the stale `scheduleAppendFlush` /
@@ -15,6 +15,17 @@
 > rather than a bare integer round-down, because `functions: 96` against a
 > measured 96.19% left only one uncovered function of headroom. Re-stamped
 > `Planned at` to `fbc1ea5`.
+>
+> Revision 2026-07-09 (second): brought
+> `src/lib/SvelteMarkdown.issue-328.test.ts` into scope for a per-test timeout
+> raise (`15_000` → `30_000`). Execution surfaced a constraint this plan could not
+> have known: under v8 coverage instrumentation the test "matches static heading
+> ids for a large streamed document" runs **13.5s against its 15s budget** (~3.1s
+> standalone), so `pnpm test` — a Done criterion — fails intermittently on the
+> timeout before ever reaching the coverage gate. The timeout is a harness limit,
+> not an assertion; raising it loosens nothing the test verifies (the #328
+> proportionality guarantee is asserted by a separate 26ms test). Re-stamped
+> `Planned at` to `7a64121`.
 
 ## Status
 
@@ -23,7 +34,7 @@
 - **Risk**: LOW
 - **Depends on**: none
 - **Category**: tests / dx
-- **Planned at**: commit `fbc1ea5`, 2026-07-07 (amended 2026-07-09)
+- **Planned at**: commit `7a64121`, 2026-07-07 (amended twice 2026-07-09)
 
 ## Why this matters
 
@@ -111,10 +122,17 @@ near line 133 and `vitest.setup.ts`), and that `describe` already restores it vi
 - `package.json` — add `engines`.
 - `src/lib/SvelteMarkdown.test.ts` (or a new streaming test file) — the
   rAF-fallback test.
+- `src/lib/SvelteMarkdown.issue-328.test.ts` — **per-test timeout only**. Raise
+  the `15_000` timeout on "matches static heading ids for a large streamed
+  document" to `30_000`; enabling coverage pushes it to ~13.5s of its 15s budget,
+  so it flakes before the coverage gate is reached. Nothing else in this file may
+  change: no assertions, no fixtures, no other timeouts.
 
 **Out of scope**:
 
 - Changing the fallback logic itself — only test it.
+- Raising any other test's timeout. If a second test proves marginal under
+  coverage, STOP and report — do not generalize this exemption.
 - Raising thresholds above current actual coverage (that would fail CI without
   adding tests; pick a threshold ≥1 point below measured coverage — see Step 1).
 
@@ -242,3 +260,9 @@ ALL must hold:
   reds the build.
 - The rAF-fallback test documents the SSR/non-browser scheduling contract; keep it
   if the fallback logic is ever refactored.
+- The `30_000` timeout on issue-328's "matches static heading ids for a large
+  streamed document" exists because **v8 coverage instrumentation roughly
+  quadruples that test's runtime** (~3.1s standalone → ~13.5s under `pnpm test`).
+  Don't trim it back toward the measured time — the margin is the point. If the
+  test ever needs a third raise, treat that as a signal the streamed-heading path
+  has regressed, not as a timeout problem.
