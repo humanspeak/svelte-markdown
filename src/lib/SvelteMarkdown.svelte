@@ -91,6 +91,7 @@
     const {
         source = [],
         streaming = false,
+        streamId = undefined,
         renderers = {},
         options = {},
         isInline = false,
@@ -119,6 +120,11 @@
     let lastOptionsSrc: typeof options | undefined
     let lastExtensionsSrc: typeof extensions | undefined
     let lastSourceProp: typeof source | undefined
+    // Left undefined rather than seeded from the prop: when `streamId` is unset
+    // this matches on every run and falls through to the source check, and when
+    // it is set the first-run reset does exactly what the source-sync path
+    // would have done anyway (teardown + fresh parser).
+    let lastStreamId: typeof streamId
     let streamSourceBuffer = ''
     let pendingStreamAppendBuffer = ''
     let pendingStreamFullSource: string | null = null
@@ -300,6 +306,22 @@
         applyStreamingSource(nextStr, !isAppendOnly)
     }
 
+    /**
+     * Drops every trace of the previous stream and rebaselines on the current
+     * `source` prop. Used when `streamId` changes, i.e. when a recycled
+     * component instance begins rendering a different message.
+     */
+    const resetStreamingSession = () => {
+        if (Array.isArray(source)) {
+            // Also sets lastSourceProp.
+            syncStreamingSourceFromProp(source)
+            return
+        }
+
+        lastSourceProp = source
+        resetStreamingState(source as string)
+    }
+
     const canUseImperativeStreaming = (methodName: 'writeChunk' | 'resetStream'): boolean => {
         if (!streaming) {
             warnStreaming(`${methodName}() is only available when streaming={true}; call dropped.`)
@@ -348,6 +370,15 @@
     export function writeChunk(chunk: StreamingChunk): void {
         if (!canUseImperativeStreaming('writeChunk')) return
 
+        // Reconcile a pending streamId change here rather than waiting for the
+        // $effect: writeChunk() is synchronous, so a caller that swaps streamId
+        // and writes in the same tick would otherwise append to the previous
+        // stream's buffer (and have that write wiped when the effect later ran).
+        if (lastStreamId !== streamId) {
+            lastStreamId = streamId
+            resetStreamingSession()
+        }
+
         if (pendingStreamFullSource !== null) {
             flushPendingStreamChanges()
         }
@@ -388,12 +419,22 @@
             teardownStreamingBuffers()
             if (incrementalParser) clearStreamingParser()
             lastSourceProp = source
+            lastStreamId = streamId
             if (streaming && hasAsyncExtension) {
                 warnStreaming(
                     'streaming prop is ignored when async extensions are used. ' +
                         'Remove async extensions or set streaming={false} to silence this warning.'
                 )
             }
+            return
+        }
+
+        // Must precede the source check: when a new stream also carries a new
+        // source, the reset rebaselines on it rather than treating the change
+        // as an append to the previous message's buffer.
+        if (lastStreamId !== streamId) {
+            lastStreamId = streamId
+            resetStreamingSession()
             return
         }
 

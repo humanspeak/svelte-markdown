@@ -256,6 +256,30 @@ export type SvelteMarkdownProps<T extends Renderers = Renderers> = {
     streaming?: boolean
 
     /**
+     * Identity of the current stream. Changing this value resets all streaming
+     * state: the internal source buffer, any pending (unflushed) chunk, the
+     * incremental parser, and the input-mode lock set by the first
+     * {@link SvelteMarkdownProps.streaming | streaming} write.
+     *
+     * Use this when a single component instance is recycled across streams —
+     * a chat transcript rendered with a non-keyed `{#each}`, a virtual list, or
+     * a keyed each whose key identifies the slot rather than the message. In
+     * those cases the imperative buffer is instance state that outlives the
+     * message, so the next stream would otherwise start with the previous
+     * message still buffered.
+     *
+     * Only meaningful when `streaming` is `true`; ignored otherwise.
+     *
+     * @defaultValue `undefined`
+     *
+     * @example
+     * ```svelte
+     * <SvelteMarkdown bind:this={markdown} source="" streaming streamId={message.id} />
+     * ```
+     */
+    streamId?: string | number
+
+    /**
      * Callback invoked after the source has been parsed into tokens.
      *
      * Receives the full token array before rendering begins. Useful for
