@@ -256,6 +256,25 @@ export type SvelteMarkdownProps<T extends Renderers = Renderers> = {
     streaming?: boolean
 
     /**
+     * Identity of the stream currently being rendered.
+     *
+     * When this value changes while `streaming` is enabled, the component
+     * discards all internal streaming state — the accumulated buffer, the
+     * append/offset input-mode lock, and the incremental parser — and
+     * re-seeds from the current `source`, exactly as if `resetStream(source)`
+     * had been called. Pass a per-response identity (message id, nonce) so a
+     * component instance that outlives one stream (recycled list rows,
+     * long-lived chat bubbles) can never leak the previous stream's buffer
+     * into the next one.
+     *
+     * When omitted, resetting between streams remains the consumer's job via
+     * `resetStream()`.
+     *
+     * @defaultValue `undefined`
+     */
+    streamId?: string | number
+
+    /**
      * Callback invoked after the source has been parsed into tokens.
      *
      * Receives the full token array before rendering begins. Useful for

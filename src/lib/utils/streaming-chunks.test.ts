@@ -4,6 +4,7 @@ import {
     applyStreamingOffsetChunk,
     commitStreamingAppendBuffer,
     getStreamingChunkInstruction,
+    isOffsetStreamRestart,
     shouldFlushStreamingAppendBuffer,
     STREAM_BATCH_MAX_CHARS,
     STREAM_MAX_OFFSET_GAP
@@ -160,5 +161,80 @@ describe('streaming chunk utilities', () => {
                 { maxOffsetGap: 3 }
             )
         ).toBe('ab   XY')
+    })
+})
+
+describe('offset stream restart detection', () => {
+    it('flags an offset-0 chunk that diverges from the buffered content', () => {
+        expect(isOffsetStreamRestart('Old stream tail text', { value: 'New', offset: 0 })).toBe(
+            true
+        )
+    })
+
+    it('does not flag an idempotent replay of the buffered prefix', () => {
+        expect(isOffsetStreamRestart('Hello World', { value: 'Hello', offset: 0 })).toBe(false)
+    })
+
+    it('does not flag a cumulative snapshot that extends the buffer', () => {
+        expect(isOffsetStreamRestart('Hello', { value: 'Hello World', offset: 0 })).toBe(false)
+    })
+
+    it('does not flag a gap fill into whitespace padding', () => {
+        // Out-of-order delivery: a later chunk opened a padded gap, then the
+        // offset-0 chunk arrives to fill it.
+        expect(isOffsetStreamRestart('    tail', { value: 'head', offset: 0 })).toBe(false)
+    })
+
+    it('does not flag chunks written past offset 0', () => {
+        expect(isOffsetStreamRestart('Hello World', { value: 'XXX', offset: 6 })).toBe(false)
+    })
+
+    it('does not flag writes into an empty buffer', () => {
+        expect(isOffsetStreamRestart('', { value: 'Hello', offset: 0 })).toBe(false)
+    })
+
+    it('does not flag empty chunk values', () => {
+        expect(isOffsetStreamRestart('Hello', { value: '', offset: 0 })).toBe(false)
+    })
+
+    it('returns a restart instruction when currentBuffer is provided and diverges', () => {
+        const chunk = { value: 'New stream', offset: 0 }
+
+        expect(
+            getStreamingChunkInstruction(chunk, 'offset', { currentBuffer: 'Old stream' })
+        ).toEqual({
+            kind: 'restart',
+            chunk,
+            nextMode: 'offset',
+            message:
+                'offset chunk at 0 diverges from the buffered stream; treating it as a new ' +
+                'stream and resetting. Call resetStream() (or set the streamId prop) when ' +
+                'starting a new stream to avoid this fallback.'
+        })
+    })
+
+    it('keeps plain offset instructions when currentBuffer is not provided', () => {
+        const chunk = { value: 'New stream', offset: 0 }
+
+        expect(getStreamingChunkInstruction(chunk, 'offset', { currentBufferLength: 10 })).toEqual({
+            kind: 'offset',
+            chunk,
+            nextMode: 'offset'
+        })
+    })
+
+    it('derives the gap check from currentBuffer when provided', () => {
+        expect(
+            getStreamingChunkInstruction(
+                { value: 'Hello', offset: STREAM_MAX_OFFSET_GAP + 1 },
+                'offset',
+                { currentBuffer: '' }
+            )
+        ).toEqual({
+            kind: 'drop',
+            message:
+                `offset chunk skipped: offset ${STREAM_MAX_OFFSET_GAP + 1} is more than ` +
+                `${STREAM_MAX_OFFSET_GAP} chars beyond the current buffer length (0).`
+        })
     })
 })

@@ -91,6 +91,7 @@
     const {
         source = [],
         streaming = false,
+        streamId = undefined,
         renderers = {},
         options = {},
         isInline = false,
@@ -257,6 +258,37 @@
         applyStreamingSource(nextSource, true)
     }
 
+    // --- Stream identity (streamId prop) ---
+    // A streamId change is a declarative resetStream(): all streaming state
+    // (buffer, input-mode lock, incremental parser) is discarded and re-seeded
+    // from the current source. This protects component instances that outlive
+    // a single stream (recycled list rows, long-lived chat bubbles) from
+    // leaking the previous stream's buffer into the next one.
+    let lastStreamId: unknown = undefined
+    let hasObservedStreamId = false
+
+    const syncStreamIdentity = () => {
+        if (!hasObservedStreamId) {
+            hasObservedStreamId = true
+            lastStreamId = streamId
+            return
+        }
+
+        if (streamId === lastStreamId) return
+
+        lastStreamId = streamId
+        lastSourceProp = source
+
+        if (Array.isArray(source)) {
+            teardownStreamingBuffers()
+            clearStreamingParser()
+            streamTokens = [...(source as Token[])]
+            return
+        }
+
+        resetStreamingState(source as string)
+    }
+
     const syncStreamingSourceFromProp = (nextSource: typeof source) => {
         lastSourceProp = nextSource
 
@@ -348,16 +380,28 @@
     export function writeChunk(chunk: StreamingChunk): void {
         if (!canUseImperativeStreaming('writeChunk')) return
 
+        // Imperative writes can race ahead of the $effect that watches
+        // streamId — reconcile the identity before applying the chunk.
+        syncStreamIdentity()
+
         if (pendingStreamFullSource !== null) {
             flushPendingStreamChanges()
         }
 
         const instruction = getStreamingChunkInstruction(chunk, streamInputMode, {
-            currentBufferLength: streamSourceBuffer.length,
+            currentBuffer: streamSourceBuffer,
             maxOffsetGap: STREAM_MAX_OFFSET_GAP
         })
         if (instruction.kind === 'drop') {
             warnStreaming(instruction.message)
+            return
+        }
+
+        if (instruction.kind === 'restart') {
+            warnStreaming(instruction.message)
+            resetStreamingState('')
+            streamInputMode = instruction.nextMode
+            applyOffsetChunk(instruction.chunk)
             return
         }
 
@@ -373,6 +417,13 @@
 
     export function resetStream(nextSource = ''): void {
         if (!canUseImperativeStreaming('resetStream')) return
+
+        // An explicit reset acknowledges the current stream identity —
+        // without this, a consumer that both calls resetStream(seed) and
+        // rotates streamId would get a second (source-seeded) reset from
+        // the effect, clobbering the explicit seed.
+        hasObservedStreamId = true
+        lastStreamId = streamId
 
         resetStreamingState(nextSource)
     }
@@ -396,6 +447,11 @@
             }
             return
         }
+
+        // Identity first: a streamId change resets and re-seeds from the
+        // current source (and records lastSourceProp), so the source-sync
+        // below won't double-apply.
+        syncStreamIdentity()
 
         if (lastSourceProp !== source) {
             syncStreamingSourceFromProp(source)
