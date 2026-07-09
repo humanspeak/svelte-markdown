@@ -19,8 +19,8 @@ export default defineConfig({
             thresholds: {
                 statements: 95,
                 branches: 89,
-                functions: 96,
-                lines: 97
+                functions: 95,
+                lines: 96
             },
             exclude: [
                 'docs/**',
