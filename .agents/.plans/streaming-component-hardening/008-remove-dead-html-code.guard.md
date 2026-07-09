@@ -41,3 +41,25 @@ I judge this **on track, not drift**, because the two paths the plan literally o
 **Not tampering.** The executor edited `README.md` (the batch index), which the plan's executor-instructions block and Done criterion 5 both explicitly require. It did **not** edit `008-remove-dead-html-code.md` (`git diff f5f1e4c..c974b80 -- .../008-*.md` → empty). The plan file is untouched.
 
 - Action: **reported to operator.** Verdict ON TRACK; the Step 3 deviation is surfaced for an explicit operator call rather than quietly ratified, since it exceeds the plan's literal "only to drop the import." No plan amendment made — guard does not widen scope to match work, and the work needs no widening to pass on intent. Recommended next gate: `guard 8 final` to re-run all criteria and open the PR.
+
+## Checkpoint 2 — 2026-07-09 12:16 — ON TRACK (final close-out + integration gate — PASS)
+
+Reviewed at `c974b80` (source snapshot; `1ce413b` = checkpoint-1 guard log) · branch `advisor/008-remove-dead-html-code` · this is the `guard 8 final` gate. **Operator explicitly ratified the Step 3 deviation** ("I am ok with the change") before this pass; it is therefore recorded as accepted, not merely tolerated. Tree clean at entry — checkpoint 1 committed the work — so nothing new to snapshot; this gate re-judges the committed snapshot rather than a shifting working tree.
+
+**Every Done criterion re-run from scratch, not trusted from checkpoint 1:**
+
+- `grep -rn "parseHtmlBlock\|processHtmlTokens\|containsMultipleTags" src` → no matches. ✓
+- `grep -rn "stream-benchmark" src` → no matches. ✓
+- `pnpm check` → exit 0, `1002 FILES 0 ERRORS` (4 pre-existing unrelated warnings). ✓
+- `pnpm test:only` → exit 0, 141 files / 901 tests pass. ✓
+- `pnpm build` → exit 0, publint `All good!` — run after `rm -rf dist` so the dist audit reflects a real clean build. ✓
+- `trunk fmt && trunk check` → exit 0, `✔ No issues`; tree clean after fmt (no formatting drift). ✓
+- Scope audit vs merge-base `f5f1e4c`: only in-scope files + guard's own log; exactly one file outside `src/lib` (the plan-designated dev route); `src/lib/index.ts` diff empty. ✓
+
+**Decisive new evidence for the final gate — the diff is a pure deletion.** I filtered every added line in the surviving source: `git diff f5f1e4c...HEAD -- token-cleanup.ts | grep '^+' | grep -v <comments>` → **empty**; the same filter on `token-cleanup.test.ts` yields exactly one line, the trimmed `import { isHtmlOpenTag, shrinkHtmlTokens }`. No live-path line was rewritten anywhere in `src/lib`. This is the strongest available proof that behavior is unchanged, and it is why the green suite is trustworthy rather than merely reassuring.
+
+**Packaged surface re-audited on a clean build** (`dist` removed first): bench module absent, no legacy symbol present. The plan's maintenance note is satisfied against real build output.
+
+**Pre-publication safety check the plan did not ask for, but a merger needs.** The branch is 2 commits behind `origin/main` (`8ba3135` version bump, `ec9a495` `feat(streaming): streamId prop` #350 — both landed after checkpoint 1). A merge could in principle resurrect a dependency on a deleted symbol. Verified it cannot: #350 touches only `SvelteMarkdown.svelte`, `types.ts`, `SvelteMarkdown.stream-id.test.ts`, `StreamIdRaceHarness.svelte` and docs — none reference the deleted symbols — and `git diff --name-only f5f1e4c..origin/main` has **zero overlap** with this PR's files. No conflict, no reintroduced importer.
+
+- Action: **PASS — integrated.** PR <https://github.com/humanspeak/svelte-markdown/pull/351> opened via the `pr` skill against `main` (labels `javascript,enhancement`, assignee `jaysin586`); the `pr` skill's upstream check passed (branch had no upstream; `push -u` repointed it at itself, not `main`). Close-out report written to `008-remove-dead-html-code.guard-report.md`. Guard does not merge — merging is the operator's call. No source code was authored or edited by guard at any point in this plan.
