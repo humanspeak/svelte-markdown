@@ -3,12 +3,13 @@
     import type {
         HtmlSnippetProps,
         ParagraphSnippetProps,
+        SvelteMarkdownOptions,
         StreamingChunk,
         TextSnippetProps
     } from '$lib/types.js'
+    import { IncrementalParser } from '$lib/utils/incremental-parser.js'
     import { Lexer, Slugger, type Token } from '$lib/utils/markdown-parser.js'
     import { parseAndCacheTokens } from '$lib/utils/parse-and-cache.js'
-    import { benchmarkAppendStream } from '$lib/utils/stream-benchmark.js'
     import { hashString, tokenCache } from '$lib/utils/token-cache.js'
     import { shrinkHtmlTokens } from '$lib/utils/token-cleanup.js'
     import { onMount, tick } from 'svelte'
@@ -361,6 +362,28 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         return Math.round(n * m) / m
     }
 
+    const benchmarkAppendParse = (chunks: string[], options: SvelteMarkdownOptions) => {
+        const parser = new IncrementalParser(options)
+        const parseDurationsMs: number[] = []
+        let streamedSource = ''
+
+        for (const chunk of chunks) {
+            streamedSource += chunk
+            const start = performance.now()
+            parser.update(streamedSource)
+            parseDurationsMs.push(performance.now() - start)
+        }
+
+        const totalParseMs = parseDurationsMs.reduce((sum, duration) => sum + duration, 0)
+
+        return {
+            chunkCount: chunks.length,
+            totalParseMs,
+            p95ParseMs: percentile(parseDurationsMs, 0.95),
+            peakParseMs: parseDurationsMs.length > 0 ? Math.max(...parseDurationsMs) : 0
+        }
+    }
+
     const asHeadingBenchNodes = (value: unknown): HeadingBenchNode[] =>
         Array.isArray(value) ? (value as HeadingBenchNode[]) : []
 
@@ -660,7 +683,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         // Up-front pure-parse benchmark for percentiles independent of
         // wall-clock pacing. Doesn't touch the live component.
         const opts = { gfm: true, breaks: false, headerIds: true, headerPrefix: '' }
-        const bench = benchmarkAppendStream(chunks, opts)
+        const bench = benchmarkAppendParse(chunks, opts)
 
         // Real-time replay against the mounted component
         const baseDelay = 1000 / chunksPerSecondTarget
@@ -773,7 +796,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         }
 
         const opts = { gfm: true, breaks: false, headerIds: true, headerPrefix: '' }
-        const bench = benchmarkAppendStream(chunks, opts)
+        const bench = benchmarkAppendParse(chunks, opts)
 
         const renderDurations: number[] = []
         const gapDurations: number[] = []
@@ -864,7 +887,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         }
 
         const opts = { gfm: true, breaks: false, headerIds: true, headerPrefix: '' }
-        const bench = benchmarkAppendStream(chunks, opts)
+        const bench = benchmarkAppendParse(chunks, opts)
         const expectedHeadingIds = collectExpectedHeadingIds(new Lexer(opts).lex(corpus), '')
         const renderDurations: number[] = []
 

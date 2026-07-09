@@ -1,6 +1,6 @@
 import type { Token } from 'marked'
 import { describe, expect, it } from 'vitest'
-import { isHtmlOpenTag, parseHtmlBlock, shrinkHtmlTokens } from './token-cleanup.js'
+import { isHtmlOpenTag, shrinkHtmlTokens } from './token-cleanup.js'
 
 type TestListItem = Token & { tokens: Token[]; listItemIndex: number }
 type TestTableCell = Token & { tokens: Token[] }
@@ -73,34 +73,6 @@ describe('Token Cleanup Utilities', () => {
             expect(isHtmlOpenTag('not html')).toBeNull()
             expect(isHtmlOpenTag('<>')).toBeNull()
             expect(isHtmlOpenTag('')).toBeNull()
-        })
-    })
-
-    describe('parseHtmlBlock', () => {
-        it('should parse simple HTML into tokens', () => {
-            const result = parseHtmlBlock('<div>hello</div>')
-            expect(result).toHaveLength(3)
-            expect(result[0]).toMatchObject({ type: 'html', tag: 'div' })
-            expect(result[1]).toMatchObject({ type: 'text', text: 'hello' })
-            expect(result[2]).toMatchObject({ type: 'html', raw: '</div>' })
-        })
-
-        it('should escape double quotes in attribute values', () => {
-            const result = parseHtmlBlock('<div class="safe">text</div>')
-            expect(result[0].raw).toBe('<div class="safe">')
-            // Verify no injection is possible
-            expect(result[0].raw).not.toContain('onclick')
-        })
-
-        it('should handle self-closing tags', () => {
-            const result = parseHtmlBlock('<div>before<br/>after</div>')
-            expect(result.some((t) => t.raw.includes('br'))).toBe(true)
-        })
-
-        it('should handle text-only content', () => {
-            const result = parseHtmlBlock('just text')
-            expect(result).toHaveLength(1)
-            expect(result[0]).toMatchObject({ type: 'text', text: 'just text' })
         })
     })
 
@@ -561,10 +533,7 @@ describe('Token Cleanup Utilities', () => {
         // arriving in a single marked emit must come out fully nested
         // *without* re-traversal — i.e. the inner descendants are reachable
         // strictly via the outer token's `tokens` field, not as siblings
-        // in a flat result. Future refactors that regress to the old
-        // three-pass shape (containsMultipleTags + parseHtmlBlock + a
-        // separate processHtmlTokens walk) would put the children in
-        // multiple result entries instead of nesting them inline.
+        // in a flat result.
         it('should produce a single nested token from a multi-tag html block in one pass', () => {
             const tokens: Token[] = [
                 {
