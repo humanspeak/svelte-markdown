@@ -269,6 +269,21 @@ export class IncrementalParser {
         return matches(source.slice(lineStart))
     }
 
+    /**
+     * True when `source` is a pure append onto the previously parsed source —
+     * i.e. this is not the first update and `source` begins with `prevSource`.
+     * Computed once per `update` and threaded into `canUseTailWindow` /
+     * `parseSource` so the full-length `startsWith` scan runs a single time.
+     *
+     * @param source - The full new source string for this update
+     * @returns `true` if this update only appends to `prevSource`
+     * @example
+     * ```typescript
+     * // prevSource === '# A\n\nB'
+     * this.isAppendOnlyUpdate('# A\n\nB\n\nC') // true
+     * this.isAppendOnlyUpdate('# A\n\nX') // false (diverges from prevSource)
+     * ```
+     */
     private isAppendOnlyUpdate = (source: string): boolean =>
         this.prevSource !== '' && source.startsWith(this.prevSource)
 
