@@ -46,7 +46,7 @@ const summarize = (tokens: ReadonlyArray<Token>): TreeNode[] =>
             type: t.type,
             ...(tag ? { tag } : {}),
             children: kids ? summarize(kids) : []
-        } as TreeNode
+        }
     })
 
 const singleShot = (source: string): Token[] => new IncrementalParser(opts()).update(source).tokens

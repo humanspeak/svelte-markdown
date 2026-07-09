@@ -33,7 +33,7 @@ read as one coherent HTML pipeline.
 
 Grep results confirming the dead code (run these yourself to re-confirm):
 
-```
+```text
 grep -rn "parseHtmlBlock\|processHtmlTokens\|containsMultipleTags" src --include='*.ts' --include='*.svelte' -l
   → only: token-cleanup.ts (definitions) and *.test.ts files
 grep -rn "stream-benchmark" src -l

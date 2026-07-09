@@ -104,52 +104,47 @@ const buildLargeHeadingSource = (sections: number) => {
 const buildDuplicateHeadingSource = (count: number) =>
     Array.from({ length: count }, () => '## Intro\n\n').join('')
 
-const textToken = (text: string): Token =>
-    ({
-        type: 'text',
-        raw: text,
-        text
-    }) as Token
+const textToken = (text: string): Token => ({
+    type: 'text',
+    raw: text,
+    text
+})
 
-const paragraphToken = (text: string, raw = text): Token =>
-    ({
-        type: 'paragraph',
-        raw,
-        text,
-        tokens: [textToken(text)]
-    }) as Token
+const paragraphToken = (text: string, raw = text): Token => ({
+    type: 'paragraph',
+    raw,
+    text,
+    tokens: [textToken(text)]
+})
 
-const listItemToken = (text: string): Token =>
-    ({
-        type: 'list_item',
-        raw: `- ${text}`,
-        text,
-        tokens: [textToken(text)]
-    }) as Token
+const listItemToken = (text: string): Token => ({
+    type: 'list_item',
+    raw: `- ${text}`,
+    text,
+    tokens: [textToken(text)]
+})
 
-const listToken = (items: Token[]): Token =>
-    ({
-        type: 'list',
-        raw: items.map((item) => item.raw).join('\n'),
-        ordered: false,
-        start: 1,
-        loose: false,
-        items
-    }) as unknown as Token
+const listToken = (items: Token[]): Token => ({
+    type: 'list',
+    raw: items.map((item) => item.raw).join('\n'),
+    ordered: false,
+    start: 1,
+    loose: false,
+    items
+})
 
 const tableCell = (text: string) => ({
     text,
     tokens: [textToken(text)]
 })
 
-const tableToken = (rows: Array<Array<ReturnType<typeof tableCell>>>): Token =>
-    ({
-        type: 'table',
-        raw: '',
-        align: [null, null],
-        header: [tableCell('Label'), tableCell('Value')],
-        rows
-    }) as unknown as Token
+const tableToken = (rows: Array<Array<ReturnType<typeof tableCell>>>): Token => ({
+    type: 'table',
+    raw: '',
+    align: [null, null],
+    header: [tableCell('Label'), tableCell('Value')],
+    rows
+})
 
 const findBodyRow = (container: HTMLElement, text: string) =>
     Array.from(container.querySelectorAll('tbody tr')).find((row) => row.textContent === text)

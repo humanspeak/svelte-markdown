@@ -35,13 +35,15 @@
 
     $effect(() => {
         if (mermaidModule) {
-            renderDiagram(text)
+            // renderDiagram catches its own errors; effects cannot await.
+            void renderDiagram(text)
         }
     })
 
     onMount(() => {
         let observer: MutationObserver
-        ;(async () => {
+        // Initialization owns its loading/error state; onMount cannot await it.
+        void (async () => {
             try {
                 const mod = (await import('mermaid')).default
                 mod.initialize({ startOnLoad: false, securityLevel: 'strict' })
@@ -56,7 +58,8 @@
         observer = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
                 if (mutation.attributeName === 'class') {
-                    renderDiagram(text)
+                    // renderDiagram catches its own errors; observers cannot await.
+                    void renderDiagram(text)
                     return
                 }
             }

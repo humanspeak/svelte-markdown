@@ -6,6 +6,7 @@ import globals from 'globals'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ts from 'typescript-eslint'
+import svelteConfig from './svelte.config.js'
 const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url))
 const tsconfigRootDir = dirname(fileURLToPath(import.meta.url))
 
@@ -26,12 +27,11 @@ export default [
             '**/pnpm-lock.yaml',
             '**/package-lock.json',
             '**/yarn.lock',
-            '**/dist',
-            '**/*.test.ts'
+            '**/dist'
         ]
     },
     js.configs.recommended,
-    ...ts.configs.recommended,
+    ...ts.configs.recommendedTypeChecked,
     ...svelte.configs['flat/recommended'],
     prettier,
     ...svelte.configs['flat/prettier'],
@@ -42,6 +42,7 @@ export default [
                 ...globals.node
             },
             parserOptions: {
+                projectService: true,
                 tsconfigRootDir
             }
         },
@@ -89,19 +90,49 @@ export default [
                     argsIgnorePattern: '^_',
                     ignoreRestSiblings: true
                 }
-            ]
+            ],
+
+            '@typescript-eslint/await-thenable': 'off',
+            '@typescript-eslint/no-floating-promises': ['error'],
+            '@typescript-eslint/no-misused-promises': ['error'],
+            '@typescript-eslint/no-unnecessary-type-assertion': 'off',
+            '@typescript-eslint/no-unsafe-argument': 'off',
+            '@typescript-eslint/no-unsafe-assignment': 'off',
+            '@typescript-eslint/no-unsafe-call': 'off',
+            '@typescript-eslint/no-unsafe-member-access': 'off',
+            '@typescript-eslint/no-unsafe-return': 'off',
+            '@typescript-eslint/require-await': 'off'
         }
+    },
+    {
+        files: ['**/*.{js,mjs,cjs}'],
+        ...ts.configs.disableTypeChecked
+    },
+    {
+        files: ['*.ts'],
+        ...ts.configs.disableTypeChecked
     },
     {
         files: ['**/*.svelte', '**/*.svelte.ts'],
         languageOptions: {
             parserOptions: {
-                parser: ts.parser
+                extraFileExtensions: ['.svelte'],
+                parser: ts.parser,
+                svelteConfig
             }
         },
         rules: {
             'prefer-const': ['off'],
             'svelte/no-navigation-without-resolve': ['off'] // Allow external links
+        }
+    },
+    {
+        files: ['**/*.test.ts'],
+        rules: {
+            camelcase: 'off',
+            'no-unused-vars': 'off',
+            '@typescript-eslint/no-explicit-any': 'off',
+            '@typescript-eslint/no-unused-vars': 'off'
         }
     },
     {

@@ -68,7 +68,7 @@ reviews:
         enabled: false
         auto_incremental_review: false
         ignore_title_keywords: []
-        labels: ['coderabbit']
+        labels: [coderabbit]
         drafts: false
         base_branches: []
     finishing_touches:

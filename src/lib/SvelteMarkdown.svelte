@@ -269,11 +269,11 @@
         if (Array.isArray(nextSource)) {
             teardownStreamingBuffers()
             clearStreamingParser()
-            streamTokens = [...(nextSource as Token[])]
+            streamTokens = [...nextSource]
             return
         }
 
-        const nextStr = nextSource as string
+        const nextStr = nextSource
         // Reuse the existing IncrementalParser when the new source extends
         // the buffered source. Without this, prop-driven streaming (the
         // common LLM-token-by-token case) drops the parser's prevTokens
@@ -319,7 +319,7 @@
         }
 
         lastSourceProp = source
-        resetStreamingState(source as string)
+        resetStreamingState(source)
     }
 
     const canUseImperativeStreaming = (methodName: 'writeChunk' | 'resetStream'): boolean => {

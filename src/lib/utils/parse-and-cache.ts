@@ -37,7 +37,7 @@ export const lexAndClean = (
 ): Token[] => {
     const lexer = new Lexer(options)
     const parsedTokens = isInline ? lexer.inlineTokens(source) : lexer.lex(source)
-    return shrinkHtmlTokens(parsedTokens) as Token[]
+    return shrinkHtmlTokens(parsedTokens)
 }
 
 /**
@@ -75,7 +75,10 @@ export const parseAndCacheTokens = (
     const cleanedTokens = lexAndClean(source, options, isInline)
 
     if (typeof options.walkTokens === 'function') {
-        cleanedTokens.forEach(options.walkTokens)
+        for (const token of cleanedTokens) {
+            // Sync parsing cannot await walkTokens; async callbacks use parseAndCacheTokensAsync.
+            void options.walkTokens(token)
+        }
     }
 
     // Cache the cleaned tokens for next time
