@@ -122,52 +122,6 @@ export const extractAttributes = (raw: string): Record<string, string> => {
 }
 
 /**
- * Converts an HTML string into a sequence of tokens using htmlparser2.
- * Handles complex nested structures while maintaining proper order and relationships.
- *
- * Key features:
- * - Preserves original HTML structure without automatic tag closing
- * - Handles self-closing tags with proper XML syntax (e.g., <br/> instead of <br>)
- * - Gracefully handles malformed HTML by preserving the original structure
- * - Maintains attribute information in opening tags
- * - Processes text content between tags
- *
- * @param {string} html - HTML string to be parsed
- * @returns {Token[]} Array of tokens representing the HTML structure
- *
- * @example
- * // Well-formed HTML
- * parseHtmlBlock('<div>Hello <span>world</span></div>')
- * // Returns [
- * //   { type: 'html', raw: '<div>', ... },
- * //   { type: 'text', raw: 'Hello ', ... },
- * //   { type: 'html', raw: '<span>', ... },
- * //   { type: 'text', raw: 'world', ... },
- * //   { type: 'html', raw: '</span>', ... },
- * //   { type: 'html', raw: '</div>', ... }
- * // ]
- *
- * // Self-closing tags
- * parseHtmlBlock('<div>Before<br/>After</div>')
- * // Returns [
- * //   { type: 'html', raw: '<div>', ... },
- * //   { type: 'text', raw: 'Before', ... },
- * //   { type: 'html', raw: '<br/>', ... },
- * //   { type: 'text', raw: 'After', ... },
- * //   { type: 'html', raw: '</div>', ... }
- * // ]
- *
- * // Malformed HTML
- * parseHtmlBlock('<div>Unclosed')
- * // Returns [
- * //   { type: 'html', raw: '<div>', ... },
- * //   { type: 'text', raw: 'Unclosed', ... }
- * // ]
- *
- * @internal
- */
-
-/**
  * Serializes an HTML attribute map into a string for tag construction.
  * Escapes double quotes in values to prevent attribute injection.
  *
@@ -185,126 +139,14 @@ const serializeAttributes = (attributes: Record<string, string>): string =>
         .map(([key, value]) => ` ${key}="${value.replace(/"/g, '&quot;')}"`)
         .join('')
 
-export const parseHtmlBlock = (html: string): Token[] => {
-    const tokens: Token[] = []
-    let currentText = ''
-    const openTags: string[] = []
-
-    const parser = new htmlparser2.Parser(
-        {
-            onopentag: (name, attributes) => {
-                if (currentText.trim()) {
-                    tokens.push({
-                        type: 'text',
-                        raw: currentText,
-                        text: currentText
-                    })
-                    currentText = ''
-                }
-
-                if (SELF_CLOSING_TAGS.test(name)) {
-                    tokens.push({
-                        type: 'html',
-                        raw: `<${name}${serializeAttributes(attributes)}/>`,
-                        tag: name,
-                        attributes
-                    })
-                } else {
-                    openTags.push(name)
-                    tokens.push({
-                        type: 'html',
-                        raw: `<${name}${serializeAttributes(attributes)}>`,
-                        tag: name,
-                        attributes
-                    })
-                }
-            },
-            ontext: (text) => {
-                currentText += text
-            },
-            onclosetag: (name) => {
-                if (currentText.trim()) {
-                    tokens.push({
-                        type: 'text',
-                        raw: currentText,
-                        text: currentText
-                    })
-                    currentText = ''
-                }
-
-                // Only add closing tag if we found its opening tag
-                // and it's not a self-closing tag
-                if (openTags.includes(name) && !SELF_CLOSING_TAGS.test(name)) {
-                    if (html.includes(`</${name}>`)) {
-                        tokens.push({
-                            type: 'html',
-                            raw: `</${name}>`,
-                            tag: name
-                        })
-                    }
-                    openTags.splice(openTags.indexOf(name), 1)
-                }
-            }
-        },
-        {
-            xmlMode: false,
-            recognizeSelfClosing: true
-        }
-    )
-
-    parser.write(html)
-    parser.end()
-
-    if (currentText.trim()) {
-        tokens.push({
-            type: 'text',
-            raw: currentText,
-            text: currentText
-        })
-    }
-
-    return tokens
-}
-
-/**
- * Determines if an HTML string contains multiple distinct tags.
- * Used as a preprocessing step to optimize token processing.
- *
- * @param {string} html - HTML string to analyze
- * @returns {boolean} True if multiple tags are present or if it's a single pair of matching tags
- *
- * @internal
- */
-const TAG_REGEX = /<\/?[a-zA-Z][^>]*>/g
-
-export const containsMultipleTags = (html: string): boolean => {
-    let openCount = 0
-    let closeCount = 0
-    TAG_REGEX.lastIndex = 0
-    let match: RegExpExecArray | null
-
-    while ((match = TAG_REGEX.exec(html)) !== null) {
-        if (match[0][1] === '/') {
-            closeCount++
-        } else {
-            openCount++
-        }
-        if (openCount > 1 || closeCount > 1) return true
-        if (openCount >= 1 && closeCount >= 1) return true
-    }
-
-    return false
-}
-
 /**
  * Fast scan used by `expandHtmlToken` to decide whether the htmlparser2
  * expansion path is worth invoking. Returns true when the input contains
  * at least two `<` characters separated by a `>` — i.e. the cheapest
  * possible witness that more than one tag is present.
  *
- * Cheaper than `containsMultipleTags` (two `indexOf` calls vs a global
- * regex sweep) and good enough for the perf gate: false positives just
- * route through htmlparser2 (correct, slightly slower); false negatives
+ * Two `indexOf` calls keep this cheap enough for the perf gate: false positives
+ * just route through htmlparser2 (correct, slightly slower); false negatives
  * cannot occur for any input that contains two tags.
  *
  * @internal
@@ -316,12 +158,9 @@ const hasMultipleTags = (html: string): boolean => {
 }
 
 /**
- * Single-pass expansion of one html token's raw string into nested
- * tokens. Combines what `parseHtmlBlock` (flat tokenization) and the
- * subsequent `processHtmlTokens` walk (stack-based nesting) used to do
- * separately into a single htmlparser2 traversal: opening tags push a
- * fresh child array onto the stack, closing tags pop it and attach the
- * collected children to the opening token via `tokens`.
+ * Single-pass expansion of one html token's raw string into nested tokens.
+ * Opening tags push a fresh child array onto the stack; closing tags pop it and
+ * attach the collected children to the opening token via `tokens`.
  *
  * Behavior is matched to the legacy two-pass pipeline:
  *   - Self-closing tags (`<br>` etc.) are emitted with `<.../>` form.
@@ -444,11 +283,9 @@ const expandHtmlToken = (token: Token): Token[] => {
  * Pair-matches flat html opens/closes that span across separate marked
  * tokens (e.g. marked emits `<details>` and `</details>` as two
  * top-level html tokens with markdown blocks between them). Tokens that
- * `expandHtmlToken` already nested (recognizable by the populated
- * `tokens` array on an html token) are passed through opaquely — no
- * recursion, no re-walk. This is the key delta from the legacy
- * `processHtmlTokens` walk, which re-traversed every nested descendant
- * for each html token in the result.
+ * `expandHtmlToken` already nested (recognizable by the populated `tokens`
+ * array on an html token) are passed through opaquely — no recursion, no
+ * re-walk.
  *
  * @internal
  */
@@ -676,87 +513,4 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
     }
 
     return pairFlatHtmlTokens(expanded)
-}
-
-/**
- * Core token processing logic that handles the complexities of HTML nesting.
- * Uses a stack-based approach to match opening and closing tags while
- * maintaining proper hierarchical relationships.
- *
- * Implementation details:
- * - Maintains a stack of opening tags
- * - Processes nested tokens recursively
- * - Preserves HTML attributes
- * - Handles malformed HTML gracefully
- *
- * @param {Token[]} tokens - Tokens to be processed
- * @returns {Token[]} Processed tokens with proper nesting structure
- *
- * @internal
- */
-export const processHtmlTokens = (tokens: Token[]): Token[] => {
-    const result: Token[] = []
-    // Stack to keep track of opening tags and their positions
-    const stack: { tag: string; startIndex: number }[] = []
-
-    for (let i = 0; i < tokens.length; i++) {
-        const token = tokens[i]
-
-        // If token contains nested tokens, process them recursively
-        if ('tokens' in token && Array.isArray(token.tokens)) {
-            token.tokens = processHtmlTokens(token.tokens)
-        }
-
-        if (token.type === 'html') {
-            const tagInfo = isHtmlOpenTag(token.raw)
-            if (!tagInfo) {
-                // If we can't parse the tag, just add it as-is
-                result.push(token)
-                continue
-            }
-
-            if (tagInfo.isOpening) {
-                // For opening tags, push to stack and add to result
-                stack.push({ tag: tagInfo.tag, startIndex: result.length })
-                result.push(token)
-            } else {
-                // For closing tags, try to match with last opening tag
-                const lastOpening = stack.pop()
-                if (!lastOpening || lastOpening.tag !== tagInfo.tag) {
-                    // If no matching opening tag, add closing tag as-is
-                    result.push(token)
-                    continue
-                }
-
-                // Found matching tags - create nested structure
-                const startIndex = lastOpening.startIndex
-                // Remove all tokens between opening and closing tags
-                const innerTokens = result.splice(startIndex + 1, result.length - startIndex - 1)
-                // Remove the opening tag
-                const openingToken = result.pop()!
-
-                // Extract attributes from opening tag
-                const attributes = extractAttributes(openingToken.raw)
-
-                // Create new nested token structure
-                result.push({
-                    type: 'html',
-                    raw: openingToken.raw,
-                    tag: tagInfo.tag,
-                    tokens: processHtmlTokens(innerTokens),
-                    attributes
-                })
-            }
-        } else {
-            // Non-HTML tokens are added as-is
-            result.push(token)
-        }
-    }
-
-    // If we have unclosed tags, return partial result (better than discarding all work)
-    if (stack.length > 0) {
-        return result
-    }
-
-    return result
 }
