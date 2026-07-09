@@ -18,6 +18,12 @@ remains).
 > tooling-command correction only and does not change any plan's source baseline,
 > so the drift checks must keep pointing at the original audited commit.
 
+> **Revision 2026-07-09 (guard):** Plan 009 retained four `pnpm exec eslint .`
+> invocations that the 2026-07-07 revision missed; these are now Trunk commands.
+> Raw ESLint is forbidden by CLAUDE.md. Use `trunk check` for changed files and
+> `trunk check --all` for a full-repo pass (574 files in ~39s under 009's
+> type-aware config). `Planned at` SHAs remain unchanged for the reason above.
+
 ## Execution order & status
 
 | Plan | Title                                                                                        | Priority | Effort | Risk | Depends on         | Status |

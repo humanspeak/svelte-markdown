@@ -6,6 +6,14 @@
 >
 > **Drift check (run first)**: `git diff --stat 939f154..HEAD -- eslint.config.mjs`
 > On any change, compare "Current state" facts to live code; mismatch ⇒ STOP.
+>
+> **Revision 2026-07-09 (guard):** Replaced this plan's four `pnpm exec eslint .`
+> invocations with Trunk equivalents. CLAUDE.md makes Trunk the source of truth
+> and forbids running raw ESLint/Prettier. Use `trunk check` for changed files
+> and `trunk check --all` for a full-repo pass. The `Planned at` SHA stays
+> `939f154` — a tooling-command correction only, matching the batch README's
+> 2026-07-07 revision, so the drift check keeps pointing at the originally
+> audited commit.
 
 ## Status
 
@@ -59,12 +67,18 @@ CI runs on Node 22/24.
 
 ## Commands you will need
 
-| Purpose     | Command                    | Expected on success |
-| ----------- | -------------------------- | ------------------- |
-| Lint        | `trunk fmt && trunk check` | exit 0              |
-| ESLint only | `pnpm exec eslint .`       | exit 0              |
-| Typecheck   | `pnpm check`               | exit 0              |
-| All unit    | `pnpm test:only`           | all pass            |
+| Purpose       | Command                    | Expected on success |
+| ------------- | -------------------------- | ------------------- |
+| Lint          | `trunk fmt && trunk check` | exit 0              |
+| Lint one file | `trunk check <path>`       | exit 0              |
+| Lint all      | `trunk check --all`        | exit 0              |
+| Typecheck     | `pnpm check`               | exit 0              |
+| All unit      | `pnpm test:only`           | all pass            |
+
+Never run `pnpm lint`, `pnpm format`, `npx prettier`, or `npx eslint` (CLAUDE.md).
+Plain `trunk check` only inspects files changed relative to the upstream branch —
+that covers a new/untracked scratch file from Step 3. Because this plan turns on
+repo-wide rules, also run `trunk check --all` once before declaring done.
 
 ## Scope
 
@@ -99,9 +113,10 @@ block scoped to `**/*.test.ts` that relaxes rules that don't fit tests (e.g.
 allow non-null assertions or `any` where the existing tests rely on them) — but
 keep correctness rules on. Run ESLint and triage what surfaces.
 
-**Verify**: `pnpm exec eslint .` runs over test files (no longer skipped). Fix
-surfaced violations minimally, or relax clearly test-inappropriate rules in the
-override. Target: `pnpm exec eslint .` → exit 0.
+**Verify**: `trunk check` now reports on test files (no longer skipped) — confirm
+by running it against a changed `*.test.ts`. Fix surfaced violations minimally, or
+relax clearly test-inappropriate rules in the override. Target:
+`trunk fmt && trunk check` → exit 0.
 
 ### Step 2: Enable type-aware linting for the promise rules
 
@@ -131,13 +146,15 @@ risk budget.
 
 Temporarily introduce an obvious floating promise in a scratch spot (e.g. a
 `Promise.resolve()` statement with no `await`/`void` in a `.ts` file under
-`src/lib`), run `pnpm exec eslint .`, and confirm it reports
-`no-floating-promises`. Then revert the scratch change. This proves the rule is
-actually wired to type info, not silently inactive. Document the result in your
-report (do not commit the scratch change).
+`src/lib`), run `trunk check <scratch-path>`, and confirm it reports
+`no-floating-promises`. Do this in **three** scratch files — a plain `.ts`, a
+`.test.ts`, and a `.svelte` — since each reaches type info by a different parser
+path and any one of them can be silently inactive. Then delete the scratch files.
+This proves the rule is actually wired to type info. Document the result in your
+report (do not commit the scratch files).
 
-**Verify**: ESLint flags the scratch floating promise; after revert,
-`trunk fmt && trunk check` → exit 0.
+**Verify**: Trunk flags the floating promise in all three scratch files; after
+deleting them, `trunk fmt && trunk check` → exit 0 and `git status` is clean.
 
 ### Step 4: Full suite
 
@@ -157,8 +174,12 @@ ALL must hold:
       `eslint.config.mjs`.
 - [ ] `no-floating-promises` is active and provably catches a floating promise
       (Step 3), then reverted.
-- [ ] `trunk fmt && trunk check` exits 0 (all surfaced violations fixed or justified via Trunk
-      inline ignore — never `eslint-disable`).
+- [ ] `trunk fmt && trunk check` exits 0, and `trunk check --all` exits 0 (all
+      surfaced violations fixed or justified via Trunk inline ignore — never
+      `eslint-disable`, and never by switching a rule `'off'` in
+      `eslint.config.mjs` to force green).
+- [ ] Any rule from `recommendedTypeChecked` set to `'off'` in the config is
+      listed in your report with a one-line rationale and its violation count.
 - [ ] `pnpm check` exits 0; `pnpm test:only` exits 0.
 - [ ] No `eslint-disable` comments introduced (`grep -rn "eslint-disable" src`
       shows none added by this change).
