@@ -293,4 +293,59 @@ describe('streamId prop', () => {
             expect(container.querySelector('h1')?.textContent).toBe('Two')
         })
     })
+
+    // The reset is keyed on strict inequality, so a falsy-but-present streamId
+    // must still reset. A truthiness guard (`streamId && lastStreamId !== streamId`)
+    // would still pass the 0 -> 1 case, but fails the two undefined cases.
+    describe('falsy and undefined streamId values', () => {
+        test('resets when streamId transitions from 0 to another value', async () => {
+            const { component, container, rerender } = render(SvelteMarkdown, {
+                props: { source: '', streaming: true, streamId: 0 }
+            })
+
+            await act(() => component.writeChunk('# Zero'))
+            await flushStreamingBatch()
+            expect(container.querySelector('h1')?.textContent).toBe('Zero')
+
+            await act(() => rerender({ source: '', streaming: true, streamId: 1 }))
+            await act(() => component.writeChunk('# One'))
+            await flushStreamingBatch()
+
+            expect(container.querySelectorAll('h1')).toHaveLength(1)
+            expect(container.querySelector('h1')?.textContent).toBe('One')
+        })
+
+        test('resets when streamId transitions from undefined to 0', async () => {
+            const { component, container, rerender } = render(SvelteMarkdown, {
+                props: { source: '', streaming: true }
+            })
+
+            await act(() => component.writeChunk('# Unset'))
+            await flushStreamingBatch()
+            expect(container.querySelector('h1')?.textContent).toBe('Unset')
+
+            await act(() => rerender({ source: '', streaming: true, streamId: 0 }))
+            await act(() => component.writeChunk('# Zero'))
+            await flushStreamingBatch()
+
+            expect(container.querySelectorAll('h1')).toHaveLength(1)
+            expect(container.querySelector('h1')?.textContent).toBe('Zero')
+        })
+
+        test('resets when streamId transitions from a value back to undefined', async () => {
+            const { component, container, rerender } = render(SvelteMarkdown, {
+                props: { source: '', streaming: true, streamId: 'msg-1' }
+            })
+
+            await act(() => component.writeChunk('# Named'))
+            await flushStreamingBatch()
+
+            await act(() => rerender({ source: '', streaming: true, streamId: undefined }))
+            await act(() => component.writeChunk('# Unnamed'))
+            await flushStreamingBatch()
+
+            expect(container.querySelectorAll('h1')).toHaveLength(1)
+            expect(container.querySelector('h1')?.textContent).toBe('Unnamed')
+        })
+    })
 })

@@ -23,12 +23,12 @@ ordering; driving the prop from a real parent does not. The stream starts as
         | undefined
     >()
 
-    export function write(chunk: StreamingChunk): void {
+    export const write = (chunk: StreamingChunk): void => {
         markdown?.writeChunk(chunk)
     }
 
     /** Swap the stream identity and write its first chunk without an intervening flush. */
-    export function switchStreamAndWrite(nextStreamId: string, chunk: StreamingChunk): void {
+    export const switchStreamAndWrite = (nextStreamId: string, chunk: StreamingChunk): void => {
         streamId = nextStreamId
         markdown?.writeChunk(chunk)
     }
