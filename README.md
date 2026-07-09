@@ -825,7 +825,43 @@ The first successful write after a reset locks the stream into one input mode:
 
 Switching modes before `resetStream()` or a `source` prop reset logs a warning and drops the chunk. Offset chunks must use a non-negative safe integer `offset`.
 
-Changing the `source` prop also resets the imperative buffer, seeds a new baseline value, and unlocks the input mode.
+Setting the `source` prop to a **new value** also resets the imperative buffer, seeds a new baseline value, and unlocks the input mode. Re-assigning the same value is not a change and resets nothing — see the warning below.
+
+#### Resetting between messages
+
+The streaming buffer, the incremental parser, and the input-mode lock are all **per-component-instance** state. They outlive any single message. If a component instance is reused for a second stream without being reset, the new stream starts on top of the previous message's buffer.
+
+This bites the common chat-transcript pattern, because Svelte reuses the component instance whenever it isn't keyed by message identity:
+
+```svelte
+<!-- ⚠️ Broken: one recycled instance, no reset between messages -->
+{#each messages as message}
+    <SvelteMarkdown bind:this={markdown} source="" streaming={true} />
+{/each}
+```
+
+Holding `source=""` for the entire conversation means the `source` prop never changes, so nothing ever triggers the implicit reset. Concretely:
+
+- **append mode** — the next message renders as `previous message + new message`.
+- **offset mode** — writes overwrite in place without truncating, so the previous message's **tail** survives past the end of the new one. This does not self-correct until the new message grows longer than the old one.
+- **either mode** — the input-mode lock from the previous stream is still in force, so the first chunk of the new stream is dropped with a warning if it uses the other chunk type.
+
+Pass a `streamId` that changes per message. Whenever its value changes, the component drops the buffer, any pending unflushed chunk, the parser, and the mode lock, then rebaselines on the current `source`:
+
+```svelte
+<!-- ✅ Correct: streamId identifies the stream -->
+{#each messages as message}
+    <SvelteMarkdown bind:this={markdown} source="" streaming={true} streamId={message.id} />
+{/each}
+```
+
+`streamId` accepts a `string` or `number` and is ignored when `streaming` is `false`. Three equivalent ways to get a clean stream, in rough order of preference:
+
+1. **`streamId={message.id}`** — declarative; works even when the instance is recycled.
+2. **`{#each messages as message (message.id)}`** — a keyed each gives each message its own instance, so there is nothing to reset. Use this when the key genuinely identifies the message rather than a slot in a virtual list.
+3. **`markdown.resetStream()`** — imperative; call it _before_ the first `writeChunk()` of the new stream.
+
+> **Note:** if you reset by changing `source` and call `writeChunk()` in the same tick, the write lands before the prop-driven reset — `writeChunk()` is synchronous while the reset runs in an effect. Prefer `streamId` or `resetStream()`, which take effect immediately.
 
 Appending directly to `source` is still supported:
 
@@ -946,6 +982,7 @@ The component emits a `parsed` event when tokens are calculated:
 | ------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------ |
 | source             | `string \| Token[]`     | Markdown content or pre-parsed tokens                                                                  |
 | streaming          | `boolean`               | Enable incremental rendering for LLM streaming                                                         |
+| streamId           | `string \| number`      | Identity of the current stream. Changing it resets the streaming buffer, parser, and input-mode lock   |
 | renderers          | `Partial<Renderers>`    | Custom component overrides                                                                             |
 | options            | `SvelteMarkdownOptions` | Marked parser configuration                                                                            |
 | isInline           | `boolean`               | Toggle inline parsing mode                                                                             |

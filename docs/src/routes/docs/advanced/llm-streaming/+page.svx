@@ -78,7 +78,7 @@ The component works reactively by default. For best streaming performance, pass 
 - `string` for append mode
 - `{ value, offset }` for websocket-style offset patches
 
-The first successful write locks the stream into one mode until `resetStream()` or a `source` prop reset. If an offset patch skips ahead, missing positions are padded with spaces.
+The first successful write locks the stream into one mode until `resetStream()`, a [`streamId` change](#resetting-between-messages), or a `source` prop reset. If an offset patch skips ahead, missing positions are padded with spaces.
 
 ### With websocket-style offset chunks
 
@@ -99,7 +99,45 @@ markdown?.writeChunk({ value: 'Hello', offset: 0 })
 
 There is no delete or truncate behavior in offset mode, and offsets must be non-negative safe integers.
 
-Like append mode, the first successful write locks the stream shape until `resetStream()` or a `source` prop reset.
+Like append mode, the first successful write locks the stream shape until `resetStream()`, a `streamId` change, or a `source` prop reset.
+
+## Resetting Between Messages
+
+The streaming buffer, the incremental parser, and the input-mode lock are **per-component-instance** state. They outlive any single message. If one instance is reused for a second stream without being reset, the new stream starts on top of the previous message's buffer.
+
+This is easy to hit in a chat transcript, because Svelte reuses the component instance whenever it is not keyed by message identity:
+
+```svelte
+<!-- ⚠️ Broken: one recycled instance, no reset between messages -->
+{#each messages as message}
+    <SvelteMarkdown bind:this={markdown} source="" streaming={true} />
+{/each}
+```
+
+Holding `source=""` for the whole conversation means the `source` prop never changes, so nothing ever triggers the implicit reset. The symptoms differ by mode:
+
+- **Append mode** — the next message renders as `previous message + new message`.
+- **Offset mode** — writes overwrite in place without truncating, so the previous message's **tail** survives past the end of the new one. It does not self-correct until the new message grows longer than the old one.
+- **Either mode** — the previous stream's input-mode lock is still in force, so the first chunk of the new stream is dropped with a warning if it uses the other chunk type.
+
+Pass a `streamId` that changes per message. Whenever its value changes, the component drops the buffer, any pending unflushed chunk, the parser, and the mode lock, then rebaselines on the current `source`:
+
+```svelte
+<!-- ✅ Correct: streamId identifies the stream -->
+{#each messages as message}
+    <SvelteMarkdown bind:this={markdown} source="" streaming={true} streamId={message.id} />
+{/each}
+```
+
+`streamId` accepts a `string` or `number` and is ignored when `streaming` is `false`.
+
+There are three equivalent ways to start a clean stream, in rough order of preference:
+
+1. **`streamId={message.id}`** — declarative, and works even when the instance is recycled.
+2. **A keyed each** — `{#each messages as message (message.id)}` gives each message its own instance, so there is nothing to reset. Use this when the key identifies the message rather than a slot in a virtual list.
+3. **`markdown.resetStream()`** — imperative; call it _before_ the new stream's first `writeChunk()`.
+
+> **Note:** resetting by changing `source` is not safe to combine with a same-tick `writeChunk()`. `writeChunk()` runs synchronously, while a prop-driven reset runs in an effect, so the write would land on the old buffer and then be wiped. `streamId` and `resetStream()` both take effect immediately and have no such ordering hazard.
 
 ### SDK Examples
 
