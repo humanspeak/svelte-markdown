@@ -2,7 +2,7 @@
 
 **Recommendation: PASS** — every done criterion reproduced green by guard, and the type-aware promise rules are proven active in all three parser paths rather than merely configured.
 **Reviewed at** `0f77f55` · 2026-07-09 14:13 · **Plan planned at** `939f154`
-**Integrated** — PR opened via the `pr` skill for the reviewed snapshot commit (`0f77f55`). See "Integration" below.
+**Integrated** — PR <https://github.com/humanspeak/svelte-markdown/pull/352> opened via the `pr` skill for the reviewed snapshot commit (`0f77f55`).
 
 ## Done criteria
 
@@ -68,4 +68,4 @@ Both are in the log; repeated here because a report that hides its own misfires 
 
 ## Integration
 
-The reviewed snapshot is `0f77f55`. Two commits carry the executor's work (`0418585`, `0f77f55`); guard's log and the plan amendment are separate commits. PR opened via the `pr` skill against `main`. **Merging is the operator's call — guard never merges.**
+The reviewed snapshot is `0f77f55`. Two commits carry the executor's work (`0418585`, `0f77f55`); guard's log and the plan amendment are separate commits (`1dff968`, `2590f3d`). PR <https://github.com/humanspeak/svelte-markdown/pull/352> opened via the `pr` skill against `main`, assigned to `jaysin586`, labelled `javascript,enhancement`. **Merging is the operator's call — guard never merges.**
