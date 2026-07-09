@@ -29,3 +29,14 @@
 - Corrected `STREAM_BATCH_FALLBACK_MS` provenance: `src/lib/utils/streaming-chunks.ts:3`, not `SvelteMarkdown.svelte:82`.
 - Re-stamped `Planned at` → `fbc1ea5`; drift check re-baselined to the same SHA. Batch `README.md` row for 010: `DONE` → `AMENDED — needs threshold slack`.
 - Action: plan amended with operator agreement. **010 is re-opened**: the executor must change `vite.config.ts` thresholds to `functions: 95, lines: 96` (statements 95 and branches 89 already carry ≥1 point). Guard did not make that edit — it is source. Re-run `guard hardening 10 final` afterward for the close-out gate.
+
+## Checkpoint 3 — 2026-07-09 15:10 — OUT-OF-SCOPE (operator-directed, sanctioned)
+
+`b372498` · `package.json` — removed the `lint`, `format`, and `lint:fix` scripts.
+
+- **Not plan 010 work.** Plan 010's scope admits `package.json` only to add `engines`. The operator directed this cleanup explicitly; it is recorded here so the `final` scope audit reads it as sanctioned rather than as "while I was in there" drift. Committed separately from the plan snapshot (`159ff06`) so the two remain separable.
+- Rationale: `CLAUDE.md:73` already forbids running prettier/eslint directly, but the scripts' presence in `package.json` kept inviting agents to run `pnpm lint` anyway. `pnpm lint` (`prettier --check . && eslint .`) fails on ~34 pre-existing unformatted generated files; `pnpm format` rewrites them and pollutes the diff.
+- `lint:fix` removed alongside `format` — it was defined as `pnpm run format && eslint . --fix` and would have broken on a `format`-only removal.
+- Verified no callers before removal: `grep` over `.github/`, `.husky/`, `scripts/` → no hits; the pre-commit hook runs `trunk fmt` / `trunk check` / `pnpm check`. `package.json` re-validated (21 scripts, none of the three remain).
+- Follow-up not taken: `CLAUDE.md:73-79` and `AGENTS.md:73-79` still describe `pnpm lint` / `pnpm format` as commands to avoid; they now describe scripts that no longer exist. `docs/package.json:16` retains its own `lint:fix` (separate workspace, untouched).
+- Action: reported to the operator; guard authored this at the operator's explicit direction, outside the plan.
