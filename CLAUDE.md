@@ -62,20 +62,29 @@ pnpm build            # Build the package
 pnpm package          # Create distributable package
 pnpm check            # Run svelte-check type checking
 
-# Code Quality
-pnpm lint             # Check linting (prettier + eslint)
-pnpm lint:fix         # Fix linting issues
-pnpm format           # Format code with prettier
+# Code Quality — use Trunk, not raw prettier/eslint
+trunk fmt             # Format changed files
+trunk check           # Lint changed files
+trunk check --fix     # Lint changed files and auto-fix
 ```
 
 ## Code Style & Linting
 
-- **Trunk** is used for linting orchestration (see `.trunk/trunk.yaml`)
-- **ESLint** with TypeScript and Svelte plugins
-- **Prettier** with svelte, organize-imports, and tailwindcss plugins
-- **Husky** pre-commit hooks run `trunk fmt` before commits
+**Always use `trunk fmt` and `trunk check` to format and lint. Do not run `pnpm lint`, `pnpm format`, `npx prettier`, or `npx eslint` directly.**
+
+Trunk is the source of truth (see `.trunk/trunk.yaml`); it orchestrates Prettier and ESLint with the repo's config and, critically, **only operates on files changed relative to the upstream branch**. The raw tools behave differently and will mislead you:
+
+- `pnpm lint` runs `prettier --check . && eslint .` across the **whole repo**, which flags ~34 pre-existing unformatted files (generated `docs/static/**/*.md`, `pnpm-lock.yaml`). These are not your changes — don't try to fix them.
+- Because that command is `&&`-chained, the Prettier failure means **ESLint never runs**, so a green-looking mental model is wrong either way.
+- `pnpm format` (`prettier --write .`) would rewrite all those unrelated files and pollute the diff. Never run it.
+- Passing files to `npx prettier` explicitly fails on `.svx` ("No parser could be inferred"); Trunk handles the repo's file types correctly.
+
+To check only what you changed: `trunk check --fix` (this is what the Husky pre-commit hook runs, followed by `pnpm check` for svelte-check types).
+
+- **Husky** pre-commit hooks run `trunk fmt`, then `trunk check --fix`, then `pnpm check`
 - Code style enforces camelCase, prefer-const, no-var
 - **Never use `eslint-disable` comments** (e.g., `eslint-disable-line`, `eslint-disable-next-line`). Always use Trunk's inline ignore syntax instead: `// trunk-ignore(eslint/rule-name)`. This applies to all files including tests.
+    - Note: raw `npx eslint` still reports these as warnings because `trunk-ignore` is a Trunk-level suppression — another reason to check via `trunk check`.
 
 ## Testing
 
