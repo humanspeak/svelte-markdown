@@ -796,4 +796,111 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(cellAfter).toBe(cellBefore)
         expect(cellAfter).toHaveAttribute('data-remount-probe', 'kept')
     })
+
+    // ---------------------------------------------------------------------
+    // Source-less root-key matching — adversarial edge cases (issue #339).
+    //
+    // These probe `assignSourceLessRootKeys` beyond the three sibling-insert
+    // tests above: they exercise first-child churn, reorder, and tie-breaking
+    // of structurally identical roots. They encode the CURRENT (correct)
+    // contract of the full-subtree overlap matcher and guard any refactor.
+    // ---------------------------------------------------------------------
+
+    test('keeps a reused non-first list item mounted when the first item churns and the wrapper is recreated', async () => {
+        const originalFirstItem = listItemToken('First')
+        const stableItem = listItemToken('More')
+
+        const props = {
+            source: [listToken([originalFirstItem, stableItem])],
+            renderers: {
+                listitem: TrackedListItem
+            } satisfies Partial<Renderers>
+        } satisfies SvelteMarkdownProps
+
+        const { container, rerender } = render(SvelteMarkdown, { props })
+        const itemBefore = container.querySelector('[data-tracked-list-item="More"]')
+        expect(itemBefore).toBeInstanceOf(HTMLLIElement)
+
+        const replacedFirstItem = listItemToken('Replaced')
+        await rerender({
+            ...props,
+            // NEW list wrapper object; first item replaced with a fresh object;
+            // `stableItem` reused. Full-subtree overlap still shares `stableItem`
+            // (and its text token), so the wrapper inherits the prior root key
+            // and the "More" item is not remounted.
+            source: [listToken([replacedFirstItem, stableItem])]
+        })
+
+        const itemAfter = container.querySelector('[data-tracked-list-item="More"]')
+        expect(container.querySelector('li')?.textContent).toBe('Replaced')
+        expect(itemAfter).toBe(itemBefore)
+    })
+
+    test('keeps each list item mounted when two lists swap positions with recreated wrappers and reused items', async () => {
+        const alphaItem = listItemToken('Alpha')
+        const betaItem = listItemToken('Beta')
+
+        const props = {
+            source: [listToken([alphaItem]), listToken([betaItem])],
+            renderers: {
+                listitem: TrackedListItem
+            } satisfies Partial<Renderers>
+        } satisfies SvelteMarkdownProps
+
+        const { container, rerender } = render(SvelteMarkdown, { props })
+        const alphaBefore = container.querySelector('[data-tracked-list-item="Alpha"]')
+        const betaBefore = container.querySelector('[data-tracked-list-item="Beta"]')
+        expect(alphaBefore).toBeInstanceOf(HTMLLIElement)
+        expect(betaBefore).toBeInstanceOf(HTMLLIElement)
+
+        await rerender({
+            ...props,
+            // Swap order; recreate both list wrappers; reuse the item objects.
+            // Each recreated wrapper must inherit its OWN previous root key
+            // (greedy best-match + `usedPreviousRoots` guard), not the other's.
+            source: [listToken([betaItem]), listToken([alphaItem])]
+        })
+
+        const alphaAfter = container.querySelector('[data-tracked-list-item="Alpha"]')
+        const betaAfter = container.querySelector('[data-tracked-list-item="Beta"]')
+        expect(alphaAfter).toBe(alphaBefore)
+        expect(betaAfter).toBe(betaBefore)
+
+        const renderedOrder = Array.from(
+            container.querySelectorAll('[data-tracked-list-item]'),
+            (li) => li.getAttribute('data-tracked-list-item')
+        )
+        expect(renderedOrder).toEqual(['Beta', 'Alpha'])
+    })
+
+    test('assigns previous keys positionally when structurally identical roots share the same items (tie-break)', async () => {
+        const sharedItem = listItemToken('Shared')
+
+        const props = {
+            source: [listToken([sharedItem]), listToken([sharedItem])],
+            renderers: {
+                listitem: TrackedListItem
+            } satisfies Partial<Renderers>
+        } satisfies SvelteMarkdownProps
+
+        const { container, rerender } = render(SvelteMarkdown, { props })
+        const uls = container.querySelectorAll('ul')
+        expect(uls).toHaveLength(2)
+        uls[0].setAttribute('data-tie-probe', 'first')
+        uls[1].setAttribute('data-tie-probe', 'second')
+
+        await rerender({
+            ...props,
+            // Both wrappers recreated; both still contain the same shared item,
+            // so both new roots overlap each previous root equally. The greedy
+            // strict-`>` matcher breaks the tie in encounter order: new root N
+            // takes previous root N's key, so the probed uls stay in place.
+            source: [listToken([sharedItem]), listToken([sharedItem])]
+        })
+
+        const ulsAfter = container.querySelectorAll('ul')
+        expect(ulsAfter).toHaveLength(2)
+        expect(ulsAfter[0].getAttribute('data-tie-probe')).toBe('first')
+        expect(ulsAfter[1].getAttribute('data-tie-probe')).toBe('second')
+    })
 })

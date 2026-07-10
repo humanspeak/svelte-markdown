@@ -26,20 +26,20 @@ remains).
 
 ## Execution order & status
 
-| Plan | Title                                                                                        | Priority | Effort | Risk | Depends on         | Status |
-| ---- | -------------------------------------------------------------------------------------------- | -------- | ------ | ---- | ------------------ | ------ |
-| 001  | Inline-HTML fast path stops rendering unknown/dangerous tags (XSS)                           | P1       | S      | LOW  | —                  | DONE   |
-| 002  | Offset-mode streaming rejects unbounded gaps (RangeError/DoS)                                | P1       | S      | LOW  | —                  | DONE   |
-| 003  | `shrinkHtmlTokens` preserves list-item / table-cell identity                                 | P2       | M      | MED  | —                  | DONE   |
-| 004  | Source-offset render keys extend to table body cells (`rows`)                                | P2       | S      | MED  | —                  | DONE   |
-| 005  | Prop-driven streaming batches through the rAF scheduler (#327)                               | P2       | M      | MED  | —                  | DONE   |
-| 006  | Heading-id dedup snapshots slugger occurrences (#337)                                        | P3       | M      | MED  | —                  | DONE   |
-| 007  | Streaming hot-path micro-opts: single-pass reuse array + dedupe `startsWith` (#332 residual) | P3       | S      | LOW  | —                  | DONE   |
-| 008  | Remove dead legacy HTML-pairing code + bench module                                          | P2       | S      | LOW  | —                  | DONE   |
-| 009  | Lint test files + enable type-aware promise rules                                            | P2       | M      | MED  | 008 (soft)         | DONE   |
-| 010  | Coverage thresholds + `engines` + rAF-fallback test                                          | P3       | S      | LOW  | —                  | DONE   |
-| 011  | Unify streaming token-reuse identity + generic child walk (#331, #333)                       | P2       | L      | HIGH | 003,005,007 (soft) | TODO   |
-| 012  | Simplify source-less root-key matching (#339) — investigate-then-shrink                      | P3       | M      | MED  | 004 (soft)         | TODO   |
+| Plan | Title                                                                                        | Priority | Effort | Risk | Depends on         | Status                                                                                                   |
+| ---- | -------------------------------------------------------------------------------------------- | -------- | ------ | ---- | ------------------ | -------------------------------------------------------------------------------------------------------- |
+| 001  | Inline-HTML fast path stops rendering unknown/dangerous tags (XSS)                           | P1       | S      | LOW  | —                  | DONE                                                                                                     |
+| 002  | Offset-mode streaming rejects unbounded gaps (RangeError/DoS)                                | P1       | S      | LOW  | —                  | DONE                                                                                                     |
+| 003  | `shrinkHtmlTokens` preserves list-item / table-cell identity                                 | P2       | M      | MED  | —                  | DONE                                                                                                     |
+| 004  | Source-offset render keys extend to table body cells (`rows`)                                | P2       | S      | MED  | —                  | DONE                                                                                                     |
+| 005  | Prop-driven streaming batches through the rAF scheduler (#327)                               | P2       | M      | MED  | —                  | DONE                                                                                                     |
+| 006  | Heading-id dedup snapshots slugger occurrences (#337)                                        | P3       | M      | MED  | —                  | DONE                                                                                                     |
+| 007  | Streaming hot-path micro-opts: single-pass reuse array + dedupe `startsWith` (#332 residual) | P3       | S      | LOW  | —                  | DONE                                                                                                     |
+| 008  | Remove dead legacy HTML-pairing code + bench module                                          | P2       | S      | LOW  | —                  | DONE                                                                                                     |
+| 009  | Lint test files + enable type-aware promise rules                                            | P2       | M      | MED  | 008 (soft)         | DONE                                                                                                     |
+| 010  | Coverage thresholds + `engines` + rAF-fallback test                                          | P3       | S      | LOW  | —                  | DONE                                                                                                     |
+| 011  | Unify streaming token-reuse identity + generic child walk (#331, #333)                       | P2       | L      | HIGH | 003,005,007 (soft) | TODO                                                                                                     |
+| 012  | Simplify source-less root-key matching (#339) — investigate-then-shrink                      | P3       | M      | MED  | 004 (soft)         | REJECTED (both #339 candidates regress first-child churn; only robust variants match current complexity) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) | REJECTED
 (one-line rationale).
@@ -100,6 +100,17 @@ These came out of this audit and were **not** open issues before:
 
 ## Findings considered and rejected (do not re-audit)
 
+- **#339 — simplify source-less root-key matching** (`render-metadata.ts`, plan 012):
+  investigated per plan; kept as-is. Both proposed simpler models key a root on a
+  single representative child (candidate 1: first-child identity map; candidate 2:
+  first-descendant key inheritance), so first-child churn (root's first nested
+  token replaced, rest reused + wrapper recreated) breaks the match and remounts
+  the subtree — a regression against the current, correct full-subtree overlap.
+  Any model robust to arbitrary single-child churn must weigh multiple children,
+  which reintroduces multi-identity retention plus the greedy reorder/tie-break
+  matcher — comparable complexity, no clear win. Guard tests for first-child
+  churn, reorder, and tie-break were added to `SvelteMarkdown.issue-328.test.ts`
+  and pass against the unchanged implementation.
 - **Token-cache 32-bit FNV-1a key collision serving wrong tokens** (`token-cache.ts`):
   real but statistically negligible at `maxSize: 50` + 5-min TTL, and a documented
   speed tradeoff. Not worth a plan unless cache size grows substantially.
