@@ -48,6 +48,7 @@
     siteUrl={SITE_URL}
     breadcrumbResolver={buildBreadcrumbs}
     {faqs}
+    faqRoute="/docs/getting-started"
     sitemapManifest={sitemapManifest as Record<string, string>}
 >
     {@render children()}

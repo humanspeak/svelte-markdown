@@ -510,10 +510,21 @@ Happy coding! <span style="color: hotpink">♥</span>`
                 <p>Edit markdown on the left, see it rendered on the right.</p>
             </div>
             <div class="panel">
-                <div class="head">
-                    <span class="tab on">editor.md</span>
-                    <span class="grow"></span>
-                    <button class="ctrl" type="button" onclick={resetPlayground}>⟲ reset</button>
+                <div class="bar">
+                    <span>
+                        <span class="lbl">file</span> ·
+                        <span class="v">markdown-playground.svelte</span>
+                    </span>
+                    <span>
+                        <span class="lbl">chars</span>
+                        <span class="v">{editorText.length}</span>
+                    </span>
+                    <span>
+                        <span class="lbl">render</span>
+                        <span class="v">400ms debounce</span>
+                    </span>
+                    <span class="live">● LIVE</span>
+                    <button class="ctrl" type="button" onclick={resetPlayground}>↻ reset</button>
                 </div>
                 <div class="body">
                     <div class="col">
@@ -1072,7 +1083,8 @@ Happy coding! <span style="color: hotpink">♥</span>`
         border: 1px solid var(--brut-rule);
         background: var(--brut-bg);
     }
-    .brut-stream .panel .bar {
+    .brut-stream .panel .bar,
+    .brut-play .panel .bar {
         display: flex;
         align-items: center;
         gap: 18px;
@@ -1083,17 +1095,21 @@ Happy coding! <span style="color: hotpink">♥</span>`
         background: var(--brut-bg-2);
         flex-wrap: wrap;
     }
-    .brut-stream .panel .bar .lbl {
+    .brut-stream .panel .bar .lbl,
+    .brut-play .panel .bar .lbl {
         color: var(--brut-ink-3);
     }
-    .brut-stream .panel .bar .v {
+    .brut-stream .panel .bar .v,
+    .brut-play .panel .bar .v {
         color: var(--brut-ink);
     }
-    .brut-stream .panel .bar .live {
+    .brut-stream .panel .bar .live,
+    .brut-play .panel .bar .live {
         margin-left: auto;
         color: var(--brut-accent);
     }
-    .brut-stream .panel .ctrl {
+    .brut-stream .panel .ctrl,
+    .brut-play .panel .ctrl {
         background: transparent;
         border: 1px solid var(--brut-rule);
         padding: 4px 10px;
@@ -1102,7 +1118,8 @@ Happy coding! <span style="color: hotpink">♥</span>`
         color: var(--brut-ink-2);
         cursor: pointer;
     }
-    .brut-stream .panel .ctrl:hover {
+    .brut-stream .panel .ctrl:hover,
+    .brut-play .panel .ctrl:hover {
         background: var(--brut-bg);
         color: var(--brut-ink);
     }
@@ -1342,37 +1359,6 @@ Happy coding! <span style="color: hotpink">♥</span>`
         gap: 24px;
         border-bottom: 1px solid var(--brut-rule);
         scroll-margin-top: 80px;
-    }
-    .brut-play .panel .head {
-        display: flex;
-        padding: 8px 14px;
-        border-bottom: 1px solid var(--brut-rule);
-        font-size: 11px;
-        color: var(--brut-ink-3);
-        background: var(--brut-bg-2);
-        align-items: center;
-        gap: 12px;
-    }
-    .brut-play .panel .head .tab {
-        padding: 0 12px;
-        border-right: 1px solid var(--brut-rule);
-        margin-right: -1px;
-    }
-    .brut-play .panel .head .tab.on {
-        color: var(--brut-ink);
-        background: var(--brut-bg);
-    }
-    .brut-play .panel .head .grow {
-        flex: 1;
-    }
-    .brut-play .panel .head .ctrl {
-        background: transparent;
-        border: 0;
-        padding: 0 8px;
-        font-family: inherit;
-        font-size: 11px;
-        color: var(--brut-accent);
-        cursor: pointer;
     }
     .brut-play .panel .body {
         display: grid;
