@@ -2,9 +2,7 @@
 
 **Recommendation: PASS** — the investigation reached a reject on evidence guard reproduced, and the three edge tests it leaves behind are real DOM-identity guards, not decoration.
 **Reviewed at** `5dbf32b` · 2026-07-10 08:35 · **Plan planned at** `939f154`
-
-> PR not yet opened. Guard withheld publication pending operator confirmation; the
-> snapshot commit sits on `advisor/012-simplify-sourceless-root-keys`, unmerged.
+**Integrated** — PR https://github.com/humanspeak/svelte-markdown/pull/355 opened via the `pr` skill for the reviewed snapshot commit (`5dbf32b`). Merging is the operator's call; guard never merges.
 
 ## Done criteria
 
