@@ -31,9 +31,10 @@ REJECTED (one-line rationale).
 - **011 keeps its original number**: it was authored in the (now closed)
   `.agents/.plans-closed/streaming-component-hardening/` batch as plan 011,
   was never executed, and was carried over here on 2026-07-13 with refreshed
-  line references and drift baseline (`eed2e08`). The number is preserved for
-  traceability with GitHub issues #331/#333 and the source batch's guard
-  reports.
+  line references and drift baseline (`eed2e08`); after 001/002 landed it was
+  re-baselined to `e8940c5` (guard amendment, operator-approved, 2026-07-13).
+  The number is preserved for traceability with GitHub issues #331/#333 and
+  the source batch's guard reports.
 
 ## Findings considered and rejected
 

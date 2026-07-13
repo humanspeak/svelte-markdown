@@ -6,8 +6,19 @@
 > `.agents/.plans/redraw-hardening/README.md` when done.
 >
 > **Drift check (run first)**:
-> `git diff --stat eed2e08..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/streaming-token-reuse.ts src/lib/SvelteMarkdown.svelte`
+> `git diff --stat e8940c5..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/streaming-token-reuse.ts src/lib/SvelteMarkdown.svelte`
 > On any change, compare "Current state" excerpts to live code; mismatch ⇒ STOP.
+>
+> Revision 2026-07-13 (guard, operator-approved): re-baselined the drift check
+> from `eed2e08` to `e8940c5` after plans 001/002 of this batch landed on main
+> (PRs #365/#364). Guard verified all "Current state" excerpts against
+> `e8940c5`: `incremental-parser.ts` and `streaming-token-reuse.ts` are
+> byte-identical since `eed2e08`; in `SvelteMarkdown.svelte` only plan 002's
+> reset-site swaps and two invariant comments landed, shifting the streaming
+> assignment excerpt from lines 184-186 to 188-190 (refs updated below).
+> Note for the executor: the reset sites now use `streamTokens = []` — your
+> collapsed assignment must follow the same replace-never-shrink invariant
+> documented at the `streamTokens` declaration (`SvelteMarkdown.svelte:133`).
 >
 > **Carried over 2026-07-13**: this plan was authored in the (now closed)
 > `streaming-component-hardening` batch at `939f154` and never executed. It was
@@ -29,7 +40,7 @@
   003/005/007 prerequisites from the source batch all landed already.)
 - **Category**: tech-debt (structural correctness hardening)
 - **Planned at**: commit `939f154`, 2026-07-07; refreshed against `eed2e08`,
-  2026-07-13
+  2026-07-13; re-baselined against `e8940c5` (post-001/002), 2026-07-13
 - **Absorbs GitHub issues**: #331 (single identity rule) and #333 (generic child
   walk). Close both when this lands.
 
@@ -98,7 +109,7 @@ unchanged.
 
 Reuse module, `src/lib/utils/streaming-token-reuse.ts:13-35` (`hasSameStableNodeIdentity`)
 and `:80-107` (`reuseStableNode` with the enumerated `tokens`/`items`/`header`/
-`rows` walk). The module is consumed at `src/lib/SvelteMarkdown.svelte:184-186`:
+`rows` walk). The module is consumed at `src/lib/SvelteMarkdown.svelte:188-190`:
 
 ```ts
 streamTokens = canReuse ? reuseStableStreamingTokens(streamTokens, newTokens, divergeAt) : newTokens
@@ -135,7 +146,7 @@ identity rule is correct on its own.
   and delete it, or reduce it to a single shared identity predicate the parser
   imports. Generic child walk (all array-of-nodes own-properties) replaces the
   enumerated keys.
-- `src/lib/SvelteMarkdown.svelte` — collapse the `canReuse` branch at 184-186.
+- `src/lib/SvelteMarkdown.svelte` — collapse the `canReuse` branch at 188-190.
 - Test files: recreate `streaming-reuse-repro.test.ts`; update
   `streaming-token-reuse.test.ts` and `incremental-parser.test.ts` to match the
   new surface.
@@ -204,7 +215,7 @@ merge use — that is the "one rule" requirement. Do not yet move it into
 
 Make `update()` return `tokens` that are **already the reused array** (splice the
 stable prefix from `prevTokens`, deep-merge the boundary token via the shared
-predicate/walk). Then change `SvelteMarkdown.svelte:184-186` to
+predicate/walk). Then change `SvelteMarkdown.svelte:188-190` to
 `streamTokens = newTokens` unconditionally. Remove `reuseStableStreamingTokens`,
 `divergeAt`, and `canReuse` from the public surface **only after** all callers are
 migrated. Preserve `divergeOffset` and `streamRenderMetadataStartIndex/Offset`
@@ -254,7 +265,7 @@ ALL must hold:
 
 ## STOP conditions
 
-- Any in-scope file drifted from the excerpts since eed2e08.
+- Any in-scope file drifted from the excerpts since e8940c5.
 - Plan 001's redraw-regression tests fail or need their delta baselines
   changed to pass — that means this refactor altered render identity; report
   the failing assertion and the `__svmParserByType` breakdown.
