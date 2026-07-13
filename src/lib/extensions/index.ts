@@ -8,6 +8,7 @@
  * import { markedAlert, AlertRenderer } from '@humanspeak/svelte-markdown/extensions'
  * import { markedFootnote, FootnoteRef, FootnoteSection } from '@humanspeak/svelte-markdown/extensions'
  * import { markedKatex, KatexRenderer } from '@humanspeak/svelte-markdown/extensions'
+ * import { createShikiHighlighter, ShikiCode, setShikiHighlighter } from '@humanspeak/svelte-markdown/extensions'
  * ```
  *
  * @module @humanspeak/svelte-markdown/extensions
@@ -19,3 +20,12 @@ export { FootnoteRef, FootnoteSection, markedFootnote } from './footnote/index.j
 export { BLOCK_KATEX_TOKEN, INLINE_KATEX_TOKEN, KatexRenderer, markedKatex } from './katex/index.js'
 export type { MarkedKatexOptions } from './katex/index.js'
 export { MermaidRenderer, markedMermaid } from './mermaid/index.js'
+export {
+    SHIKI_CONTEXT_KEY,
+    ShikiCode,
+    createShikiHighlighter,
+    escapeHtml,
+    getShikiHighlighter,
+    setShikiHighlighter
+} from './shiki/index.js'
+export type { CreateShikiHighlighterOptions, ShikiHighlighter } from './shiki/index.js'

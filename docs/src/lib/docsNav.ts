@@ -9,6 +9,7 @@ import {
     FileText,
     Filter,
     Gauge,
+    Highlighter,
     Link,
     List,
     Lock,
@@ -158,7 +159,12 @@ export const docsSections: NavSection[] = [
             { title: 'Token Caching', href: '/docs/advanced/token-caching', icon: Zap },
             { title: 'Tree Shaking', href: '/docs/advanced/tree-shaking', icon: Gauge },
             { title: 'Allow/Deny', href: '/docs/advanced/allow-deny', icon: Shield },
-            { title: 'Marked Extensions', href: '/docs/advanced/marked-extensions', icon: Puzzle }
+            { title: 'Marked Extensions', href: '/docs/advanced/marked-extensions', icon: Puzzle },
+            {
+                title: 'Syntax Highlighting',
+                href: '/docs/advanced/syntax-highlighting',
+                icon: Highlighter
+            }
         ]
     },
     {
@@ -200,6 +206,7 @@ export const docsSections: NavSection[] = [
             { title: 'Caching Performance', href: '/examples/caching-performance', icon: Gauge },
             { title: 'Marked Extensions', href: '/examples/marked-extensions', icon: Puzzle },
             { title: 'Mermaid Diagrams', href: '/examples/mermaid', icon: Workflow },
+            { title: 'Syntax Highlighting', href: '/examples/shiki', icon: Highlighter },
             { title: 'GitHub Alerts', href: '/examples/github-alerts', icon: TriangleAlert },
             { title: 'Footnotes', href: '/examples/footnotes', icon: Superscript },
             { title: 'Code Formatting', href: '/examples/code-formatting', icon: Code },

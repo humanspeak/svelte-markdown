@@ -23,6 +23,7 @@ const shared = {
         'LLM streaming with imperative writeChunk() / resetStream() API',
         '23 markdown renderers + 84 HTML tag renderers — every override is a Svelte snippet',
         'First-class extensions: KaTeX math, Mermaid diagrams, GitHub alerts, footnotes',
+        'Opt-in Shiki syntax highlighting (streaming-compatible, tree-shaken from core)',
         'Built-in XSS protection — protocol allowlist, event-handler stripping, attribute sanitization',
         'Allow/deny utilities (allowHtmlOnly, excludeRenderersOnly, etc.) for fine-grained control',
         'Drop-in component — works anywhere in your Svelte app'
@@ -101,7 +102,7 @@ export const competitors: Competitor[] = [
             },
             {
                 name: 'Code Highlighting',
-                us: 'Via marked extensions',
+                us: 'Built-in via opt-in Shiki extension',
                 them: 'Built-in (Shiki/Prism)'
             },
             { name: 'Remark/Rehype Plugins', us: false, them: true }
@@ -124,8 +125,7 @@ export const competitors: Competitor[] = [
         consUs: [
             ...shared.consUs,
             'Cannot embed Svelte components inside markdown content',
-            'No frontmatter support (parse separately if needed)',
-            'No built-in code syntax highlighting (use a marked extension)'
+            'No frontmatter support (parse separately if needed)'
         ],
         consThem: [
             'Cannot render dynamic/user-supplied markdown',
@@ -474,12 +474,7 @@ export const competitors: Competitor[] = [
             'Slash commands, toolbar, and more',
             'Headless — fully customizable appearance'
         ],
-        consUs: [
-            ...shared.consUs,
-            'No editing capabilities',
-            'No collaborative features',
-            'No built-in code syntax highlighting (use a marked extension)'
-        ],
+        consUs: [...shared.consUs, 'No editing capabilities', 'No collaborative features'],
         consThem: [
             'Heavy bundle for display-only use cases',
             'Svelte support is via adapter, not first-party',
@@ -605,7 +600,11 @@ export const competitors: Competitor[] = [
                 them: false,
                 note: 'Carta is an authoring editor with live preview, not a renderer for streaming agent output with nested HTML.'
             },
-            { name: 'Syntax Highlighting', us: 'Via marked extensions', them: 'Built-in plugin' },
+            {
+                name: 'Syntax Highlighting',
+                us: 'Opt-in Shiki extension',
+                them: 'Built-in plugin'
+            },
             {
                 name: 'Math (KaTeX)',
                 us: 'Built-in extension (markedKatex)',
@@ -632,12 +631,7 @@ export const competitors: Competitor[] = [
             'Plugin system for syntax highlighting, math, etc.',
             'Keyboard shortcuts and toolbar'
         ],
-        consUs: [
-            ...shared.consUs,
-            'No editing capabilities',
-            'No split-pane UI',
-            'No built-in code syntax highlighting (use a marked extension)'
-        ],
+        consUs: [...shared.consUs, 'No editing capabilities', 'No split-pane UI'],
         consThem: [
             'Bundled editor code even if you only need rendering',
             'Smaller community than established editors',
@@ -718,11 +712,7 @@ export const competitors: Competitor[] = [
             'XSS-safe by default',
             'Established community (~1,300 GitHub stars)'
         ],
-        consUs: [
-            ...shared.consUs,
-            'No editing capabilities',
-            'No built-in code syntax highlighting (use a marked extension)'
-        ],
+        consUs: [...shared.consUs, 'No editing capabilities'],
         consThem: [
             'Built on Svelte 3/4 — not updated for Svelte 5 runes',
             'Development has slowed significantly',

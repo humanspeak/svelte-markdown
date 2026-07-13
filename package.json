@@ -85,6 +85,10 @@
         "./extensions/mermaid": {
             "types": "./dist/extensions/mermaid/index.d.ts",
             "svelte": "./dist/extensions/mermaid/index.js"
+        },
+        "./extensions/shiki": {
+            "types": "./dist/extensions/shiki/index.d.ts",
+            "svelte": "./dist/extensions/shiki/index.js"
         }
     },
     "svelte": "./dist/index.js",
@@ -173,6 +177,7 @@
     "peerDependencies": {
         "katex": ">=0.16.0",
         "mermaid": ">=10.0.0",
+        "shiki": ">=4.0.0",
         "svelte": "^5.0.0"
     },
     "peerDependenciesMeta": {
@@ -180,6 +185,9 @@
             "optional": true
         },
         "mermaid": {
+            "optional": true
+        },
+        "shiki": {
             "optional": true
         }
     },
