@@ -456,4 +456,50 @@ describe('TokenCache', () => {
             expect(cache.getTokens(source, options2)).toEqual(tokens2)
         })
     })
+
+    describe('Hash collision safety', () => {
+        /*
+         * Verified 32-bit FNV-1a collision pair: both strings are distinct but
+         * hashString() maps them to the same value ('17dpyl2'). Found via a
+         * birthday-bound search over random short ASCII strings (collision hit
+         * after ~65k strings, <0.1s). The self-check test below fails loudly if
+         * the hash implementation ever changes and the pair stops colliding —
+         * regenerate the pair if that happens.
+         */
+        const COLLISION_A = 'dq6qA'
+        const COLLISION_B = 'dmIwH'
+
+        it('uses a genuine FNV-1a collision pair (self-check)', () => {
+            expect(COLLISION_A).not.toBe(COLLISION_B)
+            expect(hashString(COLLISION_A)).toBe(hashString(COLLISION_B))
+        })
+
+        it('does not serve tokens for a different source with a colliding hash', () => {
+            const options: SvelteMarkdownOptions = {}
+            const tokensA: Token[] = [{ type: 'heading', raw: COLLISION_A, depth: 1, text: 'A' }]
+
+            cache.setTokens(COLLISION_A, options, tokensA)
+
+            // COLLISION_B hashes to the same key but is a different source: the
+            // cache must treat it as a miss, never return A's tokens.
+            expect(cache.getTokens(COLLISION_B, options)).toBeUndefined()
+        })
+
+        it('always returns tokens matching the requested source across the shared key', () => {
+            const options: SvelteMarkdownOptions = {}
+            const tokensA: Token[] = [{ type: 'heading', raw: COLLISION_A, depth: 1, text: 'A' }]
+            const tokensB: Token[] = [{ type: 'heading', raw: COLLISION_B, depth: 1, text: 'B' }]
+
+            cache.setTokens(COLLISION_A, options, tokensA)
+            // Colliding source B is a guarded miss, not a wrong hit.
+            expect(cache.getTokens(COLLISION_B, options)).toBeUndefined()
+
+            // Storing B overwrites the shared key (last writer wins per-key).
+            cache.setTokens(COLLISION_B, options, tokensB)
+            expect(cache.getTokens(COLLISION_B, options)).toEqual(tokensB)
+            // A now misses rather than returning B's tokens — the invariant is
+            // that a returned entry always matches the requested source.
+            expect(cache.getTokens(COLLISION_A, options)).toBeUndefined()
+        })
+    })
 })
