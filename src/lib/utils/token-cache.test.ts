@@ -501,5 +501,19 @@ describe('TokenCache', () => {
             // that a returned entry always matches the requested source.
             expect(cache.getTokens(COLLISION_A, options)).toBeUndefined()
         })
+
+        it('hasTokens agrees with getTokens for a colliding different source', () => {
+            const options: SvelteMarkdownOptions = {}
+            const tokensA: Token[] = [{ type: 'heading', raw: COLLISION_A, depth: 1, text: 'A' }]
+
+            cache.setTokens(COLLISION_A, options, tokensA)
+
+            // hasTokens must apply the same source verification as getTokens:
+            // reporting a hit that getTokens would refuse to serve is the
+            // inconsistency this test pins.
+            expect(cache.hasTokens(COLLISION_A, options)).toBe(true)
+            expect(cache.hasTokens(COLLISION_B, options)).toBe(false)
+            expect(cache.getTokens(COLLISION_B, options)).toBeUndefined()
+        })
     })
 })
