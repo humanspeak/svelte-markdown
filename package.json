@@ -1,6 +1,6 @@
 {
     "name": "@humanspeak/svelte-markdown",
-    "version": "1.7.12",
+    "version": "1.7.13",
     "description": "Markdown and HTML renderer for Svelte 5 — built for rendering streaming AI agent output from Claude Code, ChatGPT, and agentic workflows. XSS-safe defaults, streaming-aware sanitization, token caching, TypeScript types, and Svelte 5 runes.",
     "keywords": [
         "svelte",
