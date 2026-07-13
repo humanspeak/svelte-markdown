@@ -10,6 +10,7 @@ type StreamingTestNode = Record<string, unknown> & {
     items?: StreamingTestNode[]
     header?: StreamingTestNode[]
     rows?: StreamingTestNode[][]
+    customChildren?: StreamingTestNode[]
 }
 
 const token = (node: StreamingTestNode): Token => node as Token
@@ -216,5 +217,30 @@ describe('reuseStableStreamingTokens', () => {
         expect(resultHtml.tokens?.[0]).toBe(previousChild)
         expect(resultHtml.tokens?.[1]).toBe(addedChild)
         expect(node(nextHtml).tokens?.[0]).toBe(nextChild)
+    })
+
+    it('does not over-reuse a token when a child under a custom key changes', () => {
+        const previousStableChild = { type: 'text', raw: 'stable', text: 'stable' }
+        const previousChangedChild = { type: 'text', raw: 'old', text: 'old' }
+        const nextStableChild = { type: 'text', raw: 'stable', text: 'stable' }
+        const nextChangedChild = { type: 'text', raw: 'new', text: 'new' }
+        const previousExtension = token({
+            type: 'extension',
+            raw: 'extension',
+            customChildren: [previousStableChild, previousChangedChild]
+        })
+        const nextExtension = token({
+            type: 'extension',
+            raw: 'extension',
+            customChildren: [nextStableChild, nextChangedChild]
+        })
+
+        const result = reuseStableStreamingTokens([previousExtension], [nextExtension], 0)
+        const resultExtension = node(result[0])
+
+        expect(resultExtension).not.toBe(node(previousExtension))
+        expect(resultExtension).not.toBe(node(nextExtension))
+        expect(resultExtension.customChildren?.[0]).toBe(previousStableChild)
+        expect(resultExtension.customChildren?.[1]).toBe(nextChangedChild)
     })
 })
