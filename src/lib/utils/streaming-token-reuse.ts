@@ -138,7 +138,7 @@ const reuseStableNode = (
  * Reuses stable token objects from a previous streaming parse to preserve
  * component identity across incremental updates.
  */
-export const reuseStableStreamingTokens = (
+export const reuseStableTokenArray = (
     previousTokens: Token[],
     nextTokens: Token[],
     divergeAt: number
@@ -172,3 +172,6 @@ export const reuseStableStreamingTokens = (
 
     return reusedTokens ?? nextTokens
 }
+
+// Kept temporarily while internal callers migrate to the clearer name.
+export const reuseStableStreamingTokens = reuseStableTokenArray
