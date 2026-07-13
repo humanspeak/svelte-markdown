@@ -30,3 +30,11 @@ follows checkpoint 2 · step-3 amendment, operator-approved ("Go ahead"), applie
 - Rationale: plan defect confirmed per checkpoint 2 — the prescribed collapse is unachievable under Svelte 5 proxy identity semantics (evidence in checkpoint 2). The plan was wrong about reality; the work faithfully implemented the wrong prescription.
 - Standard resisted: the quality bar is unchanged — all done-criteria commands, the 5 repro cases, the #333 generic-walk test, plan 001's unmodified harness, and all STOP conditions remain in force. Only the mechanism prescription moved; #331's one-rule and #333's generic-walk intents are unaffected (both already delivered at `481bc55`).
 - Action: amendment committed on `plans/011-guard-checkpoint-2` for PR to main; executor should not resume step 3 until it merges, so it reads the amended plan.
+
+## Checkpoint 4 — 2026-07-13 19:48 — PLAN AMENDED
+
+follows checkpoint 3 · operator-approved editorial consolidation of the same amendment, found uncommitted in the working tree on `plans/011-guard-checkpoint-2` and committed by guard
+
+- Change: the checkpoint-3 amendment restated cleanly rather than layered — title, `Why this matters`, `Scope`, `Git workflow`, `Step 4`, and maintenance notes now describe the amended design directly (parser decides identity, component merges in proxy space; `reuseStableTokenArray` rename; resume-by-revert instructions), replacing the superseded-marker prose.
+- Guard verification before commit: done criteria and STOP conditions byte-untouched by this edit; no scope boundary, verification command, or quality gate weakened; all sections consistent with the amended Step 3 and the checkpoint-3 record.
+- Action: committed on `plans/011-guard-checkpoint-2` as the authoritative amendment text.

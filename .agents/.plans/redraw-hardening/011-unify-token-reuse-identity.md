@@ -1,4 +1,4 @@
-# Plan 011: Fold streaming token reuse into IncrementalParser under one identity rule and a generic child walk
+# Plan 011: Unify streaming token identity while merging in Svelte proxy space
 
 > **Executor instructions**: Follow step by step; verify each step; obey STOP
 > conditions. This is the highest-risk plan in the batch — its STOP conditions are
@@ -17,7 +17,7 @@
 > reset-site swaps and two invariant comments landed, shifting the streaming
 > assignment excerpt from lines 184-186 to 188-190 (refs updated below).
 > Note for the executor: the reset sites now use `streamTokens = []` — your
-> collapsed assignment must follow the same replace-never-shrink invariant
+> proxy-space merge assignment must follow the same replace-never-shrink invariant
 > documented at the `streamTokens` declaration (`SvelteMarkdown.svelte:133`).
 >
 > Revision 2026-07-13 #2 (guard, operator-approved): **Step 3 reworked** after
@@ -77,14 +77,11 @@ bugs (the archived repro cases in issue #331). Separately, the reuse walk only
 recurses into four hard-coded child keys (`tokens`/`items`/`header`/`rows`) and
 applies its structural check only to `type === 'html'` — a per-type allowlist on
 shared infra that will silently mis-reuse any nested token shape it doesn't know
-(issue #333). Folding reuse into `IncrementalParser.update()` so it returns an
-already-reused token array governed by a **single** identity rule eliminates the
-divergence structurally: the component assignment collapses to
-`streamTokens = newTokens`, and `reuseStableStreamingTokens` / `divergeAt` /
-`canReuse` drop off the public surface. _(Superseded — see Revision
-2026-07-13 #2: the single-rule goal stands, but the merge must stay
-component-side in proxy space; the collapse to an unconditional assignment
-is not achievable under Svelte 5's proxy identity semantics.)_
+(issue #333). The parser must own the identity decision under a **single** shared
+predicate, while the component applies that decision through one generic merge
+in proxy space. This removes the duplicate identity encoding without severing
+the Svelte proxy identities used by render-metadata WeakMaps, keyed each blocks,
+the slugger prefix-skip, and `parsed()` consumers.
 
 The user-visible staleness is **already gated** by the shipped `canReuse` flag
 (append-only ∧ ¬referenceSensitive ∧ non-empty prevSource), so this plan's value
@@ -160,13 +157,15 @@ identity rule is correct on its own.
 
 **In scope**:
 
-- `src/lib/utils/incremental-parser.ts` — extend `update()` to return an
-  already-reused token array under one identity predicate.
-- `src/lib/utils/streaming-token-reuse.ts` — either fold its logic into the parser
-  and delete it, or reduce it to a single shared identity predicate the parser
-  imports. Generic child walk (all array-of-nodes own-properties) replaces the
-  enumerated keys.
-- `src/lib/SvelteMarkdown.svelte` — collapse the `canReuse` branch at 188-190.
+- `src/lib/utils/incremental-parser.ts` — make the divergence loop use the shared
+  identity predicate and keep returning raw tokens plus the stable-prefix/reuse
+  decision. Do not perform the merge here.
+- `src/lib/utils/streaming-token-reuse.ts` — retain the component-side merge,
+  rename it to `reuseStableTokenArray`, and make it use the single shared
+  identity predicate plus a generic child walk over all array-valued own
+  properties.
+- `src/lib/SvelteMarkdown.svelte` — keep one conditional proxy-space merge call
+  at the streaming assignment; do not collapse it to `streamTokens = newTokens`.
 - Test files: recreate `streaming-reuse-repro.test.ts`; update
   `streaming-token-reuse.test.ts` and `incremental-parser.test.ts` to match the
   new surface.
@@ -190,10 +189,12 @@ identity rule is correct on its own.
 
 ## Git workflow
 
-- Branch: `advisor/011-unify-token-reuse-identity` (`--no-track origin/main`).
+- Branch: `advisor/011-unify-token-reuse-identity-e10bfcc`. Resume by reverting
+  guard snapshot `35d38d0` with `git revert` so the failed experiment remains in
+  history and the worktree returns to the green Step 2 state at `481bc55`.
 - Commit style: `refactor(parser): single identity rule for streaming token reuse`.
-  Commit in stages: (1) port repro tests, (2) generic child walk under one
-  predicate, (3) fold into update() + collapse component, (4) delete dead surface.
+  Steps 1–2 are already committed. Commit the amended Step 3 proxy-space merge,
+  then the Step 4 rename/dead-surface cleanup as logical units.
 - Do NOT push or open a PR unless instructed.
 
 ## Steps
@@ -258,10 +259,13 @@ Instead:
   → all pass.
 - `pnpm test:only` → all pass.
 
-### Step 4: Delete dead surface, typecheck, lint
+### Step 4: Finalize the renamed merge surface, typecheck, lint
 
-Remove now-unused exports. Confirm nothing in `src/lib/index.ts` exported the
-removed symbols (they are internal — verify with grep).
+Ensure the component-side merge is named `reuseStableTokenArray` everywhere and
+remove the obsolete `reuseStableStreamingTokens` and
+`hasSameStableNodeIdentity` names, including stale imports, tests, examples, and
+comments. Confirm `src/lib/index.ts` never exported either removed internal
+symbol.
 
 **Verify**: `pnpm check` → 0; `pnpm test:only` → all pass; `trunk fmt && trunk check` → 0;
 `grep -rn "reuseStableStreamingTokens\|hasSameStableNodeIdentity" src/lib`
@@ -326,6 +330,6 @@ ALL must hold:
   path staying byte-identical, and that the generic walk doesn't over-reuse
   (structural check still fires when a nested child changed).
 - Plan 007 of the source batch already landed (its single-pass reuse array is
-  the current shape of `streaming-token-reuse.ts:131-170`); deleting
-  `reuseStableStreamingTokens` here supersedes that optimization, which is
-  expected and fine.
+  the current shape of `streaming-token-reuse.ts:131-170`). Preserve that
+  optimization while renaming `reuseStableStreamingTokens` to
+  `reuseStableTokenArray`; only its identity predicate and child walk change.
