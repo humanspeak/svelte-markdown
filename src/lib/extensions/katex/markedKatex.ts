@@ -1,4 +1,4 @@
-import { markTailWindowSafe } from '$lib/types.js'
+import { tailWindowSafeExtension } from '$lib/utils/tail-window.js'
 import type { MarkedExtension } from 'marked'
 
 /** Token type emitted for inline math (`\(...\)`, opt-in `$...$`). */
@@ -195,12 +195,6 @@ export function markedKatex(options: MarkedKatexOptions = {}): MarkedExtension {
     }
     // Both tokenizers are block-anchored (`$$`, `\[`, AMS envs) or delimiter-
     // scoped (`\(…\)`, `$…$`) and inspect only `src` from the current position,
-    // so they are safe to run inside the streaming tail-window. Mark the
-    // function references Marked stores in `options.extensions.block/inline`.
-    for (const entry of ext.extensions ?? []) {
-        if ('tokenizer' in entry && typeof entry.tokenizer === 'function') {
-            markTailWindowSafe(entry.tokenizer)
-        }
-    }
-    return ext
+    // so they are safe to run inside the streaming tail-window.
+    return tailWindowSafeExtension(ext)
 }

@@ -449,16 +449,27 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         return Math.round(n * m) / m
     }
 
+    /** Splits text into word-sized chunks (word + trailing whitespace). */
+    const wordChunks = (text: string): string[] => {
+        const chunks: string[] = []
+        const re = /\S+\s*/g
+        let match
+        while ((match = re.exec(text)) !== null) chunks.push(match[0])
+        return chunks
+    }
+
     const benchmarkAppendParse = (chunks: string[], options: SvelteMarkdownOptions) => {
         const parser = new IncrementalParser(options)
         const parseDurationsMs: number[] = []
+        let tailWindowChunks = 0
         let streamedSource = ''
 
         for (const chunk of chunks) {
             streamedSource += chunk
             const start = performance.now()
-            parser.update(streamedSource)
+            const result = parser.update(streamedSource)
             parseDurationsMs.push(performance.now() - start)
+            if (result.usedTailWindow) tailWindowChunks++
         }
 
         const totalParseMs = parseDurationsMs.reduce((sum, duration) => sum + duration, 0)
@@ -468,6 +479,9 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             totalParseMs,
             p95ParseMs: percentile(parseDurationsMs, 0.95),
             peakParseMs: parseDurationsMs.length > 0 ? Math.max(...parseDurationsMs) : 0,
+            // Ground truth from the parser: how many appends re-lexed only the
+            // tail. The first chunk always full-parses (empty prevSource).
+            tailWindowChunks,
             // Per-chunk timings, in stream order — the `stream-extensions`
             // scenario slices these into first/last thirds to measure whether
             // per-chunk parse cost scales with document length (the O(N²)
@@ -773,31 +787,14 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
     }
 
     /**
-     * Real-time streaming scenario. Word-chunks the corpus, appends one
-     * chunk per tick at ~30 chunks/sec, and times each parse+render
-     * cycle. The live SvelteMarkdown component is mounted in streaming
-     * mode so the IncrementalParser is exercised. Rolling observers
-     * pick up longtasks/rAF/mutations during the run.
+     * Steady-cadence replay of pre-split chunks against the mounted
+     * component: appends one chunk to `source` per timer tick, measuring
+     * the render duration of each append. Shared by `runStreaming` and
+     * `runStreamingExtensions` (the bursty variant owns its own jittered
+     * loop). Bails if `clear()` flips `isStreaming` mid-stream — see the
+     * note in `runStreamingBursty`.
      */
-    const runStreaming = async (chunksPerSecondTarget = 30) => {
-        if (isStreaming) return
-        scenario = 'stream-30tps'
-        resetStat()
-        source = ''
-        tokenCache.clearAllTokens()
-        await tick()
-
-        const chunks: string[] = []
-        const re = /\S+\s*/g
-        let match
-        while ((match = re.exec(STREAM_CORPUS)) !== null) chunks.push(match[0])
-
-        // Up-front pure-parse benchmark for percentiles independent of
-        // wall-clock pacing. Doesn't touch the live component.
-        const opts = { gfm: true, breaks: false, headerIds: true, headerPrefix: '' }
-        const bench = benchmarkAppendParse(chunks, opts)
-
-        // Real-time replay against the mounted component
+    const replayChunks = async (chunks: string[], chunksPerSecondTarget: number) => {
         const baseDelay = 1000 / chunksPerSecondTarget
         const renderDurations: number[] = []
         let i = 0
@@ -805,8 +802,6 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         const startWall = performance.now()
         await new Promise<void>((resolve) => {
             const step = async () => {
-                // Bail if `clear()` ran mid-stream — same race as the
-                // bursty variant. See note in `runStreamingBursty`.
                 if (!isStreaming || i >= chunks.length) {
                     resolve()
                     return
@@ -834,11 +829,18 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             clearTimeout(streamHandle)
             streamHandle = null
         }
+        return { renderDurations, wallMs }
+    }
 
+    /** Common stream-scenario stat fields from a replay + parse benchmark. */
+    const streamReplayStats = (
+        chunks: string[],
+        renderDurations: number[],
+        wallMs: number,
+        bench: ReturnType<typeof benchmarkAppendParse>
+    ) => {
         const renderTotal = renderDurations.reduce((s, d) => s + d, 0)
-        stat = {
-            ...stat,
-            srcKb: round(STREAM_CORPUS.length / 1024, 1),
+        return {
             streamChunks: chunks.length,
             streamTotalMs: round(renderTotal),
             streamAvgMs: round(renderTotal / chunks.length, 3),
@@ -848,6 +850,37 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             parseChunkAvgMs: round(bench.totalParseMs / bench.chunkCount, 3),
             parseChunkP95Ms: round(bench.p95ParseMs, 3),
             parseChunkPeakMs: round(bench.peakParseMs, 3)
+        }
+    }
+
+    /**
+     * Real-time streaming scenario. Word-chunks the corpus, appends one
+     * chunk per tick at ~30 chunks/sec, and times each parse+render
+     * cycle. The live SvelteMarkdown component is mounted in streaming
+     * mode so the IncrementalParser is exercised. Rolling observers
+     * pick up longtasks/rAF/mutations during the run.
+     */
+    const runStreaming = async (chunksPerSecondTarget = 30) => {
+        if (isStreaming) return
+        scenario = 'stream-30tps'
+        resetStat()
+        source = ''
+        tokenCache.clearAllTokens()
+        await tick()
+
+        const chunks = wordChunks(STREAM_CORPUS)
+
+        // Up-front pure-parse benchmark for percentiles independent of
+        // wall-clock pacing. Doesn't touch the live component.
+        const opts = { gfm: true, breaks: false, headerIds: true, headerPrefix: '' }
+        const bench = benchmarkAppendParse(chunks, opts)
+
+        const { renderDurations, wallMs } = await replayChunks(chunks, chunksPerSecondTarget)
+
+        stat = {
+            ...stat,
+            srcKb: round(STREAM_CORPUS.length / 1024, 1),
+            ...streamReplayStats(chunks, renderDurations, wallMs, bench)
         }
         scenario = 'stream-30tps-done'
     }
@@ -875,10 +908,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         await tick()
 
         const corpus = generateStreamExtensions(12)
-        const chunks: string[] = []
-        const re = /\S+\s*/g
-        let match
-        while ((match = re.exec(corpus)) !== null) chunks.push(match[0])
+        const chunks = wordChunks(corpus)
 
         // Up-front pure-parse benchmark WITH the extensions registered, so the
         // IncrementalParser exercises the same tail-window decision the live
@@ -889,67 +919,24 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         )
         const bench = benchmarkAppendParse(chunks, extOpts)
         const growth = parseGrowthProfile(bench.parseDurationsMs)
-        // Tail-window engaged ⇒ per-chunk parse cost does not scale with
-        // document length. Ratio < 1.6 catches that directly. At the very
-        // small absolute times the engaged path produces (a tail re-lex of a
-        // few hundred bytes), timer noise can inflate the ratio, so also treat
-        // a flat last-third mean below FLAT_PARSE_FLOOR_MS as engaged — a full
-        // re-lex of this multi-KB corpus per chunk cannot stay that cheap.
-        const FLAT_PARSE_FLOOR_MS = 0.1
+        // Engagement is reported as fact from the parser (`usedTailWindow` per
+        // append), not inferred from timings. The first chunk always
+        // full-parses (empty prevSource), so "engaged" means the overwhelming
+        // majority of appends re-lexed only the tail. The growth ratio stays
+        // purely a performance metric alongside it.
         const tailWindow =
-            growth.ratio === 0
+            bench.chunkCount === 0
                 ? 'n/a'
-                : growth.ratio < 1.6 || growth.lastMs < FLAT_PARSE_FLOOR_MS
+                : bench.tailWindowChunks >= bench.chunkCount * 0.9
                   ? 'engaged'
                   : 'disabled'
 
-        // Real-time replay against the mounted (extension-enabled) component.
-        const baseDelay = 1000 / chunksPerSecondTarget
-        const renderDurations: number[] = []
-        let i = 0
-        isStreaming = true
-        const startWall = performance.now()
-        await new Promise<void>((resolve) => {
-            const step = async () => {
-                if (!isStreaming || i >= chunks.length) {
-                    resolve()
-                    return
-                }
-                const t0 = performance.now()
-                source += chunks[i]
-                i++
-                await tick()
-                if (!isStreaming) {
-                    resolve()
-                    return
-                }
-                renderDurations.push(performance.now() - t0)
-                streamHandle = setTimeout(() => {
-                    void step()
-                }, baseDelay)
-            }
-            void step()
-        })
-        const wallMs = performance.now() - startWall
-        isStreaming = false
-        if (streamHandle !== null) {
-            clearTimeout(streamHandle)
-            streamHandle = null
-        }
+        const { renderDurations, wallMs } = await replayChunks(chunks, chunksPerSecondTarget)
 
-        const renderTotal = renderDurations.reduce((s, d) => s + d, 0)
         stat = {
             ...stat,
             srcKb: round(corpus.length / 1024, 1),
-            streamChunks: chunks.length,
-            streamTotalMs: round(renderTotal),
-            streamAvgMs: round(renderTotal / chunks.length, 3),
-            streamP95Ms: round(percentile(renderDurations, 0.95), 3),
-            streamPeakMs: round(Math.max(...renderDurations), 3),
-            chunksPerSec: round((chunks.length / wallMs) * 1000, 1),
-            parseChunkAvgMs: round(bench.totalParseMs / bench.chunkCount, 3),
-            parseChunkP95Ms: round(bench.p95ParseMs, 3),
-            parseChunkPeakMs: round(bench.peakParseMs, 3),
+            ...streamReplayStats(chunks, renderDurations, wallMs, bench),
             extParseFirstMs: round(growth.firstMs, 4),
             extParseLastMs: round(growth.lastMs, 4),
             extGrowthRatio: round(growth.ratio, 2),
@@ -990,10 +977,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         // (occasionally up to 50) into chunks. Each chunk gets a
         // delay drawn from {short: [5,30], medium: [30,80], long: [80,200]}
         // weighted toward short (so the average is realistic).
-        const words: string[] = []
-        const re = /\S+\s*/g
-        let match
-        while ((match = re.exec(STREAM_CORPUS)) !== null) words.push(match[0])
+        const words = wordChunks(STREAM_CORPUS)
 
         const chunks: string[] = []
         const chunkDelays: number[] = []

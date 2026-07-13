@@ -9,9 +9,10 @@
  * @module incremental-parser
  */
 
-import { isTailWindowSafe, type SvelteMarkdownOptions } from '$lib/types.js'
+import type { SvelteMarkdownOptions } from '$lib/types.js'
 import type { Token } from '$lib/utils/markdown-parser.js'
 import { lexAndClean } from '$lib/utils/parse-and-cache.js'
+import { isTailWindowSafe } from '$lib/utils/tail-window.js'
 
 /**
  * The shape of an HTML token after the cleanup pipeline. Marked's base
@@ -52,6 +53,8 @@ export interface IncrementalUpdateResult {
     divergeOffset?: number
     /** Whether consumers can safely reuse stable token objects from the previous parse */
     canReuse: boolean
+    /** Whether this update re-lexed only the appended tail (vs the whole source) */
+    usedTailWindow: boolean
 }
 
 /**
@@ -123,15 +126,11 @@ export class IncrementalParser {
         const exts = (options as Record<string, unknown>).extensions as
             { block?: unknown[]; inline?: unknown[] } | undefined
         const tokenizerEntries = [...(exts?.block ?? []), ...(exts?.inline ?? [])]
-        const hasExtensionTokenizers = tokenizerEntries.length > 0
-        const hasUnsafeExtensionTokenizer = tokenizerEntries.some(
-            (entry) => !isTailWindowSafe(entry)
-        )
 
         this.tailWindowDisabled =
             typeof options.walkTokens === 'function' ||
             options.tokenizer != null ||
-            (hasExtensionTokenizers && hasUnsafeExtensionTokenizer)
+            tokenizerEntries.some((entry) => !isTailWindowSafe(entry))
     }
 
     private getTailWindowBoundary = (): TailWindowBoundary => {
@@ -619,6 +618,12 @@ export class IncrementalParser {
         }
 
         this.updateCachedState(source, parseResult, isAppendOnly, appendAddsDefinition)
-        return { tokens: newTokens, divergeAt, divergeOffset, canReuse }
+        return {
+            tokens: newTokens,
+            divergeAt,
+            divergeOffset,
+            canReuse,
+            usedTailWindow: parseResult.usedTailWindow
+        }
     }
 }

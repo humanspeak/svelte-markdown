@@ -1,4 +1,4 @@
-import { markTailWindowSafe } from '$lib/types.js'
+import { tailWindowSafeExtension } from '$lib/utils/tail-window.js'
 import type { MarkedExtension } from 'marked'
 
 /**
@@ -51,12 +51,6 @@ export function markedMermaid(): MarkedExtension {
     }
     // The mermaid tokenizer is block-anchored (a ` ```mermaid ` fence) and
     // inspects only `src` from the current position, so it is safe inside the
-    // streaming tail-window. Mark the function reference Marked stores in
-    // `options.extensions.block`.
-    for (const entry of ext.extensions ?? []) {
-        if ('tokenizer' in entry && typeof entry.tokenizer === 'function') {
-            markTailWindowSafe(entry.tokenizer)
-        }
-    }
-    return ext
+    // streaming tail-window.
+    return tailWindowSafeExtension(ext)
 }

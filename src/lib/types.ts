@@ -24,55 +24,6 @@ import type { MarkedOptions, Renderers } from './utils/markdown-parser.js'
 import type { HtmlKey } from './utils/rendererKeys.js'
 import type { SanitizeAttributesFn, SanitizeUrlFn } from './utils/sanitize.js'
 
-/**
- * Marker key for extension tokenizer **functions** that are safe to run inside
- * the streaming incremental tail-window.
- *
- * The streaming {@link IncrementalParser} normally disables its tail-window
- * (which re-lexes only the appended tail and reuses a stable token prefix) the
- * moment any extension tokenizer is registered, because a tokenizer whose
- * output depends on prefix content would produce wrong tokens when the prefix
- * is not re-lexed. A tokenizer that carries this marker promises to be
- * **block-anchored and stateless** — it inspects only `src` from the current
- * position, exactly like Marked's built-in block rules — so re-lexing the tail
- * from a stable block boundary is guaranteed to match a full re-lex.
- *
- * Marked's `use()` stores the tokenizer **function reference** in
- * `options.extensions.block` / `options.extensions.inline`, so the marker must
- * live on the function itself (which survives by reference); it is invisible to
- * `Marked` otherwise. This is a global-registry symbol so the promise is
- * checkable across module boundaries without importing the same binding.
- *
- * @remarks This is a promise about tokenizer statelessness. Any extension with
- * cross-block state (e.g. footnotes, whose definitions and references interact
- * across blocks) must **not** carry it.
- */
-export const TAIL_WINDOW_SAFE: unique symbol = Symbol.for('svelte-markdown.tailWindowSafe')
-
-/**
- * Tags an extension tokenizer function as tail-window safe (see
- * {@link TAIL_WINDOW_SAFE}) and returns it, for fluent use where a tokenizer
- * function is defined. Only apply to block-anchored, stateless tokenizers.
- *
- * @param tokenizer - The tokenizer function to mark
- * @returns The same function, now carrying the {@link TAIL_WINDOW_SAFE} marker
- */
-export const markTailWindowSafe = <F>(tokenizer: F): F => {
-    ;(tokenizer as unknown as Record<symbol, boolean>)[TAIL_WINDOW_SAFE] = true
-    return tokenizer
-}
-
-/**
- * True when `value` is a tail-window-safe tokenizer function carrying the
- * {@link TAIL_WINDOW_SAFE} marker.
- *
- * @param value - Candidate entry from `options.extensions.block`/`.inline`
- * @returns `true` if the entry is a function marked tail-window safe
- */
-export const isTailWindowSafe = (value: unknown): boolean =>
-    typeof value === 'function' &&
-    (value as unknown as Record<symbol, unknown>)[TAIL_WINDOW_SAFE] === true
-
 // --- Markdown snippet prop types ---
 
 export interface ParagraphSnippetProps {
