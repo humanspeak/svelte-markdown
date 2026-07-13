@@ -15,30 +15,11 @@
 
 import '@testing-library/jest-dom'
 import { act, render } from '@testing-library/svelte'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
-import { tokenCache } from './utils/token-cache.js'
+import { flushStreamingBatch, useStreamingTestHarness } from './test/streaming/harness.js'
 
-beforeEach(() => {
-    tokenCache.clearAllTokens()
-    vi.useFakeTimers()
-    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
-        return setTimeout(() => cb(performance.now()), 16) as unknown as number
-    })
-    vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
-})
-
-afterEach(() => {
-    vi.unstubAllGlobals()
-    vi.useRealTimers()
-    vi.restoreAllMocks()
-})
-
-const flushStreamingBatch = async () => {
-    await act(async () => {
-        await vi.advanceTimersByTimeAsync(50)
-    })
-}
+useStreamingTestHarness()
 
 const MULTI_BLOCK = '# Title\n\nOne.\n\nTwo.'
 

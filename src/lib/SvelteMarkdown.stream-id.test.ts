@@ -19,34 +19,12 @@
 
 import '@testing-library/jest-dom'
 import { act, render } from '@testing-library/svelte'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
+import { flushStreamingBatch, useStreamingTestHarness } from './test/streaming/harness.js'
 import StreamIdRaceHarness from './test/streaming/StreamIdRaceHarness.svelte'
-import { tokenCache } from './utils/token-cache.js'
 
-beforeEach(() => {
-    tokenCache.clearAllTokens()
-    vi.useFakeTimers()
-    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
-        return setTimeout(() => cb(performance.now()), 16) as unknown as number
-    })
-    vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
-})
-
-afterEach(() => {
-    vi.unstubAllGlobals()
-    vi.useRealTimers()
-    // A failing assertion skips a test's own `mockRestore()`, and `vi.spyOn`
-    // on an already-spied method hands back the existing mock — call history
-    // included. Restore here so one failure can't cascade into the next test.
-    vi.restoreAllMocks()
-})
-
-const flushStreamingBatch = async () => {
-    await act(async () => {
-        await vi.advanceTimersByTimeAsync(50)
-    })
-}
+useStreamingTestHarness()
 
 describe('streamId prop', () => {
     describe('append mode', () => {
