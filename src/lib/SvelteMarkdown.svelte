@@ -130,6 +130,9 @@
     let pendingStreamFullSource: string | null = null
     let streamFlushHandle: StreamFlushHandle = null
     let streamInputMode: StreamingInputMode = null
+    // Invariant (#291): only ever reassign this array wholesale — never
+    // push/splice/index-write/shrink it in place. See the rationale comment
+    // in applyStreamingSource before touching any write site.
     let streamTokens = $state<Token[]>([])
     let streamRenderMetadataStartIndex = 0
     let streamRenderMetadataStartOffset = 0
