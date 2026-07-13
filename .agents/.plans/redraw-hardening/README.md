@@ -12,11 +12,11 @@ conditions, and update your row when done.
 
 ## Execution order & status
 
-| Plan | Title                                                                  | Priority | Effort | Risk | Depends on             | Status |
-| ---- | ---------------------------------------------------------------------- | -------- | ------ | ---- | ---------------------- | ------ |
-| 001  | Redraw regression harness (Parser-count + DOM-identity tripwires)      | P1       | S–M    | LOW  | —                      | DONE   |
-| 002  | Stream resets replace the token array instead of mutating `length`     | P3       | S      | LOW  | —                      | DONE   |
-| 011  | Unify streaming token-reuse identity + generic child walk (#331, #333) | P2       | L      | HIGH | 001 (soft), 002 (soft) | TODO   |
+| Plan | Title                                                                  | Priority | Effort | Risk | Depends on             | Status                                                 |
+| ---- | ---------------------------------------------------------------------- | -------- | ------ | ---- | ---------------------- | ------------------------------------------------------ |
+| 001  | Redraw regression harness (Parser-count + DOM-identity tripwires)      | P1       | S–M    | LOW  | —                      | DONE                                                   |
+| 002  | Stream resets replace the token array instead of mutating `length`     | P3       | S      | LOW  | —                      | DONE                                                   |
+| 011  | Unify streaming token-reuse identity + generic child walk (#331, #333) | P2       | L      | HIGH | 001 (soft), 002 (soft) | IN PROGRESS (step 3 amended after STOP; see guard log) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) |
 REJECTED (one-line rationale).
@@ -35,6 +35,12 @@ REJECTED (one-line rationale).
   re-baselined to `e8940c5` (guard amendment, operator-approved, 2026-07-13).
   The number is preserved for traceability with GitHub issues #331/#333 and
   the source batch's guard reports.
+- **011 step 3 amended** (guard checkpoint 2, operator-approved, 2026-07-13):
+  the original fold-into-`update()` design severed proxy-space token identity
+  (STOP conditions 2 and 3 fired, 14 test failures at snapshot `35d38d0`).
+  Amended contract: parser owns the identity decision, component owns the
+  merge in proxy space. Steps 1–2 remain green at `481bc55` on
+  `advisor/011-unify-token-reuse-identity-e10bfcc`.
 
 ## Findings considered and rejected
 

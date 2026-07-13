@@ -20,6 +20,20 @@
 > collapsed assignment must follow the same replace-never-shrink invariant
 > documented at the `streamTokens` declaration (`SvelteMarkdown.svelte:133`).
 >
+> Revision 2026-07-13 #2 (guard, operator-approved): **Step 3 reworked** after
+> STOP conditions 2 and 3 fired at guard checkpoint 2 (snapshot `35d38d0`,
+> 14 test failures). Root cause: folding the merge into `update()` severs
+> token identity at Svelte 5's reactive-proxy boundary — the WeakMap render
+> metadata, keyed each blocks, slugger prefix-skip, and `parsed()` consumers
+> key on the proxy objects read from `$state streamTokens`, and raw tokens
+> returned by the parser mint fresh child proxies on every array assignment.
+> Amended contract: the **parser owns the identity decision** (single shared
+> predicate + stable prefix length), the **component owns the merge** in
+> proxy space. Steps 1–2 are complete and green at `481bc55`. Executor:
+> resume on `advisor/011-unify-token-reuse-identity-e10bfcc` by reverting
+> guard snapshot `35d38d0` (`git revert` — keep history), then follow the
+> amended Step 3 below.
+>
 > **Carried over 2026-07-13**: this plan was authored in the (now closed)
 > `streaming-component-hardening` batch at `939f154` and never executed. It was
 > moved here and its line references, excerpts, and drift baseline were
@@ -40,7 +54,10 @@
   003/005/007 prerequisites from the source batch all landed already.)
 - **Category**: tech-debt (structural correctness hardening)
 - **Planned at**: commit `939f154`, 2026-07-07; refreshed against `eed2e08`,
-  2026-07-13; re-baselined against `e8940c5` (post-001/002), 2026-07-13
+  2026-07-13; re-baselined against `e8940c5` (post-001/002), 2026-07-13;
+  step 3 amended at guard checkpoint 2, 2026-07-13 (drift baseline stays
+  `e8940c5`; the executor's own commits `aa3cedc`/`481bc55`/`35d38d0` on the
+  work branch are expected in the drift diff and are not drift)
 - **Absorbs GitHub issues**: #331 (single identity rule) and #333 (generic child
   walk). Close both when this lands.
 
@@ -64,7 +81,10 @@ shared infra that will silently mis-reuse any nested token shape it doesn't know
 already-reused token array governed by a **single** identity rule eliminates the
 divergence structurally: the component assignment collapses to
 `streamTokens = newTokens`, and `reuseStableStreamingTokens` / `divergeAt` /
-`canReuse` drop off the public surface.
+`canReuse` drop off the public surface. _(Superseded — see Revision
+2026-07-13 #2: the single-rule goal stands, but the merge must stay
+component-side in proxy space; the collapse to an unconditional assignment
+is not achievable under Svelte 5's proxy identity semantics.)_
 
 The user-visible staleness is **already gated** by the shipped `canReuse` flag
 (append-only ∧ ¬referenceSensitive ∧ non-empty prevSource), so this plan's value
@@ -211,15 +231,26 @@ merge use — that is the "one rule" requirement. Do not yet move it into
 - `pnpm test:only src/lib/utils/streaming-token-reuse.test.ts src/lib/utils/incremental-parser.test.ts`
   → all pass.
 
-### Step 3: Fold reuse into `update()` and collapse the component
+### Step 3 (amended 2026-07-13): parser decides identity, component merges in proxy space
 
-Make `update()` return `tokens` that are **already the reused array** (splice the
-stable prefix from `prevTokens`, deep-merge the boundary token via the shared
-predicate/walk). Then change `SvelteMarkdown.svelte:188-190` to
-`streamTokens = newTokens` unconditionally. Remove `reuseStableStreamingTokens`,
-`divergeAt`, and `canReuse` from the public surface **only after** all callers are
-migrated. Preserve `divergeOffset` and `streamRenderMetadataStartIndex/Offset`
-behavior exactly (render-metadata depends on it).
+Do **NOT** move the merge into `update()` — the merge must operate on the
+proxy objects the component actually rendered (see Revision 2026-07-13 #2).
+Instead:
+
+- `update()` keeps returning **raw** `tokens` plus the identity decision:
+  `divergeAt` (rename to `stablePrefixLength` if clearer) and `canReuse`
+  (rename to `shouldReuseTokens` if clearer) stay on the result. The
+  divergence loop must use the shared `isSameStableNode` predicate — already
+  achieved in step 2.
+- `SvelteMarkdown.svelte:188-190` keeps a **single** merge call in proxy
+  space:
+  `streamTokens = canReuse ? reuseStableTokenArray(streamTokens, newTokens, divergeAt) : newTokens`
+  where `reuseStableTokenArray` is the step-2 generic-walk implementation.
+  It is the only identity logic outside the parser, and it makes no identity
+  decisions of its own beyond applying the shared predicate/walk to the
+  boundary token.
+- Preserve `divergeOffset` and `streamRenderMetadataStartIndex/Offset`
+  behavior exactly (render-metadata depends on it).
 
 **Verify**:
 
@@ -233,8 +264,10 @@ Remove now-unused exports. Confirm nothing in `src/lib/index.ts` exported the
 removed symbols (they are internal — verify with grep).
 
 **Verify**: `pnpm check` → 0; `pnpm test:only` → all pass; `trunk fmt && trunk check` → 0;
-`grep -rn "reuseStableStreamingTokens\|canReuse\|divergeAt" src/lib` shows no
-stale references (except any intentionally kept internal usage you documented).
+`grep -rn "reuseStableStreamingTokens\|hasSameStableNodeIdentity" src/lib`
+shows no stale references to the pre-plan surface. (`canReuse`/`divergeAt` —
+or their renames — legitimately survive on the `update()` result per amended
+Step 3.)
 
 ## Test plan
 
@@ -257,8 +290,12 @@ ALL must hold:
       merge (one function, both call sites).
 - [ ] The child walk is generic (no hard-coded `tokens`/`items`/`header`/`rows`
       allowlist gating recursion) — asserted by the new #333 test.
-- [ ] `SvelteMarkdown.svelte` streaming assignment is unconditional
-      (`streamTokens = newTokens`), or the `canReuse` branch is gone.
+- [ ] The component contains no identity logic beyond one call to the shared
+      merge (`reuseStableTokenArray`), whose inputs (stable prefix length,
+      reuse gate) come from the parser; the identity predicate exists in
+      exactly one function used by both the parser loop and the merge.
+      _(Amended 2026-07-13 — replaces the unconditional-assignment criterion;
+      see Revision 2026-07-13 #2.)_
 - [ ] No files outside the in-scope list are modified (`git status`).
 - [ ] The batch `README.md` status row for 011 is updated; issues #331 and #333
       noted as resolved-pending-merge.
@@ -269,9 +306,11 @@ ALL must hold:
 - Plan 001's redraw-regression tests fail or need their delta baselines
   changed to pass — that means this refactor altered render identity; report
   the failing assertion and the `__svmParserByType` breakdown.
-- Folding reuse into `update()` changes `divergeOffset` or the render-metadata
-  prefix-skip behavior (an #328 test fails) — the offset accounting is subtle;
-  report rather than adjusting expectations.
+- The refactor changes `divergeOffset` or the render-metadata prefix-skip
+  behavior (an #328 test fails) — the offset accounting is subtle; report
+  rather than adjusting expectations. (Fired once at guard checkpoint 2
+  against the original fold-into-`update()` step 3; still applies to the
+  amended approach.)
 - The generic child walk causes a real regression in an existing streaming test
   that the enumerated walk didn't — that means a token shape needs special
   handling; report the specific token/test.
