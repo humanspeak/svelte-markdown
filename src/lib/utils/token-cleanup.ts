@@ -96,18 +96,24 @@ const formatSelfClosingHtmlToken = (token: Token): Token => {
 export const extractAttributes = (raw: string): Record<string, string> => {
     const attributes: Record<string, string> = {}
 
-    // First pass: handle regular and unclosed quoted attributes
-    const quotedRegex = /([a-zA-Z][\w-]*?)=["']([^"']*?)(?:["']|$)/g
+    // First pass: handle regular and unclosed quoted attributes. The value
+    // class matches only the same quote that opened it, so an apostrophe inside
+    // a double-quoted value (or a double quote inside a single-quoted value)
+    // does not terminate the match early. The `(?:"|$)` / `(?:'|$)` closers
+    // keep support for streaming-truncated tags like `<div class="foo`.
+    const quotedRegex = /([a-zA-Z][\w-]*)=(?:"([^"]*)(?:"|$)|'([^']*)(?:'|$))/g
     let match
     while ((match = quotedRegex.exec(raw)) !== null) {
-        const [, key, value] = match
+        const key = match[1]
+        const value = match[2] ?? match[3] ?? ''
         attributes[key] = value.trim()
     }
 
     // Strip quoted attribute blocks before the boolean pass so word-like
     // tokens inside a value (e.g. `bar` in `title="foo bar baz"`) aren't
-    // mistakenly harvested as boolean attributes.
-    const stripped = raw.replace(/[a-zA-Z][\w-]*?=["'][^"']*?(?:["']|$)/g, ' ')
+    // mistakenly harvested as boolean attributes. Mirrors the quote-type-aware
+    // matching above so embedded other-type quotes stay inside the value.
+    const stripped = raw.replace(/[a-zA-Z][\w-]*=(?:"[^"]*(?:"|$)|'[^']*(?:'|$))/g, ' ')
 
     // Second pass: handle boolean attributes
     const booleanRegex = /(?:^|\s)([a-zA-Z][\w-]*?)(?=[\s>]|$)/g
