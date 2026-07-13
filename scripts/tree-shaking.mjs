@@ -27,6 +27,18 @@ const cases = [
         expectAllMissing: ['node_modules/katex', 'node_modules/mermaid']
     },
     {
+        // SPIKE (plan 004): the default code renderer must never pull Shiki into
+        // the core bundle — highlighting is an opt-in, explicitly-imported
+        // extension, so the "lightweight" core positioning stays honest.
+        name: 'core component stays shiki-free',
+        source: `
+            import SvelteMarkdown from '@humanspeak/svelte-markdown/SvelteMarkdown'
+            console.log(SvelteMarkdown)
+        `,
+        expectInitialMissing: ['node_modules/shiki', 'node_modules/@shikijs'],
+        expectAllMissing: ['node_modules/shiki', 'node_modules/@shikijs']
+    },
+    {
         name: 'katex tokenizer only',
         source: `
             import { markedKatex } from '@humanspeak/svelte-markdown/extensions/katex'
@@ -60,6 +72,43 @@ const cases = [
         `,
         expectInitialMissing: ['node_modules/mermaid'],
         expectDynamicPresent: ['node_modules/mermaid']
+    },
+    {
+        // Plan 004 ship: importing an unrelated extension subpath must not pull
+        // Shiki (or any @shikijs engine/grammar) into the bundle — highlighting
+        // is opt-in and only reachable via the shiki subpath.
+        name: 'other extension stays shiki-free',
+        source: `
+            import { markedKatex } from '@humanspeak/svelte-markdown/extensions/katex'
+            console.log(markedKatex().extensions?.length)
+        `,
+        expectInitialMissing: ['node_modules/shiki', 'node_modules/@shikijs'],
+        expectAllMissing: ['node_modules/shiki', 'node_modules/@shikijs']
+    },
+    {
+        // Plan 004 ship: the ShikiCode renderer on its own does NOT pull Shiki
+        // in — it only depends on the escaped fallback. Shiki is bundled solely
+        // when the consumer constructs a highlighter, keeping the renderer cheap.
+        name: 'shiki renderer stays shiki-free',
+        source: `
+            import { ShikiCode } from '@humanspeak/svelte-markdown/extensions/shiki'
+            console.log(ShikiCode)
+        `,
+        expectInitialMissing: ['node_modules/shiki', 'node_modules/@shikijs'],
+        expectAllMissing: ['node_modules/shiki', 'node_modules/@shikijs']
+    },
+    {
+        // Plan 004 ship: opting into the highlighter factory does pull Shiki's
+        // core (`@shikijs/*`, resolved via the `shiki/core` +
+        // `shiki/engine/javascript` subpaths) into the bundle — proving the
+        // opt-in path resolves and is intentionally bundled only when the
+        // consumer actually constructs a highlighter.
+        name: 'shiki highlighter factory',
+        source: `
+            import { createShikiHighlighter } from '@humanspeak/svelte-markdown/extensions/shiki'
+            console.log(createShikiHighlighter)
+        `,
+        expectInitialPresent: ['node_modules/@shikijs']
     }
 ]
 

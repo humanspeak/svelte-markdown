@@ -85,6 +85,10 @@
         "./extensions/mermaid": {
             "types": "./dist/extensions/mermaid/index.d.ts",
             "svelte": "./dist/extensions/mermaid/index.js"
+        },
+        "./extensions/shiki": {
+            "types": "./dist/extensions/shiki/index.d.ts",
+            "svelte": "./dist/extensions/shiki/index.js"
         }
     },
     "svelte": "./dist/index.js",
@@ -162,6 +166,7 @@
         "prettier-plugin-svelte": "^4.1.1",
         "prettier-plugin-tailwindcss": "^0.8.0",
         "publint": "^0.3.21",
+        "shiki": "^4.3.1",
         "svelte": "^5.56.4",
         "svelte-check": "^4.7.1",
         "typescript": "^6.0.3",
@@ -172,6 +177,7 @@
     "peerDependencies": {
         "katex": ">=0.16.0",
         "mermaid": ">=10.0.0",
+        "shiki": ">=4.0.0",
         "svelte": "^5.0.0"
     },
     "peerDependenciesMeta": {
@@ -179,6 +185,9 @@
             "optional": true
         },
         "mermaid": {
+            "optional": true
+        },
+        "shiki": {
             "optional": true
         }
     },
