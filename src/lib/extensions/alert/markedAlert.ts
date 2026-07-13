@@ -1,3 +1,4 @@
+import { markTailWindowSafe } from '$lib/types.js'
 import type { MarkedExtension } from 'marked'
 
 /**
@@ -39,7 +40,7 @@ const ALERT_TYPES: ReadonlySet<string> = new Set(['note', 'tip', 'important', 'w
  * @returns A `MarkedExtension` with a single block-level `alert` tokenizer
  */
 export function markedAlert(): MarkedExtension {
-    return {
+    const ext: MarkedExtension = {
         extensions: [
             {
                 name: 'alert',
@@ -70,4 +71,14 @@ export function markedAlert(): MarkedExtension {
             }
         ]
     }
+    // The alert tokenizer is block-anchored (`> [!NOTE]`) and inspects only
+    // `src` from the current position, so it is safe inside the streaming
+    // tail-window. Mark the function reference Marked stores in
+    // `options.extensions.block`.
+    for (const entry of ext.extensions ?? []) {
+        if ('tokenizer' in entry && typeof entry.tokenizer === 'function') {
+            markTailWindowSafe(entry.tokenizer)
+        }
+    }
+    return ext
 }

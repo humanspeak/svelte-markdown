@@ -9,7 +9,7 @@
  * @module incremental-parser
  */
 
-import type { SvelteMarkdownOptions } from '$lib/types.js'
+import { isTailWindowSafe, type SvelteMarkdownOptions } from '$lib/types.js'
 import type { Token } from '$lib/utils/markdown-parser.js'
 import { lexAndClean } from '$lib/utils/parse-and-cache.js'
 
@@ -112,16 +112,26 @@ export class IncrementalParser {
     constructor(options: SvelteMarkdownOptions) {
         this.options = options
 
+        // Marked's `use()` stores each extension's tokenizer FUNCTION (by
+        // reference) in `options.extensions.block` / `.inline`. A registered
+        // tokenizer only forces a full re-lex per chunk if it might depend on
+        // prefix content; block-anchored, stateless tokenizers (marked with
+        // `TAIL_WINDOW_SAFE` — katex, alert, mermaid) can safely run inside the
+        // tail-window, exactly like Marked's built-in block rules. Custom
+        // extensions and footnotes (cross-block ref/def state) carry no marker
+        // and keep the conservative full-reparse behavior.
         const exts = (options as Record<string, unknown>).extensions as
             { block?: unknown[]; inline?: unknown[] } | undefined
-        const hasExtensionTokenizers =
-            (exts?.block != null && exts.block.length > 0) ||
-            (exts?.inline != null && exts.inline.length > 0)
+        const tokenizerEntries = [...(exts?.block ?? []), ...(exts?.inline ?? [])]
+        const hasExtensionTokenizers = tokenizerEntries.length > 0
+        const hasUnsafeExtensionTokenizer = tokenizerEntries.some(
+            (entry) => !isTailWindowSafe(entry)
+        )
 
         this.tailWindowDisabled =
             typeof options.walkTokens === 'function' ||
             options.tokenizer != null ||
-            hasExtensionTokenizers
+            (hasExtensionTokenizers && hasUnsafeExtensionTokenizer)
     }
 
     private getTailWindowBoundary = (): TailWindowBoundary => {
@@ -560,8 +570,19 @@ export class IncrementalParser {
         // `raw === '<div>'` but very different `.tokens` children. Without
         // this check the streaming consumer would never see the partial-
         // to-closed transition. See #291.
+        // `divergeOffset` is the absolute source offset of the first diverged
+        // token, letting `SvelteMarkdown.svelte` skip render-metadata work for
+        // the reused prefix. The tail-window path seeds it with the already
+        // -known `boundary.reparseOffset` (the reused prefix is covered) and
+        // only sums tokens past the prefix. The full-reparse path (which still
+        // re-lexes the whole source, e.g. when a built-in extension is not
+        // tail-safe) starts at 0 and sums every matched token from index 0, so
+        // an append-only update with a stable prefix can still skip the prefix
+        // metadata walk even though the tail-window was bypassed.
         let divergeAt = 0
-        let divergeOffset = parseResult.usedTailWindow ? boundary.reparseOffset : undefined
+        let divergeOffset: number | undefined = parseResult.usedTailWindow
+            ? boundary.reparseOffset
+            : 0
         if (!referenceSensitive) {
             const minLen = Math.min(this.prevTokens.length, newTokens.length)
             while (divergeAt < minLen) {
@@ -574,12 +595,24 @@ export class IncrementalParser {
                     if ((prevKids === undefined) !== (nextKids === undefined)) break
                     if (prevKids && nextKids && prevKids.length !== nextKids.length) break
                 }
-                if (
-                    parseResult.usedTailWindow &&
-                    divergeOffset !== undefined &&
-                    divergeAt >= boundary.prefixCount
-                ) {
-                    divergeOffset += this.getTokenSourceLength(next)
+                if (parseResult.usedTailWindow) {
+                    // Tail-window path (unchanged): tokens up to `prefixCount`
+                    // are the reused prefix already covered by `reparseOffset`.
+                    if (divergeOffset !== undefined && divergeAt >= boundary.prefixCount) {
+                        divergeOffset += this.getTokenSourceLength(next)
+                    }
+                } else if (divergeOffset !== undefined) {
+                    // Full-reparse path: accumulate the absolute offset from
+                    // index 0. A matched-prefix HTML token with an unknown
+                    // source span (unclosed opening) breaks the offset→source
+                    // mapping — null the offset so the consumer falls back to a
+                    // full metadata walk. A wrong offset silently corrupts
+                    // source keys and DOM identity; `undefined` is always safe.
+                    if (this.hasHtmlSpanMismatch(next)) {
+                        divergeOffset = undefined
+                    } else {
+                        divergeOffset += this.getTokenSourceLength(next)
+                    }
                 }
                 divergeAt++
             }

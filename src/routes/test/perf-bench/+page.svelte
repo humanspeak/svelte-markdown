@@ -1,5 +1,11 @@
 <script lang="ts">
     import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
+    import {
+        AlertRenderer,
+        KatexRenderer,
+        markedAlert,
+        markedKatex
+    } from '$lib/extensions/index.js'
     import type {
         HtmlSnippetProps,
         ParagraphSnippetProps,
@@ -7,12 +13,42 @@
         StreamingChunk,
         TextSnippetProps
     } from '$lib/types.js'
+    import { buildParserOptions } from '$lib/utils/extension-options.js'
     import { IncrementalParser } from '$lib/utils/incremental-parser.js'
-    import { Lexer, Slugger, type Token } from '$lib/utils/markdown-parser.js'
+    import {
+        Lexer,
+        type RendererComponent,
+        type Renderers,
+        Slugger,
+        type Token
+    } from '$lib/utils/markdown-parser.js'
     import { parseAndCacheTokens } from '$lib/utils/parse-and-cache.js'
     import { hashString, tokenCache } from '$lib/utils/token-cache.js'
     import { shrinkHtmlTokens } from '$lib/utils/token-cleanup.js'
+    import type { MarkedExtension } from 'marked'
     import { onMount, tick } from 'svelte'
+    // KaTeX stylesheet so the streamed block/inline math in the
+    // `stream-extensions` scenario renders legibly for a human operator.
+    import 'katex/dist/katex.css'
+
+    // Extension-token renderer keys layered onto the built-in Renderers map,
+    // mirroring the katex route's typing idiom.
+    interface StreamExtensionRenderers extends Renderers {
+        inlineKatex: RendererComponent
+        blockKatex: RendererComponent
+        alert: RendererComponent
+    }
+
+    // Built-in extensions exercised by the `stream-extensions` scenario.
+    // Created once so their object identity is stable across renders — a
+    // fresh array/renderer map each render would force the component to
+    // rebuild its IncrementalParser every chunk and defeat the measurement.
+    const STREAM_EXTENSIONS: MarkedExtension[] = [markedKatex(), markedAlert()]
+    const STREAM_EXTENSION_RENDERERS: Partial<StreamExtensionRenderers> = {
+        blockKatex: KatexRenderer,
+        inlineKatex: KatexRenderer,
+        alert: AlertRenderer
+    }
 
     /**
      * Performance baseline fixture for svelte-markdown.
@@ -257,6 +293,40 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
 *Thanks for reading.*
 `
 
+    /**
+     * Streaming corpus that interleaves prose, `$$…$$` block math, inline
+     * `\(…\)` math, and `> [!NOTE]` GitHub alerts — the exact token shapes the
+     * marketed katex/alert extensions handle. Used by the `stream-extensions`
+     * scenario to measure the extension streaming path (which historically
+     * disabled the incremental tail-window and re-lexed the whole accumulated
+     * source per chunk → O(N²) over a stream). Sized near ~4KB so the
+     * per-chunk parse cost visibly grows with document length on the
+     * unoptimized path.
+     */
+    const generateStreamExtensions = (sections: number): string => {
+        const out: string[] = ['# Streaming Extensions Corpus\n']
+        out.push(
+            'This document interleaves prose, block/inline math, and GitHub alerts to exercise the katex + alert extension streaming path.\n'
+        )
+        for (let i = 0; i < sections; i++) {
+            out.push(`## Section ${i}: Field Notes`)
+            out.push(
+                `A paragraph of prose for section ${i} with an inline math reference \\(a_{${i}} = ${i} \\cdot \\pi\\) plus **bold** and a [link](https://example.com/${i}).`
+            )
+            out.push('$$')
+            out.push(`E_{${i}} = mc^2 + \\sum_{k=0}^{${i}} \\frac{k}{${i + 1}}`)
+            out.push('$$\n')
+            out.push(`> [!NOTE]`)
+            out.push(`> Note ${i}: remember to normalize the coefficient before section ${i + 1}.`)
+            out.push('')
+            out.push(
+                `Closing remarks for section ${i}. The renderer must keep the reused prefix stable while the tail grows.`
+            )
+            out.push('')
+        }
+        return out.join('\n')
+    }
+
     // ---- Per-scenario reactive state -----------------------------------------
 
     let source = $state('')
@@ -314,7 +384,18 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         // scenario): wall-clock distribution of inter-chunk gaps.
         streamGapAvgMs: 0,
         streamGapP95Ms: 0,
-        streamGapPeakMs: 0
+        streamGapPeakMs: 0,
+        // stream-extensions scenario only: quadratic-growth diagnostics.
+        // `extParseFirstMs`/`extParseLastMs` are the mean per-chunk parse
+        // times over the first vs last third of the stream; their ratio
+        // (`extGrowthRatio`) is ≈1 when the incremental tail-window is
+        // engaged and climbs with document length when every chunk re-lexes
+        // the whole accumulated source. `extTailWindow` is the human label
+        // derived from that ratio.
+        extParseFirstMs: 0,
+        extParseLastMs: 0,
+        extGrowthRatio: 0,
+        extTailWindow: 'n/a'
     })
 
     // ---- Rolling-10s observer state ------------------------------------------
@@ -348,6 +429,12 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
     // override path and never show up in the bench.
     let useOverrides = $state(false)
 
+    // When true, the live preview mounts SvelteMarkdown with the built-in
+    // katex + alert extensions (and their renderers). Drives the
+    // `stream-extensions` scenario so the extension streaming path is
+    // measured end-to-end, not just in the isolated parse benchmark.
+    let useExtensions = $state(false)
+
     // ---- Helpers --------------------------------------------------------------
 
     const percentile = (values: number[], p: number): number => {
@@ -380,8 +467,29 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             chunkCount: chunks.length,
             totalParseMs,
             p95ParseMs: percentile(parseDurationsMs, 0.95),
-            peakParseMs: parseDurationsMs.length > 0 ? Math.max(...parseDurationsMs) : 0
+            peakParseMs: parseDurationsMs.length > 0 ? Math.max(...parseDurationsMs) : 0,
+            // Per-chunk timings, in stream order — the `stream-extensions`
+            // scenario slices these into first/last thirds to measure whether
+            // per-chunk parse cost scales with document length (the O(N²)
+            // signature) or stays flat (tail-window engaged).
+            parseDurationsMs
         }
+    }
+
+    /**
+     * Mean per-chunk parse time over the first and last third of a stream,
+     * plus their ratio. A ratio near 1 means per-chunk cost does not scale
+     * with accumulated document length (the incremental tail-window is
+     * engaged); a large ratio means every chunk re-lexes the whole source.
+     */
+    const parseGrowthProfile = (durations: number[]) => {
+        const mean = (xs: number[]) =>
+            xs.length === 0 ? 0 : xs.reduce((s, d) => s + d, 0) / xs.length
+        const third = Math.max(1, Math.floor(durations.length / 3))
+        const firstMs = mean(durations.slice(0, third))
+        const lastMs = mean(durations.slice(-third))
+        const ratio = firstMs > 0 ? lastMs / firstMs : 0
+        return { firstMs, lastMs, ratio }
     }
 
     const asHeadingBenchNodes = (value: unknown): HeadingBenchNode[] =>
@@ -463,7 +571,11 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             headingIdMismatches: 0,
             streamGapAvgMs: 0,
             streamGapP95Ms: 0,
-            streamGapPeakMs: 0
+            streamGapPeakMs: 0,
+            extParseFirstMs: 0,
+            extParseLastMs: 0,
+            extGrowthRatio: 0,
+            extTailWindow: 'n/a'
         }
     }
 
@@ -741,6 +853,112 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
     }
 
     /**
+     * Extension streaming scenario (the plan's red measurement). Mirrors
+     * `runStreaming` — same word-chunk cadence at ~30 chunks/sec — but the
+     * corpus interleaves `$$…$$` math, inline `\(…\)` math, and `> [!NOTE]`
+     * alerts, and both the parse benchmark and the live component run with
+     * the katex + alert extensions registered.
+     *
+     * Registering any extension tokenizer historically disabled the
+     * incremental tail-window, so every chunk re-lexed the whole accumulated
+     * source (O(N²) over the stream). The `extGrowthRatio` diagnostic makes
+     * that visible: it stays ≈1 when the tail-window is engaged and climbs
+     * with document length when it is not.
+     */
+    const runStreamingExtensions = async (chunksPerSecondTarget = 30) => {
+        if (isStreaming) return
+        scenario = 'stream-extensions'
+        resetStat()
+        useExtensions = true
+        source = ''
+        tokenCache.clearAllTokens()
+        await tick()
+
+        const corpus = generateStreamExtensions(12)
+        const chunks: string[] = []
+        const re = /\S+\s*/g
+        let match
+        while ((match = re.exec(corpus)) !== null) chunks.push(match[0])
+
+        // Up-front pure-parse benchmark WITH the extensions registered, so the
+        // IncrementalParser exercises the same tail-window decision the live
+        // component makes. Independent of wall-clock pacing.
+        const extOpts = buildParserOptions(
+            { gfm: true, breaks: false, headerIds: true, headerPrefix: '' },
+            STREAM_EXTENSIONS
+        )
+        const bench = benchmarkAppendParse(chunks, extOpts)
+        const growth = parseGrowthProfile(bench.parseDurationsMs)
+        // Tail-window engaged ⇒ per-chunk parse cost does not scale with
+        // document length. Ratio < 1.6 catches that directly. At the very
+        // small absolute times the engaged path produces (a tail re-lex of a
+        // few hundred bytes), timer noise can inflate the ratio, so also treat
+        // a flat last-third mean below FLAT_PARSE_FLOOR_MS as engaged — a full
+        // re-lex of this multi-KB corpus per chunk cannot stay that cheap.
+        const FLAT_PARSE_FLOOR_MS = 0.1
+        const tailWindow =
+            growth.ratio === 0
+                ? 'n/a'
+                : growth.ratio < 1.6 || growth.lastMs < FLAT_PARSE_FLOOR_MS
+                  ? 'engaged'
+                  : 'disabled'
+
+        // Real-time replay against the mounted (extension-enabled) component.
+        const baseDelay = 1000 / chunksPerSecondTarget
+        const renderDurations: number[] = []
+        let i = 0
+        isStreaming = true
+        const startWall = performance.now()
+        await new Promise<void>((resolve) => {
+            const step = async () => {
+                if (!isStreaming || i >= chunks.length) {
+                    resolve()
+                    return
+                }
+                const t0 = performance.now()
+                source += chunks[i]
+                i++
+                await tick()
+                if (!isStreaming) {
+                    resolve()
+                    return
+                }
+                renderDurations.push(performance.now() - t0)
+                streamHandle = setTimeout(() => {
+                    void step()
+                }, baseDelay)
+            }
+            void step()
+        })
+        const wallMs = performance.now() - startWall
+        isStreaming = false
+        if (streamHandle !== null) {
+            clearTimeout(streamHandle)
+            streamHandle = null
+        }
+
+        const renderTotal = renderDurations.reduce((s, d) => s + d, 0)
+        stat = {
+            ...stat,
+            srcKb: round(corpus.length / 1024, 1),
+            streamChunks: chunks.length,
+            streamTotalMs: round(renderTotal),
+            streamAvgMs: round(renderTotal / chunks.length, 3),
+            streamP95Ms: round(percentile(renderDurations, 0.95), 3),
+            streamPeakMs: round(Math.max(...renderDurations), 3),
+            chunksPerSec: round((chunks.length / wallMs) * 1000, 1),
+            parseChunkAvgMs: round(bench.totalParseMs / bench.chunkCount, 3),
+            parseChunkP95Ms: round(bench.p95ParseMs, 3),
+            parseChunkPeakMs: round(bench.peakParseMs, 3),
+            extParseFirstMs: round(growth.firstMs, 4),
+            extParseLastMs: round(growth.lastMs, 4),
+            extGrowthRatio: round(growth.ratio, 2),
+            extTailWindow: tailWindow
+        }
+        scenario = 'stream-extensions-done'
+    }
+
+    /**
      * Bursty streaming variant. Real LLM token streams are not steady
      * — they arrive in 1–10 token bursts separated by 0–200ms pauses,
      * occasionally with a 50+ token slug landing in one chunk after a
@@ -954,6 +1172,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         }
         isStreaming = false
         useOverrides = false
+        useExtensions = false
         source = ''
         tokenCache.clearAllTokens()
         resetStat()
@@ -1176,8 +1395,69 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         >
             {isStreaming ? 'Streaming…' : 'Stream large'}
         </button>
+        <button
+            data-testid="stream-extensions"
+            onclick={() => runStreamingExtensions(30)}
+            disabled={isStreaming}
+        >
+            {isStreaming ? 'Streaming…' : 'Stream extensions'}
+        </button>
         <button data-testid="clear" onclick={clear}>Clear</button>
     </div>
+
+    {#if scenario === 'stream-extensions' || scenario === 'stream-extensions-done'}
+        <div
+            class="ext-diag"
+            class:ext-diag--engaged={stat.extTailWindow === 'engaged'}
+            class:ext-diag--disabled={stat.extTailWindow === 'disabled'}
+            data-testid="ext-diagnostics"
+        >
+            <div class="ext-diag__head">
+                <span class="ext-diag__title">Extension streaming — katex + alerts</span>
+                <span class="ext-diag__state">
+                    {scenario === 'stream-extensions-done' ? '✓ done' : '… streaming'}
+                </span>
+            </div>
+            <div class="ext-diag__grid">
+                <div class="ext-diag__cell">
+                    <span class="ext-diag__label">doc size</span>
+                    <span class="ext-diag__value">{stat.srcKb} KB</span>
+                </div>
+                <div class="ext-diag__cell">
+                    <span class="ext-diag__label">chunks</span>
+                    <span class="ext-diag__value">{stat.streamChunks}</span>
+                </div>
+                <div class="ext-diag__cell">
+                    <span class="ext-diag__label">parse avg / chunk</span>
+                    <span class="ext-diag__value">{stat.parseChunkAvgMs} ms</span>
+                </div>
+                <div class="ext-diag__cell">
+                    <span class="ext-diag__label">parse peak / chunk</span>
+                    <span class="ext-diag__value">{stat.parseChunkPeakMs} ms</span>
+                </div>
+                <div class="ext-diag__cell">
+                    <span class="ext-diag__label">parse first⅓ → last⅓</span>
+                    <span class="ext-diag__value">
+                        {stat.extParseFirstMs} → {stat.extParseLastMs} ms
+                    </span>
+                </div>
+                <div class="ext-diag__cell ext-diag__cell--wide">
+                    <span class="ext-diag__label">growth ratio (last⅓ / first⅓)</span>
+                    <span class="ext-diag__value ext-diag__value--ratio">
+                        {stat.extGrowthRatio}×
+                        <span class="ext-diag__badge">
+                            tail-window {stat.extTailWindow}
+                        </span>
+                    </span>
+                </div>
+            </div>
+            <p class="ext-diag__note">
+                Ratio ≈ 1 means per-chunk parse cost is flat as the document grows (incremental
+                tail-window engaged). A ratio that climbs with document length is the O(N²)
+                re-lex-everything signature this scenario exists to catch.
+            </p>
+        </div>
+    {/if}
 
     <div class="stats" data-testid="perf-stats">
         scenario={scenario} srcKb={stat.srcKb} tokenCount={stat.tokenCount} parseColdMs={stat.parseColdMs}
@@ -1191,9 +1471,9 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         chunksPerSec={stat.chunksPerSec} parseChunkAvgMs={stat.parseChunkAvgMs} parseChunkP95Ms={stat.parseChunkP95Ms}
         parseChunkPeakMs={stat.parseChunkPeakMs} headingCount={stat.headingCount}
         headingIdMismatches={stat.headingIdMismatches} streamGapAvgMs={stat.streamGapAvgMs}
-        streamGapP95Ms={stat.streamGapP95Ms} streamGapPeakMs={stat.streamGapPeakMs} · longestTaskMs={longTaskSupported
-            ? displayLongestTaskMs
-            : 'n/a'}
+        streamGapP95Ms={stat.streamGapP95Ms} streamGapPeakMs={stat.streamGapPeakMs} · extParseFirstMs={stat.extParseFirstMs}
+        extParseLastMs={stat.extParseLastMs} extGrowthRatio={stat.extGrowthRatio} extTailWindow={stat.extTailWindow}
+        · longestTaskMs={longTaskSupported ? displayLongestTaskMs : 'n/a'}
         longTasks10s={longTaskSupported ? displayLongTaskCount : 'n/a'} rafP95Ms={displayRafP95Ms}
         mutations10s={displayMutationCount} loaf10s={loafSupported ? displayLoafCount : 'n/a'}
         loafScriptMaxMs={loafSupported ? displayLoafScriptMaxMs : 'n/a'} heapAllocKbPerSec={heapSupported
@@ -1216,7 +1496,21 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
     {/snippet}
 
     <div class="preview" data-testid="perf-preview" bind:this={previewEl}>
-        {#if useOverrides}
+        {#if useExtensions}
+            <!--
+                Extension-streaming scenario: mount with the built-in katex +
+                alert extensions and their renderers so the live component
+                exercises the same tail-window decision the parse benchmark
+                measures.
+            -->
+            <SvelteMarkdown
+                bind:this={markdown}
+                {source}
+                streaming={isStreaming}
+                extensions={STREAM_EXTENSIONS}
+                renderers={STREAM_EXTENSION_RENDERERS}
+            />
+        {:else if useOverrides}
             <!--
                 Slow-path scenario: pass markdown + html snippet overrides
                 so the dispatch in Parser.svelte goes through the
@@ -1295,5 +1589,96 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         border-radius: 0.25rem;
         padding: 0.75rem;
         background: white;
+    }
+    .ext-diag {
+        border: 2px solid #cbd5e0;
+        border-radius: 0.4rem;
+        padding: 0.6rem 0.85rem;
+        background: #f8fafc;
+    }
+    .ext-diag--engaged {
+        border-color: #38a169;
+        background: #f0fff4;
+    }
+    .ext-diag--disabled {
+        border-color: #dd6b20;
+        background: #fffaf0;
+    }
+    .ext-diag__head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .ext-diag__title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: #1a202c;
+    }
+    .ext-diag__state {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #4a5568;
+    }
+    .ext-diag__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.5rem;
+    }
+    .ext-diag__cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        padding: 0.35rem 0.5rem;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.3rem;
+    }
+    .ext-diag__cell--wide {
+        grid-column: 1 / -1;
+    }
+    .ext-diag__label {
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #718096;
+    }
+    .ext-diag__value {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+    .ext-diag__value--ratio {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 1.35rem;
+    }
+    .ext-diag__badge {
+        font-family: inherit;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.12rem 0.5rem;
+        border-radius: 999px;
+        background: #e2e8f0;
+        color: #2d3748;
+    }
+    .ext-diag--engaged .ext-diag__badge {
+        background: #38a169;
+        color: white;
+    }
+    .ext-diag--disabled .ext-diag__badge {
+        background: #dd6b20;
+        color: white;
+    }
+    .ext-diag__note {
+        margin: 0.5rem 0 0;
+        font-size: 0.72rem;
+        line-height: 1.4;
+        color: #4a5568;
     }
 </style>
