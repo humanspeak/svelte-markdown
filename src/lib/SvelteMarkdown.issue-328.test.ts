@@ -11,36 +11,18 @@
 import '@testing-library/jest-dom'
 import { act, render } from '@testing-library/svelte'
 import Slugger from 'github-slugger'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
 import StableHeading from './test/issues/issue-328/StableHeading.svelte'
 import TrackedListItem from './test/issues/issue-328/TrackedListItem.svelte'
 import TrackedParagraph from './test/issues/issue-328/TrackedParagraph.svelte'
+import { flushStreamingBatch, useStreamingTestHarness } from './test/streaming/harness.js'
 import type { SvelteMarkdownProps } from './types.js'
 import type { Renderers, Token } from './utils/markdown-parser.js'
-import { tokenCache } from './utils/token-cache.js'
 
 type TestListItemToken = Token & { text?: string }
 
-beforeEach(() => {
-    tokenCache.clearAllTokens()
-    vi.useFakeTimers()
-    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-        return setTimeout(() => callback(performance.now()), 16) as unknown as number
-    })
-    vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
-})
-
-afterEach(() => {
-    vi.unstubAllGlobals()
-    vi.useRealTimers()
-})
-
-const flushStreamingBatch = async () => {
-    await act(async () => {
-        await vi.advanceTimersByTimeAsync(50)
-    })
-}
+useStreamingTestHarness()
 
 const headingIds = (container: HTMLElement) =>
     Array.from(container.querySelectorAll('h1,h2,h3,h4,h5,h6'), (heading) => heading.id)
