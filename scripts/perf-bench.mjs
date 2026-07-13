@@ -78,6 +78,14 @@ function parseStats(s) {
         streamGapAvgMs: num(grab('streamGapAvgMs')),
         streamGapP95Ms: num(grab('streamGapP95Ms')),
         streamGapPeakMs: num(grab('streamGapPeakMs')),
+        // stream-extensions-only: per-chunk parse cost over the first vs last
+        // third of the stream and their ratio. extGrowthRatio ≈ 1 ⇒ the
+        // incremental tail-window is engaged; a climbing ratio is the O(N²)
+        // re-lex signature. extTailWindow is the derived human label.
+        extParseFirstMs: num(grab('extParseFirstMs')),
+        extParseLastMs: num(grab('extParseLastMs')),
+        extGrowthRatio: num(grab('extGrowthRatio')),
+        extTailWindow: grab('extTailWindow'),
         longestTaskMs: grab('longestTaskMs'),
         longTasks10s: grab('longTasks10s'),
         rafP95Ms: num(grab('rafP95Ms')),
@@ -142,6 +150,14 @@ async function runStreamingLarge(page) {
     return runDocScenario(page, 'stream-large', { timeout: 120_000 })
 }
 
+async function runStreamingExtensions(page) {
+    // Same ~30tps word-chunk cadence as `stream-30tps`, but the corpus mixes
+    // katex math + GitHub alerts and the parser runs with those extensions
+    // registered. Historically that disabled the incremental tail-window and
+    // re-lexed the whole accumulated source per chunk — watch `extGrowthRatio`.
+    return runDocScenario(page, 'stream-extensions', { timeout: 120_000 })
+}
+
 async function runAll(label, page) {
     console.log(`\n=== ${label} run ===`)
     const out = {}
@@ -182,6 +198,10 @@ async function runAll(label, page) {
     console.log('  → stream-large…')
     out.streamLarge = await runStreamingLarge(page)
     console.log('   ', JSON.stringify(out.streamLarge))
+
+    console.log('  → stream-extensions…')
+    out.streamExtensions = await runStreamingExtensions(page)
+    console.log('   ', JSON.stringify(out.streamExtensions))
 
     return out
 }

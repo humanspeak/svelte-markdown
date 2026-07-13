@@ -1,6 +1,11 @@
+import { markedAlert } from '$lib/extensions/alert/markedAlert.js'
+import { markedFootnote } from '$lib/extensions/footnote/markedFootnote.js'
+import { markedKatex } from '$lib/extensions/katex/markedKatex.js'
+import { markedMermaid } from '$lib/extensions/mermaid/markedMermaid.js'
 import type { SvelteMarkdownOptions } from '$lib/types.js'
 import type { Token } from '$lib/utils/markdown-parser.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { buildParserOptions } from './extension-options.js'
 import { IncrementalParser } from './incremental-parser.js'
 import * as parseAndCacheModule from './parse-and-cache.js'
 
@@ -17,6 +22,7 @@ interface InternalParser {
         source: string,
         boundary: { prefixCount: number; reparseOffset: number }
     ) => boolean
+    tailWindowDisabled: boolean
 }
 
 /** Expose the private tail-window internals without repeating the cast per test. */
@@ -705,6 +711,329 @@ describe('IncrementalParser', () => {
             parser.update('Rewritten [ref0] content\n\n[ref0]: /b')
 
             expect(Math.max(...scannedLengths)).toBeLessThan(source.length)
+        })
+    })
+
+    /**
+     * Builds parser options exactly the way `SvelteMarkdown.svelte` does
+     * (via `buildParserOptions`), so the extension tokenizers land in
+     * `options.extensions.block` / `.inline` where the constructor reads them.
+     *
+     * @param extensions - Marked extensions to register
+     * @returns Parser options with the extensions merged in
+     * @example
+     * ```ts
+     * const options = createExtensionOptions([markedKatex(), markedAlert()])
+     * ```
+     */
+    const createExtensionOptions = (
+        extensions: Parameters<typeof buildParserOptions>[1]
+    ): SvelteMarkdownOptions => buildParserOptions({ gfm: true }, extensions)
+
+    /**
+     * Word-chunks a source the same way the streaming perf-bench does, so the
+     * parity tests replay a realistic LLM-style token cadence.
+     *
+     * @param source - Markdown source to split
+     * @returns Word-sized chunks (word + trailing whitespace)
+     * @example
+     * ```ts
+     * wordChunks('a b') // => ['a ', 'b']
+     * ```
+     */
+    const wordChunks = (source: string): string[] => {
+        const chunks: string[] = []
+        const re = /\S+\s*/g
+        let match: RegExpExecArray | null
+        while ((match = re.exec(source)) !== null) chunks.push(match[0])
+        return chunks
+    }
+
+    /**
+     * Feeds `chunks` cumulatively into a parser, asserting after EVERY append
+     * that the incremental tokens deep-equal a one-shot lex of the accumulated
+     * source — a malformed intermediate parse cannot self-correct on the final
+     * append and still pass.
+     *
+     * @param parser - Parser under test
+     * @param chunks - Chunks appended cumulatively
+     * @param options - The same options the parser was constructed with, for
+     *   the per-append one-shot comparison lex
+     * @returns Tokens from the final append
+     * @example
+     * ```ts
+     * const tokens = streamThrough(parser, wordChunks(source), options)
+     * ```
+     */
+    const streamThrough = (
+        parser: IncrementalParser,
+        chunks: string[],
+        options: SvelteMarkdownOptions
+    ): Token[] => {
+        let accumulated = ''
+        let tokens: Token[] = []
+        for (const chunk of chunks) {
+            accumulated += chunk
+            tokens = parser.update(accumulated).tokens
+            expect(tokens).toEqual(parseAndCacheModule.lexAndClean(accumulated, options, false))
+        }
+        return tokens
+    }
+
+    describe('Extension streaming parity', () => {
+        // A corpus that interleaves prose, block `$$…$$` math, inline `\(…\)`
+        // math, and `> [!NOTE]` alerts — the token shapes the marketed katex +
+        // alert extensions handle.
+        const EXTENSION_CORPUS = [
+            '# Streaming Extensions',
+            '',
+            'Intro prose with inline math \\(a_0 = 1\\) and a [link](https://example.com).',
+            '',
+            '$$',
+            'E = mc^2 + \\sum_{k=0}^{3} \\frac{k}{4}',
+            '$$',
+            '',
+            '> [!NOTE]',
+            '> Remember to normalize the coefficient before the next section.',
+            '',
+            '## Section Two',
+            '',
+            'More prose with another inline expression \\(b = \\pi r^2\\).',
+            '',
+            '> [!WARNING]',
+            '> Watch out for the boundary condition here.',
+            '',
+            'Closing remarks after the alert.'
+        ].join('\n')
+
+        it('streams katex + alert content to the same tokens as a one-shot lex', () => {
+            const options = createExtensionOptions([markedKatex(), markedAlert()])
+            const parser = new IncrementalParser(options)
+
+            const streamed = streamThrough(parser, wordChunks(EXTENSION_CORPUS), options)
+            const oneShot = parseAndCacheModule.lexAndClean(EXTENSION_CORPUS, options, false)
+
+            expect(streamed).toEqual(oneShot)
+        })
+
+        it('matches a one-shot lex when chunk boundaries fall inside math and alerts', () => {
+            const options = createExtensionOptions([markedKatex(), markedAlert()])
+            const parser = new IncrementalParser(options)
+
+            // Fixed-size chunking deliberately splits inside `$$…$$`, inside
+            // `\(…\)`, and mid-alert, exercising partial-token appends.
+            const chunks: string[] = []
+            for (let i = 0; i < EXTENSION_CORPUS.length; i += 7) {
+                chunks.push(EXTENSION_CORPUS.slice(i, i + 7))
+            }
+
+            const streamed = streamThrough(parser, chunks, options)
+            const oneShot = parseAndCacheModule.lexAndClean(EXTENSION_CORPUS, options, false)
+
+            expect(streamed).toEqual(oneShot)
+        })
+
+        it('streams a mermaid fence split across chunks to the same tokens as a one-shot lex', () => {
+            const options = createExtensionOptions([markedMermaid()])
+            const parser = new IncrementalParser(options)
+            const source = [
+                'Intro prose before the diagram.',
+                '',
+                '```mermaid',
+                'graph TD',
+                '    A[Start] --> B{Decision}',
+                '    B -->|yes| C[Done]',
+                '```',
+                '',
+                'Closing prose after the diagram.'
+            ].join('\n')
+
+            // Fixed-size chunking deliberately splits inside the fence so the
+            // mermaid tokenizer sees partial fences on intermediate appends.
+            const chunks: string[] = []
+            for (let i = 0; i < source.length; i += 5) {
+                chunks.push(source.slice(i, i + 5))
+            }
+
+            const streamed = streamThrough(parser, chunks, options)
+            const oneShot = parseAndCacheModule.lexAndClean(source, options, false)
+
+            expect(streamed).toEqual(oneShot)
+        })
+
+        it('keeps single-dollar inline katex parity when enabled', () => {
+            const options = createExtensionOptions([markedKatex({ singleDollarInline: true })])
+            const parser = new IncrementalParser(options)
+            const source = 'Cost is $5 but energy is $E = mc^2$ across the board.\n\nTail prose.'
+
+            const streamed = streamThrough(parser, wordChunks(source), options)
+            const oneShot = parseAndCacheModule.lexAndClean(source, options, false)
+
+            expect(streamed).toEqual(oneShot)
+        })
+    })
+
+    describe('Full-reparse metadata prefix offset', () => {
+        // A custom extension whose tokenizer never matches: normal markdown is
+        // produced, but its mere presence keeps the parser on the full-reparse
+        // path (no `tailWindowSafe` marker), exactly like a user extension.
+        const noopExtension = {
+            extensions: [
+                {
+                    name: 'noopBlock',
+                    level: 'block' as const,
+                    start: () => undefined,
+                    tokenizer: () => undefined
+                }
+            ]
+        }
+
+        it('reports the absolute source offset of the first changed token on the full-reparse path', () => {
+            const options = createExtensionOptions([noopExtension])
+            const parser = new IncrementalParser(options)
+            // Confirm we are genuinely on the full-reparse (tail-window-off) path.
+            expect(asInternalParser(parser).tailWindowDisabled).toBe(true)
+
+            const base = '# Alpha\n\nBravo paragraph.\n\n'
+            parser.update(base)
+            const appended = `${base}Charlie paragraph.`
+
+            const result = parser.update(appended)
+
+            expect(result.canReuse).toBe(true)
+            expect(result.divergeAt).toBeGreaterThan(0)
+            expect(result.divergeOffset).toBe(base.length)
+            // The offset must point at the first byte of the appended token.
+            expect(appended.slice(result.divergeOffset)).toBe('Charlie paragraph.')
+        })
+
+        it('falls back to an undefined offset when an unknown HTML span sits in the reused prefix', () => {
+            const options = createExtensionOptions([noopExtension])
+            const parser = new IncrementalParser(options)
+            expect(asInternalParser(parser).tailWindowDisabled).toBe(true)
+
+            // An unclosed `<details>` opening (its `</details>` never arrives)
+            // has no known source span, so any offset at or beyond it is
+            // untrustworthy. It sits at the head of the reused prefix.
+            const base = '<details>\n<summary>Title</summary>\n\nBoxed paragraph.\n\n'
+            parser.update(base)
+            const appended = `${base}Trailing paragraph.`
+
+            const result = parser.update(appended)
+
+            // Sanity: the unclosed opening really is an unknown-span html token
+            // sitting in the matched prefix.
+            const internal = asInternalParser(parser)
+            const openingIsUnknownSpan = internal.prevTokens.some(
+                (token) => token.type === 'html' && internal.hasHtmlSpanMismatch(token)
+            )
+            expect(openingIsUnknownSpan).toBe(true)
+            expect(result.canReuse).toBe(true)
+            expect(result.divergeOffset).toBeUndefined()
+        })
+    })
+
+    describe('Tail-safe built-in extensions', () => {
+        it('engages the tail-window for katex + alert streams', () => {
+            const options = createExtensionOptions([markedKatex(), markedAlert()])
+            const parser = new IncrementalParser(options)
+            // The tail-safe marker must flip the constructor decision.
+            expect(asInternalParser(parser).tailWindowDisabled).toBe(false)
+
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            const base =
+                '# Math\n\n$$\nE = mc^2\n$$\n\n> [!NOTE]\n> Normalize the coefficient.\n\nProse tail.\n\n'
+            parser.update(base)
+
+            const internal = asInternalParser(parser)
+            const boundary = internal.getTailWindowBoundary()
+            expect(boundary.reparseOffset).toBeGreaterThan(0)
+
+            const appended = `${base}Appended paragraph after warm-up.`
+            expect(internal.canUseTailWindow(appended, boundary)).toBe(true)
+
+            parser.update(appended)
+
+            // Tail-window engaged: the second update re-lexes only the appended
+            // tail slice, never the whole accumulated source.
+            const lastLexInput = lexSpy.mock.calls.at(-1)?.[0]
+            expect(lastLexInput).toBe(appended.slice(boundary.reparseOffset))
+            expect((lastLexInput as string).length).toBeLessThan(appended.length)
+        })
+
+        it('produces the same tokens on the tail-window path as a one-shot lex (katex + alert)', () => {
+            const options = createExtensionOptions([markedKatex(), markedAlert()])
+            const source =
+                '# Doc\n\nIntro \\(x\\) prose.\n\n$$\na^2 + b^2 = c^2\n$$\n\n' +
+                '> [!TIP]\n> Keep it simple.\n\nMiddle prose.\n\n$$\n\\int_0^1 x\\,dx\n$$\n\nEnd.'
+
+            // Warm-up update so the tail-window is primed, then a final append.
+            const parser = new IncrementalParser(options)
+            const warm = `${source}\n\n`
+            parser.update(warm)
+            const final = `${warm}> [!WARNING]\n> Final alert.\n`
+            const streamed = parser.update(final)
+            const oneShot = parseAndCacheModule.lexAndClean(final, options, false)
+
+            expect(streamed.tokens).toEqual(oneShot)
+        })
+
+        it('marks katex, alert, and mermaid as tail-safe', () => {
+            for (const extensions of [
+                [markedKatex()],
+                [markedAlert()],
+                [markedMermaid()],
+                [markedKatex(), markedAlert(), markedMermaid()]
+            ]) {
+                const parser = new IncrementalParser(createExtensionOptions(extensions))
+                expect(asInternalParser(parser).tailWindowDisabled).toBe(false)
+            }
+        })
+
+        it('keeps footnote streams on the full-reparse path (footnote is not tail-safe)', () => {
+            const options = createExtensionOptions([markedFootnote()])
+            const parser = new IncrementalParser(options)
+            expect(asInternalParser(parser).tailWindowDisabled).toBe(true)
+
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            const base = 'Body text[^1].\n\n[^1]: A footnote definition.\n\n'
+            parser.update(base)
+            const appended = `${base}More streamed text.`
+            parser.update(appended)
+
+            // Full reparse: the whole accumulated source is re-lexed each update.
+            expect(lexSpy.mock.calls.at(-1)?.[0]).toBe(appended)
+        })
+
+        it('disables the tail-window when any registered extension is not tail-safe', () => {
+            // katex (safe) mixed with footnote (unsafe) ⇒ conservative disable.
+            const options = createExtensionOptions([markedKatex(), markedFootnote()])
+            const parser = new IncrementalParser(options)
+            expect(asInternalParser(parser).tailWindowDisabled).toBe(true)
+        })
+
+        it('keeps a user-supplied custom extension without the marker on the full-reparse path', () => {
+            const customExtension = {
+                extensions: [
+                    {
+                        name: 'customInline',
+                        level: 'inline' as const,
+                        start: () => undefined,
+                        tokenizer: () => undefined
+                    }
+                ]
+            }
+            const options = createExtensionOptions([customExtension])
+            const parser = new IncrementalParser(options)
+            expect(asInternalParser(parser).tailWindowDisabled).toBe(true)
+
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            const base = '# Heading\n\nStable paragraph.\n\n'
+            parser.update(base)
+            const appended = `${base}Appended paragraph.`
+            parser.update(appended)
+
+            expect(lexSpy.mock.calls.at(-1)?.[0]).toBe(appended)
         })
     })
 })
