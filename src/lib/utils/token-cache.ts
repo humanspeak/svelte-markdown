@@ -19,6 +19,20 @@ import { MemoryCache } from '$lib/utils/cache.js'
 import type { Token, TokensList } from '$lib/utils/markdown-parser.js'
 
 /**
+ * Internal cache entry shape.
+ *
+ * The parsed tokens are stored alongside the exact source string that produced
+ * them. Because cache keys are derived from a 32-bit FNV-1a hash (not
+ * collision-resistant), a hit is only trusted when the stored `source` matches
+ * the requested source — otherwise a hash collision could serve one document's
+ * tokens for a different document. See {@link TokenCache.getTokens}.
+ */
+type TokenCacheEntry = {
+    source: string
+    tokens: Token[] | TokensList
+}
+
+/**
  * Fast non-cryptographic hash function using FNV-1a algorithm.
  * Optimized for speed over cryptographic security.
  *
@@ -112,13 +126,24 @@ const getCacheKey = (source: string, options: SvelteMarkdownOptions): string => 
  * - TTL-based expiration for time-sensitive content
  * - Advanced deletion (deleteByPrefix, deleteByMagicString)
  *
+ * Collision safety:
+ * - Each entry stores the exact source string alongside its tokens. On a hit
+ *   the stored source is compared to the requested source, so a 32-bit
+ *   FNV-1a hash collision is treated as a miss rather than serving a
+ *   different document's tokens (relevant under a shared SSR singleton).
+ *
  * Performance characteristics:
- * - Cache hit: <1ms (vs 50-200ms parsing)
- * - Memory: ~5MB for 50 cached documents (default maxSize)
+ * - Cache hit: <1ms (vs 50-200ms parsing) plus one string comparison
+ * - Memory: ~5MB of tokens for 50 cached documents (default maxSize); the
+ *   retained source strings roughly double this for text-heavy documents
  * - Hash computation: ~0.05ms for 10KB, ~0.5ms for 100KB
  *
+ * Note: the inherited raw `get()`/`set()` operate on the wrapped
+ * {@link TokenCacheEntry} shape (`{ source, tokens }`), not on the bare token
+ * array — use `getTokens`/`setTokens` for token access.
+ *
  * @class TokenCache
- * @extends MemoryCache<Token[] | TokensList>
+ * @extends MemoryCache<TokenCacheEntry>
  *
  * @example
  * ```typescript
@@ -139,7 +164,7 @@ const getCacheKey = (source: string, options: SvelteMarkdownOptions): string => 
  * cache.setTokens(markdown, options, tokens)
  * ```
  */
-export class TokenCache extends MemoryCache<Token[] | TokensList> {
+export class TokenCache extends MemoryCache<TokenCacheEntry> {
     /**
      * Creates a new TokenCache instance.
      *
@@ -169,7 +194,15 @@ export class TokenCache extends MemoryCache<Token[] | TokensList> {
      */
     getTokens(source: string, options: SvelteMarkdownOptions): Token[] | TokensList | undefined {
         const key = getCacheKey(source, options)
-        return this.get(key)
+        const entry = this.get(key)
+        // Guard against 32-bit hash collisions: only trust a hit when the
+        // stored source matches the requested source. On mismatch, treat it as
+        // a miss — the parse path will re-parse and overwrite the colliding
+        // entry (acceptable LRU behavior).
+        if (entry === undefined || entry.source !== source) {
+            return undefined
+        }
+        return entry.tokens
     }
 
     /**
@@ -188,7 +221,9 @@ export class TokenCache extends MemoryCache<Token[] | TokensList> {
      */
     setTokens(source: string, options: SvelteMarkdownOptions, tokens: Token[] | TokensList): void {
         const key = getCacheKey(source, options)
-        this.set(key, tokens)
+        // Store the source alongside the tokens so getTokens can verify a hit
+        // against hash collisions.
+        this.set(key, { source, tokens })
     }
 
     /**
