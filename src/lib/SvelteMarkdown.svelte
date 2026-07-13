@@ -178,6 +178,7 @@
         // block, leaving stale snippets in the DOM whenever a streamed
         // `</details>` collapsed several siblings into one nested token.
         // See #291.
+        // Resets below follow the same rule: always replace, never shrink.
         // A freshly (re)created parser has an empty prevSource and always
         // reports canReuse=false on its first update, so that case needs no
         // separate guard here.
@@ -256,7 +257,7 @@
 
         if (nextSource === '') {
             clearStreamingParser()
-            streamTokens.length = 0
+            streamTokens = []
             return
         }
 
@@ -298,7 +299,7 @@
 
         if (nextStr === '') {
             clearStreamingParser()
-            streamTokens.length = 0
+            streamTokens = []
             return
         }
 
@@ -460,7 +461,7 @@
 
             if (streamSourceBuffer === '') {
                 clearStreamingParser()
-                streamTokens.length = 0
+                streamTokens = []
                 return
             }
 
