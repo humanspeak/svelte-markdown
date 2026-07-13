@@ -714,15 +714,33 @@ describe('IncrementalParser', () => {
         })
     })
 
-    // Builds parser options exactly the way `SvelteMarkdown.svelte` does
-    // (via `buildParserOptions`), so the extension tokenizers land in
-    // `options.extensions.block` / `.inline` where the constructor reads them.
+    /**
+     * Builds parser options exactly the way `SvelteMarkdown.svelte` does
+     * (via `buildParserOptions`), so the extension tokenizers land in
+     * `options.extensions.block` / `.inline` where the constructor reads them.
+     *
+     * @param extensions - Marked extensions to register
+     * @returns Parser options with the extensions merged in
+     * @example
+     * ```ts
+     * const options = createExtensionOptions([markedKatex(), markedAlert()])
+     * ```
+     */
     const createExtensionOptions = (
         extensions: Parameters<typeof buildParserOptions>[1]
     ): SvelteMarkdownOptions => buildParserOptions({ gfm: true }, extensions)
 
-    // Word-chunk a source the same way the streaming perf-bench does, so the
-    // parity tests replay a realistic LLM-style token cadence.
+    /**
+     * Word-chunks a source the same way the streaming perf-bench does, so the
+     * parity tests replay a realistic LLM-style token cadence.
+     *
+     * @param source - Markdown source to split
+     * @returns Word-sized chunks (word + trailing whitespace)
+     * @example
+     * ```ts
+     * wordChunks('a b') // => ['a ', 'b']
+     * ```
+     */
     const wordChunks = (source: string): string[] => {
         const chunks: string[] = []
         const re = /\S+\s*/g
@@ -731,13 +749,33 @@ describe('IncrementalParser', () => {
         return chunks
     }
 
-    // Feeds `chunks` cumulatively into a parser and returns the final tokens.
-    const streamThrough = (parser: IncrementalParser, chunks: string[]): Token[] => {
+    /**
+     * Feeds `chunks` cumulatively into a parser, asserting after EVERY append
+     * that the incremental tokens deep-equal a one-shot lex of the accumulated
+     * source — a malformed intermediate parse cannot self-correct on the final
+     * append and still pass.
+     *
+     * @param parser - Parser under test
+     * @param chunks - Chunks appended cumulatively
+     * @param options - The same options the parser was constructed with, for
+     *   the per-append one-shot comparison lex
+     * @returns Tokens from the final append
+     * @example
+     * ```ts
+     * const tokens = streamThrough(parser, wordChunks(source), options)
+     * ```
+     */
+    const streamThrough = (
+        parser: IncrementalParser,
+        chunks: string[],
+        options: SvelteMarkdownOptions
+    ): Token[] => {
         let accumulated = ''
         let tokens: Token[] = []
         for (const chunk of chunks) {
             accumulated += chunk
             tokens = parser.update(accumulated).tokens
+            expect(tokens).toEqual(parseAndCacheModule.lexAndClean(accumulated, options, false))
         }
         return tokens
     }
@@ -772,7 +810,7 @@ describe('IncrementalParser', () => {
             const options = createExtensionOptions([markedKatex(), markedAlert()])
             const parser = new IncrementalParser(options)
 
-            const streamed = streamThrough(parser, wordChunks(EXTENSION_CORPUS))
+            const streamed = streamThrough(parser, wordChunks(EXTENSION_CORPUS), options)
             const oneShot = parseAndCacheModule.lexAndClean(EXTENSION_CORPUS, options, false)
 
             expect(streamed).toEqual(oneShot)
@@ -789,8 +827,36 @@ describe('IncrementalParser', () => {
                 chunks.push(EXTENSION_CORPUS.slice(i, i + 7))
             }
 
-            const streamed = streamThrough(parser, chunks)
+            const streamed = streamThrough(parser, chunks, options)
             const oneShot = parseAndCacheModule.lexAndClean(EXTENSION_CORPUS, options, false)
+
+            expect(streamed).toEqual(oneShot)
+        })
+
+        it('streams a mermaid fence split across chunks to the same tokens as a one-shot lex', () => {
+            const options = createExtensionOptions([markedMermaid()])
+            const parser = new IncrementalParser(options)
+            const source = [
+                'Intro prose before the diagram.',
+                '',
+                '```mermaid',
+                'graph TD',
+                '    A[Start] --> B{Decision}',
+                '    B -->|yes| C[Done]',
+                '```',
+                '',
+                'Closing prose after the diagram.'
+            ].join('\n')
+
+            // Fixed-size chunking deliberately splits inside the fence so the
+            // mermaid tokenizer sees partial fences on intermediate appends.
+            const chunks: string[] = []
+            for (let i = 0; i < source.length; i += 5) {
+                chunks.push(source.slice(i, i + 5))
+            }
+
+            const streamed = streamThrough(parser, chunks, options)
+            const oneShot = parseAndCacheModule.lexAndClean(source, options, false)
 
             expect(streamed).toEqual(oneShot)
         })
@@ -800,7 +866,7 @@ describe('IncrementalParser', () => {
             const parser = new IncrementalParser(options)
             const source = 'Cost is $5 but energy is $E = mc^2$ across the board.\n\nTail prose.'
 
-            const streamed = streamThrough(parser, wordChunks(source))
+            const streamed = streamThrough(parser, wordChunks(source), options)
             const oneShot = parseAndCacheModule.lexAndClean(source, options, false)
 
             expect(streamed).toEqual(oneShot)

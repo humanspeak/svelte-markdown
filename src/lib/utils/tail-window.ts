@@ -34,6 +34,11 @@ export const TAIL_WINDOW_SAFE: unique symbol = Symbol.for('svelte-markdown.tailW
  * {@link tailWindowSafeExtension} to mark a whole extension atomically.
  *
  * @param tokenizer - The tokenizer function to mark
+ * @returns Nothing — the marker is attached to the function in place
+ * @example
+ * ```ts
+ * markTailWindowSafe(myBlockTokenizer)
+ * ```
  */
 export const markTailWindowSafe = (tokenizer: (..._args: never[]) => unknown): void => {
     ;(tokenizer as unknown as Record<symbol, boolean>)[TAIL_WINDOW_SAFE] = true
@@ -47,6 +52,10 @@ export const markTailWindowSafe = (tokenizer: (..._args: never[]) => unknown): v
  *
  * @param ext - The Marked extension whose tokenizers are all tail-window safe
  * @returns The same extension, with every tokenizer marked
+ * @example
+ * ```ts
+ * return tailWindowSafeExtension({ extensions: [{ name: 'math', level: 'block', tokenizer }] })
+ * ```
  */
 export const tailWindowSafeExtension = (ext: MarkedExtension): MarkedExtension => {
     for (const entry of ext.extensions ?? []) {
@@ -63,6 +72,10 @@ export const tailWindowSafeExtension = (ext: MarkedExtension): MarkedExtension =
  *
  * @param value - Candidate entry from `options.extensions.block`/`.inline`
  * @returns `true` if the entry is a function marked tail-window safe
+ * @example
+ * ```ts
+ * isTailWindowSafe(options.extensions?.block?.[0]) // true only for marked tokenizers
+ * ```
  */
 export const isTailWindowSafe = (value: unknown): boolean =>
     typeof value === 'function' &&

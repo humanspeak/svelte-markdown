@@ -551,6 +551,13 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         new Promise((resolve) => requestAnimationFrame(() => resolve()))
 
     const resetStat = () => {
+        // Preview modes are mutually exclusive and scenario-owned: every
+        // scenario starts from the default mount, then re-asserts the one
+        // flag it needs (e.g. `useExtensions = true`) after this call.
+        // Without this, a flag set by one scenario leaks into the next and
+        // the live component silently measures the wrong configuration.
+        useOverrides = false
+        useExtensions = false
         stat = {
             srcKb: 0,
             tokenCount: 0,
@@ -824,12 +831,16 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             void step()
         })
         const wallMs = performance.now() - startWall
+        // `clear()` cancels a run by flipping `isStreaming` false mid-stream;
+        // on natural completion it is still true here (we reset it ourselves).
+        // Callers must not publish stats for a cancelled, partial replay.
+        const completed = isStreaming && i === chunks.length
         isStreaming = false
         if (streamHandle !== null) {
             clearTimeout(streamHandle)
             streamHandle = null
         }
-        return { renderDurations, wallMs }
+        return { renderDurations, wallMs, completed }
     }
 
     /** Common stream-scenario stat fields from a replay + parse benchmark. */
@@ -875,7 +886,13 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         const opts = { gfm: true, breaks: false, headerIds: true, headerPrefix: '' }
         const bench = benchmarkAppendParse(chunks, opts)
 
-        const { renderDurations, wallMs } = await replayChunks(chunks, chunksPerSecondTarget)
+        const { renderDurations, wallMs, completed } = await replayChunks(
+            chunks,
+            chunksPerSecondTarget
+        )
+        // A cancelled run means `clear()` already reset the page state —
+        // publishing partial stats would overwrite it with garbage.
+        if (!completed) return
 
         stat = {
             ...stat,
@@ -931,7 +948,13 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
                   ? 'engaged'
                   : 'disabled'
 
-        const { renderDurations, wallMs } = await replayChunks(chunks, chunksPerSecondTarget)
+        const { renderDurations, wallMs, completed } = await replayChunks(
+            chunks,
+            chunksPerSecondTarget
+        )
+        // A cancelled run means `clear()` already reset the page state —
+        // publishing partial stats would overwrite it with garbage.
+        if (!completed) return
 
         stat = {
             ...stat,
@@ -1079,7 +1102,6 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         if (isStreaming) return
         scenario = 'stream-large'
         resetStat()
-        useOverrides = false
         source = ''
         tokenCache.clearAllTokens()
         isStreaming = true
@@ -1155,8 +1177,6 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             streamHandle = null
         }
         isStreaming = false
-        useOverrides = false
-        useExtensions = false
         source = ''
         tokenCache.clearAllTokens()
         resetStat()
