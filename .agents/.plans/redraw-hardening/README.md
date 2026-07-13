@@ -14,7 +14,7 @@ conditions, and update your row when done.
 
 | Plan | Title                                                                  | Priority | Effort | Risk | Depends on             | Status |
 | ---- | ---------------------------------------------------------------------- | -------- | ------ | ---- | ---------------------- | ------ |
-| 001  | Redraw regression harness (Parser-count + DOM-identity tripwires)      | P1       | S–M    | LOW  | —                      | TODO   |
+| 001  | Redraw regression harness (Parser-count + DOM-identity tripwires)      | P1       | S–M    | LOW  | —                      | DONE   |
 | 002  | Stream resets replace the token array instead of mutating `length`     | P3       | S      | LOW  | —                      | TODO   |
 | 011  | Unify streaming token-reuse identity + generic child walk (#331, #333) | P2       | L      | HIGH | 001 (soft), 002 (soft) | TODO   |
 
