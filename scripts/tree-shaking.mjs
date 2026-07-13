@@ -27,6 +27,18 @@ const cases = [
         expectAllMissing: ['node_modules/katex', 'node_modules/mermaid']
     },
     {
+        // SPIKE (plan 004): the default code renderer must never pull Shiki into
+        // the core bundle — highlighting is an opt-in, explicitly-imported
+        // extension, so the "lightweight" core positioning stays honest.
+        name: 'core component stays shiki-free',
+        source: `
+            import SvelteMarkdown from '@humanspeak/svelte-markdown/SvelteMarkdown'
+            console.log(SvelteMarkdown)
+        `,
+        expectInitialMissing: ['node_modules/shiki', 'node_modules/@shikijs'],
+        expectAllMissing: ['node_modules/shiki', 'node_modules/@shikijs']
+    },
+    {
         name: 'katex tokenizer only',
         source: `
             import { markedKatex } from '@humanspeak/svelte-markdown/extensions/katex'
