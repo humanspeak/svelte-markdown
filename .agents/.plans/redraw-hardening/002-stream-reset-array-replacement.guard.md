@@ -11,3 +11,12 @@
 - Done criteria all reproduced by guard (not taken from the executor's report): grep exit 1 (no matches), `pnpm check` exit 0, `pnpm test` exit 0 (145 files / 960 tests, coverage 96.13/90.44/96.29/97.69), named test file 2/2 passed, `git status` clean post-snapshot.
 - Minor in-spirit deviation, judged acceptable: executor reworded the new test's docstring to avoid the literal string `streamTokens.length`, keeping the done-criterion grep clean; the grep's target is source mutation writes, and the docstring remains accurate.
 - Action: PASS at final; PR opened via the `pr` skill (URL in close-out report). Reported to operator.
+
+## Checkpoint 2 — 2026-07-13 15:54 — ON TRACK
+
+1e8d5ab · operator-requested integration update — merged `origin/main` (now containing plan 001's harness, squash `eb0c749` / PR #365) into this branch
+
+- Merge performed by guard at the operator's direction; only conflict was the batch README status table (both rows now DONE) — resolved in plan metadata only, no source touched by the merge beyond what main brought in.
+- Combined gate re-run by guard on the merged tree: `pnpm test` exit 0 — 146 files / 965 tests passed (includes the 5 redraw-regression harness tests running against 002's reset refactor), coverage 96.13/90.44/96.29/97.69 unchanged.
+- The reviewed snapshot `045232b` is untouched (merge, not rebase), so the close-out report's SHA remains valid; PR #364 updated by the push.
+- Action: none needed — reported to operator.
