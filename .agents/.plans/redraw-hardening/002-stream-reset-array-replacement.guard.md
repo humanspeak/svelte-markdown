@@ -20,3 +20,13 @@
 - Combined gate re-run by guard on the merged tree: `pnpm test` exit 0 — 146 files / 965 tests passed (includes the 5 redraw-regression harness tests running against 002's reset refactor), coverage 96.13/90.44/96.29/97.69 unchanged.
 - The reviewed snapshot `045232b` is untouched (merge, not rebase), so the close-out report's SHA remains valid; PR #364 updated by the push.
 - Action: none needed — reported to operator.
+
+## Checkpoint 3 — 2026-07-13 16:00 — ON TRACK
+
+d5a5d97 · operator-requested /simplify pass on PR #364 (4 parallel reviewers: reuse, simplification, efficiency, altitude)
+
+- Three angles returned clean or no-change recommendations: efficiency verified all three swapped sites are cold reset paths (one empty-array allocation per teardown); simplification recommended against extracting the 3x `clearStreamingParser(); streamTokens = []` blocks (the flow-controlling `return` can't move into a helper) and against test-assertion helpers at two call sites.
+- One finding applied (altitude): the replace-never-shrink rule lived only inside `applyStreamingSource`, ~280 lines from the farthest reset site it governs — a 3-line invariant comment was added at the `streamTokens` declaration (`SvelteMarkdown.svelte:133`), the one anchor every writer sits under. Comment-only; verified with `pnpm check` (0 errors) and the 5-file streaming test set (130/130 passed).
+- One observation deferred (reuse): the rAF-stub + `flushStreamingBatch` test boilerplate is now duplicated across 5 test files with no shared helper; extraction is a separate cross-file refactor, out of scope for this PR.
+- Conduct note: this edit was authored by guard at the operator's explicit /simplify instruction — an operator-directed exception to guard's read-only rule, recorded here for the audit trail.
+- Action: fix pushed to PR #364; reuse observation reported to operator for a possible follow-up plan.
