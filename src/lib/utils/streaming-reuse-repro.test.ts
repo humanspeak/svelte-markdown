@@ -1,13 +1,13 @@
 import { IncrementalParser } from '$lib/utils/incremental-parser.js'
 import type { Token } from '$lib/utils/markdown-parser.js'
-import { reuseStableStreamingTokens } from '$lib/utils/streaming-token-reuse.js'
+import { reuseStableTokenArray } from '$lib/utils/streaming-token-reuse.js'
 import { describe, expect, it } from 'vitest'
 
 type AnyToken = Token & { tokens?: AnyToken[]; text?: string; tag?: string }
 
 const simulateUi = (parser: IncrementalParser, ui: Token[], source: string): Token[] => {
     const { tokens, divergeAt } = parser.update(source)
-    return reuseStableStreamingTokens(ui, tokens, divergeAt)
+    return reuseStableTokenArray(ui, tokens, divergeAt)
 }
 
 const findFirst = (tokens: AnyToken[] | undefined, type: string): AnyToken | undefined => {
@@ -52,7 +52,7 @@ describe('suspected bug 1 — reference definition arriving later', () => {
         const { tokens: freshTokens, divergeAt } = parser.update(full)
         expect(findFirst(freshTokens as AnyToken[], 'link')).toBeDefined()
 
-        ui = reuseStableStreamingTokens(ui, freshTokens, divergeAt)
+        ui = reuseStableTokenArray(ui, freshTokens, divergeAt)
         expect(findFirst(ui as AnyToken[], 'link')).toBeDefined()
     })
 })
@@ -68,7 +68,7 @@ describe('suspected bug 2 — offset-mode edit inside a closed html block', () =
         const { tokens: freshTokens, divergeAt } = parser.update(s2)
         expect(JSON.stringify(freshTokens)).toContain('xyz')
 
-        ui = reuseStableStreamingTokens(ui, freshTokens, divergeAt)
+        ui = reuseStableTokenArray(ui, freshTokens, divergeAt)
         expect(JSON.stringify(ui)).toContain('xyz')
         expect(JSON.stringify(ui)).not.toContain('abc')
     })
@@ -86,7 +86,7 @@ describe('suspected bug 3 — parser reset with different options', () => {
         const { tokens: freshTokens, divergeAt } = parserB.update(src)
         expect(findFirst(freshTokens as AnyToken[], 'br')).toBeDefined()
 
-        ui = reuseStableStreamingTokens(ui, freshTokens, divergeAt)
+        ui = reuseStableTokenArray(ui, freshTokens, divergeAt)
         expect(findFirst(ui as AnyToken[], 'br')).toBeDefined()
     })
 })

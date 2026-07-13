@@ -172,6 +172,3 @@ export const reuseStableTokenArray = (
 
     return reusedTokens ?? nextTokens
 }
-
-// Kept temporarily while internal callers migrate to the clearer name.
-export const reuseStableStreamingTokens = reuseStableTokenArray
