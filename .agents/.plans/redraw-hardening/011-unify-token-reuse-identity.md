@@ -3,21 +3,33 @@
 > **Executor instructions**: Follow step by step; verify each step; obey STOP
 > conditions. This is the highest-risk plan in the batch — its STOP conditions are
 > load-bearing. Update this plan's row in
-> `.agents/.plans/streaming-component-hardening/README.md` when done.
+> `.agents/.plans/redraw-hardening/README.md` when done.
 >
 > **Drift check (run first)**:
-> `git diff --stat 939f154..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/streaming-token-reuse.ts src/lib/SvelteMarkdown.svelte`
+> `git diff --stat eed2e08..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/streaming-token-reuse.ts src/lib/SvelteMarkdown.svelte`
 > On any change, compare "Current state" excerpts to live code; mismatch ⇒ STOP.
+>
+> **Carried over 2026-07-13**: this plan was authored in the (now closed)
+> `streaming-component-hardening` batch at `939f154` and never executed. It was
+> moved here and its line references, excerpts, and drift baseline were
+> refreshed against `eed2e08` (the code drifted meaningfully in between: #359
+> added tail-window incremental lexing to `incremental-parser.ts`). The plan
+> number 011 is preserved for traceability with issues #331/#333 and the
+> original batch's guard reports.
 
 ## Status
 
 - **Priority**: P2
 - **Effort**: L
 - **Risk**: HIGH
-- **Depends on**: recommend landing after 003, 005, 007 (they touch the same hot
-  path and reduce merge churn); no hard code dependency.
+- **Depends on**: 001-redraw-regression-harness.md (soft but strongly
+  recommended — its Parser-count and DOM-identity tripwires must be green and
+  unmodified when this refactor lands). Land 002 first too; it touches the
+  same region of `SvelteMarkdown.svelte` and avoids merge churn. (The original
+  003/005/007 prerequisites from the source batch all landed already.)
 - **Category**: tech-debt (structural correctness hardening)
-- **Planned at**: commit `939f154`, 2026-07-07
+- **Planned at**: commit `939f154`, 2026-07-07; refreshed against `eed2e08`,
+  2026-07-13
 - **Absorbs GitHub issues**: #331 (single identity rule) and #333 (generic child
   walk). Close both when this lands.
 
@@ -26,7 +38,7 @@
 "Are these the same stable streaming node?" is encoded in **two** places that
 disagree:
 
-- The parser's divergence loop (`incremental-parser.ts:540-546`) keys on `raw`
+- The parser's divergence loop (`incremental-parser.ts:585-596`) keys on `raw`
   plus an HTML shape check.
 - `hasSameStableNodeIdentity` (`streaming-token-reuse.ts:13-35`) adds a `type`
   equality check **and** a `text` fallback on top of the same HTML shape check.
@@ -52,9 +64,13 @@ bug. Treat it as a careful refactor with its own tests, per #331's own guidance.
 
 ### The two identity encodings
 
-Parser divergence loop, `src/lib/utils/incremental-parser.ts:535-556`:
+Parser divergence loop, `src/lib/utils/incremental-parser.ts:581-618` (at
+`eed2e08`; identity checks at 590-596, interleaved since #359 with
+tail-window `divergeOffset` accounting that this plan must preserve exactly):
 
 ```ts
+let divergeAt = 0
+let divergeOffset: number | undefined = parseResult.usedTailWindow ? boundary.reparseOffset : 0
 if (!referenceSensitive) {
     const minLen = Math.min(this.prevTokens.length, newTokens.length)
     while (divergeAt < minLen) {
@@ -67,15 +83,22 @@ if (!referenceSensitive) {
             if ((prevKids === undefined) !== (nextKids === undefined)) break
             if (prevKids && nextKids && prevKids.length !== nextKids.length) break
         }
-        // ... divergeOffset accounting ...
+        // ... divergeOffset accounting: tail-window path sums past
+        // boundary.prefixCount; full-reparse path sums from 0 and nulls
+        // the offset on an html span mismatch (lines 597-615) ...
         divergeAt++
     }
 }
 ```
 
+`update()` returns `{ tokens, divergeAt, divergeOffset, canReuse, usedTailWindow }`
+(`incremental-parser.ts:620-627`). `usedTailWindow` and `divergeOffset` are
+consumed by the render-metadata prefix skip and must survive this refactor
+unchanged.
+
 Reuse module, `src/lib/utils/streaming-token-reuse.ts:13-35` (`hasSameStableNodeIdentity`)
 and `:80-107` (`reuseStableNode` with the enumerated `tokens`/`items`/`header`/
-`rows` walk). The module is consumed at `src/lib/SvelteMarkdown.svelte:171-173`:
+`rows` walk). The module is consumed at `src/lib/SvelteMarkdown.svelte:184-186`:
 
 ```ts
 streamTokens = canReuse ? reuseStableStreamingTokens(streamTokens, newTokens, divergeAt) : newTokens
@@ -112,7 +135,7 @@ identity rule is correct on its own.
   and delete it, or reduce it to a single shared identity predicate the parser
   imports. Generic child walk (all array-of-nodes own-properties) replaces the
   enumerated keys.
-- `src/lib/SvelteMarkdown.svelte` — collapse the `canReuse` branch at 171-173.
+- `src/lib/SvelteMarkdown.svelte` — collapse the `canReuse` branch at 184-186.
 - Test files: recreate `streaming-reuse-repro.test.ts`; update
   `streaming-token-reuse.test.ts` and `incremental-parser.test.ts` to match the
   new surface.
@@ -124,7 +147,15 @@ identity rule is correct on its own.
   identity, not reference safety.
 - The `divergeOffset` source-offset accounting (used by render-metadata prefix
   skip) — preserve it exactly.
-- render-metadata source-less keys — plan 012.
+- The tail-window machinery added by #359 (`src/lib/utils/tail-window.ts`,
+  `getTailWindowBoundary`, `usedTailWindow`, `boundary.prefixCount` /
+  `reparseOffset` seeding) — preserve behavior byte-identically; the identity
+  predicate is the only thing being unified.
+- `src/lib/SvelteMarkdown.redraw-regression.test.ts` (added by plan 001) —
+  must stay green **unmodified**; if this refactor changes its measured
+  deltas, that is a STOP condition, not a baseline update.
+- render-metadata source-less keys — plan 012 of the closed
+  `streaming-component-hardening` batch (REJECTED; do not revisit).
 
 ## Git workflow
 
@@ -173,7 +204,7 @@ merge use — that is the "one rule" requirement. Do not yet move it into
 
 Make `update()` return `tokens` that are **already the reused array** (splice the
 stable prefix from `prevTokens`, deep-merge the boundary token via the shared
-predicate/walk). Then change `SvelteMarkdown.svelte:171-173` to
+predicate/walk). Then change `SvelteMarkdown.svelte:184-186` to
 `streamTokens = newTokens` unconditionally. Remove `reuseStableStreamingTokens`,
 `divergeAt`, and `canReuse` from the public surface **only after** all callers are
 migrated. Preserve `divergeOffset` and `streamRenderMetadataStartIndex/Offset`
@@ -223,7 +254,10 @@ ALL must hold:
 
 ## STOP conditions
 
-- Any in-scope file drifted from the excerpts since 939f154.
+- Any in-scope file drifted from the excerpts since eed2e08.
+- Plan 001's redraw-regression tests fail or need their delta baselines
+  changed to pass — that means this refactor altered render identity; report
+  the failing assertion and the `__svmParserByType` breakdown.
 - Folding reuse into `update()` changes `divergeOffset` or the render-metadata
   prefix-skip behavior (an #328 test fails) — the offset accounting is subtle;
   report rather than adjusting expectations.
@@ -241,5 +275,7 @@ ALL must hold:
 - Reviewer must scrutinize: `divergeOffset` preservation, the reference-sensitive
   path staying byte-identical, and that the generic walk doesn't over-reuse
   (structural check still fires when a nested child changed).
-- Plan 007 Part A becomes moot if `reuseStableStreamingTokens` is deleted here —
-  coordinate ordering.
+- Plan 007 of the source batch already landed (its single-pass reuse array is
+  the current shape of `streaming-token-reuse.ts:131-170`); deleting
+  `reuseStableStreamingTokens` here supersedes that optimization, which is
+  expected and fine.
