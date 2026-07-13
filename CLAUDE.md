@@ -32,7 +32,9 @@ src/
 │   │   └── html/             # HTML element renderers
 │   │       └── *.svelte      # Individual HTML tags (Div, Span, etc.)
 │   └── utils/                # Utility functions
-│       ├── markdown-parser.js
+│       ├── markdown-parser.ts
+│       ├── incremental-parser.ts # Streaming tail-window parser
+│       ├── sanitize.ts       # Default URL/attribute sanitizers
 │       ├── token-cache.ts    # LRU caching for parsed tokens
 │       ├── cache.ts          # Generic memory cache
 │       ├── rendererKeys.ts   # Canonical renderer key lists
@@ -140,7 +142,11 @@ buildUnsupportedRenderers() // Block all markdown renderers
 
 The following are explicitly out of scope:
 
-- Built-in HTML sanitization (provide hooks instead)
+- A bundled full DOM sanitizer (e.g. DOMPurify). The library ships
+  safe-by-default URL/attribute sanitization (`src/lib/utils/sanitize.ts`,
+  wired as prop defaults) — but full HTML sanitization of untrusted input
+  stays the consumer's responsibility, layered via the `sanitizeUrl` /
+  `sanitizeAttributes` hooks or an external sanitizer.
 - Remote fetching of markdown documents
 - WYSIWYG editor functionality
 
@@ -148,7 +154,7 @@ The following are explicitly out of scope:
 
 1. **`src/lib/index.ts`** - All public exports
 2. **`src/lib/SvelteMarkdown.svelte`** - Main component implementation
-3. **`src/lib/utils/markdown-parser.js`** - Token parsing logic
+3. **`src/lib/utils/markdown-parser.ts`** - Token parsing logic
 4. **`src/lib/renderers/`** - Individual renderer components
 5. **`README.md`** - Usage documentation
 
@@ -157,13 +163,18 @@ The following are explicitly out of scope:
 - Tests required for new features
 - Coverage must remain at 90%+
 - Pre-commit hooks will format code automatically
-- CI runs on Node 20, 22, and 24
+- CI runs on Node 22 and 24 (`engines`: node >=22)
 - Package published automatically on release via GitHub Actions
 - **README.md must be updated** when adding new features, props, or public API changes
 
 ## Security Considerations
 
-- No built-in HTML sanitization by default
-- XSS protection through secure parsing
-- Users should integrate their own sanitizer if needed
+- Safe-by-default sanitization ships enabled: `defaultSanitizeUrl` (protocol
+  allowlist blocking `javascript:`/`data:`/`vbscript:`) and
+  `defaultSanitizeAttributes` (strips `on*` handlers and `srcdoc`, sanitizes
+  URL attributes) are the default `sanitizeUrl`/`sanitizeAttributes` props —
+  see `src/lib/utils/sanitize.ts`
+- No bundled full DOM sanitizer — for untrusted input, layer DOMPurify (or
+  similar) on top; the defaults are XSS hardening, not complete sanitization
+- XSS protection through secure parsing (HTMLParser2)
 - Use `allowHtmlOnly`/`excludeHtmlOnly` to restrict HTML tags
