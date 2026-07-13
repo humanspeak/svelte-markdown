@@ -734,6 +734,12 @@ tokenCache.deleteTokens(markdown, options)
 const myCache = new TokenCache({ maxSize: 100, ttl: 10 * 60 * 1000 })
 ```
 
+> **Note (v1.7.12+):** cache entries store the source string alongside its
+> tokens so a hit is verified against hash collisions — `getTokens`,
+> `setTokens`, and `hasTokens` are the supported token API. The raw
+> `get()`/`set()` methods inherited from `MemoryCache` now operate on the
+> wrapped `{ source, tokens }` entry shape, not bare token arrays.
+
 ### Smart Image Lazy Loading
 
 Images automatically lazy load using native `loading="lazy"` and IntersectionObserver prefetching, with a smooth fade-in animation and error state handling. To disable lazy loading, provide a custom Image renderer:

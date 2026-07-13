@@ -228,12 +228,16 @@ export class TokenCache extends MemoryCache<TokenCacheEntry> {
     }
 
     /**
-     * Checks if tokens are cached without retrieving them.
+     * Checks if tokens are cached for this exact source.
      * Useful for cache statistics or conditional logic.
+     *
+     * Applies the same source verification as {@link getTokens}: a hash
+     * collision with a different document reports `false`, so `hasTokens`
+     * can never claim a hit that `getTokens` would refuse to serve.
      *
      * @param source - Raw markdown string
      * @param options - Svelte markdown parser options
-     * @returns True if cached and not expired
+     * @returns True if this source's tokens are cached and not expired
      *
      * @example
      * ```typescript
@@ -243,8 +247,7 @@ export class TokenCache extends MemoryCache<TokenCacheEntry> {
      * ```
      */
     hasTokens(source: string, options: SvelteMarkdownOptions): boolean {
-        const key = getCacheKey(source, options)
-        return this.has(key)
+        return this.getTokens(source, options) !== undefined
     }
 
     /**
