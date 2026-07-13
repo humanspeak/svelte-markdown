@@ -29,6 +29,7 @@ import type { Token, TokensList } from '$lib/utils/markdown-parser.js'
  */
 type TokenCacheEntry = {
     source: string
+    // trunk-ignore(eslint/@typescript-eslint/no-redundant-type-constituents): TokensList resolves as an error type in CI's lint program; union matches the pre-existing getTokens/setTokens signatures
     tokens: Token[] | TokensList
 }
 
