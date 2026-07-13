@@ -114,4 +114,31 @@ describe('extractAttributes', () => {
             class: 'foo bar'
         })
     })
+
+    it('preserves an apostrophe inside a double-quoted value', () => {
+        expect(extractAttributes(`<img alt="it's a cat" src="/c.png">`)).toEqual({
+            alt: "it's a cat",
+            src: '/c.png'
+        })
+    })
+
+    it('preserves a double quote inside a single-quoted value', () => {
+        expect(extractAttributes(`<div title='say "hi"' id="x">`)).toEqual({
+            title: 'say "hi"',
+            id: 'x'
+        })
+    })
+
+    it('does not truncate URLs containing an apostrophe', () => {
+        expect(extractAttributes(`<a href="https://x.com/?a='b&c=d" title="hi">`)).toEqual({
+            href: "https://x.com/?a='b&c=d",
+            title: 'hi'
+        })
+    })
+
+    it('closes an unclosed value containing an other-type quote at end of string', () => {
+        expect(extractAttributes(`<div title="it's unfinished`)).toEqual({
+            title: "it's unfinished"
+        })
+    })
 })
