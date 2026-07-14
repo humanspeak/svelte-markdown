@@ -12,11 +12,11 @@ conditions, and update your row when done.
 
 ## Execution order & status
 
-| Plan | Title                                                                  | Priority | Effort | Risk | Depends on             | Status                                                 |
-| ---- | ---------------------------------------------------------------------- | -------- | ------ | ---- | ---------------------- | ------------------------------------------------------ |
-| 001  | Redraw regression harness (Parser-count + DOM-identity tripwires)      | P1       | S–M    | LOW  | —                      | DONE                                                   |
-| 002  | Stream resets replace the token array instead of mutating `length`     | P3       | S      | LOW  | —                      | DONE                                                   |
-| 011  | Unify streaming token-reuse identity + generic child walk (#331, #333) | P2       | L      | HIGH | 001 (soft), 002 (soft) | IN PROGRESS (step 3 amended after STOP; see guard log) |
+| Plan | Title                                                                  | Priority | Effort | Risk | Depends on             | Status                                                    |
+| ---- | ---------------------------------------------------------------------- | -------- | ------ | ---- | ---------------------- | --------------------------------------------------------- |
+| 001  | Redraw regression harness (Parser-count + DOM-identity tripwires)      | P1       | S–M    | LOW  | —                      | DONE                                                      |
+| 002  | Stream resets replace the token array instead of mutating `length`     | P3       | S      | LOW  | —                      | DONE                                                      |
+| 011  | Unify streaming token-reuse identity + generic child walk (#331, #333) | P2       | L      | HIGH | 001 (soft), 002 (soft) | DONE (guard final PASS; #331/#333 resolved-pending-merge) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) |
 REJECTED (one-line rationale).
