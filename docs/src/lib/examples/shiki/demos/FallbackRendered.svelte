@@ -5,7 +5,7 @@
         createShikiHighlighter,
         ShikiCode,
         SHIKI_CONTEXT_KEY
-    } from '@humanspeak/svelte-markdown/extensions'
+    } from '@humanspeak/svelte-markdown/extensions/shiki'
     import { DemoSplitV2 } from '@humanspeak/docs-kit'
     import { setContext } from 'svelte'
     import ts from 'shiki/langs/typescript.mjs'
