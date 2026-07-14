@@ -1,9 +1,12 @@
 /**
- * SPIKE — streaming-compatible Shiki syntax-highlighting extension.
+ * Streaming-compatible Shiki syntax-highlighting extension.
  *
- * Intentionally NOT wired into the `extensions` barrel or the `package.json`
- * `exports` map: shipping is a follow-up decision (see the design report at
- * `.agents/.plans/bigger-faster-stronger/004-shiki-spike-report.md`).
+ * Shipped ONLY via the `@humanspeak/svelte-markdown/extensions/shiki` subpath —
+ * intentionally NOT re-exported from the `extensions` barrel.
+ * `createShikiHighlighter.js` statically imports `shiki/core` from plain JS, so
+ * a barrel re-export would force every barrel consumer's bundler to resolve
+ * `shiki` (an optional peer dependency) even when they never use highlighting
+ * (guarded by `barrel-optional-deps.test.ts`).
  *
  * @module
  */

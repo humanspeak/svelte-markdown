@@ -8,8 +8,13 @@
  * import { markedAlert, AlertRenderer } from '@humanspeak/svelte-markdown/extensions'
  * import { markedFootnote, FootnoteRef, FootnoteSection } from '@humanspeak/svelte-markdown/extensions'
  * import { markedKatex, KatexRenderer } from '@humanspeak/svelte-markdown/extensions'
- * import { createShikiHighlighter, ShikiCode, setShikiHighlighter } from '@humanspeak/svelte-markdown/extensions'
  * ```
+ *
+ * Shiki is deliberately NOT re-exported here — import it from the dedicated
+ * `@humanspeak/svelte-markdown/extensions/shiki` subpath instead. Its
+ * implementation statically imports `shiki/core` from plain JS, so exporting it
+ * from this barrel forces every barrel consumer's bundler to resolve `shiki`
+ * (an optional peer dependency) even when they never use highlighting.
  *
  * @module @humanspeak/svelte-markdown/extensions
  */
@@ -20,12 +25,3 @@ export { FootnoteRef, FootnoteSection, markedFootnote } from './footnote/index.j
 export { BLOCK_KATEX_TOKEN, INLINE_KATEX_TOKEN, KatexRenderer, markedKatex } from './katex/index.js'
 export type { MarkedKatexOptions } from './katex/index.js'
 export { MermaidRenderer, markedMermaid } from './mermaid/index.js'
-export {
-    SHIKI_CONTEXT_KEY,
-    ShikiCode,
-    createShikiHighlighter,
-    escapeHtml,
-    getShikiHighlighter,
-    setShikiHighlighter
-} from './shiki/index.js'
-export type { CreateShikiHighlighterOptions, ShikiHighlighter } from './shiki/index.js'

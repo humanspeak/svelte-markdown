@@ -86,6 +86,21 @@ const cases = [
         expectAllMissing: ['node_modules/shiki', 'node_modules/@shikijs']
     },
     {
+        // Shiki must never be reachable from the extensions barrel — its
+        // implementation statically imports `shiki/core` from plain JS, so a
+        // barrel re-export forces every barrel consumer to have the optional
+        // `shiki` peer installed just to resolve modules (shipped broken in
+        // v1.8.0). Bundle-level check; the source-graph invariant lives in
+        // `src/lib/extensions/barrel-optional-deps.test.ts`.
+        name: 'extensions barrel stays shiki-free',
+        source: `
+            import { markedAlert } from '@humanspeak/svelte-markdown/extensions'
+            console.log(markedAlert().extensions?.length)
+        `,
+        expectInitialMissing: ['node_modules/shiki', 'node_modules/@shikijs'],
+        expectAllMissing: ['node_modules/shiki', 'node_modules/@shikijs']
+    },
+    {
         // Plan 004 ship: the ShikiCode renderer on its own does NOT pull Shiki
         // in — it only depends on the escaped fallback. Shiki is bundled solely
         // when the consumer constructs a highlighter, keeping the renderer cheap.

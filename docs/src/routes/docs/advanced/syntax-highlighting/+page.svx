@@ -19,7 +19,7 @@ description: Add opt-in Shiki syntax highlighting to @humanspeak/svelte-markdown
 
 # Syntax Highlighting
 
-`@humanspeak/svelte-markdown` ships an **opt-in Shiki syntax-highlighting extension** from the `@humanspeak/svelte-markdown/extensions` subpath. It highlights fenced code blocks by replacing the default `code` renderer with `ShikiCode` — no marked tokenizer, no `extensions` prop entry, and (critically) **no async work on the render path**, so streaming stays enabled.
+`@humanspeak/svelte-markdown` ships an **opt-in Shiki syntax-highlighting extension** from the dedicated `@humanspeak/svelte-markdown/extensions/shiki` subpath (deliberately not re-exported from the `extensions` barrel, so consumers who skip highlighting never need `shiki` installed). It highlights fenced code blocks by replacing the default `code` renderer with `ShikiCode` — no marked tokenizer, no `extensions` prop entry, and (critically) **no async work on the render path**, so streaming stays enabled.
 
 ## Why It's a Renderer, Not a Marked Extension
 
@@ -50,7 +50,7 @@ Import only the languages and themes you need — each is a separate ESM module,
         createShikiHighlighter,
         ShikiCode,
         setShikiHighlighter
-    } from '@humanspeak/svelte-markdown/extensions'
+    } from '@humanspeak/svelte-markdown/extensions/shiki'
     import js from 'shiki/langs/javascript.mjs'
     import ts from 'shiki/langs/typescript.mjs'
     import githubDark from 'shiki/themes/github-dark.mjs'
@@ -84,7 +84,7 @@ Language **aliases** come for free — registering `javascript` also matches `js
 ```svelte
 <script lang="ts">
     import { setContext } from 'svelte'
-    import { createShikiHighlighter, SHIKI_CONTEXT_KEY } from '@humanspeak/svelte-markdown/extensions'
+    import { createShikiHighlighter, SHIKI_CONTEXT_KEY } from '@humanspeak/svelte-markdown/extensions/shiki'
     import ts from 'shiki/langs/typescript.mjs'
     import githubLight from 'shiki/themes/github-light.mjs'
 

@@ -622,7 +622,7 @@ Import only the languages and themes you need (each is a separate ESM module), b
         createShikiHighlighter,
         ShikiCode,
         setShikiHighlighter
-    } from '@humanspeak/svelte-markdown/extensions'
+    } from '@humanspeak/svelte-markdown/extensions/shiki'
     import js from 'shiki/langs/javascript.mjs'
     import ts from 'shiki/langs/typescript.mjs'
     import githubDark from 'shiki/themes/github-dark.mjs'
