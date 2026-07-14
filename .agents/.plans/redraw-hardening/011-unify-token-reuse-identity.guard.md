@@ -50,3 +50,12 @@ follows checkpoint 3 · operator-approved editorial consolidation of the same am
 - Scope audit clean: contribution (`git diff e10bfcc...17ebf6b`) touches five in-scope files only; `SvelteMarkdown.redraw-regression.test.ts`, plan files, and guard log untouched. `src/lib/index.ts` never exported the removed internals.
 - Open item: done criterion "batch README status row updated; #331/#333 noted resolved-pending-merge" is not yet satisfied — the README is currently stewarded on `plans/011-guard-checkpoint-2` (rows at e10bfcc on the executor branch would conflict); reconcile at final/merge rather than having the executor touch it now.
 - Action: reported to operator — work is faithful to the amended plan and gate-complete except the administrative README row; ready for `guard final` (close-out report + PR) once the plans branch merges.
+
+## Checkpoint 6 — 2026-07-14 07:19 — ON TRACK (final: PASS)
+
+378e6e1 · `guard final` close-out on `plans/011-guard-checkpoint-2`; tree clean, nothing to snapshot — gates re-run at `213761c`, `378e6e1` adds only the README status row
+
+- All done criteria reproduced green on the final tip: `pnpm check` 0 errors; `pnpm test:only` 971/971; `trunk fmt && trunk check` no issues; stale-name grep clean; drift check (`e8940c5..HEAD`, in-scope source) shows exactly the executor's three source files; redraw-regression harness diff 0 lines; origin/main unmoved at `e10bfcc`.
+- README row closed out by guard (`378e6e1`): 011 → DONE, #331/#333 resolved-pending-merge — the last open criterion from checkpoint 5.
+- Close-out report written: `011-unify-token-reuse-identity.guard-report.md` — **PASS**.
+- Integration: branch pushed (`-u origin plans/011-guard-checkpoint-2`), PR opened via the `pr` skill: <https://github.com/humanspeak/svelte-markdown/pull/368> (base `main`, closes #331/#333). Merge is the operator's call; guard stops here.
