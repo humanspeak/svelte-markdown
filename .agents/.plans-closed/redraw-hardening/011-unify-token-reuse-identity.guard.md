@@ -59,3 +59,11 @@ follows checkpoint 3 · operator-approved editorial consolidation of the same am
 - README row closed out by guard (`378e6e1`): 011 → DONE, #331/#333 resolved-pending-merge — the last open criterion from checkpoint 5.
 - Close-out report written: `011-unify-token-reuse-identity.guard-report.md` — **PASS**.
 - Integration: branch pushed (`-u origin plans/011-guard-checkpoint-2`), PR opened via the `pr` skill: <https://github.com/humanspeak/svelte-markdown/pull/368> (base `main`, closes #331/#333). Merge is the operator's call; guard stops here.
+
+## Checkpoint 7 — 2026-07-14 08:50 — ON TRACK
+
+7d2e91c · post-final CI remediation: PR #368's Trunk check failed with 4 new `@typescript-eslint/no-redundant-type-constituents` findings in `streaming-reuse-repro.test.ts` (the `$lib`-aliased `Token` resolves as an error type in CI's typed lint, flagging every union/intersection containing it — not reproducible locally, where type resolution works)
+
+- Remediation authored by a Codex rescue agent acting as executor, operator-directed; guard authored no source. Fix reshapes the four `Token`-in-type-operator positions to the sibling suite's structural `StreamingTestNode` + cast-helper convention (`node`/`nodes`), matching `streaming-token-reuse.test.ts`.
+- Guard verification before commit: diff read in full — one file only, every repro assertion byte-preserved (identity `toBe` checks, link/br expectations intact); `pnpm test:only src/lib/utils/streaming-reuse-repro.test.ts` → 5/5; `trunk check` on the file → no issues. Snapshot committed as `7d2e91c` and pushed to PR #368.
+- The final PASS verdict is unaffected: this changes test-type plumbing only, no source or assertion semantics. Awaiting CI green on the PR; batch close-out (`599c184`) rides the same PR.
