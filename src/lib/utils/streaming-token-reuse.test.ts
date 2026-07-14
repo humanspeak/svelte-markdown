@@ -1,6 +1,6 @@
 import type { Token } from '$lib/utils/markdown-parser.js'
 import { describe, expect, it } from 'vitest'
-import { reuseStableStreamingTokens } from './streaming-token-reuse.js'
+import { reuseStableTokenArray } from './streaming-token-reuse.js'
 
 type StreamingTestNode = Record<string, unknown> & {
     type?: string
@@ -10,17 +10,18 @@ type StreamingTestNode = Record<string, unknown> & {
     items?: StreamingTestNode[]
     header?: StreamingTestNode[]
     rows?: StreamingTestNode[][]
+    customChildren?: StreamingTestNode[]
 }
 
 const token = (node: StreamingTestNode): Token => node as Token
 const node = (tokenValue: Token): StreamingTestNode => tokenValue as unknown as StreamingTestNode
 
-describe('reuseStableStreamingTokens', () => {
+describe('reuseStableTokenArray', () => {
     it('returns the next token array unchanged when no stable identity can be reused', () => {
         const previous = [token({ type: 'paragraph', raw: 'Old paragraph', text: 'Old paragraph' })]
         const next = [token({ type: 'paragraph', raw: 'New paragraph', text: 'New paragraph' })]
 
-        const result = reuseStableStreamingTokens(previous, next, 0)
+        const result = reuseStableTokenArray(previous, next, 0)
 
         expect(result).toBe(next)
         expect(result[0]).toBe(next[0])
@@ -45,7 +46,7 @@ describe('reuseStableStreamingTokens', () => {
         const previous = [previousHeading, previousSpace, previousParagraph]
         const next = [nextHeading, nextSpace, nextParagraph, appendedParagraph]
 
-        const result = reuseStableStreamingTokens(previous, next, 2)
+        const result = reuseStableTokenArray(previous, next, 2)
 
         expect(result).not.toBe(next)
         expect(result[0]).toBe(previousHeading)
@@ -61,7 +62,7 @@ describe('reuseStableStreamingTokens', () => {
         const previousParagraph = token({ type: 'paragraph', raw: 'Removed', text: 'Removed' })
         const nextHeading = token({ type: 'heading', raw: '# Stable', text: 'Stable' })
 
-        const result = reuseStableStreamingTokens(
+        const result = reuseStableTokenArray(
             [previousHeading, previousParagraph],
             [nextHeading],
             99
@@ -115,7 +116,7 @@ describe('reuseStableStreamingTokens', () => {
             items: [nextFirstItem, nextSecondItem, nextThirdItem]
         })
 
-        const result = reuseStableStreamingTokens([previousList], [nextList], 0)
+        const result = reuseStableTokenArray([previousList], [nextList], 0)
         const resultList = node(result[0])
         const nextListNode = node(nextList)
 
@@ -159,7 +160,7 @@ describe('reuseStableStreamingTokens', () => {
             rows: nextRows
         })
 
-        const result = reuseStableStreamingTokens([previousTable], [nextTable], 0)
+        const result = reuseStableTokenArray([previousTable], [nextTable], 0)
         const resultTable = node(result[0])
 
         expect(resultTable).not.toBe(node(previousTable))
@@ -184,7 +185,7 @@ describe('reuseStableStreamingTokens', () => {
         })
         const next = [nextHtml]
 
-        const result = reuseStableStreamingTokens([previousHtml], next, 0)
+        const result = reuseStableTokenArray([previousHtml], next, 0)
 
         expect(result).toBe(next)
         expect(result[0]).toBe(nextHtml)
@@ -207,7 +208,7 @@ describe('reuseStableStreamingTokens', () => {
             tokens: [nextChild, addedChild]
         })
 
-        const result = reuseStableStreamingTokens([previousHtml], [nextHtml], 0)
+        const result = reuseStableTokenArray([previousHtml], [nextHtml], 0)
         const resultHtml = node(result[0])
 
         expect(resultHtml).not.toBe(node(previousHtml))
@@ -216,5 +217,30 @@ describe('reuseStableStreamingTokens', () => {
         expect(resultHtml.tokens?.[0]).toBe(previousChild)
         expect(resultHtml.tokens?.[1]).toBe(addedChild)
         expect(node(nextHtml).tokens?.[0]).toBe(nextChild)
+    })
+
+    it('does not over-reuse a token when a child under a custom key changes', () => {
+        const previousStableChild = { type: 'text', raw: 'stable', text: 'stable' }
+        const previousChangedChild = { type: 'text', raw: 'old', text: 'old' }
+        const nextStableChild = { type: 'text', raw: 'stable', text: 'stable' }
+        const nextChangedChild = { type: 'text', raw: 'new', text: 'new' }
+        const previousExtension = token({
+            type: 'extension',
+            raw: 'extension',
+            customChildren: [previousStableChild, previousChangedChild]
+        })
+        const nextExtension = token({
+            type: 'extension',
+            raw: 'extension',
+            customChildren: [nextStableChild, nextChangedChild]
+        })
+
+        const result = reuseStableTokenArray([previousExtension], [nextExtension], 0)
+        const resultExtension = node(result[0])
+
+        expect(resultExtension).not.toBe(node(previousExtension))
+        expect(resultExtension).not.toBe(node(nextExtension))
+        expect(resultExtension.customChildren?.[0]).toBe(previousStableChild)
+        expect(resultExtension.customChildren?.[1]).toBe(nextChangedChild)
     })
 })

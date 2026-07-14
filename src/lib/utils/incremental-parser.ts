@@ -12,6 +12,7 @@
 import type { SvelteMarkdownOptions } from '$lib/types.js'
 import type { Token } from '$lib/utils/markdown-parser.js'
 import { lexAndClean } from '$lib/utils/parse-and-cache.js'
+import { isSameStableNode } from '$lib/utils/streaming-token-reuse.js'
 import { isTailWindowSafe } from '$lib/utils/tail-window.js'
 
 /**
@@ -587,13 +588,7 @@ export class IncrementalParser {
             while (divergeAt < minLen) {
                 const prev = this.prevTokens[divergeAt]
                 const next = newTokens[divergeAt]
-                if (prev.raw !== next.raw) break
-                if (prev.type === 'html' && next.type === 'html') {
-                    const prevKids = (prev as HtmlToken).tokens
-                    const nextKids = (next as HtmlToken).tokens
-                    if ((prevKids === undefined) !== (nextKids === undefined)) break
-                    if (prevKids && nextKids && prevKids.length !== nextKids.length) break
-                }
+                if (!isSameStableNode(prev, next)) break
                 if (parseResult.usedTailWindow) {
                     // Tail-window path (unchanged): tokens up to `prefixCount`
                     // are the reused prefix already covered by `reparseOffset`.

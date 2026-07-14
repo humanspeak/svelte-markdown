@@ -83,7 +83,7 @@
         STREAM_MAX_OFFSET_GAP,
         type StreamingInputMode
     } from '$lib/utils/streaming-chunks.js'
-    import { reuseStableStreamingTokens } from '$lib/utils/streaming-token-reuse.js'
+    import { reuseStableTokenArray } from '$lib/utils/streaming-token-reuse.js'
 
     type StreamFlushHandle =
         { kind: 'raf'; id: number } | { kind: 'timeout'; id: ReturnType<typeof setTimeout> } | null
@@ -186,7 +186,7 @@
         // reports canReuse=false on its first update, so that case needs no
         // separate guard here.
         streamTokens = canReuse
-            ? reuseStableStreamingTokens(streamTokens, newTokens, divergeAt)
+            ? reuseStableTokenArray(streamTokens, newTokens, divergeAt)
             : newTokens
         const canSkipRenderMetadataPrefix = canReuse && divergeOffset !== undefined
         streamRenderMetadataStartIndex = canSkipRenderMetadataPrefix ? divergeAt : 0
