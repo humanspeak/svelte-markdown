@@ -3,14 +3,27 @@ import type { Token } from '$lib/utils/markdown-parser.js'
 import { reuseStableTokenArray } from '$lib/utils/streaming-token-reuse.js'
 import { describe, expect, it } from 'vitest'
 
-type AnyToken = Token & { tokens?: AnyToken[]; text?: string; tag?: string }
+type StreamingTestNode = Record<string, unknown> & {
+    type?: string
+    text?: string
+    tag?: string
+    tokens?: StreamingTestNode[]
+    items?: StreamingTestNode[]
+}
+
+const node = (tokenValue: Token): StreamingTestNode => tokenValue as unknown as StreamingTestNode
+const nodes = (tokenValues: Token[]): StreamingTestNode[] =>
+    tokenValues as unknown as StreamingTestNode[]
 
 const simulateUi = (parser: IncrementalParser, ui: Token[], source: string): Token[] => {
     const { tokens, divergeAt } = parser.update(source)
     return reuseStableTokenArray(ui, tokens, divergeAt)
 }
 
-const findFirst = (tokens: AnyToken[] | undefined, type: string): AnyToken | undefined => {
+const findFirst = (
+    tokens: StreamingTestNode[] | undefined,
+    type: string
+): StreamingTestNode | undefined => {
     for (const t of tokens ?? []) {
         if (t.type === type) return t
         const nested = findFirst(t.tokens, type)
@@ -33,10 +46,10 @@ describe('happy path (append-only)', () => {
         const parser = new IncrementalParser({})
         let ui: Token[] = []
         ui = simulateUi(parser, ui, '- alpha\n- beta\n')
-        const listA = ui[0] as AnyToken & { items?: AnyToken[] }
+        const listA = node(ui[0])
         const itemAlpha = listA.items?.[0]
         ui = simulateUi(parser, ui, '- alpha\n- beta\n- gamma')
-        const listB = ui[0] as AnyToken & { items?: AnyToken[] }
+        const listB = node(ui[0])
         expect(listB.items?.[0]).toBe(itemAlpha)
     })
 })
@@ -46,14 +59,14 @@ describe('suspected bug 1 — reference definition arriving later', () => {
         const parser = new IncrementalParser({})
         let ui: Token[] = []
         ui = simulateUi(parser, ui, 'See [the docs][ref] for details.')
-        expect(findFirst(ui as AnyToken[], 'link')).toBeUndefined()
+        expect(findFirst(nodes(ui), 'link')).toBeUndefined()
 
         const full = 'See [the docs][ref] for details.\n\n[ref]: https://example.com'
         const { tokens: freshTokens, divergeAt } = parser.update(full)
-        expect(findFirst(freshTokens as AnyToken[], 'link')).toBeDefined()
+        expect(findFirst(nodes(freshTokens), 'link')).toBeDefined()
 
         ui = reuseStableTokenArray(ui, freshTokens, divergeAt)
-        expect(findFirst(ui as AnyToken[], 'link')).toBeDefined()
+        expect(findFirst(nodes(ui), 'link')).toBeDefined()
     })
 })
 
@@ -80,13 +93,13 @@ describe('suspected bug 3 — parser reset with different options', () => {
         let ui: Token[] = []
         const src = 'line one\nline two'
         ui = simulateUi(parserA, ui, src)
-        expect(findFirst(ui as AnyToken[], 'br')).toBeUndefined()
+        expect(findFirst(nodes(ui), 'br')).toBeUndefined()
 
         const parserB = new IncrementalParser({ gfm: true, breaks: true })
         const { tokens: freshTokens, divergeAt } = parserB.update(src)
-        expect(findFirst(freshTokens as AnyToken[], 'br')).toBeDefined()
+        expect(findFirst(nodes(freshTokens), 'br')).toBeDefined()
 
         ui = reuseStableTokenArray(ui, freshTokens, divergeAt)
-        expect(findFirst(ui as AnyToken[], 'br')).toBeDefined()
+        expect(findFirst(nodes(ui), 'br')).toBeDefined()
     })
 })
