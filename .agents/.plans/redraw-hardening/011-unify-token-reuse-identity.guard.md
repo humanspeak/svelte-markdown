@@ -38,3 +38,15 @@ follows checkpoint 3 · operator-approved editorial consolidation of the same am
 - Change: the checkpoint-3 amendment restated cleanly rather than layered — title, `Why this matters`, `Scope`, `Git workflow`, `Step 4`, and maintenance notes now describe the amended design directly (parser decides identity, component merges in proxy space; `reuseStableTokenArray` rename; resume-by-revert instructions), replacing the superseded-marker prose.
 - Guard verification before commit: done criteria and STOP conditions byte-untouched by this edit; no scope boundary, verification command, or quality gate weakened; all sections consistent with the amended Step 3 and the checkpoint-3 record.
 - Action: committed on `plans/011-guard-checkpoint-2` as the authoritative amendment text.
+
+## Checkpoint 5 — 2026-07-13 20:08 — ON TRACK
+
+17ebf6b · post-resume checkpoint against `advisor/011-unify-token-reuse-identity-e10bfcc`; tree clean, nothing to snapshot — the branch tip is the snapshot
+
+- Resume followed the amended plan exactly: `72a8736` is a byte-pure revert of guard snapshot `35d38d0` (guard-verified: `git diff 481bc55 72a8736` empty, history preserved); `37387cd` renames the merge to `reuseStableTokenArray` with a temporary alias and keeps the component's conditional proxy-space call; `17ebf6b` migrates the tests and removes the alias.
+- Done criteria re-run by guard, all green: `pnpm check` → 0 errors; `pnpm test:only` → 971/971 (includes the 5 #331 repro cases, plan 001's redraw-regression harness, issue-328, and Shiki suites — the 14 checkpoint-2 failures are gone); `trunk fmt && trunk check` → no issues; `grep -rn "reuseStableStreamingTokens\|hasSameStableNodeIdentity" src/lib` → clean.
+- One predicate, both call sites: `incremental-parser.ts:591` (`if (!isSameStableNode(prev, next)) break`, old inline raw/html-shape check deleted) and `streaming-token-reuse.ts:36,111`; predicate defined once at `streaming-token-reuse.ts:63`. `divergeOffset` accounting and reference-sensitivity logic byte-untouched by the contribution diff.
+- #333 criterion genuinely asserted, not gamed: `streaming-token-reuse.test.ts:238-244` walks an `extension` token's `customChildren` (non-enumerated key) and asserts the changed child is NOT over-reused while the stable sibling keeps identity.
+- Scope audit clean: contribution (`git diff e10bfcc...17ebf6b`) touches five in-scope files only; `SvelteMarkdown.redraw-regression.test.ts`, plan files, and guard log untouched. `src/lib/index.ts` never exported the removed internals.
+- Open item: done criterion "batch README status row updated; #331/#333 noted resolved-pending-merge" is not yet satisfied — the README is currently stewarded on `plans/011-guard-checkpoint-2` (rows at e10bfcc on the executor branch would conflict); reconcile at final/merge rather than having the executor touch it now.
+- Action: reported to operator — work is faithful to the amended plan and gate-complete except the administrative README row; ready for `guard final` (close-out report + PR) once the plans branch merges.
