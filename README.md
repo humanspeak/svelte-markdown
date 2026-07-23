@@ -1072,7 +1072,7 @@ Part of the [Humanspeak](https://humanspeak.com) family of runes-native Svelte 5
 | [@humanspeak/svelte-virtual-list](https://virtuallist.svelte.page) | Virtual scrolling for Svelte |
 | [@humanspeak/svelte-motion](https://motion.svelte.page) | Framer Motion for Svelte 5 |
 | [@humanspeak/svelte-headless-table](https://table.svelte.page) | Headless data tables for Svelte |
-| [@humanspeak/svelte-diff-match-patch](https://diff.svelte.page) | Diff comparison for Svelte |
+| [@humanspeak/svelte-diff](https://diff.svelte.page) | Diff comparison for Svelte |
 | [@humanspeak/svelte-purify](https://purify.svelte.page) | HTML sanitisation for Svelte |
 | [@humanspeak/svelte-virtual-chat](https://virtualchat.svelte.page) | Virtual chat viewport for Svelte 5 |
 | [@humanspeak/memory-cache](https://memory.svelte.page) | In-memory cache for TypeScript |
