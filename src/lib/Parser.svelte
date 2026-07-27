@@ -188,6 +188,30 @@
         // has been added by the user.
         !(renderers as Record<string, unknown>).space && !snippetOverrides.space
     )
+    const inlineNestedRawTextOk = $derived(
+        renderers.rawtext === defaultRenderers.rawtext && !snippetOverrides.rawtext
+    )
+    const inlineStrongOk = $derived(
+        renderers.strong === defaultRenderers.strong &&
+            !snippetOverrides.strong &&
+            inlineNestedRawTextOk
+    )
+    const inlineEmOk = $derived(
+        renderers.em === defaultRenderers.em && !snippetOverrides.em && inlineNestedRawTextOk
+    )
+    const inlineDelOk = $derived(
+        renderers.del === defaultRenderers.del && !snippetOverrides.del && inlineNestedRawTextOk
+    )
+    const inlineCodespanOk = $derived(
+        renderers.codespan === defaultRenderers.codespan && !snippetOverrides.codespan
+    )
+    const inlineLinkOk = $derived(
+        renderers.link === defaultRenderers.link && !snippetOverrides.link && inlineNestedRawTextOk
+    )
+    const inlineBrOk = $derived(renderers.br === defaultRenderers.br && !snippetOverrides.br)
+    const inlineEscapeOk = $derived(
+        renderers.escape === defaultRenderers.escape && !snippetOverrides.escape
+    )
 
     // Sanitize rest props before they reach any renderer or snippet.
     // This is the single enforcement point — custom renderers cannot bypass it.
@@ -229,6 +253,42 @@
         <!-- inlined: space tokens render nothing -->
     {:else if token.type === 'text' && inlineTextOk && !(token as Tokens.Text).tokens}
         {(token as Tokens.Text).text ?? token.raw}
+    {:else if token.type === 'strong' && inlineStrongOk}
+        {@const strongToken = token as Tokens.Strong}
+        <strong>
+            {#each strongToken.tokens as childToken, i (renderMetadata.getStableNodeKey(childToken, i))}
+                {@render dispatch(childToken, restProps)}
+            {/each}
+        </strong>
+    {:else if token.type === 'em' && inlineEmOk}
+        {@const emToken = token as Tokens.Em}
+        <em>
+            {#each emToken.tokens as childToken, i (renderMetadata.getStableNodeKey(childToken, i))}
+                {@render dispatch(childToken, restProps)}
+            {/each}
+        </em>
+    {:else if token.type === 'del' && inlineDelOk}
+        {@const delToken = token as Tokens.Del}
+        <del>
+            {#each delToken.tokens as childToken, i (renderMetadata.getStableNodeKey(childToken, i))}
+                {@render dispatch(childToken, restProps)}
+            {/each}
+        </del>
+    {:else if token.type === 'codespan' && inlineCodespanOk}
+        {@const codespanToken = token as Tokens.Codespan}
+        <code>{codespanToken.raw.replace(/`/g, '')}</code>
+    {:else if token.type === 'link' && inlineLinkOk}
+        {@const linkToken = token as Tokens.Link}
+        {@const href = sanitizeUrl(linkToken.href, { type: 'link', tag: 'a' }) || undefined}
+        <a {href} title={linkToken.title}>
+            {#each linkToken.tokens as childToken, i (renderMetadata.getStableNodeKey(childToken, i))}
+                {@render dispatch(childToken, restProps)}
+            {/each}
+        </a>
+    {:else if token.type === 'br' && inlineBrOk}
+        <br />
+    {:else if token.type === 'escape' && inlineEscapeOk}
+        {(token as Tokens.Escape).text}
     {:else if inlineHtmlOk && htmlTok.tag}
         {@const sanitizedAttrs = htmlTok.attributes
             ? sanitizeAttributes(

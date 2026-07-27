@@ -31,6 +31,9 @@ interface SVMWindow extends Window {
     __svmParserByType?: Record<string, number>
 }
 const readParserCount = () => (window as SVMWindow).__svmParserCount ?? 0
+const readParserCountsByType = () => ({
+    ...((window as SVMWindow).__svmParserByType ?? {})
+})
 
 describe('redraw regression harness', () => {
     test('calibration: the DEV Parser counter is live under Vitest', async () => {
@@ -48,6 +51,31 @@ describe('redraw regression harness', () => {
         // the `import.meta.env.DEV` guard in Parser.svelte is active here.
         expect(readParserCount()).toBeGreaterThan(before)
         expect(readParserCount()).toBeGreaterThan(0)
+    })
+
+    test('simple default inline tokens allocate no recursive Parsers', () => {
+        const targetTypes = ['strong', 'em', 'del', 'codespan', 'link', 'br', 'escape'] as const
+        const before = readParserCountsByType()
+        const { container } = render(SvelteMarkdown, {
+            props: {
+                source: '**bold** *emphasis* ~~removed~~ `code` [safe](https://example.com "Safe title")  \nnext \\*literal\\*'
+            }
+        })
+
+        expect(container.querySelector('strong')).toHaveTextContent('bold')
+        expect(container.querySelector('em')).toHaveTextContent('emphasis')
+        expect(container.querySelector('del')).toHaveTextContent('removed')
+        expect(container.querySelector('code')).toHaveTextContent('code')
+        expect(container.querySelector('a')).toHaveAttribute('href', 'https://example.com')
+        expect(container.querySelector('a')).toHaveAttribute('title', 'Safe title')
+        expect(container.querySelector('br')).toBeInTheDocument()
+        expect(container.querySelector('p')).toHaveTextContent('next *literal*')
+
+        const after = readParserCountsByType()
+        const deltas = Object.fromEntries(
+            targetTypes.map((type) => [type, (after[type] ?? 0) - (before[type] ?? 0)])
+        )
+        expect(deltas).toEqual(Object.fromEntries(targetTypes.map((type) => [type, 0])))
     })
 
     test('growing the tail block in place spawns zero new Parsers', async () => {

@@ -395,4 +395,109 @@ describe('Parser branch coverage', () => {
             expect(container.querySelector('li')).toBeInTheDocument()
         }
     })
+
+    test('custom inline renderers preserve surrounding default token order', async () => {
+        const renderers = {
+            ...baseRenderers,
+            strong: baseRenderers.em,
+            link: baseRenderers.strong
+        }
+        const tokens = [
+            {
+                type: 'strong',
+                raw: '**custom strong**',
+                text: 'custom strong',
+                tokens: [{ type: 'text', raw: 'custom strong', text: 'custom strong' }]
+            },
+            { type: 'text', raw: ' / ', text: ' / ' },
+            {
+                type: 'em',
+                raw: '*default em*',
+                text: 'default em',
+                tokens: [{ type: 'text', raw: 'default em', text: 'default em' }]
+            },
+            { type: 'text', raw: ' / ', text: ' / ' },
+            {
+                type: 'link',
+                raw: '[custom link](https://example.com)',
+                href: 'https://example.com',
+                title: null,
+                text: 'custom link',
+                tokens: [{ type: 'text', raw: 'custom link', text: 'custom link' }]
+            },
+            { type: 'text', raw: ' / ', text: ' / ' },
+            {
+                type: 'del',
+                raw: '~~default del~~',
+                text: 'default del',
+                tokens: [{ type: 'text', raw: 'default del', text: 'default del' }]
+            }
+        ] as any
+
+        const { container } = render(Parser, {
+            props: { tokens, renderers }
+        })
+        await vi.runAllTimersAsync()
+
+        expect(container).toHaveTextContent(
+            'custom strong / default em / custom link / default del'
+        )
+        expect(container.querySelector('em')).toHaveTextContent('custom strong')
+        expect(container.querySelectorAll('em')).toHaveLength(2)
+        expect(container.querySelector('strong')).toHaveTextContent('custom link')
+        expect(container.querySelector('a')).toBeNull()
+        expect(container.querySelector('del')).toHaveTextContent('default del')
+    })
+
+    test('link snippet override keeps the generic snippet path', async () => {
+        const linkSnippet = createRawSnippet(() => ({
+            render: () => '<span data-testid="custom-link-snippet">custom snippet</span>'
+        }))
+        const tokens = [
+            {
+                type: 'link',
+                raw: '[original](https://example.com)',
+                href: 'https://example.com',
+                title: null,
+                text: 'original',
+                tokens: [{ type: 'text', raw: 'original', text: 'original' }]
+            }
+        ] as any
+
+        const { container } = render(Parser, {
+            props: {
+                tokens,
+                renderers: baseRenderers,
+                snippetOverrides: { link: linkSnippet }
+            }
+        })
+        await vi.runAllTimersAsync()
+
+        expect(container.querySelector('[data-testid="custom-link-snippet"]')).toHaveTextContent(
+            'custom snippet'
+        )
+        expect(container.querySelector('a')).toBeNull()
+    })
+
+    test('custom rawtext renderer receives nested leaf text through the generic path', async () => {
+        const renderers = {
+            ...baseRenderers,
+            rawtext: baseRenderers.codespan
+        }
+        const tokens = [
+            {
+                type: 'strong',
+                raw: '**nested**',
+                text: 'nested',
+                tokens: [{ type: 'text', raw: 'nested', text: 'nested' }]
+            }
+        ] as any
+
+        const { container } = render(Parser, {
+            props: { tokens, renderers }
+        })
+        await vi.runAllTimersAsync()
+
+        expect(container.querySelector('strong > code')).toHaveTextContent('nested')
+    })
 })
