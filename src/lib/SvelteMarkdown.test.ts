@@ -1528,6 +1528,26 @@ describe('URL sanitization (Issue #272)', () => {
         expect(link).toHaveAttribute('href', 'javascript:alert("XSS")')
     })
 
+    test('passes link context to a custom sanitizeUrl on the inline path', () => {
+        const sanitizeUrl = vi.fn((url: string) => (url.startsWith('blocked:') ? '' : url))
+        const { container } = render(SvelteMarkdown, {
+            source: '[Allowed](https://example.com) [Blocked](blocked:unsafe)',
+            sanitizeUrl
+        })
+        const links = container.querySelectorAll('a')
+
+        expect(links[0]).toHaveAttribute('href', 'https://example.com')
+        expect(links[1]).not.toHaveAttribute('href')
+        expect(sanitizeUrl).toHaveBeenCalledWith('https://example.com', {
+            type: 'link',
+            tag: 'a'
+        })
+        expect(sanitizeUrl).toHaveBeenCalledWith('blocked:unsafe', {
+            type: 'link',
+            tag: 'a'
+        })
+    })
+
     test('allows custom sanitizeAttributes to override default', () => {
         const keepAll = (attrs: Record<string, string>) => attrs
         const { container } = render(SvelteMarkdown, {

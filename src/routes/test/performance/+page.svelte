@@ -43,7 +43,7 @@ console.log('Section ${i}, Block ${j}');
 
 <div class="container">
     <div class="controls">
-        <button onclick={() => (source = largeMarkdown)} class="load-btn">
+        <button onclick={() => (source = largeMarkdown)} class="load-btn" data-testid="load-large">
             Load Large Document
         </button>
 
