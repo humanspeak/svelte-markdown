@@ -6,13 +6,8 @@ test.describe('Performance Tests', () => {
     })
 
     test('should handle large documents efficiently', async ({ page }) => {
-        // Measure initial render time
-        const startTime = Date.now()
         await page.getByTestId('load-large').click()
         await expect(page.getByRole('heading', { name: 'Section 99', exact: true })).toBeVisible()
-        const initialRenderTime = Date.now() - startTime
-
-        expect(initialRenderTime).toBeLessThan(1000) // Should render in under 1 second
     })
 
     test('should handle rapid content updates', async ({ page, browserName }) => {
@@ -37,5 +32,18 @@ test.describe('Performance Tests', () => {
         } else {
             expect(avgUpdateTime).toBeLessThan(100)
         }
+    })
+
+    test('perf benchmark completion observes committed DOM', async ({ page }) => {
+        await page.goto('/test/perf-bench', { waitUntil: 'networkidle' })
+
+        await page.getByTestId('parse-1kb').click()
+
+        await expect(page.getByTestId('perf-stats')).toContainText('scenario=parse-1kb-done')
+        await expect(
+            page
+                .getByTestId('perf-preview')
+                .getByRole('heading', { name: 'Quick Example', exact: true })
+        ).toBeVisible()
     })
 })

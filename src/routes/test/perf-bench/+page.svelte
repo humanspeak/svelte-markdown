@@ -547,8 +547,11 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         return mismatches
     }
 
-    const waitForAnimationFrame = (): Promise<void> =>
-        new Promise((resolve) => requestAnimationFrame(() => resolve()))
+    const waitForCommittedUpdate = async (): Promise<void> => {
+        await tick()
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+        await tick()
+    }
 
     const resetStat = () => {
         // Preview modes are mutually exclusive and scenario-owned: every
@@ -796,10 +799,10 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
     /**
      * Steady-cadence replay of pre-split chunks against the mounted
      * component: appends one chunk to `source` per timer tick, measuring
-     * the render duration of each append. Shared by `runStreaming` and
-     * `runStreamingExtensions` (the bursty variant owns its own jittered
-     * loop). Bails if `clear()` flips `isStreaming` mid-stream — see the
-     * note in `runStreamingBursty`.
+     * source-assignment-to-DOM-commit duration for each append. Shared by
+     * `runStreaming` and `runStreamingExtensions` (the bursty variant owns
+     * its own jittered loop). Bails if `clear()` flips `isStreaming`
+     * mid-stream — see the note in `runStreamingBursty`.
      */
     const replayChunks = async (chunks: string[], chunksPerSecondTarget: number) => {
         const baseDelay = 1000 / chunksPerSecondTarget
@@ -816,7 +819,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
                 const t0 = performance.now()
                 source += chunks[i]
                 i++
-                await tick()
+                await waitForCommittedUpdate()
                 if (!isStreaming) {
                     resolve()
                     return
@@ -1045,7 +1048,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
                 const t0 = performance.now()
                 source += chunks[idx]
                 idx++
-                await tick()
+                await waitForCommittedUpdate()
                 if (!isStreaming) {
                     resolve()
                     return
@@ -1128,8 +1131,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             if (!isStreaming) break
             const t0 = performance.now()
             markdown.writeChunk(chunk)
-            await waitForAnimationFrame()
-            await tick()
+            await waitForCommittedUpdate()
             if (!isStreaming) break
             renderDurations.push(performance.now() - t0)
         }
