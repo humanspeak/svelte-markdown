@@ -42,14 +42,33 @@ export const competitors: Competitor[] = [
         github: 'https://github.com/beynar/svelte-streamdown',
         npm: 'svelte-streamdown',
         type: 'Streaming Markdown Renderer',
-        approach: 'Reactive content prop with block-level reuse',
+        approach: 'Reactive content prop with cached block splitting and block-level reuse',
         features: [
             { name: 'Svelte 5 Compatibility', us: true, them: true },
             { name: 'TypeScript Support', us: true, them: true },
             {
                 name: 'Streaming API',
-                us: 'Reactive source or writeChunk() / resetStream()',
-                them: 'Reactive content prop'
+                us: 'Reactive source or direct writeChunk() ingestion',
+                them: 'Reactive complete-content prop',
+                note: 'Svelte Markdown can consume transport deltas directly. With Svelte Streamdown, the application maintains and repeatedly supplies the accumulated content string.'
+            },
+            {
+                name: 'Out-of-Order Chunk Delivery',
+                us: 'Native offset-addressed chunk assembly',
+                them: false,
+                note: 'Svelte Markdown accepts writeChunk({ value, offset }) and assembles websocket-style chunks even when they arrive out of order. Svelte Streamdown accepts a complete content string, so callers must order and assemble chunks before updating the prop.'
+            },
+            {
+                name: 'Mid-Stream Corrections',
+                us: 'Offset writes can replace earlier ranges',
+                them: 'Caller rebuilds the content string',
+                note: 'Offset-addressed writes support retransmission, transcription correction, and edits to previously received output without requiring callers to reconstruct the complete document first.'
+            },
+            {
+                name: 'Stream Lifecycle Isolation',
+                us: 'resetStream() + streamId',
+                them: 'Caller-managed content state',
+                note: 'Svelte Markdown provides synchronous resetStream() and declarative streamId boundaries to prevent content from one response carrying into the next.'
             },
             {
                 name: 'Incomplete Markdown',
@@ -67,12 +86,25 @@ export const competitors: Competitor[] = [
                 name: 'Repeated Document Cache',
                 us: 'Built-in configurable LRU + TTL',
                 them: false,
-                note: 'Svelte Streamdown instead relies on Svelte reactivity to reuse unchanged blocks during append-only streams.'
+                note: 'Svelte Streamdown caches block splitting and uses Svelte reactivity to reuse unchanged mounted blocks, but does not provide a reusable LRU for completed documents that are revisited or remounted.'
             },
             {
                 name: 'Append-Only Stream Reuse',
-                us: 'Tail-window incremental parser',
-                them: 'Unchanged blocks skip re-lexing'
+                us: 'Tail-window parser + frame coalescing',
+                them: 'Cached block splitting + reactive block reuse',
+                note: 'Both avoid needlessly parsing stable content. Svelte Markdown additionally coalesces bursts of incoming updates at the animation-frame boundary.'
+            },
+            {
+                name: 'Measured Streaming Performance',
+                us: '2–4× faster under burst backpressure',
+                them: 'Effectively tied when updates are frame-paced',
+                note: 'Production Chromium benchmark against svelte-streamdown 3.1.2. Across 10–200 KB append-only streams, Svelte Markdown completed burst workloads in roughly half to one quarter of the time by coalescing updates per animation frame. At one 512-character update per frame over 50 KB, both sustained about 59 updates/second. The 50 KB output used 2,821 descendant elements with Svelte Markdown versus 3,480 with Svelte Streamdown. Reproduce with pnpm perf:stream-compare.'
+            },
+            {
+                name: 'Measured DOM Footprint (50 KB)',
+                us: '2,821 descendant elements',
+                them: '3,480 descendant elements',
+                note: 'Measured by the production Chromium streaming benchmark with animations and optional rich-content controls disabled. The difference reflects each renderer’s output structure; Svelte Streamdown’s additional presentation features may justify that structure for applications that use them.'
             },
             {
                 name: 'Custom Renderers',
@@ -130,7 +162,12 @@ export const competitors: Competitor[] = [
         ],
         prosUs: [
             ...shared.prosUs,
-            'Imperative writeChunk() / resetStream() API for direct token ingestion',
+            'Direct transport-delta ingestion without maintaining a second reactive accumulator',
+            'Native out-of-order chunk assembly with offset-addressed writes',
+            'Mid-stream replacement writes for corrections and retransmission',
+            'Explicit resetStream() and streamId lifecycle boundaries',
+            'Measured 2–4× faster than svelte-streamdown 3.1.2 under burst backpressure',
+            'Measured about 19% fewer descendant elements on the 50 KB benchmark',
             'Configurable LRU cache also accelerates repeated non-streaming documents',
             'Broad raw HTML support with per-tag renderers and allow/deny helpers',
             'Stricter URL and attribute sanitization enabled by default',
@@ -151,13 +188,15 @@ export const competitors: Competitor[] = [
         ],
         consThem: [
             'No imperative chunk-ingestion API — callers update the complete content string',
+            'No native offset-addressed assembly for out-of-order chunks or earlier-range corrections',
+            'Stream resets and response isolation are managed in caller-owned content state',
             'No reusable LRU cache for switching among previously rendered documents',
             'Link and image prefix controls allow all origins by default',
             'Opinionated styling requires Tailwind setup or theme overrides',
             'A newer, single-maintainer port that tracks the upstream React project'
         ],
         verdict:
-            'Choose Svelte Streamdown when you want a batteries-included AI response UI with animated reveals, citations, MDX-style components, interactive diagrams, and Tailwind styling. Choose @humanspeak/svelte-markdown when you want a lower-level, unstyled renderer with direct chunk ingestion, reusable caching, broad raw-HTML customization, and stricter security defaults. Both are credible Svelte 5 choices for incomplete streaming markdown; the deciding factor is whether you want an opinionated presentation layer or a composable rendering primitive.',
+            'Choose Svelte Streamdown when you want a batteries-included AI response UI with animated reveals, citations, MDX-style components, interactive diagrams, and Tailwind styling. Choose @humanspeak/svelte-markdown when you want a lower-level, unstyled renderer with direct and out-of-order chunk ingestion, explicit stream lifecycle controls, frame-coalesced updates, reusable document caching, broad raw-HTML customization, and stricter security defaults. Both are credible Svelte 5 choices for incomplete streaming markdown; the deciding factor is whether you want an opinionated presentation layer or a composable rendering primitive.',
         keywords: [
             'svelte-streamdown',
             'svelte streamdown',
