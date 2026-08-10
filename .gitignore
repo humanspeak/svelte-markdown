@@ -44,3 +44,4 @@ mprocs.log
 # docs
 docs/static/social-cards/**
 docs/src/lib/github-stats.json
+/.competitive-intel

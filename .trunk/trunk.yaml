@@ -7,7 +7,7 @@ cli:
 plugins:
     sources:
         - id: trunk
-          ref: v1.10.2
+          ref: v1.11.0
           uri: https://github.com/trunk-io/plugins
 # Many linters and tools depend on runtimes - configure them here. (https://docs.trunk.io/runtimes)
 runtimes:
@@ -57,21 +57,21 @@ lint:
               - svelte
               - javascript
     enabled:
-        - grype@0.115.0
+        - grype@0.117.0
         - sort-package-json@4.0.0
         - actionlint@1.7.12
-        - checkov@3.3.6
-        - eslint@10.6.0
+        - checkov@3.3.9
+        - eslint@10.8.1
         - git-diff-check
-        - markdownlint@0.49.0
-        - osv-scanner@2.4.0
-        - oxipng@10.1.1
-        - prettier@3.9.4
+        - markdownlint@0.49.1
+        - osv-scanner@2.5.0
+        - oxipng@10.2.0
+        - prettier@3.9.6
         - shellcheck@0.11.0
-        - shfmt@3.6.0
-        - svgo@4.0.1
+        - shfmt@3.13.1
+        - svgo@4.0.2
         - taplo@0.10.0
-        - trufflehog@3.95.8
+        - trufflehog@3.96.0
         - yamllint@1.38.0
 actions:
     disabled:
@@ -79,3 +79,6 @@ actions:
         - trunk-check-pre-push
         - trunk-fmt-pre-commit
         - trunk-upgrade-available
+tools:
+    enabled:
+        - oxfmt@0.63.0
