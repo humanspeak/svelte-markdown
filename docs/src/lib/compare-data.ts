@@ -33,6 +33,141 @@ const shared = {
 
 export const competitors: Competitor[] = [
     {
+        slug: 'vs-svelte-streamdown',
+        name: 'Svelte Streamdown',
+        tagline: 'Two Svelte 5 Renderers Built for AI Streaming',
+        description:
+            'Compare svelte-streamdown and @humanspeak/svelte-markdown: two Svelte 5 markdown renderers for streaming AI output, with different approaches to styling, caching, HTML, MDX, and rich content.',
+        website: 'https://svelte-streamdown.beynar.workers.dev',
+        github: 'https://github.com/beynar/svelte-streamdown',
+        npm: 'svelte-streamdown',
+        type: 'Streaming Markdown Renderer',
+        approach: 'Reactive content prop with block-level reuse',
+        features: [
+            { name: 'Svelte 5 Compatibility', us: true, them: true },
+            { name: 'TypeScript Support', us: true, them: true },
+            {
+                name: 'Streaming API',
+                us: 'Reactive source or writeChunk() / resetStream()',
+                them: 'Reactive content prop'
+            },
+            {
+                name: 'Incomplete Markdown',
+                us: true,
+                them: true,
+                note: 'Both projects are designed to keep partial AI output renderable while new content arrives.'
+            },
+            {
+                name: 'Streaming HTML Output',
+                us: 'Partial blocks reconcile when </tag> arrives',
+                them: 'Incomplete blocks handled',
+                note: 'Svelte Markdown explicitly tracks incomplete raw HTML tails; Svelte Streamdown documents graceful handling for incomplete markdown and MDX blocks.'
+            },
+            {
+                name: 'Repeated Document Cache',
+                us: 'Built-in configurable LRU + TTL',
+                them: false,
+                note: 'Svelte Streamdown instead relies on Svelte reactivity to reuse unchanged blocks during append-only streams.'
+            },
+            {
+                name: 'Append-Only Stream Reuse',
+                us: 'Tail-window incremental parser',
+                them: 'Unchanged blocks skip re-lexing'
+            },
+            {
+                name: 'Custom Renderers',
+                us: '24 markdown + 83 HTML snippet overrides',
+                them: 'Typed snippets + theme system'
+            },
+            {
+                name: 'HTML Tag Control',
+                us: '83 tags with allow/deny helpers',
+                them: 'skipHtml + allowed element controls'
+            },
+            {
+                name: 'URL Safety Defaults',
+                us: 'Protocol allowlist + attribute sanitization',
+                them: 'Configurable prefixes (allow all by default)',
+                note: 'Svelte Streamdown exposes link and image prefix controls; their documented default is ["*"].'
+            },
+            {
+                name: 'Streaming Animations',
+                us: false,
+                them: 'Word, character, or block animations'
+            },
+            { name: 'MDX-Style Components', us: false, them: true },
+            { name: 'Inline Citations', us: false, them: 'Popover + list/carousel views' },
+            {
+                name: 'Built-in Styling',
+                us: 'Unstyled by default',
+                them: 'Tailwind typography + themes'
+            },
+            {
+                name: 'Math (KaTeX)',
+                us: 'Opt-in first-class extension',
+                them: 'Opt-in component'
+            },
+            {
+                name: 'Diagrams (Mermaid)',
+                us: 'Opt-in first-class extension',
+                them: 'Opt-in interactive component'
+            },
+            {
+                name: 'Code Highlighting',
+                us: 'Opt-in Shiki extension',
+                them: 'Opt-in Shiki component + copy button'
+            },
+            {
+                name: 'Marked Extensions',
+                us: 'Full extension objects',
+                them: 'Custom tokenizers'
+            },
+            {
+                name: 'Advanced Tables',
+                us: 'GFM tables',
+                them: 'GFM + row/column spans, footers, multiple headers'
+            }
+        ],
+        prosUs: [
+            ...shared.prosUs,
+            'Imperative writeChunk() / resetStream() API for direct token ingestion',
+            'Configurable LRU cache also accelerates repeated non-streaming documents',
+            'Broad raw HTML support with per-tag renderers and allow/deny helpers',
+            'Stricter URL and attribute sanitization enabled by default',
+            'Unstyled core integrates without requiring Tailwind'
+        ],
+        prosThem: [
+            'Purpose-built streaming animations at word, character, and block level',
+            'MDX-style custom Svelte components inside runtime markdown',
+            'Interactive citations with popover, list, and carousel presentations',
+            'Opinionated typography and granular Tailwind theme system out of the box',
+            'Rich built-ins including interactive Mermaid controls, code copy buttons, and advanced tables'
+        ],
+        consUs: [
+            ...shared.consUs,
+            'No built-in token reveal animations or citation UI',
+            'No MDX-style component syntax inside markdown',
+            'Requires application styling by design'
+        ],
+        consThem: [
+            'No imperative chunk-ingestion API — callers update the complete content string',
+            'No reusable LRU cache for switching among previously rendered documents',
+            'Link and image prefix controls allow all origins by default',
+            'Opinionated styling requires Tailwind setup or theme overrides',
+            'A newer, single-maintainer port that tracks the upstream React project'
+        ],
+        verdict:
+            'Choose Svelte Streamdown when you want a batteries-included AI response UI with animated reveals, citations, MDX-style components, interactive diagrams, and Tailwind styling. Choose @humanspeak/svelte-markdown when you want a lower-level, unstyled renderer with direct chunk ingestion, reusable caching, broad raw-HTML customization, and stricter security defaults. Both are credible Svelte 5 choices for incomplete streaming markdown; the deciding factor is whether you want an opinionated presentation layer or a composable rendering primitive.',
+        keywords: [
+            'svelte-streamdown',
+            'svelte streamdown',
+            'svelte-streamdown vs svelte-markdown',
+            'svelte streaming markdown',
+            'svelte ai markdown renderer',
+            'streamdown svelte'
+        ]
+    },
+    {
         slug: 'vs-mdsvex',
         name: 'MDsveX',
         tagline: 'Build-Time Preprocessor vs Runtime Component',

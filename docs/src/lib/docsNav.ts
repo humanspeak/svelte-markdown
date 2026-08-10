@@ -219,6 +219,11 @@ export const docsSections: NavSection[] = [
         icon: Swords,
         items: [
             { title: 'All Comparisons', href: '/compare', icon: Swords, exact: true },
+            {
+                title: 'vs Svelte Streamdown',
+                href: '/compare/vs-svelte-streamdown',
+                icon: Swords
+            },
             { title: 'vs MDsveX', href: '/compare/vs-mdsvex', icon: Swords },
             { title: 'vs Tiptap', href: '/compare/vs-tiptap', icon: Swords },
             { title: 'vs markdown-it', href: '/compare/vs-markdown-it', icon: Swords },
