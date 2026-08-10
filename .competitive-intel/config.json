@@ -1,0 +1,57 @@
+{
+    "project": "@humanspeak/svelte-markdown",
+    "category": "component-based Svelte markdown renderer",
+
+    "self_npm": "@humanspeak/svelte-markdown",
+    "self_repo": "humanspeak/svelte-markdown",
+
+    "self_features": [
+        "Marked-based parsing",
+        "Secure HTML parsing via HTMLParser2 + XSS-safe defaults (protocol allowlist, on* handler stripping)",
+        "Full markdown + GFM",
+        "Svelte 5 runes",
+        "Inline snippet overrides for renderers",
+        "Customizable component renderer system",
+        "WCAG 2.1 accessibility",
+        "GitHub-style header slug generation",
+        "First-class marked extensions: KaTeX, Mermaid, Shiki, GitHub Alerts, Footnotes",
+        "Opt-in Shiki highlighting, tree-shaken out of core",
+        "Intelligent token caching (50-200x re-renders)",
+        "LLM streaming mode with incremental rendering + streaming-aware sanitization",
+        "streamId prop to reset state between streams",
+        "Smart image lazy loading with fade-in"
+    ],
+
+    "non_goals": [
+        "WYSIWYG / editor functionality (this is a renderer, not an editor)",
+        "Remote fetching of markdown documents",
+        "A bundled full DOM sanitizer (DOMPurify etc.) — ships safe-by-default URL/attribute sanitization only; full sanitization is the consumer's responsibility"
+    ],
+
+    "competitors": [
+        { "npm": "svelte-markdown", "repo": "pablo-abc/svelte-markdown" },
+        { "npm": "svelte-exmarkdown", "repo": "ssssota/svelte-exmarkdown" }
+    ],
+
+    "watchlist": [
+        {
+            "npm": "svelte-streamdown",
+            "repo": "beynar/svelte-streamdown",
+            "note": "Svelte 5 port of Vercel Streamdown; same AI-streaming niche; incremental render via fine-grained reactivity"
+        },
+        {
+            "npm": "@comark/svelte",
+            "repo": "",
+            "note": "batteries-included: first-party Shiki + KaTeX + beautiful-mermaid, streaming-oriented"
+        }
+    ],
+
+    "compare_data_paths": ["docs/src/lib/compare-data.ts"],
+    "page_validation": {
+        "download_tolerance": 0.3,
+        "_comment": "compare-data.ts drives the /compare 'vs' pages (12 competitors incl. editors/parsers/preprocessors beyond the renderer watchlist). Validator checks svelte_peer for framework claims, hardcoded download figures, and them: feature cells on version bumps."
+    },
+
+    "slack_channel": "C0BP5BF1UTX",
+    "_slack_channel_comment": "#claude-reports in human-speak.slack.com (public, home workspace). Confirmed auto-send works 2026-08-10. NOTE: sends only work while the humanspeak workspace is the connected Slack — the integration is single-workspace, and from another org this same channel is a Slack Connect channel that blocks bot sends (draft-only)."
+}
