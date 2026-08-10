@@ -123,7 +123,7 @@ jobs:
 
                       # Debug: Show available refs
                       echo "Available branches:"
-                      git branch -a | head -5
+                      git branch -a | sed -n '1,5p'
 
                       # Try different git diff approaches for PR context
                       if git rev-parse "origin/${BASE_REF}" >/dev/null 2>&1; then
