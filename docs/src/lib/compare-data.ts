@@ -21,7 +21,7 @@ const shared = {
         'TypeScript-first with full type safety',
         'Built-in token caching (50-200x faster re-renders on repeated content)',
         'LLM streaming with imperative writeChunk() / resetStream() API',
-        '23 markdown renderers + 84 HTML tag renderers — every override is a Svelte snippet',
+        '24 markdown renderers + 83 HTML tag renderers — every override is a Svelte snippet',
         'First-class extensions: KaTeX math, Mermaid diagrams, GitHub alerts, footnotes',
         'Opt-in Shiki syntax highlighting (streaming-compatible, tree-shaken from core)',
         'Built-in XSS protection — protocol allowlist, event-handler stripping, attribute sanitization',
@@ -179,7 +179,7 @@ export const competitors: Competitor[] = [
         type: 'Preprocessor',
         approach: 'Build-time (.svx files)',
         features: [
-            { name: 'Svelte 5 Native', us: true, them: true },
+            { name: 'Svelte 5 Compatibility', us: true, them: true },
             { name: 'TypeScript Support', us: true, them: 'Partial' },
             { name: 'Runtime Rendering', us: true, them: false, note: 'MDsveX is build-time only' },
             {
@@ -209,7 +209,7 @@ export const competitors: Competitor[] = [
             },
             {
                 name: 'HTML Tag Control',
-                us: '84 tags with allow/deny',
+                us: '83 tags with allow/deny',
                 them: 'Via rehype plugins'
             },
             { name: 'Markdown in Components', us: true, them: true },
@@ -250,7 +250,7 @@ export const competitors: Competitor[] = [
             'Simpler mental model — just pass a string, get rendered output'
         ],
         prosThem: [
-            'Largest Svelte markdown ecosystem (~3,000 GitHub stars)',
+            'Established Svelte markdown ecosystem (~3,000 GitHub stars)',
             'Build-time optimization — zero runtime parsing cost',
             'Use Svelte components directly inside markdown files',
             'Rich plugin ecosystem via unified/remark/rehype',
@@ -290,30 +290,34 @@ export const competitors: Competitor[] = [
         type: 'Rich Text Editor',
         approach: 'WYSIWYG editing (ProseMirror)',
         features: [
-            { name: 'Svelte 5 Native', us: true, them: 'Via wrapper (svelte-tiptap)' },
+            {
+                name: 'Svelte 5 Compatibility',
+                us: true,
+                them: 'Official integration guide (runes or legacy syntax)'
+            },
             { name: 'TypeScript Support', us: true, them: true },
             { name: 'Markdown Rendering', us: true, them: 'Via extension' },
             { name: 'WYSIWYG Editing', us: false, them: true },
             {
                 name: 'Bundle Size',
-                us: 'Lightweight (~15KB)',
-                them: 'Heavy (~200KB+ with extensions)'
+                us: 'Focused renderer + parser',
+                them: 'Editor core + selected extensions'
             },
             { name: 'Custom Renderers', us: true, them: 'Via node views' },
             { name: 'Token Caching', us: true, them: false },
             {
-                name: 'LLM Streaming Mode',
+                name: 'AI Streaming',
                 us: 'writeChunk() / resetStream()',
-                them: false,
-                note: 'Tiptap can update editor state live, but it does not document a dedicated markdown streaming renderer mode.'
+                them: 'Paid AI Toolkit',
+                note: 'Tiptap can stream AI-generated text, HTML, and tool edits into an editor. This is a paid editing workflow, not a read-only streaming markdown renderer.'
             },
             {
                 name: 'Streaming HTML Output',
                 us: 'Partial blocks reconcile when </tag> arrives',
-                them: false,
-                note: 'Tiptap is a content editor — rendering agent-streamed HTML where partial <div>...</div> blocks resolve mid-stream is outside its model.'
+                them: 'Paid AI Toolkit streamHtml()',
+                note: 'Tiptap streams HTML into an editable ProseMirror document; Svelte Markdown progressively renders an accumulating markdown/HTML response.'
             },
-            { name: 'HTML Tag Control', us: '84 tags with allow/deny', them: 'Via schema' },
+            { name: 'HTML Tag Control', us: '83 tags with allow/deny', them: 'Via schema' },
             { name: 'Collaborative Editing', us: false, them: true },
             { name: 'Toolbar/Menus', us: false, them: 'Headless (build your own)' },
             {
@@ -330,7 +334,7 @@ export const competitors: Competitor[] = [
         ],
         prosThem: [
             'Full WYSIWYG rich text editing experience',
-            'Massive ecosystem (~36,500 GitHub stars)',
+            'Massive ecosystem (~38,000 GitHub stars)',
             'Collaborative editing support (Y.js)',
             'Extensible with 100+ official extensions',
             'Framework-agnostic — works beyond Svelte'
@@ -338,7 +342,7 @@ export const competitors: Competitor[] = [
         consUs: [...shared.consUs, 'No editing capabilities', 'No collaborative features'],
         consThem: [
             'Massive bundle size for simple rendering use cases',
-            'Svelte support is via community wrapper, not first-party',
+            'Svelte integration is documented, but lower-level than the React and Vue packages',
             'Complex setup and configuration for basic markdown display',
             'Overkill if you just need to render markdown'
         ],
@@ -364,7 +368,7 @@ export const competitors: Competitor[] = [
         type: 'Markdown Parser',
         approach: 'String in, HTML string out',
         features: [
-            { name: 'Svelte 5 Native', us: true, them: false },
+            { name: 'Svelte 5 Compatibility', us: true, them: 'Framework-agnostic' },
             { name: 'TypeScript Support', us: true, them: '@types/markdown-it' },
             { name: 'Component Output', us: 'Svelte components', them: 'Raw HTML string' },
             {
@@ -428,7 +432,7 @@ export const competitors: Competitor[] = [
             'No need for {@html} and manual sanitization'
         ],
         prosThem: [
-            'Massive ecosystem (21M+ weekly npm downloads)',
+            'Massive ecosystem (27M+ weekly npm downloads)',
             '100% CommonMark compliant with spec test suite',
             '200+ community plugins available',
             'Framework-agnostic — use anywhere',
@@ -462,7 +466,7 @@ export const competitors: Competitor[] = [
         type: 'Markdown Parser',
         approach: 'String in, HTML string out',
         features: [
-            { name: 'Svelte 5 Native', us: true, them: false },
+            { name: 'Svelte 5 Compatibility', us: true, them: 'Framework-agnostic' },
             { name: 'TypeScript Support', us: true, them: true },
             { name: 'Component Output', us: 'Svelte components', them: 'Raw HTML string' },
             { name: 'Custom Renderers', us: 'Svelte components', them: 'Token manipulation' },
@@ -508,8 +512,8 @@ export const competitors: Competitor[] = [
             { name: 'GFM Support', us: true, them: true },
             {
                 name: 'Bundle Size',
-                us: '~15KB (includes marked)',
-                them: '~8KB (parser only)'
+                us: 'Renderer layer + marked',
+                them: 'Parser only'
             },
             { name: 'Framework Integration', us: 'Native Svelte', them: 'Requires {@html}' }
         ],
@@ -520,7 +524,7 @@ export const competitors: Competitor[] = [
             'No {@html} needed — renders as safe Svelte components'
         ],
         prosThem: [
-            'Most popular JS markdown parser (38M+ weekly npm downloads)',
+            'One of the most popular JS markdown parsers (63M+ weekly npm downloads)',
             'Smaller bundle (parser only, no rendering layer)',
             'Framework-agnostic — use anywhere',
             'Maximum flexibility with token/renderer hooks',
@@ -557,11 +561,15 @@ export const competitors: Competitor[] = [
         type: 'WYSIWYG Markdown Editor',
         approach: 'ProseMirror + remark pipeline',
         features: [
-            { name: 'Svelte 5 Native', us: true, them: 'Via recipe/adapter' },
+            { name: 'Svelte 5 Compatibility', us: true, them: 'Via community integration' },
             { name: 'TypeScript Support', us: true, them: true },
             { name: 'Markdown Rendering', us: true, them: true },
             { name: 'WYSIWYG Editing', us: false, them: true },
-            { name: 'Bundle Size', us: 'Lightweight (~15KB)', them: 'Heavy (~150KB+)' },
+            {
+                name: 'Dependency Surface',
+                us: 'Focused renderer',
+                them: 'ProseMirror + remark + selected plugins'
+            },
             { name: 'Custom Renderers', us: true, them: 'Via ProseMirror nodes' },
             { name: 'Token Caching', us: true, them: false },
             {
@@ -578,7 +586,7 @@ export const competitors: Competitor[] = [
             },
             {
                 name: 'HTML Tag Control',
-                us: '84 tags with allow/deny',
+                us: '83 tags with allow/deny',
                 them: 'Via ProseMirror schema'
             },
             {
@@ -604,7 +612,7 @@ export const competitors: Competitor[] = [
         ],
         prosThem: [
             'Full WYSIWYG markdown editing experience',
-            'Plugin-driven architecture (~10,700 GitHub stars)',
+            'Plugin-driven architecture (~11,800 GitHub stars)',
             'Collaborative editing via Y.js',
             'Slash commands, toolbar, and more',
             'Headless — fully customizable appearance'
@@ -612,12 +620,12 @@ export const competitors: Competitor[] = [
         consUs: [...shared.consUs, 'No editing capabilities', 'No collaborative features'],
         consThem: [
             'Heavy bundle for display-only use cases',
-            'Svelte support is via adapter, not first-party',
+            'No first-party Svelte package; integration is community-led',
             'Requires significant configuration and plugin wiring',
             'ProseMirror learning curve'
         ],
         verdict:
-            'Choose Milkdown when you need a beautiful, interactive markdown editing experience with collaborative features. Choose @humanspeak/svelte-markdown when you just need to display markdown — it is 10x lighter and requires zero configuration.',
+            'Choose Milkdown when you need a headless, plugin-driven markdown editor with collaborative features. Choose @humanspeak/svelte-markdown when you only need to render markdown and want a smaller API surface without ProseMirror or editor-state overhead.',
         keywords: ['milkdown', 'milkdown svelte', 'svelte markdown editor', 'milkdown vs tiptap']
     },
     {
@@ -631,14 +639,14 @@ export const competitors: Competitor[] = [
         type: 'Runtime Renderer',
         approach: 'unified/remark/rehype pipeline',
         features: [
-            { name: 'Svelte 5 Native', us: true, them: true },
+            { name: 'Svelte 5 Compatibility', us: true, them: true },
             { name: 'TypeScript Support', us: true, them: true },
             { name: 'Parsing Engine', us: 'marked', them: 'unified/remark/rehype' },
             { name: 'Custom Renderers', us: true, them: true },
             { name: 'Token Caching', us: 'Built-in LRU cache', them: false },
             {
                 name: 'HTML Tag Control',
-                us: '84 tags with allow/deny',
+                us: '83 tags with allow/deny',
                 them: 'Via rehype plugins'
             },
             {
@@ -657,7 +665,7 @@ export const competitors: Competitor[] = [
             { name: 'Snippet Overrides', us: true, them: false },
             {
                 name: 'HTML Renderers',
-                us: '84 dedicated components',
+                us: '83 dedicated components',
                 them: 'Generic element handling'
             },
             {
@@ -670,13 +678,17 @@ export const competitors: Competitor[] = [
                 us: 'Built-in extension (markedMermaid)',
                 them: 'Via rehype-mermaid'
             },
-            { name: 'Bundle Size', us: '~15KB', them: '~25KB+ (unified stack)' },
+            {
+                name: 'Dependency Surface',
+                us: 'marked-based renderer',
+                them: 'unified + remark + rehype pipeline'
+            },
             { name: 'Marked Extensions', us: true, them: false }
         ],
         prosUs: [
             ...shared.prosUs,
             'Svelte 5 snippet overrides — customize rendering inline',
-            '84 dedicated HTML tag renderers (not generic)',
+            '83 dedicated HTML tag renderers (not generic)',
             'Smaller bundle — marked is lighter than unified stack'
         ],
         prosThem: [
@@ -712,16 +724,17 @@ export const competitors: Competitor[] = [
         type: 'Markdown Editor + Viewer',
         approach: 'Split-pane editor with live preview',
         features: [
-            { name: 'Svelte 5 Native', us: true, them: true },
+            { name: 'Svelte 5 Compatibility', us: true, them: true },
             { name: 'TypeScript Support', us: true, them: true },
             { name: 'Markdown Rendering', us: true, them: true },
             { name: 'Markdown Editing', us: false, them: true },
             { name: 'Custom Renderers', us: 'Svelte components', them: 'Via plugins' },
             { name: 'Token Caching', us: true, them: false },
             {
-                name: 'HTML Tag Control',
-                us: '84 tags with allow/deny',
-                them: 'Via rehype-sanitize'
+                name: 'HTML Safety',
+                us: 'URL + attribute sanitization enabled by default',
+                them: 'Consumer-supplied sanitizer',
+                note: 'Carta explicitly does not sanitize user input by default and recommends configuring DOMPurify or sanitize-html.'
             },
             {
                 name: 'LLM Streaming Mode',
@@ -736,6 +749,12 @@ export const competitors: Competitor[] = [
                 note: 'Carta is an authoring editor with live preview, not a renderer for streaming agent output with nested HTML.'
             },
             {
+                name: 'Reactive Viewer',
+                us: true,
+                them: 'Manual render() or keyed remount',
+                note: 'Carta documents that its standalone Markdown component is not reactive.'
+            },
+            {
                 name: 'Syntax Highlighting',
                 us: 'Opt-in Shiki extension',
                 them: 'Built-in plugin'
@@ -748,7 +767,7 @@ export const competitors: Competitor[] = [
             {
                 name: 'Diagrams (Mermaid)',
                 us: 'Built-in extension (markedMermaid)',
-                them: 'Built-in plugin'
+                them: 'Via unified/community plugin'
             },
             { name: 'Split-Pane UI', us: false, them: true },
             { name: 'Keyboard Shortcuts', us: false, them: true }
@@ -756,7 +775,7 @@ export const competitors: Competitor[] = [
         prosUs: [
             ...shared.prosUs,
             'Simpler API — one component, one prop',
-            'More granular HTML control (84 individual tag renderers)',
+            'More granular HTML control (83 individual tag renderers)',
             'Snippet overrides for inline customization'
         ],
         prosThem: [
@@ -764,17 +783,18 @@ export const competitors: Competitor[] = [
             'Svelte-native (not a wrapper around another framework)',
             'Lightweight compared to ProseMirror-based editors',
             'Plugin system for syntax highlighting, math, etc.',
-            'Keyboard shortcuts and toolbar'
+            'Keyboard shortcuts, toolbar, 150+ remark plugins, and component embeds'
         ],
         consUs: [...shared.consUs, 'No editing capabilities', 'No split-pane UI'],
         consThem: [
             'Bundled editor code even if you only need rendering',
             'Smaller community than established editors',
-            'No token caching',
-            'Fewer HTML tag renderers'
+            'No sanitization by default',
+            'Standalone Markdown viewer is not reactive without manual handling',
+            'No token caching'
         ],
         verdict:
-            'Choose Carta when you need a Svelte-native markdown editor with live preview — it is the lightest editor option in the ecosystem. Choose @humanspeak/svelte-markdown when you only need rendering — simpler, lighter, with better caching and HTML control.',
+            'Choose Carta when you need a Svelte-native markdown editor and viewer with live preview, authoring controls, and access to remark plugins. Choose @humanspeak/svelte-markdown for reactive or streaming display, built-in caching, granular HTML rendering, and safer defaults.',
         keywords: ['carta-md', 'carta svelte', 'svelte markdown editor', 'carta vs svelte-markdown']
     },
     {
@@ -783,12 +803,12 @@ export const competitors: Competitor[] = [
         tagline: 'Full Editor vs Pure Renderer',
         description:
             'Compare ByteMD and @humanspeak/svelte-markdown: a hackable markdown editor from ByteDance versus a focused Svelte 5 renderer for app content.',
-        github: 'https://github.com/pd4d10/bytemd',
+        github: 'https://github.com/bytedance/bytemd',
         npm: 'bytemd',
         type: 'Markdown Editor',
         approach: 'Split-pane editor + preview',
         features: [
-            { name: 'Svelte 5 Native', us: true, them: 'Svelte 3/4 era' },
+            { name: 'Svelte 5 Compatibility', us: true, them: 'Compiled Svelte component' },
             { name: 'TypeScript Support', us: true, them: true },
             { name: 'Markdown Rendering', us: true, them: true },
             { name: 'Markdown Editing', us: false, them: true },
@@ -796,7 +816,7 @@ export const competitors: Competitor[] = [
             { name: 'Token Caching', us: true, them: false },
             {
                 name: 'HTML Tag Control',
-                us: '84 tags with allow/deny',
+                us: '83 tags with allow/deny',
                 them: 'Via sanitize schema'
             },
             {
@@ -827,16 +847,20 @@ export const competitors: Competitor[] = [
                 them: 'Via @bytemd/plugin-mermaid'
             },
             { name: 'XSS Protection', us: 'Built-in', them: 'Built-in (sanitize-html)' },
-            { name: 'Framework Support', us: 'Svelte 5', them: 'Svelte, React, Vue, vanilla' },
+            {
+                name: 'Framework Support',
+                us: 'Svelte 5',
+                them: 'Svelte/vanilla, React, Vue, Angular'
+            },
             {
                 name: 'Maintenance',
                 us: 'Active',
-                them: 'Slowed (~1.3k stars, fewer recent updates)'
+                them: 'Dormant since February 2025 (~1.4k stars)'
             }
         ],
         prosUs: [
             ...shared.prosUs,
-            'Svelte 5 native — ByteMD is Svelte 3/4 era',
+            'Uses current Svelte 5 APIs and runes directly',
             'Actively maintained for latest Svelte',
             'Lighter bundle for rendering use cases'
         ],
@@ -845,17 +869,17 @@ export const competitors: Competitor[] = [
             'Framework-agnostic — works in React, Vue, vanilla JS',
             'Official plugins for math, mermaid, syntax highlighting',
             'XSS-safe by default',
-            'Established community (~1,300 GitHub stars)'
+            'Established community (~1,400 GitHub stars)'
         ],
         consUs: [...shared.consUs, 'No editing capabilities'],
         consThem: [
-            'Built on Svelte 3/4 — not updated for Svelte 5 runes',
-            'Development has slowed significantly',
+            'Compiled from an older Svelte codebase rather than designed around Svelte 5 runes',
+            'No release or repository activity since February 2025',
             'Overkill for display-only use cases',
             'Larger bundle size'
         ],
         verdict:
-            'Choose ByteMD when you need a cross-framework markdown editor with built-in plugins. Choose @humanspeak/svelte-markdown when you want a modern, Svelte 5-native rendering component — ByteMD has not yet been updated for Svelte 5.',
+            'Choose ByteMD when you need an established cross-framework markdown editor/viewer with official plugins and secure defaults. Choose @humanspeak/svelte-markdown when you want an actively maintained, Svelte 5-native renderer with streaming, caching, and component-level HTML control.',
         keywords: ['bytemd', 'bytemd svelte', 'markdown editor svelte', 'bytemd vs svelte-markdown']
     },
     {
@@ -870,12 +894,13 @@ export const competitors: Competitor[] = [
         type: 'Content Processing Pipeline',
         approach: 'AST transformation pipeline',
         features: [
-            { name: 'Svelte 5 Native', us: true, them: false },
+            { name: 'Svelte 5 Compatibility', us: true, them: 'Framework-agnostic' },
             { name: 'TypeScript Support', us: true, them: true },
             {
-                name: 'Component Output',
+                name: 'Output',
                 us: 'Svelte components',
-                them: 'HTML string (rehype-stringify)'
+                them: 'Syntax tree or configured compiler output',
+                note: 'unified itself is a processor; plugins decide whether the result is HTML, another tree, lint messages, or something else.'
             },
             { name: 'Custom Renderers', us: 'Svelte components', them: 'AST transformers' },
             { name: 'Token Caching', us: true, them: 'Manual' },
@@ -903,7 +928,11 @@ export const competitors: Competitor[] = [
             },
             { name: 'AST Access', us: false, them: true },
             { name: 'Learning Curve', us: 'Minimal', them: 'Steep (AST concepts)' },
-            { name: 'Bundle Size', us: '~15KB', them: '~30KB+ (unified + remark + rehype)' },
+            {
+                name: 'Dependency Surface',
+                us: 'One renderer package',
+                them: 'Pipeline assembled from multiple packages'
+            },
             { name: 'Setup', us: 'One component', them: 'Pipeline assembly required' }
         ],
         prosUs: [
@@ -925,7 +954,7 @@ export const competitors: Competitor[] = [
             'Smaller plugin ecosystem than unified'
         ],
         consThem: [
-            'Not a component — outputs HTML strings requiring {@html}',
+            'Not a component — Svelte output requires application glue or another integration',
             'Steep learning curve (AST, visitors, transformers)',
             'Requires pipeline assembly with multiple packages',
             'Larger bundle footprint',
@@ -947,13 +976,13 @@ export const competitors: Competitor[] = [
         description:
             'Compare ProseMirror and @humanspeak/svelte-markdown: low-level editor framework assembly versus a ready-to-use Svelte 5 markdown renderer for apps.',
         website: 'https://prosemirror.net',
-        github: 'https://github.com/ProseMirror/prosemirror',
+        github: 'https://github.com/ProseMirror',
         npm: 'prosemirror-model',
         type: 'Editor Framework',
         approach: 'Low-level editor toolkit',
         features: [
             {
-                name: 'Svelte 5 Native',
+                name: 'Svelte 5 Compatibility',
                 us: true,
                 them: 'Via adapter (@prosemirror-adapter/svelte)'
             },
@@ -974,7 +1003,11 @@ export const competitors: Competitor[] = [
                 them: false,
                 note: 'ProseMirror is an editor toolkit, not a markdown renderer — rendering agent-streamed HTML where nested blocks resolve mid-stream is outside its scope.'
             },
-            { name: 'Bundle Size', us: '~15KB', them: '~80KB+ (core + markdown + view)' },
+            {
+                name: 'Dependency Surface',
+                us: 'Focused renderer',
+                them: 'Model + state + view + markdown modules'
+            },
             { name: 'Learning Curve', us: 'Minimal', them: 'Very steep' },
             { name: 'Collaborative Editing', us: false, them: true },
             { name: 'Setup Time', us: 'Minutes', them: 'Days to weeks' },
@@ -988,7 +1021,7 @@ export const competitors: Competitor[] = [
         ],
         prosThem: [
             'Build any kind of editor imaginable',
-            'Industry standard for rich text editing (~8,700 stars)',
+            'Industry-standard rich text toolkit with independently maintained modules',
             'Powers Google Docs-like editing experiences',
             'Collaborative editing support',
             'Maximum control over every aspect'
@@ -1001,9 +1034,10 @@ export const competitors: Competitor[] = [
         consThem: [
             'Extremely steep learning curve',
             'Massive effort to build a basic markdown editor',
-            'Svelte support is via community adapter',
+            'Svelte support is via a community adapter',
             'Overkill for rendering — like using a CNC machine to cut paper',
-            'Large bundle for display-only use cases'
+            'Core functionality is assembled from several independently versioned modules',
+            'Large dependency surface for display-only use cases'
         ],
         verdict:
             'Choose ProseMirror when you need to build a custom, production-grade editor with specific behaviors that no existing editor provides. Choose @humanspeak/svelte-markdown when you need to render markdown — it does in one component what would take weeks of ProseMirror development.',
