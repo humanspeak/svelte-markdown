@@ -5,6 +5,12 @@
     "self_npm": "@humanspeak/svelte-markdown",
     "self_repo": "humanspeak/svelte-markdown",
 
+    "github_handle": "jaysin586",
+    "repo_triage": {
+        "enabled": true,
+        "_comment": "Surfaces open PRs/issues NOT opened by github_handle, and threads where someone replied after your last comment. Uses self_repo. 'since' each run = previous last_run. Set GITHUB_TOKEN in the scheduled env to raise rate limits."
+    },
+
     "self_features": [
         "Marked-based parsing",
         "Secure HTML parsing via HTMLParser2 + XSS-safe defaults (protocol allowlist, on* handler stripping)",
@@ -51,6 +57,17 @@
         "download_tolerance": 0.3,
         "_comment": "compare-data.ts drives the /compare 'vs' pages (12 competitors incl. editors/parsers/preprocessors beyond the renderer watchlist). Validator checks svelte_peer for framework claims, hardcoded download figures, and them: feature cells on version bumps."
     },
+    "benchmarks": [
+        {
+            "page": "vs-svelte-streamdown",
+            "script": "scripts/stream-compare-bench.mjs",
+            "command": "pnpm build && pnpm preview  (then, in another shell) pnpm perf:stream-compare",
+            "measures": "streaming perf claims on the page: 'Nx faster under burst backpressure', DOM-footprint element counts, p95/throughput",
+            "compares": { "svelte-streamdown": "devDependency" },
+            "measured_against": { "svelte-streamdown": "3.1.2" },
+            "_comment": "Perf numbers are only valid for the pinned devDep version. When svelte-streamdown publishes past measured_against, flag the page and prompt a human to bump the devDep + re-run the script. Do NOT auto-run in the nightly job."
+        }
+    ],
 
     "slack_channel": "C0BP5BF1UTX",
     "_slack_channel_comment": "#claude-reports in human-speak.slack.com (public, home workspace). Confirmed auto-send works 2026-08-10. NOTE: sends only work while the humanspeak workspace is the connected Slack — the integration is single-workspace, and from another org this same channel is a Slack Connect channel that blocks bot sends (draft-only)."
