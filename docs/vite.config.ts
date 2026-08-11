@@ -12,13 +12,13 @@ import { sveltekit } from '@sveltejs/kit/vite'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 
-import { competitors } from './src/lib/compare-data'
+import { competitors, ours } from './src/lib/compare-data'
 import { docsConfig } from './src/lib/docs-config'
 
 const indexNowKey = '71d77690-dc98-4385-ac10-569e4ec5c303'
 
 export default defineConfig({
-    // Three docs-kit plugins run on `buildStart` and rewatch via Vite's
+    // The docs-kit plugins run on `buildStart` and rewatch via Vite's
     // own file watcher — no chokidar process, no package.json scripts to
     // maintain.
     //   * `demoManifestPlugin`     scans `src/lib/examples/<...>/demos/*.svelte`
@@ -37,10 +37,6 @@ export default defineConfig({
     //     plus `src/lib/examples/**/demos/*.svelte`, then emits
     //     `static/examples.md` and `static/examples/<slug>.md` with the
     //     live example prose, notes, and fenced Svelte demo source.
-    //   * `llmsFullPlugin`         concatenates every per-page mirror into
-    //     `static/llms-full.txt`, served at /llms-full.txt — the surface
-    //     agentic LLMs (Claude Code, Cursor) reach for when they want the
-    //     whole library in a single context window.
     //   * `llmsPlugin`             emits `static/llms.txt` — the compact
     //     discovery index per the llmstxt.org convention. The `prepend` +
     //     `append` slots inline our hand-curated positioning content
@@ -49,7 +45,12 @@ export default defineConfig({
     //     features, use cases; `static/llms-append.md`: external links)
     //     while the canonical-URL block and `## Documentation` link
     //     table auto-sync from the sitemap manifest so new doc pages
-    //     show up without a manual edit.
+    //     show up without a manual edit. It also emits Markdown mirrors
+    //     for the comparison index and every competitor page.
+    //   * `llmsFullPlugin`         concatenates every docs and comparison
+    //     mirror into `static/llms-full.txt`, served at /llms-full.txt —
+    //     the surface agentic LLMs (Claude Code, Cursor) reach for when
+    //     they want the whole library in a single context window.
     plugins: [
         sitemapManifestPlugin({
             blogDir: false,
@@ -68,17 +69,18 @@ export default defineConfig({
             siteUrl: 'https://markdown.svelte.page',
             sourceBaseUrl: 'https://github.com/humanspeak/svelte-markdown/blob/main/docs'
         }),
-        llmsFullPlugin({
-            siteUrl: 'https://markdown.svelte.page',
-            pkgName: '@humanspeak/svelte-markdown'
-        }),
         llmsPlugin({
             siteUrl: 'https://markdown.svelte.page',
             pkgName: 'Svelte Markdown',
             description:
                 'A powerful, customizable markdown and HTML renderer for Svelte 5 — built for rendering streaming AI agent output from Claude Code, ChatGPT, and agentic workflows. Built on Marked and HTMLParser2 with 24 markdown renderers, 83 HTML tag renderers, LRU token caching, allow/deny filtering, and XSS-safe defaults.',
             prepend: 'static/llms-prepend.md',
-            append: 'static/llms-append.md'
+            append: 'static/llms-append.md',
+            comparisons: { ours, competitors }
+        }),
+        llmsFullPlugin({
+            siteUrl: 'https://markdown.svelte.page',
+            pkgName: '@humanspeak/svelte-markdown'
         }),
         // Renders `static/og-default.png` + per-page social cards from
         // satori templates. `apply: 'build'` — dev skips it, so iterating

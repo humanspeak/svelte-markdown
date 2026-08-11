@@ -4,6 +4,7 @@ static/twitter-default.png
 static/docs/
 static/examples.md
 static/examples/
+static/compare/
 static/llms*.txt
 src/lib/sitemap-manifest.json
 src/lib/demo-manifest.json
