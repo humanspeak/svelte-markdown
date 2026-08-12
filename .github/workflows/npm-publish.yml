@@ -7,12 +7,18 @@ permissions:
     pull-requests: read
 
 # 2. Trigger conditions
+#
+# Runs on push to main rather than pull_request[closed]: GitHub withholds
+# secrets from pull_request events triggered by fork PRs — even the merged
+# close event — so publishes silently failed for external contributions
+# (first hit: humanspeak/svelte-motion PR #466). Push events always run in
+# the base repo with secrets. PR context (labels, title, URL) is recovered
+# by API lookup in check-if-merged. The version-bump commit is "[skip ci]"
+# so it can't retrigger this workflow.
 on:
-    pull_request:
-        types: [closed]
+    push:
         branches:
             - main
-            - '!dependabot/**'
         paths:
             - src/**
             - '!docs/**'
@@ -45,20 +51,70 @@ jobs:
         outputs:
             should_run: ${{ steps.check.outputs.should_run }}
             has_skip_label: ${{ steps.check.outputs.has_skip_label }}
+            has_major: ${{ steps.check.outputs.has_major }}
+            has_minor: ${{ steps.check.outputs.has_minor }}
+            pr_number: ${{ steps.check.outputs.pr_number }}
+            pr_title: ${{ steps.check.outputs.pr_title }}
+            pr_url: ${{ steps.check.outputs.pr_url }}
         steps:
+            # Push payloads carry no PR context, so recover the merged PR (for
+            # skip-publish/major/minor labels and release notes) from the commit.
+            - id: pr
+              if: github.event_name == 'push'
+              uses: actions/github-script@v9 # zizmor: ignore[unpinned-uses]
+              with:
+                  script: |
+                      const { owner, repo } = context.repo
+                      const { data: prs } =
+                          await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                              owner,
+                              repo,
+                              commit_sha: context.sha
+                          })
+                      const pr = prs.find((candidate) => candidate.merged_at)
+                      if (!pr) {
+                          core.info(`No merged PR associated with ${context.sha}`)
+                          return
+                      }
+                      const labels = pr.labels.map((label) => label.name)
+                      core.setOutput('found', 'true')
+                      core.setOutput('number', String(pr.number))
+                      core.setOutput('title', pr.title)
+                      core.setOutput('url', pr.html_url)
+                      core.setOutput('has_skip_label', String(labels.includes('skip-publish')))
+                      core.setOutput('has_major', String(labels.includes('major')))
+                      core.setOutput('has_minor', String(labels.includes('minor')))
+
             - id: check
               env:
                   EVENT_NAME: ${{ github.event_name }}
-                  PR_MERGED: ${{ github.event.pull_request.merged }}
-                  HAS_SKIP_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'skip-publish') }}
+                  PR_FOUND: ${{ steps.pr.outputs.found }}
+                  PR_NUMBER: ${{ steps.pr.outputs.number }}
+                  PR_TITLE: ${{ steps.pr.outputs.title }}
+                  PR_URL: ${{ steps.pr.outputs.url }}
+                  HAS_SKIP_LABEL: ${{ steps.pr.outputs.has_skip_label }}
+                  HAS_MAJOR: ${{ steps.pr.outputs.has_major }}
+                  HAS_MINOR: ${{ steps.pr.outputs.has_minor }}
               run: |
-                  if [[ "$EVENT_NAME" == "pull_request" && "$PR_MERGED" != "true" ]]; then
+                  # Pushes publish only when the commit landed via a merged PR;
+                  # direct pushes to main stay unpublished (same behavior as the
+                  # old pull_request[closed] trigger). Dispatch always runs.
+                  if [[ "$EVENT_NAME" == "push" && "$PR_FOUND" != "true" ]]; then
                       echo "should_run=false" >> $GITHUB_OUTPUT
                   else
                       echo "should_run=true" >> $GITHUB_OUTPUT
                   fi
 
-                  echo "has_skip_label=$HAS_SKIP_LABEL" >> $GITHUB_OUTPUT
+                  echo "has_skip_label=${HAS_SKIP_LABEL:-false}" >> $GITHUB_OUTPUT
+                  echo "has_major=${HAS_MAJOR:-false}" >> $GITHUB_OUTPUT
+                  echo "has_minor=${HAS_MINOR:-false}" >> $GITHUB_OUTPUT
+                  echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+                  {
+                      echo "pr_title<<PR_TITLE_EOF"
+                      echo "$PR_TITLE"
+                      echo "PR_TITLE_EOF"
+                  } >> $GITHUB_OUTPUT
+                  echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
 
     debug-check:
         needs: check-if-merged
@@ -156,8 +212,10 @@ jobs:
                   [[ $OUTPUT == *"::error"* ]] && exit 1 || exit 0
 
             - name: Upload Results
-              if: failure() && github.event_name == 'pull_request'
+              if: failure() && github.event_name == 'push' && needs.check-if-merged.outputs.pr_number != ''
               uses: actions/github-script@v9 # zizmor: ignore[unpinned-uses]
+              env:
+                  PR_NUMBER: ${{ needs.check-if-merged.outputs.pr_number }}
               with:
                   github-token: ${{ secrets.ACTIONS_KEY }}
                   script: |
@@ -183,7 +241,7 @@ jobs:
                       commentBody += '\nPlease remove these debugging statements before merging.';
 
                       github.rest.issues.createComment({
-                          issue_number: context.issue.number,
+                          issue_number: Number(process.env.PR_NUMBER),
                           owner: owner,
                           repo: repo,
                           body: commentBody
@@ -220,7 +278,7 @@ jobs:
             - uses: pnpm/action-setup@v6 # zizmor: ignore[unpinned-uses]
 
             - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
+              uses: actions/setup-node@v7 # zizmor: ignore[unpinned-uses]
               with:
                   node-version: ${{ matrix.node-version }}
 
@@ -232,6 +290,18 @@ jobs:
               run: |
                   pnpm build
                   pnpm test
+
+            - name: Upload Vitest Results
+              if: always()
+              # Telemetry only — a flaky upload must never block the release
+              # (a "fetch failed" here blocked the svelte-motion v0.9.0 publish
+              # on 2026-08-12).
+              continue-on-error: true
+              uses: trunk-io/analytics-uploader@main # zizmor: ignore[unpinned-uses]
+              with:
+                  junit-paths: junit-vitest.xml
+                  org-slug: ${{ secrets.TRUNK_ORG_SLUG }}
+                  token: ${{ secrets.TRUNK_TOKEN }}
 
             - name: Upload coverage to Coveralls
               uses: coverallsapp/github-action@v2 # zizmor: ignore[unpinned-uses]
@@ -258,7 +328,7 @@ jobs:
 
             - uses: pnpm/action-setup@v6 # zizmor: ignore[unpinned-uses]
 
-            - uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses]
+            - uses: actions/setup-node@v7 # zizmor: ignore[unpinned-uses]
               with:
                   node-version: 24
 
@@ -270,6 +340,18 @@ jobs:
 
             - name: Run Playwright tests
               run: pnpm run test:e2e
+
+            - name: Upload Playwright Results
+              if: always()
+              # Telemetry only — a flaky upload must never block the release
+              # (a "fetch failed" here blocked the svelte-motion v0.9.0 publish
+              # on 2026-08-12).
+              continue-on-error: true
+              uses: trunk-io/analytics-uploader@main # zizmor: ignore[unpinned-uses]
+              with:
+                  junit-paths: test-results/junit-playwright.xml
+                  org-slug: ${{ secrets.TRUNK_ORG_SLUG }}
+                  token: ${{ secrets.TRUNK_TOKEN }}
 
             - uses: actions/upload-artifact@v7 # zizmor: ignore[unpinned-uses]
               if: always()
@@ -324,7 +406,7 @@ jobs:
             - uses: pnpm/action-setup@v6 # zizmor: ignore[unpinned-uses]
 
             - name: Use Node.js - 24
-              uses: actions/setup-node@v6 # zizmor: ignore[unpinned-uses,cache-poisoning]
+              uses: actions/setup-node@v7 # zizmor: ignore[unpinned-uses,cache-poisoning]
               with:
                   node-version: 24
 
@@ -335,22 +417,19 @@ jobs:
               id: publish-check
               env:
                   EVENT_NAME: ${{ github.event_name }}
-                  IS_MERGED: ${{ github.event.pull_request.merged }}
-                  HAS_SKIP_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'skip-publish') }}
+                  HAS_SKIP_LABEL: ${{ needs.check-if-merged.outputs.has_skip_label }}
                   INPUT_VERSION: ${{ github.event.inputs.version_bump }}
               run: |
                   # Validate event name first
-                  if [[ "$EVENT_NAME" != "pull_request" && "$EVENT_NAME" != "workflow_dispatch" ]]; then
+                  if [[ "$EVENT_NAME" != "push" && "$EVENT_NAME" != "workflow_dispatch" ]]; then
                     echo "Invalid event type"
                     exit 1
                   fi
 
-                  # Check publishing conditions
-                  if [[ "$EVENT_NAME" == "pull_request" ]]; then
-                    if [[ "$IS_MERGED" != "true" ]]; then
-                      echo "PR not merged, skipping publish"
-                      echo "should_publish=false" >> $GITHUB_OUTPUT
-                    elif [[ "$HAS_SKIP_LABEL" == "true" ]]; then
+                  # Check publishing conditions (check-if-merged already gated
+                  # push events on an associated merged PR)
+                  if [[ "$EVENT_NAME" == "push" ]]; then
+                    if [[ "$HAS_SKIP_LABEL" == "true" ]]; then
                       echo "Publishing skipped due to skip-publish label"
                       echo "should_publish=false" >> $GITHUB_OUTPUT
                     else
@@ -364,13 +443,15 @@ jobs:
                   fi
 
             - name: Create Comment on Skip
-              if: github.event_name == 'pull_request' && steps.publish-check.outputs.should_publish == 'false'
+              if: github.event_name == 'push' && steps.publish-check.outputs.should_publish == 'false' && needs.check-if-merged.outputs.pr_number != ''
               uses: actions/github-script@v9 # zizmor: ignore[unpinned-uses]
+              env:
+                  PR_NUMBER: ${{ needs.check-if-merged.outputs.pr_number }}
               with:
                   github-token: ${{ secrets.ACTIONS_KEY }}
                   script: |
                       github.rest.issues.createComment({
-                          issue_number: context.issue.number,
+                          issue_number: Number(process.env.PR_NUMBER),
                           owner: context.repo.owner,
                           repo: context.repo.repo,
                           body: '⏭️ NPM publishing was skipped due to the `skip-publish` label.'
@@ -392,8 +473,8 @@ jobs:
               if: steps.publish-check.outputs.should_publish == 'true'
               id: version-type
               env:
-                  HAS_MAJOR: ${{ contains(github.event.pull_request.labels.*.name, 'major') }}
-                  HAS_MINOR: ${{ contains(github.event.pull_request.labels.*.name, 'minor') }}
+                  HAS_MAJOR: ${{ needs.check-if-merged.outputs.has_major }}
+                  HAS_MINOR: ${{ needs.check-if-merged.outputs.has_minor }}
                   INPUT_VERSION: ${{ github.event.inputs.version_bump }}
               run: |
                   # Function to validate version bump type
@@ -427,8 +508,8 @@ jobs:
               if: steps.publish-check.outputs.should_publish == 'true'
               id: version
               env:
-                  PR_TITLE: ${{ github.event.pull_request.title }}
-                  PR_URL: ${{ github.event.pull_request.html_url }}
+                  PR_TITLE: ${{ needs.check-if-merged.outputs.pr_title }}
+                  PR_URL: ${{ needs.check-if-merged.outputs.pr_url }}
                   BUMP_TYPE: ${{ steps.version-type.outputs.bump }}
                   GITHUB_TOKEN: ${{ secrets.ACTIONS_KEY }}
                   GPG_KEY_ID: ${{ steps.import_gpg.outputs.keyid }}
@@ -506,12 +587,12 @@ jobs:
                   NEW_VERSION: ${{ steps.version.outputs.new_version }}
                   EVENT_NAME: ${{ github.event_name }}
                   CUSTOM_MESSAGE: ${{ github.event.inputs.custom_message }}
-                  PR_TITLE: ${{ github.event.pull_request.title }}
-                  PR_URL: ${{ github.event.pull_request.html_url }}
+                  PR_TITLE: ${{ needs.check-if-merged.outputs.pr_title }}
+                  PR_URL: ${{ needs.check-if-merged.outputs.pr_url }}
               run: |
                   BODY="Changes in this Release
                   ${CUSTOM_MESSAGE:-$PR_TITLE}"
-                  if [[ "$EVENT_NAME" == "pull_request" ]]; then
+                  if [[ "$EVENT_NAME" == "push" && -n "$PR_URL" ]]; then
                       BODY="$BODY
 
                   For more details, see the [Pull Request]($PR_URL)"
@@ -549,13 +630,15 @@ jobs:
                   git push --delete origin "$RELEASE_VERSION" || true
 
             - name: Notify on failure
-              if: failure()
+              if: failure() && needs.check-if-merged.outputs.pr_number != ''
               uses: actions/github-script@v9 # zizmor: ignore[unpinned-uses]
+              env:
+                  PR_NUMBER: ${{ needs.check-if-merged.outputs.pr_number }}
               with:
                   github-token: ${{ secrets.ACTIONS_KEY }}
                   script: |
                       github.rest.issues.createComment({
-                          issue_number: context.issue.number,
+                          issue_number: Number(process.env.PR_NUMBER),
                           owner: context.repo.owner,
                           repo: context.repo.repo,
                           body: '❌ Release workflow failed. Please check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
