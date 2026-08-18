@@ -3,7 +3,7 @@
     "last_run": "2026-08-18",
     "run_type": "delta",
     "snapshot": {
-        "fetched_at": "2026-08-18T07:00:27Z",
+        "fetched_at": "2026-08-18T11:00:33Z",
         "project": "@humanspeak/svelte-markdown",
         "self": {
             "npm": "@humanspeak/svelte-markdown",
@@ -132,6 +132,7 @@
                 }
             ]
         },
+        "upstream": [],
         "competitors": [
             {
                 "npm": "svelte-markdown",
@@ -275,5 +276,210 @@
             "first_seen": "2026-08-18",
             "note": "Surfaced in discovery; 0.4.0 last published 2026-01-12, ~30 wkly DL. Too small/stale to track \u2014 recorded to avoid re-surfacing it each week."
         }
-    ]
+    ],
+    "seo": {
+        "export_date": "2026-08-18",
+        "striking_distance": [
+            {
+                "query": "svelte markdown",
+                "impressions": 272.0,
+                "position": 11.03
+            },
+            {
+                "query": "\"milkdown\" \"javascript:\" xss",
+                "impressions": 230.0,
+                "position": 7.11
+            },
+            {
+                "query": "tiptap markdown",
+                "impressions": 212.0,
+                "position": 19.46
+            },
+            {
+                "query": "tiptap svelte",
+                "impressions": 197.0,
+                "position": 17.46
+            },
+            {
+                "query": "@humanspeak/svelte-markdown",
+                "impressions": 98.0,
+                "position": 4.71
+            },
+            {
+                "query": "svelte markdown renderer",
+                "impressions": 85.0,
+                "position": 5.74
+            },
+            {
+                "query": "svelte-markdown",
+                "impressions": 62.0,
+                "position": 9.39
+            },
+            {
+                "query": "svelte-exmarkdown",
+                "impressions": 51.0,
+                "position": 10.86
+            },
+            {
+                "query": "svelte marked",
+                "impressions": 42.0,
+                "position": 8.88
+            },
+            {
+                "query": "svelte markdown editor",
+                "impressions": 37.0,
+                "position": 11.08
+            },
+            {
+                "query": "markdown playground",
+                "impressions": 35.0,
+                "position": 12.51
+            },
+            {
+                "query": "svelte render markdown",
+                "impressions": 34.0,
+                "position": 6.15
+            },
+            {
+                "query": "svelte tiptap",
+                "impressions": 30.0,
+                "position": 17.7
+            },
+            {
+                "query": "markdown svelte",
+                "impressions": 29.0,
+                "position": 6.72
+            },
+            {
+                "query": "svelte custom renderer",
+                "impressions": 26.0,
+                "position": 7.5
+            },
+            {
+                "query": "\"alerttriangle\" \"lucide-svelte\"",
+                "impressions": 26.0,
+                "position": 7.81
+            },
+            {
+                "query": "svelte-markdown npm package",
+                "impressions": 26.0,
+                "position": 9.81
+            },
+            {
+                "query": "site:svelte.page",
+                "impressions": 24.0,
+                "position": 18.21
+            },
+            {
+                "query": "svelte-markdown npm",
+                "impressions": 21.0,
+                "position": 8.81
+            },
+            {
+                "query": "marked svelte",
+                "impressions": 20.0,
+                "position": 13.7
+            }
+        ],
+        "underperforming_pages": [
+            {
+                "page": "https://markdown.svelte.page/compare/vs-milkdown",
+                "impressions": 797.0,
+                "position": 9.87,
+                "ctr": 0.63
+            },
+            {
+                "page": "https://markdown.svelte.page/compare/vs-tiptap",
+                "impressions": 639.0,
+                "position": 18.19,
+                "ctr": 0.16
+            },
+            {
+                "page": "https://markdown.svelte.page/compare/vs-bytemd",
+                "impressions": 375.0,
+                "position": 9.56,
+                "ctr": 0.27
+            },
+            {
+                "page": "https://markdown.svelte.page/compare/vs-carta",
+                "impressions": 359.0,
+                "position": 10.99,
+                "ctr": 0.84
+            },
+            {
+                "page": "https://markdown.svelte.page/docs/getting-started",
+                "impressions": 255.0,
+                "position": 13.91,
+                "ctr": 1.96
+            },
+            {
+                "page": "https://markdown.svelte.page/docs/advanced/marked-extensions",
+                "impressions": 237.0,
+                "position": 9.23,
+                "ctr": 0.84
+            },
+            {
+                "page": "https://markdown.svelte.page/compare/vs-mdsvex",
+                "impressions": 233.0,
+                "position": 14.3,
+                "ctr": 0.43
+            },
+            {
+                "page": "https://markdown.svelte.page/compare/vs-marked",
+                "impressions": 231.0,
+                "position": 14.66,
+                "ctr": 0.87
+            },
+            {
+                "page": "https://markdown.svelte.page/docs/advanced/syntax-highlighting",
+                "impressions": 222.0,
+                "position": 22.73,
+                "ctr": 0.9
+            },
+            {
+                "page": "https://markdown.svelte.page/compare",
+                "impressions": 163.0,
+                "position": 14.67,
+                "ctr": 0.61
+            },
+            {
+                "page": "https://markdown.svelte.page/docs/api/svelte-markdown",
+                "impressions": 142.0,
+                "position": 27.06,
+                "ctr": 1.41
+            },
+            {
+                "page": "https://markdown.svelte.page/compare/vs-unified-remark",
+                "impressions": 120.0,
+                "position": 17.39,
+                "ctr": 0.0
+            },
+            {
+                "page": "https://markdown.svelte.page/examples",
+                "impressions": 119.0,
+                "position": 15.23,
+                "ctr": 0.0
+            },
+            {
+                "page": "https://markdown.svelte.page/examples/github-alerts",
+                "impressions": 115.0,
+                "position": 23.84,
+                "ctr": 0.0
+            },
+            {
+                "page": "https://markdown.svelte.page/examples/llm-streaming",
+                "impressions": 110.0,
+                "position": 24.09,
+                "ctr": 0.0
+            }
+        ],
+        "recommendations_open": [
+            "rewrite vs-tiptap title/meta (639 impr, pos 18, 0.16% CTR \u2014 intent/title problem)",
+            "write dedicated markdown-XSS/security page (markdown xss KD4; milkdown-xss cluster 230 impr pos 7)",
+            "dedicated hub page for 'svelte markdown' head term (pos 11 via homepage)",
+            "dedicated 'marked in Svelte' page (rank pos 8-13 with no target URL)",
+            "fix structured-data validation errors on 11 pages",
+            "wire up IndexNow (38 eligible pages)"
+        ]
+    }
 }
