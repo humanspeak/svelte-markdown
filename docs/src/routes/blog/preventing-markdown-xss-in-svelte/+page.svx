@@ -39,6 +39,10 @@ This is the smallest payload that demonstrates the problem:
 [Review the report](javascript:stealCookies())
 ```
 
+That is the easy-to-miss distinction: a markdown-native link can carry `javascript:` without
+containing an HTML tag at all. Sanitizing only the raw HTML-looking parts of a markdown string
+does not close the XSS boundary.
+
 It reads like an ordinary markdown link. A few neighboring variants are just as important:
 
 ```md
@@ -113,7 +117,18 @@ These defaults are XSS hardening. They are not a complete DOM sanitizer, and the
 
 That distinction matters. Inline styles are not comprehensively sanitized. Less-common URL containers such as `srcset` may need an application-specific rule. An iframe with a permitted HTTPS URL can still load a site you would rather not embed. HTML and browser behavior are broad enough that fully untrusted raw HTML deserves a dedicated sanitizer and a narrowly defined policy.
 
-For that case, combine the built-in markdown URL checks with DOMPurify or an equivalent sanitizer. The [security guide](/docs/advanced/security) covers the hooks and the defense-in-depth pattern. Sanitizing only the HTML-looking parts of a markdown string is not sufficient: a markdown-native link can carry `javascript:` without containing an HTML tag at all.
+For that case, combine the built-in markdown URL checks with DOMPurify or an equivalent sanitizer. The [security guide](/docs/advanced/security) covers the hooks and the defense-in-depth pattern.
+
+## How to render markdown safely: a review checklist
+
+When rendering untrusted markdown, verify all four layers:
+
+- **Protocol allowlist:** reject dangerous link and image protocols, including `javascript:`, `data:`, and `vbscript:`.
+- **Attribute policy:** strip `on*` handlers and `srcdoc` before they reach a renderer.
+- **HTML policy:** block iframe, form, embed, and other tags your product does not need.
+- **Layered sanitizer:** pass fully untrusted raw HTML through a maintained DOM sanitizer configured with your application's allowlist.
+
+Run those checks against real payloads, not just configuration. At minimum, test a `javascript:` link, a `data:` image, an `onerror` handler, and an iframe with `srcdoc`.
 
 ## Tighten the allowed HTML surface
 
@@ -167,16 +182,7 @@ The same approach works with `sanitizeAttributes` when your policy depends on th
 
 Markdown libraries make different trust assumptions. Some expose an allow-all URL prefix as their default; others return an HTML string and leave the entire policy to you. That can be reasonable for trusted documents and surprising for comments or chat.
 
-Before choosing a renderer, test its current defaults with a `javascript:` link, a `data:` image, an `onerror` handler, and an iframe with `srcdoc`. Do not infer the answer from the word “markdown.” If you are comparing editor-oriented tools, our [Milkdown comparison](/compare/vs-milkdown) is one useful starting point, but the renderer's own security documentation should be the final authority.
-
-## A short review checklist
-
-When rendering untrusted markdown, verify all four layers:
-
-- **Protocol allowlist:** dangerous link and image protocols are rejected.
-- **Attribute policy:** `on*` handlers and `srcdoc` are stripped.
-- **HTML policy:** iframe, form, embed, and other unnecessary tags are blocked.
-- **Layered sanitizer:** fully untrusted raw HTML passes through a maintained DOM sanitizer with your application's allowlist.
+Before choosing a renderer, test its current defaults rather than inferring the answer from the word “markdown.” If you are comparing editor-oriented tools, our [Milkdown comparison](/compare/vs-milkdown) is one useful starting point, but the renderer's own security documentation should be the final authority.
 
 Safe rendering is easier to maintain when the baseline is already present. Install the package with `pnpm add @humanspeak/svelte-markdown`, then follow the [getting-started guide](/docs/getting-started) to render untrusted markdown in one component.
 

@@ -35,7 +35,7 @@ That decision is more important than the package name. A documentation site buil
 
 In practice, there are four useful approaches in Svelte 5. Here is the map before we look at the code.
 
-## Four ways to render markdown in Svelte
+## Four Svelte markdown approaches
 
 | Approach | Dynamic at runtime | Svelte components per node | Safe by default | Streaming | Best fit |
 |---|---:|---:|---:|---:|---|
@@ -152,9 +152,9 @@ The `{@html}` path is not automatically unsafe, but it creates a clear obligatio
 
 Standard markdown is often only the beginning. The renderer supports marked extensions and includes first-party integrations for common application content:
 
-- **KaTeX** renders inline and block mathematics.
-- **Mermaid** turns diagram fences into rendered diagrams.
-- **Shiki** provides grammar-aware syntax highlighting for code blocks.
+- **[KaTeX](/docs/advanced/marked-extensions#step-by-step-katex-math-rendering)** renders inline and block mathematics.
+- **[Mermaid](/docs/advanced/marked-extensions#step-by-step-mermaid-diagrams)** turns diagram fences into rendered diagrams.
+- **[Shiki](/docs/advanced/syntax-highlighting)** provides grammar-aware syntax highlighting for code blocks.
 - **GitHub-style alerts** add note, tip, warning, and caution blocks.
 - **Footnotes** add references and a footnote section without hand-written HTML.
 
@@ -175,7 +175,7 @@ Choose based on when content exists and what the output needs to become:
 - **Use mdsvex** when authors write content in the repository and it can be compiled at build time.
 - **Use a runtime component renderer** when markdown comes from an API, CMS, user, preview, or chat, or when links and code blocks need Svelte behavior.
 
-If you are comparing runtime component libraries, see [Svelte Exmarkdown vs Svelte Markdown](/compare/vs-svelte-exmarkdown). If the parser itself is the decision, see [marked vs Svelte Markdown](/compare/vs-marked).
+If you are comparing runtime component libraries, see [Svelte Exmarkdown vs Svelte Markdown](/compare/vs-svelte-exmarkdown). For an AI-focused renderer, compare [Svelte Streamdown vs Svelte Markdown](/compare/vs-svelte-streamdown). If the parser itself is the decision, see [marked vs Svelte Markdown](/compare/vs-marked).
 
 There is no single correct tool for every markdown document. There is, however, a clean default for dynamic Svelte applications: one component, runtime markdown, per-node control, and security hardening already enabled. Start with the [getting-started guide](/docs/getting-started), then add only the rendering and extension behavior your application needs.
 
