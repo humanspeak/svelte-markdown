@@ -3,7 +3,7 @@ packages:
     - docs
 
 allowBuilds:
-    '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/3e332eb43d0dddd8a9033307755f35da5e886e41': true
+    '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/728b1f534ebcf10674a04839cbd987d7e000be16': true
     '@humanspeak/docs-kit': true
     esbuild: true
     sharp: true
