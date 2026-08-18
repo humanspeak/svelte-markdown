@@ -209,6 +209,7 @@ export const competitors: Competitor[] = [
     {
         slug: 'vs-mdsvex',
         name: 'MDsveX',
+        seoTitle: 'MDsveX vs Svelte Markdown: Build-Time or Runtime?',
         tagline: 'Build-Time Preprocessor vs Runtime Component',
         description:
             'Compare MDsveX and @humanspeak/svelte-markdown: build-time .svx preprocessing versus runtime Svelte 5 markdown rendering, caching, and HTML control.',
@@ -320,9 +321,10 @@ export const competitors: Competitor[] = [
     {
         slug: 'vs-tiptap',
         name: 'Tiptap',
-        tagline: 'Heavyweight Editor vs Lightweight Renderer',
+        seoTitle: 'Tiptap vs Svelte Markdown: Editor or Renderer?',
+        tagline: 'Do you need to edit markdown, or just render it?',
         description:
-            'Compare Tiptap and @humanspeak/svelte-markdown: a ProseMirror rich text editor versus a focused Svelte 5 markdown renderer for display-only content.',
+            'Tiptap is a ProseMirror rich-text editor; Svelte Markdown is a zero-config Svelte 5 renderer for read-only markdown. Editing vs rendering — which do you need?',
         website: 'https://tiptap.dev',
         github: 'https://github.com/ueberdosis/tiptap',
         npm: '@tiptap/core',
@@ -398,6 +400,7 @@ export const competitors: Competitor[] = [
     {
         slug: 'vs-markdown-it',
         name: 'markdown-it',
+        seoTitle: 'markdown-it vs Svelte Markdown: Parser or Component?',
         tagline: 'Raw Parser vs Svelte Component',
         description:
             'Compare markdown-it and @humanspeak/svelte-markdown: raw HTML string parsing versus typed Svelte 5 renderers with caching, snippets, and HTML control.',
@@ -496,6 +499,7 @@ export const competitors: Competitor[] = [
     {
         slug: 'vs-marked',
         name: 'marked',
+        seoTitle: 'marked vs Svelte Markdown: Parser or Svelte Component?',
         tagline: 'The Engine Under Our Hood',
         description:
             'Compare marked and @humanspeak/svelte-markdown: direct markdown parsing versus a Svelte 5 component layer with renderers, caching, and safety controls.',
@@ -591,6 +595,7 @@ export const competitors: Competitor[] = [
     {
         slug: 'vs-milkdown',
         name: 'Milkdown',
+        seoTitle: 'Milkdown vs Svelte Markdown: Editor or Renderer?',
         tagline: 'Plugin-Driven Editor vs Focused Renderer',
         description:
             'Compare Milkdown and @humanspeak/svelte-markdown: a ProseMirror markdown editor versus a lightweight Svelte 5 component for rendering markdown content.',
@@ -754,6 +759,7 @@ export const competitors: Competitor[] = [
     {
         slug: 'vs-carta',
         name: 'Carta',
+        seoTitle: 'Carta vs Svelte Markdown: Editor or Renderer?',
         tagline: 'Editor + Viewer vs Pure Renderer',
         description:
             'Compare Carta and @humanspeak/svelte-markdown: a Svelte markdown editor and viewer versus a focused Svelte 5 renderer with caching and HTML filtering.',
@@ -839,6 +845,7 @@ export const competitors: Competitor[] = [
     {
         slug: 'vs-bytemd',
         name: 'ByteMD',
+        seoTitle: 'ByteMD vs Svelte Markdown: Editor or Renderer?',
         tagline: 'Full Editor vs Pure Renderer',
         description:
             'Compare ByteMD and @humanspeak/svelte-markdown: a hackable markdown editor from ByteDance versus a focused Svelte 5 renderer for app content.',
@@ -924,6 +931,7 @@ export const competitors: Competitor[] = [
     {
         slug: 'vs-unified-remark',
         name: 'unified / remark',
+        seoTitle: 'unified/remark vs Svelte Markdown: Pipeline or Component?',
         tagline: 'AST Pipeline vs Component Renderer',
         description:
             'Compare unified/remark and @humanspeak/svelte-markdown: AST content pipelines versus a direct marked-based Svelte 5 renderer with practical defaults.',
@@ -1011,6 +1019,7 @@ export const competitors: Competitor[] = [
     {
         slug: 'vs-prosemirror',
         name: 'ProseMirror',
+        seoTitle: 'ProseMirror vs Svelte Markdown: Editor or Renderer?',
         tagline: 'Editor Toolkit vs Ready-Made Renderer',
         description:
             'Compare ProseMirror and @humanspeak/svelte-markdown: low-level editor framework assembly versus a ready-to-use Svelte 5 markdown renderer for apps.',
