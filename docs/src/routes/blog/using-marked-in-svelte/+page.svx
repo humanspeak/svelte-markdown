@@ -1,6 +1,6 @@
 ---
 title: Using marked in Svelte (Safely)
-date: 2026-08-18
+date: '2026-08-18T12:00:00-04:00'
 description: How to use the marked parser in Svelte 5 — the {@html} footgun, why you get an HTML string instead of components, and how to render marked output safely.
 tags:
     - marked
@@ -18,7 +18,7 @@ readingTime: 7
     const post: BlogPostMeta = {
         slug: 'using-marked-in-svelte',
         title: 'Using marked in Svelte (Safely)',
-        date: '2026-08-18',
+        date: '2026-08-18T12:00:00-04:00',
         description:
             'How to use the marked parser in Svelte 5 — the {@html} footgun, why you get an HTML string instead of components, and how to render marked output safely.',
         tags: ['marked', 'markdown', 'svelte-5', 'security'],

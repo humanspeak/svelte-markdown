@@ -1,6 +1,6 @@
 ---
 title: Rendering Agent HTML Safely
-date: 2026-05-13
+date: '2026-05-13T12:00:00-04:00'
 description: Render AI-generated HTML safely in Svelte 5 with @humanspeak/svelte-markdown, covering XSS defenses, sanitization hooks, examples, and known gaps.
 tags:
     - ai-agents
@@ -19,7 +19,7 @@ readingTime: 9
     const post: BlogPostMeta = {
         slug: 'rendering-agent-html-safely',
         title: 'Rendering Agent HTML Safely',
-        date: '2026-05-13',
+        date: '2026-05-13T12:00:00-04:00',
         description:
             'Render AI-generated HTML safely in Svelte 5 with @humanspeak/svelte-markdown, covering XSS defenses, sanitization hooks, examples, and known gaps.',
         tags: ['ai-agents', 'security', 'streaming', 'xss', 'svelte-5'],
@@ -42,16 +42,9 @@ This is good news for the kinds of outputs we want. It is less good news for who
 
 ## The shape of agent HTML output
 
-If you’ve been rendering markdown in your product and your agent has been emitting `**bold**` and `# headings`, the worst payload you could plausibly worry about is a malformed link. The whole input shape was opinionated about what could be expressed.
+Markdown limits what an agent can express. Once you accept HTML, the surface expands to browser navigation, event handlers, embedded documents, forms, styles, and every other capability exposed by an element or attribute.
 
-Once you accept HTML from an agent, the attack surface widens to roughly _everything a browser can do_:
-
-- `<a href="javascript:steal()">` — clickjacking via protocol abuse
-- `<img src=x onerror="...">` — event handlers on any element
-- `<iframe srcdoc="...">` — arbitrary HTML injection
-- `<form action="javascript:...">` — credentials redirected to attacker-controlled handlers
-- `<style>body{display:none}</style>` — visual hijacking
-- `<a href="data:text/html,...">` — data URIs that the browser dutifully renders
+The full payload taxonomy belongs in [Preventing Markdown XSS in Svelte](/blog/preventing-markdown-xss-in-svelte), including the easy-to-miss case where a markdown-native link carries a dangerous protocol without containing raw HTML. The agent-specific concern is how that same untrusted surface behaves while the document is still arriving.
 
 The agent isn’t malicious. _Prompt injection is._ A user pastes a webpage into the chat, the model dutifully echoes some of its HTML into the response, and now your renderer is asked to put attacker-controlled markup into the DOM.
 
@@ -69,12 +62,7 @@ Below is what each of those looks like in practice.
 
 ## Layer 1 — Defaults you don’t have to think about
 
-`<SvelteMarkdown source={agentResponse} />` already applies, before any token reaches a renderer or snippet:
-
-- **URL protocol allowlist** for `href`, `src`, `action`, `formaction`, `cite`, `data`, and `poster` — only `http:`, `https:`, `mailto:`, `tel:`, and relative URLs survive. `javascript:`, `vbscript:`, `data:`, and `blob:` are blocked, including mixed-case and leading-whitespace variants.
-- **Event-handler stripping** — every `on*` attribute is removed: `onclick`, `onerror`, `onload`, `onsubmit`, all of them.
-- **`srcdoc` stripping** — iframes can’t inject arbitrary HTML through the `srcdoc` attribute.
-- **No `<script>` or `<style>` renderer** — both tags fall through to a placeholder that renders them as visible escaped text. They’re inert.
+`<SvelteMarkdown source={agentResponse} />` applies the package's URL and attribute policy before any token reaches a renderer or snippet. The [XSS guide](/blog/preventing-markdown-xss-in-svelte#what-safe-by-default-looks-like) documents the complete default policy and its limits.
 
 This is the case for both static input and streaming input. Sanitization runs in the parser, not the renderer, which means it’s applied per token as chunks arrive:
 

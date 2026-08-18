@@ -1,6 +1,6 @@
 ---
 title: Preventing Markdown XSS in Svelte
-date: 2026-08-18
+date: '2026-08-18T12:00:00-04:00'
 description: 'How markdown becomes an XSS vector in Svelte — javascript: URLs, on* handlers, data: URIs — and how to render user or AI markdown safely by default.'
 tags:
     - security
@@ -18,7 +18,7 @@ readingTime: 8
     const post: BlogPostMeta = {
         slug: 'preventing-markdown-xss-in-svelte',
         title: 'Preventing Markdown XSS in Svelte',
-        date: '2026-08-18',
+        date: '2026-08-18T12:00:00-04:00',
         description:
             'How markdown becomes an XSS vector in Svelte — javascript: URLs, on* handlers, data: URIs — and how to render user or AI markdown safely by default.',
         tags: ['security', 'xss', 'markdown', 'svelte-5'],

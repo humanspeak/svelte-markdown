@@ -1,6 +1,6 @@
 ---
 title: Rendering Markdown in Svelte 5 (The Complete Guide)
-date: 2026-08-18
+date: '2026-08-18T12:00:00-04:00'
 description: A complete guide to rendering markdown in Svelte 5 — built-ins vs parsers vs preprocessors vs component renderers, custom renderers, security, and streaming.
 tags:
     - markdown
@@ -18,7 +18,7 @@ readingTime: 12
     const post: BlogPostMeta = {
         slug: 'rendering-markdown-in-svelte',
         title: 'Rendering Markdown in Svelte 5 (The Complete Guide)',
-        date: '2026-08-18',
+        date: '2026-08-18T12:00:00-04:00',
         description:
             'A complete guide to rendering markdown in Svelte 5 — built-ins vs parsers vs preprocessors vs component renderers, custom renderers, security, and streaming.',
         tags: ['markdown', 'rendering', 'svelte-5', 'guide'],
