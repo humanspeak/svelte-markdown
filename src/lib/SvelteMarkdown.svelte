@@ -11,7 +11,7 @@
 
  <SvelteMarkdown
    source={markdownString}
-   options={{ headerIds: false }}
+   options={{ gfm: true, breaks: true }}
    renderers={{ link: CustomLink }}
  />
  ```

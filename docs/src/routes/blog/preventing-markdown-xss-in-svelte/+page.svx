@@ -1,0 +1,189 @@
+---
+title: Preventing Markdown XSS in Svelte
+date: '2026-08-18T12:00:00-04:00'
+description: 'How markdown becomes an XSS vector in Svelte — javascript: URLs, on* handlers, data: URIs — and how to render user or AI markdown safely by default.'
+tags:
+    - security
+    - xss
+    - markdown
+    - svelte-5
+author: Jason Kummerl
+readingTime: 8
+---
+
+<script lang="ts">
+    import { BlogPostV2, type BlogPostMeta } from '@humanspeak/docs-kit/blog'
+    import { docsConfig } from '$lib/docs-config'
+
+    const post: BlogPostMeta = {
+        slug: 'preventing-markdown-xss-in-svelte',
+        title: 'Preventing Markdown XSS in Svelte',
+        date: '2026-08-18T12:00:00-04:00',
+        description:
+            'How markdown becomes an XSS vector in Svelte — javascript: URLs, on* handlers, data: URIs — and how to render user or AI markdown safely by default.',
+        tags: ['security', 'xss', 'markdown', 'svelte-5'],
+        author: 'Jason Kummerl',
+        readingTime: 8
+    }
+</script>
+
+<BlogPostV2 {post} config={docsConfig}>
+
+Markdown has a reassuringly small vocabulary. Headings, emphasis, lists, links: none of it looks much like executable code. That makes it easy to treat a markdown string as harmless text.
+
+The browser does not see it that way. Once markdown becomes HTML, a link is an `href`, an image is a `src`, and any raw HTML in the source becomes part of the page. If one of those values came from a user, a CMS, or an LLM, your markdown renderer may also be an XSS boundary.
+
+This is the smallest payload that demonstrates the problem:
+
+```md
+[Review the report](javascript:stealCookies())
+```
+
+That is the easy-to-miss distinction: a markdown-native link can carry `javascript:` without
+containing an HTML tag at all. Sanitizing only the raw HTML-looking parts of a markdown string
+does not close the XSS boundary.
+
+It reads like an ordinary markdown link. A few neighboring variants are just as important:
+
+```md
+![preview](data:text/html,<script>alert(1)</script>)
+[open](vbscript:msgbox(1))
+
+<img src=x onerror="stealCookies()">
+<a href="/account" onclick="stealCookies()">Account</a>
+<iframe srcdoc="<script>stealCookies()</script>"></iframe>
+```
+
+Not every browser executes every historical payload, but that is the wrong standard for a security policy. The policy should reject dangerous protocols and executable attributes before the browser has a chance to interpret them.
+
+## Why this comes up more often now
+
+Markdown used to be mostly authored content: README files, documentation, and blog posts committed alongside code. Today we also render comments, support tickets, chat messages, CMS fields, and model output. The person rendering the markdown frequently does not control the string.
+
+LLM output deserves the same treatment as user input. The model does not need to be malicious. It can repeat markup from retrieved content, follow an injected instruction, or produce a link it was given elsewhere. The trust boundary is the input, not the apparent intent of its author.
+
+For the broader HTML-output case, see [Rendering Agent HTML Safely](/blog/rendering-agent-html-safely). Here we are concentrating on the quieter markdown-specific problem: URLs and attributes that look inert in source form.
+
+## The familiar Svelte one-liner is not a sanitizer
+
+A common implementation parses markdown into an HTML string, then asks Svelte to insert it:
+
+```svelte
+<script lang="ts">
+    import { marked } from 'marked'
+
+    const source = '[Review the report](javascript:stealCookies())'
+    const html = marked.parse(source)
+</script>
+
+{@html html}
+```
+
+`{@html}` means exactly what it says: insert this HTML. Svelte does not sanitize the string, validate its URLs, or remove event handlers. That is useful when the HTML is trusted, but it is a dangerous default for content you do not control.
+
+This is not a criticism of `marked`. A parser's job is to parse. If you choose the HTML-string path, sanitization is part of your application. [Using marked in Svelte](/blog/using-marked-in-svelte) walks through that tradeoff in more detail.
+
+## What safe by default looks like
+
+`@humanspeak/svelte-markdown` applies its URL and attribute policy before tokens reach a renderer. You do not opt into the defaults:
+
+- `http:`, `https:`, `mailto:`, `tel:`, and relative URLs are allowed.
+- `javascript:`, `data:`, `vbscript:`, malformed URLs, and other protocols are blocked.
+- Every `on*` event-handler attribute is removed.
+- `srcdoc` is removed from iframes.
+- URL-bearing HTML attributes such as `href`, `src`, `action`, `formaction`, `cite`, `data`, and `poster` pass through the URL sanitizer.
+
+That means this is a complete, runnable baseline:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const untrusted = `
+[Click me](javascript:alert(document.domain))
+
+<img src="x" onerror="alert(document.domain)">
+`
+</script>
+
+<SvelteMarkdown source={untrusted} />
+```
+
+The link's dangerous destination is neutralized, and the image's `onerror` handler never reaches the renderer. The same policy applies to markdown links, markdown images, and raw HTML attributes.
+
+## The honest boundary
+
+These defaults are XSS hardening. They are not a complete DOM sanitizer, and the package does not claim to replace DOMPurify.
+
+That distinction matters. Inline styles are not comprehensively sanitized. Less-common URL containers such as `srcset` may need an application-specific rule. An iframe with a permitted HTTPS URL can still load a site you would rather not embed. HTML and browser behavior are broad enough that fully untrusted raw HTML deserves a dedicated sanitizer and a narrowly defined policy.
+
+For that case, combine the built-in markdown URL checks with DOMPurify or an equivalent sanitizer. The [security guide](/docs/advanced/security) covers the hooks and the defense-in-depth pattern.
+
+## How to render markdown safely: a review checklist
+
+When rendering untrusted markdown, verify all four layers:
+
+- **Protocol allowlist:** reject dangerous link and image protocols, including `javascript:`, `data:`, and `vbscript:`.
+- **Attribute policy:** strip `on*` handlers and `srcdoc` before they reach a renderer.
+- **HTML policy:** block iframe, form, embed, and other tags your product does not need.
+- **Layered sanitizer:** pass fully untrusted raw HTML through a maintained DOM sanitizer configured with your application's allowlist.
+
+Run those checks against real payloads, not just configuration. At minimum, test a `javascript:` link, a `data:` image, an `onerror` handler, and an iframe with `srcdoc`.
+
+## Tighten the allowed HTML surface
+
+If your product does not need arbitrary HTML, the simplest policy is often to render less of it. `allowHtmlOnly` creates a small allowlist:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown, { allowHtmlOnly } from '@humanspeak/svelte-markdown'
+
+    const renderers = {
+        html: allowHtmlOnly(['strong', 'em', 'a', 'code', 'br'])
+    }
+</script>
+
+<SvelteMarkdown source={untrusted} {renderers} />
+```
+
+If most HTML is useful but a few embedding elements are not, deny only those:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown, { excludeHtmlOnly } from '@humanspeak/svelte-markdown'
+
+    const renderers = {
+        html: excludeHtmlOnly(['iframe', 'form', 'embed', 'object'])
+    }
+</script>
+
+<SvelteMarkdown source={untrusted} {renderers} />
+```
+
+You can also compose with the defaults rather than replacing them. This example rejects every external URL while retaining the built-in protocol checks for relative links:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown, { defaultSanitizeUrl } from '@humanspeak/svelte-markdown'
+
+    function localUrlsOnly(url, context) {
+        const safe = defaultSanitizeUrl(url, context)
+        if (!safe) return ''
+        return safe.startsWith('/') || safe.startsWith('#') ? safe : ''
+    }
+</script>
+
+<SvelteMarkdown source={untrusted} sanitizeUrl={localUrlsOnly} />
+```
+
+The same approach works with `sanitizeAttributes` when your policy depends on the tag—for example, dropping `style` everywhere or removing all attributes from an iframe. See [HTML allow/deny strategies](/docs/advanced/allow-deny) for the full set of helpers.
+
+## Check the defaults, whichever renderer you use
+
+Markdown libraries make different trust assumptions. Some expose an allow-all URL prefix as their default; others return an HTML string and leave the entire policy to you. That can be reasonable for trusted documents and surprising for comments or chat.
+
+Before choosing a renderer, test its current defaults rather than inferring the answer from the word “markdown.” If you are comparing editor-oriented tools, our [Milkdown comparison](/compare/vs-milkdown) is one useful starting point, but the renderer's own security documentation should be the final authority.
+
+Safe rendering is easier to maintain when the baseline is already present. Install the package with `pnpm add @humanspeak/svelte-markdown`, then follow the [getting-started guide](/docs/getting-started) to render untrusted markdown in one component.
+
+</BlogPostV2>

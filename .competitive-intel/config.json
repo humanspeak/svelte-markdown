@@ -52,6 +52,14 @@
         }
     ],
 
+    "seo": {
+        "enabled": true,
+        "docs_domain": "markdown.svelte.page",
+        "gsc_dir": ".competitive-intel/gsc",
+        "gsc_staleness_days": 14,
+        "_comment": "Cross-references the local GSC export (dropped in gsc_dir, gitignored) with Ahrefs to produce keyword/blog/site-fix recommendations. Nudges for a fresh export past gsc_staleness_days."
+    },
+
     "compare_data_paths": ["docs/src/lib/compare-data.ts"],
     "page_validation": {
         "download_tolerance": 0.3,

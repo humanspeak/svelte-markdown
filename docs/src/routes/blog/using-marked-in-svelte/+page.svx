@@ -1,0 +1,197 @@
+---
+title: Using marked in Svelte (Safely)
+date: '2026-08-18T12:00:00-04:00'
+description: How to use the marked parser in Svelte 5 — the {@html} footgun, why you get an HTML string instead of components, and how to render marked output safely.
+tags:
+    - marked
+    - markdown
+    - svelte-5
+    - security
+author: Jason Kummerl
+readingTime: 7
+---
+
+<script lang="ts">
+    import { BlogPostV2, type BlogPostMeta } from '@humanspeak/docs-kit/blog'
+    import { docsConfig } from '$lib/docs-config'
+
+    const post: BlogPostMeta = {
+        slug: 'using-marked-in-svelte',
+        title: 'Using marked in Svelte (Safely)',
+        date: '2026-08-18T12:00:00-04:00',
+        description:
+            'How to use the marked parser in Svelte 5 — the {@html} footgun, why you get an HTML string instead of components, and how to render marked output safely.',
+        tags: ['marked', 'markdown', 'svelte-5', 'security'],
+        author: 'Jason Kummerl',
+        readingTime: 7
+    }
+</script>
+
+<BlogPostV2 {post} config={docsConfig}>
+
+If you search for a quick way to render markdown in Svelte, the first useful answer is usually two lines long: parse the string with `marked`, then render the result with `{@html}`.
+
+It works. It is also the point where your application becomes responsible for the security and structure of the generated HTML.
+
+That does not make `marked` a bad choice. `@humanspeak/svelte-markdown` uses `marked` under the hood because it is a fast, capable parser with a mature extension system. The important question is whether you need an HTML string or a tree of Svelte components.
+
+## The 30-second implementation
+
+Install `marked`, parse your source, and insert the result:
+
+```svelte
+<script lang="ts">
+    import { marked } from 'marked'
+
+    let markdown = $state('# Hello\n\nThis is **markdown**.')
+    let html = $derived(marked.parse(markdown))
+</script>
+
+<article>{@html html}</article>
+```
+
+For trusted content, this can be entirely appropriate. The source is reactive, the code is small, and `marked` handles GitHub Flavored Markdown well.
+
+The trouble begins when `markdown` comes from somewhere else:
+
+```svelte
+<script lang="ts">
+    import { marked } from 'marked'
+
+    const markdown = `
+[Open the document](javascript:alert(document.domain))
+
+<img src="x" onerror="alert(document.domain)">
+`
+
+    const html = marked.parse(markdown)
+</script>
+
+{@html html}
+```
+
+`{@html}` performs no sanitization. It tells Svelte that the string is ready to become DOM. If the parser emits a dangerous URL or preserves an event handler, Svelte does not add another safety check.
+
+If you choose this approach for content you do not control, sanitize the generated HTML with a maintained tool such as DOMPurify and define an allowlist appropriate to your application. Also test markdown-native URLs, not only raw HTML tags. [Preventing Markdown XSS in Svelte](/blog/preventing-markdown-xss-in-svelte) covers that threat model in detail.
+
+## The second limitation: the result is one string
+
+The HTML-string model is convenient until individual nodes need application behavior.
+
+Suppose external links should open in a new tab with `rel="noopener noreferrer"`. Code blocks should go through a Shiki component. Images should use your lazy-loading component and report failures to telemetry. With raw `marked` output, you can configure a marked renderer, post-process the HTML, or manipulate the DOM after insertion. All three approaches work, but none gives you a normal Svelte component at each node.
+
+Post-processing HTML with regular expressions is especially brittle. HTML has nesting, quoting, optional attributes, and edge cases that a regex-based replacement will eventually mishandle. If per-element UI behavior is a requirement, it is usually cleaner to choose a component rendering layer at the start.
+
+## Marked extensions are still a strong reason to use it
+
+`marked` supports custom tokenizers, renderers, hooks, and extensions. That makes it useful well beyond the basic markdown specification. You can recognize domain-specific syntax, adjust parsing rules, or generate a specialized HTML string on the server.
+
+The distinction is output, not parsing power. A marked renderer ultimately returns strings. A custom tokenizer can add a new token type, but you still decide whether that token becomes an HTML fragment, is transformed into some other string, or is handed to another rendering layer.
+
+Raw `marked` is often the right tool when:
+
+- you need an HTML string for an email, feed, export, or server response;
+- the code is not running in Svelte;
+- you completely control the input and want the smallest direct integration;
+- you are building a string transformation rather than an interactive UI.
+
+In those cases, use it directly. There is no benefit in adding a component abstraction that your output does not need.
+
+## The same parser behind a component layer
+
+When the destination is a Svelte interface, `@humanspeak/svelte-markdown` keeps marked's parser and changes the rendering model:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    let markdown = $state('# Hello\n\nThis is **markdown**.')
+</script>
+
+<SvelteMarkdown source={markdown} />
+```
+
+There is no `{@html}` call. Marked produces tokens, and those tokens render through Svelte components. URL and attribute sanitization are enabled by default, while links, images, code blocks, headings, tables, and the rest remain individually overridable.
+
+For example, an external-link policy can live next to the content instead of inside an HTML-string transformation:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = 'Read the [Svelte docs](https://svelte.dev).'
+</script>
+
+<SvelteMarkdown {source}>
+    {#snippet link({ href, title, children })}
+        <a {href} {title} target="_blank" rel="noopener noreferrer">
+            {@render children?.()}
+        </a>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+That is ordinary Svelte markup. The same pattern can mount a stateful component, apply application context, or route a token to a syntax highlighter. See [snippet overrides](/docs/renderers/snippet-overrides) for the renderer names and props.
+
+## Passing marked options through
+
+Common marked behavior remains configurable through the `options` prop:
+
+```svelte
+<SvelteMarkdown
+    source={markdown}
+    options={{
+        gfm: true,
+        breaks: true
+    }}
+/>
+```
+
+Marked no longer generates heading IDs through `headerIds` or `headerPrefix`. If you use
+Marked directly and need GitHub-style heading IDs, add the `marked-gfm-heading-id` extension.
+`SvelteMarkdown` provides its own heading-ID support, but that is a renderer option rather than
+an option inherited from current versions of Marked.
+
+For custom syntax, pass marked extensions through the `extensions` prop. Extension token types can then render as components or named snippets:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { MarkedExtension } from 'marked'
+
+    const highlight: MarkedExtension = {
+        extensions: [
+            {
+                name: 'highlight',
+                level: 'inline',
+                start: (source) => source.indexOf('=='),
+                tokenizer(source) {
+                    const match = /^==([^=]+)==/.exec(source)
+                    if (!match) return
+                    return { type: 'highlight', raw: match[0], text: match[1] }
+                }
+            }
+        ]
+    }
+</script>
+
+<SvelteMarkdown source="This is ==important==." extensions={[highlight]}>
+    {#snippet highlight({ text })}
+        <mark>{text}</mark>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+The package also ships first-party integrations for KaTeX, Mermaid, Shiki, GitHub-style alerts, and footnotes. The [marked extensions guide](/docs/advanced/marked-extensions) explains how extension tokens, caching, and renderer overrides fit together.
+
+## Which path should you take?
+
+Use raw `marked` when the product you want is an HTML string and you are prepared to own its sanitization. It is direct, flexible, and very good at that job.
+
+Use a component renderer when markdown is part of a Svelte interface: when nodes need behavior, when content is dynamic, or when safe defaults are valuable. You still get marked's parsing and extension ecosystem, but you are no longer treating the rendered document as one opaque blob.
+
+The [complete guide to rendering markdown in Svelte](/blog/rendering-markdown-in-svelte) places both options alongside mdsvex and other component renderers. For a feature-by-feature view, see [marked vs Svelte Markdown](/compare/vs-marked).
+
+To keep marked's parsing while dropping the `{@html}` boundary, install `@humanspeak/svelte-markdown` and follow the [getting-started guide](/docs/getting-started).
+
+</BlogPostV2>

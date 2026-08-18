@@ -1,0 +1,4 @@
+# Local-only artifacts for the competitive-intel-digest skill.
+# config.json and state.json ARE tracked (they're the scaffolding); these are not.
+gsc/
+reports/

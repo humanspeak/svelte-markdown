@@ -151,8 +151,8 @@ importers:
         specifier: ^5.3.0
         version: 5.3.0
       '@humanspeak/docs-kit':
-        specifier: github:humanspeak/docs-kit#2026.8.1
-        version: https://codeload.github.com/humanspeak/docs-kit/tar.gz/cb293900ffe271d0df0e2d50f44ccd0bd9ec56e8(@humanspeak/svelte-markdown@)(@humanspeak/svelte-motion@0.8.2(svelte@5.56.8(@typescript-eslint/types@8.66.0)))(@internationalized/date@3.12.2)(@lucide/svelte@1.30.0(svelte@5.56.8(@typescript-eslint/types@8.66.0)))(@sveltejs/kit@2.70.2(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.56.8(@typescript-eslint/types@8.66.0))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.11)))(svelte@5.56.8(@typescript-eslint/types@8.66.0))(typescript@6.0.3)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.11)))(mode-watcher@1.1.0(svelte@5.56.8(@typescript-eslint/types@8.66.0)))(shiki@4.4.2)(svelte@5.56.8(@typescript-eslint/types@8.66.0))
+        specifier: github:humanspeak/docs-kit#2026.8.4
+        version: https://codeload.github.com/humanspeak/docs-kit/tar.gz/728b1f534ebcf10674a04839cbd987d7e000be16(@humanspeak/svelte-markdown@)(@humanspeak/svelte-motion@0.9.2(svelte@5.56.8(@typescript-eslint/types@8.66.0)))(@internationalized/date@3.12.2)(@lucide/svelte@1.30.0(svelte@5.56.8(@typescript-eslint/types@8.66.0)))(@sveltejs/kit@2.70.2(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.56.8(@typescript-eslint/types@8.66.0))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.11)))(svelte@5.56.8(@typescript-eslint/types@8.66.0))(typescript@6.0.3)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.11)))(mode-watcher@1.1.0(svelte@5.56.8(@typescript-eslint/types@8.66.0)))(shiki@4.4.2)(svelte@5.56.8(@typescript-eslint/types@8.66.0))
       '@humanspeak/svelte-markdown':
         specifier: workspace:*
         version: link:..
@@ -182,8 +182,8 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.8.1(jiti@2.7.0))
       '@humanspeak/svelte-motion':
-        specifier: ^0.8.2
-        version: 0.8.2(svelte@5.56.8(@typescript-eslint/types@8.66.0))
+        specifier: ^0.9.2
+        version: 0.9.2(svelte@5.56.8(@typescript-eslint/types@8.66.0))
       '@icons-pack/svelte-simple-icons':
         specifier: ^7.2.0
         version: 7.2.0(@sveltejs/kit@2.70.2(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.56.8(@typescript-eslint/types@8.66.0))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.11)))(svelte@5.56.8(@typescript-eslint/types@8.66.0))(typescript@6.0.3)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.11)))(svelte@5.56.8(@typescript-eslint/types@8.66.0))
@@ -675,8 +675,8 @@ packages:
     resolution: {integrity: sha512-ZZ1w0aoQkwuUuC7Yf+7sdeaNfqQiiLcSRbfI08oAxqLtpXQr9AIVX7Ay7HLDuiLYAaFPu8oBYNq/QIi9URHJ3Q==}
     engines: {node: '>=18.18.0'}
 
-  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/cb293900ffe271d0df0e2d50f44ccd0bd9ec56e8':
-    resolution: {gitHosted: true, tarball: https://codeload.github.com/humanspeak/docs-kit/tar.gz/cb293900ffe271d0df0e2d50f44ccd0bd9ec56e8}
+  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/728b1f534ebcf10674a04839cbd987d7e000be16':
+    resolution: {gitHosted: true, integrity: sha512-bK1cOrdlopJj/4K888CXeZpJjYWWOcq2LiEt7sEiKRGFqshRvYhrEOUEBk3w2mh5RgavO/wfcyesiFv4p2mdaw==, tarball: https://codeload.github.com/humanspeak/docs-kit/tar.gz/728b1f534ebcf10674a04839cbd987d7e000be16}
     version: 0.0.0
     peerDependencies:
       '@humanspeak/svelte-markdown': '>=1.0.0'
@@ -696,8 +696,8 @@ packages:
     resolution: {integrity: sha512-6kmeqrCVThw4RYZsJ74l9cOdZQ84XHnGIzrv+Po49CZBNNVDEzi0CGsTx+KKmr/Hb6hY6yDGxeWTiz4VHkdsEg==}
     engines: {node: '>=20.19.0'}
 
-  '@humanspeak/svelte-motion@0.8.2':
-    resolution: {integrity: sha512-oK4mlqKuqT+GQb21ZgT88radVHZx+rq8I4QxHOMDaqdHjneozsnkjP9Hr1iCO7XSExbMUJgm3qsOUw+UZoUsoA==}
+  '@humanspeak/svelte-motion@0.9.2':
+    resolution: {integrity: sha512-66GHIqKcLtk5LmYHiPkpD8lLloLvSVhTTRfReFk9wnAs+jPxAK867KB6OKrWhsvvX928cR5k3+p5qRABtEK/wg==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -2424,15 +2424,12 @@ packages:
   fraction.js@5.3.4:
     resolution: {integrity: sha512-1X1NTtiJphryn/uLQz3whtY6jK3fTqoE3ohKs0tT+Ujr1W59oopxmoEh7Lu5p6vBaPbgoM0bzveAW4Qi5RyWDQ==}
 
-  framer-motion@12.43.0:
-    resolution: {integrity: sha512-1eaL3RvR/kAlbG7UYcpMptEyzPoENO0c6w7ZnB3/hh2vSAz/6uGAFn6fdoqTBguNstf3MsFhJHsD/0DHiclG+g==}
+  framer-motion@13.1.0:
+    resolution: {integrity: sha512-QSZrF0Id3QGuHJ+OL+9PSY9pk86C8ERFalwAGSchzTm65+ZoGH/RM26lmEARLljcHj2lqhv0jZOOks+EI3COOw==}
     peerDependencies:
-      '@emotion/is-prop-valid': '*'
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
     peerDependenciesMeta:
-      '@emotion/is-prop-valid':
-        optional: true
       react:
         optional: true
       react-dom:
@@ -3077,21 +3074,18 @@ packages:
   moo@0.5.3:
     resolution: {integrity: sha512-m2fmM2dDm7GZQsY7KK2cme8agi+AAljILjQnof7p1ZMDe6dQ4bdnSMx0cPppudoeNv5hEFQirN6u+O4fDE0IWA==}
 
-  motion-dom@12.43.0:
-    resolution: {integrity: sha512-azKON4d9S65PEoFUiQTMTgPheEmzf2QngdRc50AKfJp9Q9mmcBVw22c8eMq9k8kxOFHdL7+WZY7N/5F/lwiDag==}
+  motion-dom@13.0.0:
+    resolution: {integrity: sha512-Xk+SJas70uMAUIApg+m3lZDShxI3LBFHq7mFGbBKoRXc2PVPDyAKmzN64Bbzt4CZdP/CItTiJxWtn4TA0v53Ng==}
 
-  motion-utils@12.39.0:
-    resolution: {integrity: sha512-8nadJAJjTtqRkmRF36FoJTrywK9nnFmnPwnSMyxaOCU7GDjN9RTMJIxx9De8ErM+vpPhMccr/6fo5WciyQLnMQ==}
+  motion-utils@13.0.0:
+    resolution: {integrity: sha512-7DnN7TmbLcYXcG4RVadXIihWlyuM9afoUww8Y5Agg431kGKiuL2/OMyP4mJ5wLz+pvN3t5ySClLOaVXJ+wekRQ==}
 
-  motion@12.43.0:
-    resolution: {integrity: sha512-BQgQbSa9Hn3/mtbib0MK53y6JSANa+YKUKlaYnWzAVDH424RYQ5LVpV3pNiWH00BA2z4ojsSdMzqT7g2FQwjuQ==}
+  motion@13.1.0:
+    resolution: {integrity: sha512-qtvscq59uCPdWnNW4SdSkrxR+BS/QYsa923bx7ocA+4p+ZGNbbVQwkSnG4aukB81QWjtl3AxX36plxNyZLmHCA==}
     peerDependencies:
-      '@emotion/is-prop-valid': '*'
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
     peerDependenciesMeta:
-      '@emotion/is-prop-valid':
-        optional: true
       react:
         optional: true
       react-dom:
@@ -4413,9 +4407,9 @@ snapshots:
 
   '@humanfs/types@0.15.0': {}
 
-  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/cb293900ffe271d0df0e2d50f44ccd0bd9ec56e8(@humanspeak/svelte-markdown@)(@humanspeak/svelte-motion@0.8.2(svelte@5.56.8(@typescript-eslint/types@8.66.0)))(@internationalized/date@3.12.2)(@lucide/svelte@1.30.0(svelte@5.56.8(@typescript-eslint/types@8.66.0)))(@sveltejs/kit@2.70.2(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.56.8(@typescript-eslint/types@8.66.0))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.11)))(svelte@5.56.8(@typescript-eslint/types@8.66.0))(typescript@6.0.3)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.11)))(mode-watcher@1.1.0(svelte@5.56.8(@typescript-eslint/types@8.66.0)))(shiki@4.4.2)(svelte@5.56.8(@typescript-eslint/types@8.66.0))':
+  '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/728b1f534ebcf10674a04839cbd987d7e000be16(@humanspeak/svelte-markdown@)(@humanspeak/svelte-motion@0.9.2(svelte@5.56.8(@typescript-eslint/types@8.66.0)))(@internationalized/date@3.12.2)(@lucide/svelte@1.30.0(svelte@5.56.8(@typescript-eslint/types@8.66.0)))(@sveltejs/kit@2.70.2(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.56.8(@typescript-eslint/types@8.66.0))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.11)))(svelte@5.56.8(@typescript-eslint/types@8.66.0))(typescript@6.0.3)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.11)))(mode-watcher@1.1.0(svelte@5.56.8(@typescript-eslint/types@8.66.0)))(shiki@4.4.2)(svelte@5.56.8(@typescript-eslint/types@8.66.0))':
     dependencies:
-      '@humanspeak/svelte-motion': 0.8.2(svelte@5.56.8(@typescript-eslint/types@8.66.0))
+      '@humanspeak/svelte-motion': 0.9.2(svelte@5.56.8(@typescript-eslint/types@8.66.0))
       '@humanspeak/svelte-satori-fix': 0.0.6(svelte@5.56.8(@typescript-eslint/types@8.66.0))
       '@lucide/svelte': 1.30.0(svelte@5.56.8(@typescript-eslint/types@8.66.0))
       '@resvg/resvg-js': 2.6.2
@@ -4438,14 +4432,13 @@ snapshots:
 
   '@humanspeak/memory-cache@1.1.2': {}
 
-  '@humanspeak/svelte-motion@0.8.2(svelte@5.56.8(@typescript-eslint/types@8.66.0))':
+  '@humanspeak/svelte-motion@0.9.2(svelte@5.56.8(@typescript-eslint/types@8.66.0))':
     dependencies:
       acorn: 8.18.0
-      motion: 12.43.0
-      motion-dom: 12.43.0
+      motion: 13.1.0
+      motion-dom: 13.0.0
       svelte: 5.56.8(@typescript-eslint/types@8.66.0)
     transitivePeerDependencies:
-      - '@emotion/is-prop-valid'
       - react
       - react-dom
 
@@ -6248,10 +6241,10 @@ snapshots:
 
   fraction.js@5.3.4: {}
 
-  framer-motion@12.43.0:
+  framer-motion@13.1.0:
     dependencies:
-      motion-dom: 12.43.0
-      motion-utils: 12.39.0
+      motion-dom: 13.0.0
+      motion-utils: 13.0.0
       tslib: 2.8.1
 
   fsevents@2.3.2:
@@ -6883,15 +6876,15 @@ snapshots:
 
   moo@0.5.3: {}
 
-  motion-dom@12.43.0:
+  motion-dom@13.0.0:
     dependencies:
-      motion-utils: 12.39.0
+      motion-utils: 13.0.0
 
-  motion-utils@12.39.0: {}
+  motion-utils@13.0.0: {}
 
-  motion@12.43.0:
+  motion@13.1.0:
     dependencies:
-      framer-motion: 12.43.0
+      framer-motion: 13.1.0
       tslib: 2.8.1
 
   mprocs@0.9.6: {}

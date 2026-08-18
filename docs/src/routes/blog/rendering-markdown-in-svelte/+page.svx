@@ -1,0 +1,182 @@
+---
+title: Rendering Markdown in Svelte 5 (The Complete Guide)
+date: '2026-08-18T12:00:00-04:00'
+description: A complete guide to rendering markdown in Svelte 5 — built-ins vs parsers vs preprocessors vs component renderers, custom renderers, security, and streaming.
+tags:
+    - markdown
+    - rendering
+    - svelte-5
+    - guide
+author: Jason Kummerl
+readingTime: 12
+---
+
+<script lang="ts">
+    import { BlogPostV2, type BlogPostMeta } from '@humanspeak/docs-kit/blog'
+    import { docsConfig } from '$lib/docs-config'
+
+    const post: BlogPostMeta = {
+        slug: 'rendering-markdown-in-svelte',
+        title: 'Rendering Markdown in Svelte 5 (The Complete Guide)',
+        date: '2026-08-18T12:00:00-04:00',
+        description:
+            'A complete guide to rendering markdown in Svelte 5 — built-ins vs parsers vs preprocessors vs component renderers, custom renderers, security, and streaming.',
+        tags: ['markdown', 'rendering', 'svelte-5', 'guide'],
+        author: 'Jason Kummerl',
+        readingTime: 12
+    }
+</script>
+
+<BlogPostV2 {post} config={docsConfig}>
+
+There is no markdown primitive built into Svelte. To render a markdown string, you need to decide where parsing happens and what the parser produces.
+
+That decision is more important than the package name. A documentation site built from files at deploy time has different needs from a chat interface receiving partial text at runtime. An HTML string is enough for some applications; others need every link and code block to be a real Svelte component.
+
+In practice, there are four useful approaches in Svelte 5. Here is the map before we look at the code.
+
+## Four Svelte markdown approaches
+
+| Approach | Dynamic at runtime | Svelte components per node | Safe by default | Streaming | Best fit |
+|---|---:|---:|---:|---:|---|
+| Svelte `{@html}` with existing HTML | Yes | No | No | No | Trusted HTML you already generated |
+| Parser such as `marked` or `markdown-it` | Yes | No; produces an HTML string | Parser-dependent; usually your responsibility | Not inherently | Simple transformations and trusted runtime content |
+| Build-time preprocessor such as mdsvex | No | Yes, at compilation | Content is trusted at build time | No | Authored pages, documentation, static blogs |
+| Runtime component renderer | Yes | Yes | Library-dependent; enabled by default here | Yes | CMS content, user input, previews, chat, application UI |
+
+The table is not a ranking. Each row is good at a different job. Problems begin when a build-time tool is forced to handle runtime content, or when an HTML-string shortcut quietly becomes the rendering path for untrusted input.
+
+### 1. Insert HTML with Svelte
+
+If your application already has a trusted HTML string, Svelte can render it directly:
+
+```svelte
+<article>{@html trustedHtml}</article>
+```
+
+This is insertion, not markdown parsing. It is also not sanitization. Svelte assumes `trustedHtml` is ready for the DOM. That is a reasonable contract for HTML produced by your own build process and a poor contract for a comment field or model response.
+
+### 2. Parse markdown into an HTML string
+
+Libraries such as `marked` and `markdown-it` turn markdown into HTML. A minimal Svelte integration looks like this:
+
+```svelte
+<script lang="ts">
+    import { marked } from 'marked'
+
+    let source = $state('# Hello from markdown')
+    let html = $derived(marked.parse(source))
+</script>
+
+{@html html}
+```
+
+This is compact and useful when an HTML string is the desired output. In a browser UI, however, you own sanitization and the result remains one opaque string rather than a set of components. [Using marked in Svelte](/blog/using-marked-in-svelte) shows the safe version of this pattern and explains when raw marked is still the right choice.
+
+### 3. Compile markdown at build time
+
+mdsvex treats markdown as source code. It lets authored `.svx` files contain Svelte components and compiles everything during the build. For a documentation site or static blog, that is excellent: content lives in the repository, failures happen during CI, and the output is normal Svelte.
+
+It is not designed to receive an arbitrary markdown string from an API after the app has loaded. If your content is known at build time, start with mdsvex. If it arrives at runtime, choose a runtime parser or renderer. Our [mdsvex comparison](/compare/vs-mdsvex) goes deeper on that boundary.
+
+### 4. Render runtime tokens as Svelte components
+
+A component renderer parses at runtime but does not collapse the result into a single HTML string. Headings, links, code blocks, lists, tables, and images render through components or snippets. That gives application code control at the node level.
+
+`@humanspeak/svelte-markdown` follows this model. It is runes-compatible, typed, SSR-friendly, and designed for both complete documents and incrementally arriving content.
+
+## Quick start
+
+Install the package:
+
+```bash
+pnpm add @humanspeak/svelte-markdown
+```
+
+Then pass a string to the `source` prop:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    let source = $state(`
+# Shipping notes
+
+- Added the account page
+- Fixed the **billing** flow
+
+Read the [release notes](/releases/42).
+`)
+</script>
+
+<SvelteMarkdown {source} />
+```
+
+When `source` changes, the rendered document updates. No browser-only setup is required, so the same component works during server rendering and hydration. The [getting-started guide](/docs/getting-started) covers parser options, inline mode, and the full prop surface.
+
+## Customize a node without rebuilding the parser
+
+Per-node rendering is where a component model earns its keep. Suppose every external link needs a new tab, a security relationship, and a product class. A Svelte 5 snippet can override only the link renderer:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+
+    const source = 'Read [the Svelte docs](https://svelte.dev).'
+</script>
+
+<SvelteMarkdown {source}>
+    {#snippet link({ href, title, children })}
+        <a
+            {href}
+            {title}
+            class="external-link"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            {@render children?.()}
+        </a>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+Everything else continues to use the defaults. For larger overrides, pass a Svelte component through the `renderers` prop—for example, `renderers={{ code: HighlightedCode }}`. The [snippet override guide](/docs/renderers/snippet-overrides) and [custom renderer guide](/docs/renderers/custom-renderers) document every renderer key and prop.
+
+## Security is part of the rendering choice
+
+The `{@html}` path is not automatically unsafe, but it creates a clear obligation: the application must sanitize any HTML it did not fully control. A markdown parser alone is not a DOM sanitizer.
+
+`@humanspeak/svelte-markdown` enables URL and attribute sanitization by default. It rejects dangerous URL protocols such as `javascript:`, `data:`, and `vbscript:`, strips `on*` handlers and `srcdoc`, and lets you narrow the allowed HTML tags. Those defaults are hardening, not a replacement for a full DOM sanitizer when you accept fully untrusted raw HTML. Read [Preventing Markdown XSS in Svelte](/blog/preventing-markdown-xss-in-svelte) for the complete boundary and practical policies.
+
+## Add syntax through marked extensions
+
+Standard markdown is often only the beginning. The renderer supports marked extensions and includes first-party integrations for common application content:
+
+- **[KaTeX](/docs/advanced/marked-extensions#step-by-step-katex-math-rendering)** renders inline and block mathematics.
+- **[Mermaid](/docs/advanced/marked-extensions#step-by-step-mermaid-diagrams)** turns diagram fences into rendered diagrams.
+- **[Shiki](/docs/advanced/syntax-highlighting)** provides grammar-aware syntax highlighting for code blocks.
+- **GitHub-style alerts** add note, tip, warning, and caution blocks.
+- **Footnotes** add references and a footnote section without hand-written HTML.
+
+Custom marked tokenizers work too. Their tokens can render through Svelte components or snippets rather than returning HTML fragments. See [marked extensions](/docs/advanced/marked-extensions) for the general model and [syntax highlighting](/docs/advanced/syntax-highlighting) for code-specific options.
+
+## What about streaming markdown?
+
+Streaming matters when text arrives a few characters or words at a time, usually from an AI endpoint. Re-parsing and replacing an entire document for every chunk can be expensive and can cause visible DOM churn.
+
+The component supports a streaming mode with an incremental parser, but it should not dictate your choice for an ordinary article or CMS page. Treat it as a capability for the applications that need it. The [LLM streaming guide](/docs/advanced/llm-streaming) covers the API, while [Rendering Agent HTML Safely](/blog/rendering-agent-html-safely) addresses the wider security surface when model output includes raw HTML.
+
+## Which approach should you use?
+
+Choose based on when content exists and what the output needs to become:
+
+- **Use `{@html}` directly** when you already have trusted, sanitized HTML and do not need component-level control.
+- **Use `marked` or `markdown-it` directly** when your desired result is an HTML string—for an export, email, server transformation, or small trusted integration.
+- **Use mdsvex** when authors write content in the repository and it can be compiled at build time.
+- **Use a runtime component renderer** when markdown comes from an API, CMS, user, preview, or chat, or when links and code blocks need Svelte behavior.
+
+If you are comparing runtime component libraries, see [Svelte Exmarkdown vs Svelte Markdown](/compare/vs-svelte-exmarkdown). For an AI-focused renderer, compare [Svelte Streamdown vs Svelte Markdown](/compare/vs-svelte-streamdown). If the parser itself is the decision, see [marked vs Svelte Markdown](/compare/vs-marked).
+
+There is no single correct tool for every markdown document. There is, however, a clean default for dynamic Svelte applications: one component, runtime markdown, per-node control, and security hardening already enabled. Start with the [getting-started guide](/docs/getting-started), then add only the rendering and extension behavior your application needs.
+
+</BlogPostV2>

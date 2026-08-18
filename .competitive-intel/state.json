@@ -1,9 +1,9 @@
 {
     "project": "@humanspeak/svelte-markdown",
-    "last_run": "2026-08-11",
+    "last_run": "2026-08-18",
     "run_type": "delta",
     "snapshot": {
-        "fetched_at": "2026-08-11T07:00:27Z",
+        "fetched_at": "2026-08-18T11:00:33Z",
         "project": "@humanspeak/svelte-markdown",
         "self": {
             "npm": "@humanspeak/svelte-markdown",
@@ -11,7 +11,7 @@
             "latest_version": "1.8.6",
             "last_publish": "2026-08-10",
             "first_publish": "2024-10-30",
-            "weekly_downloads": 45099,
+            "weekly_downloads": 28501,
             "peer_deps": {
                 "katex": ">=0.16.0",
                 "mermaid": ">=10.0.0",
@@ -20,9 +20,9 @@
             },
             "svelte_peer": "^5.0.0",
             "error": null,
-            "stars": 130,
+            "stars": 131,
             "archived": false,
-            "pushed_at": "2026-08-10",
+            "pushed_at": "2026-08-12",
             "last_release": "2026-08-10",
             "recent_releases": [
                 {
@@ -42,35 +42,35 @@
                 {
                     "version": "v1.8.4",
                     "date": "2026-07-14",
-                    "notes": "> [!IMPORTANT]\n> **This release fixes v1.8.0–v1.8.3**, which are deprecated on npm: those versions broke module resolution (`Could not resolve \"shiki/core\"`) for anyone importing from `@humanspeak/svelte-markdown/extensions` without the optional `shiki` peer dependency installed.\n>\n> **If you use the shiki extension**, update your import — everything else is unchanged:\n>\n> ```diff\n> - import { createShikiHighlighter, ShikiCode, setShikiHighlighter } from '@humanspeak/svelte-markdown/extensions'\n> + import { createShikiHighlighter, ShikiCode, setShikiHighlighter } from '@humanspeak/svelte-markd",
+                    "notes": "> [!IMPORTANT]\n> **This release fixes v1.8.0\u2013v1.8.3**, which are deprecated on npm: those versions broke module resolution (`Could not resolve \"shiki/core\"`) for anyone importing from `@humanspeak/svelte-markdown/extensions` without the optional `shiki` peer dependency installed.\n>\n> **If you use the shiki extension**, update your import \u2014 everything else is unchanged:\n>\n> ```diff\n> - import { createShikiHighlighter, ShikiCode, setShikiHighlighter } from '@humanspeak/svelte-markdown/extensions'\n> + import { createShikiHighlighter, ShikiCode, setShikiHighlighter } from '@humanspeak/svelte-markd",
                     "notes_truncated": true,
                     "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4"
                 },
                 {
                     "version": "v1.8.3",
                     "date": "2026-07-14",
-                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm — use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
+                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm \u2014 use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
                     "notes_truncated": true,
                     "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.3"
                 },
                 {
                     "version": "v1.8.2",
                     "date": "2026-07-13",
-                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm — use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
+                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm \u2014 use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
                     "notes_truncated": true,
                     "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.2"
                 },
                 {
                     "version": "v1.8.1",
                     "date": "2026-07-13",
-                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm — use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
+                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm \u2014 use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
                     "notes_truncated": true,
                     "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.1"
                 },
                 {
                     "version": "v1.8.0",
                     "date": "2026-07-13",
-                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm — use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
+                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm \u2014 use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
                     "notes_truncated": true,
                     "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.0"
                 },
@@ -132,6 +132,7 @@
                 }
             ]
         },
+        "upstream": [],
         "competitors": [
             {
                 "npm": "svelte-markdown",
@@ -139,7 +140,7 @@
                 "latest_version": "0.4.1",
                 "last_publish": "2023-12-25",
                 "first_publish": "2020-04-21",
-                "weekly_downloads": 44707,
+                "weekly_downloads": 41546,
                 "peer_deps": {
                     "svelte": "^4.0.0"
                 },
@@ -157,15 +158,15 @@
                 "latest_version": "5.0.2",
                 "last_publish": "2025-08-09",
                 "first_publish": "2022-04-09",
-                "weekly_downloads": 58302,
+                "weekly_downloads": 34876,
                 "peer_deps": {
                     "svelte": "^5.1.3"
                 },
                 "svelte_peer": "^5.1.3",
                 "error": null,
-                "stars": 351,
+                "stars": 353,
                 "archived": false,
-                "pushed_at": "2026-08-10",
+                "pushed_at": "2026-08-15",
                 "last_release": "2025-08-09",
                 "recent_releases": []
             }
@@ -177,13 +178,13 @@
                 "latest_version": "3.1.2",
                 "last_publish": "2026-07-01",
                 "first_publish": "2025-09-08",
-                "weekly_downloads": 22209,
+                "weekly_downloads": 23128,
                 "peer_deps": {
                     "svelte": "^5.0.0"
                 },
                 "svelte_peer": "^5.0.0",
                 "error": null,
-                "stars": 102,
+                "stars": 103,
                 "archived": false,
                 "pushed_at": "2026-07-01",
                 "last_release": "2026-07-01",
@@ -191,21 +192,21 @@
                     {
                         "version": "3.1.2",
                         "date": "2026-07-01",
-                        "notes": "### 🔒 Security\n- Bumped `mermaid` to `^11.15.0`, clearing 4 moderate advisories flagged by `pnpm audit` (#32, thanks @polvallverdu).\n\n### 🐛 Bug Fixes\n- List no longer absorbs a following paragraph after a blank line (#34, thanks @snayerman).\n- Inline citations with no matching source now render as plain text instead of vanishing (#31).",
+                        "notes": "### \ud83d\udd12 Security\n- Bumped `mermaid` to `^11.15.0`, clearing 4 moderate advisories flagged by `pnpm audit` (#32, thanks @polvallverdu).\n\n### \ud83d\udc1b Bug Fixes\n- List no longer absorbs a following paragraph after a blank line (#34, thanks @snayerman).\n- Inline citations with no matching source now render as plain text instead of vanishing (#31).",
                         "notes_truncated": false,
                         "url": "https://github.com/beynar/svelte-streamdown/releases/tag/3.1.2"
                     },
                     {
                         "version": "3.1.1",
                         "date": "2026-07-01",
-                        "notes": "### 🐛 Bug Fixes\n- Removed the doubled bottom border on the final table row (#23, thanks @ieedan).",
+                        "notes": "### \ud83d\udc1b Bug Fixes\n- Removed the doubled bottom border on the final table row (#23, thanks @ieedan).",
                         "notes_truncated": false,
                         "url": "https://github.com/beynar/svelte-streamdown/releases/tag/3.1.1"
                     },
                     {
                         "version": "3.1.0",
                         "date": "2026-06-10",
-                        "notes": "### ✨ Features\n\n- **`allowedLinkPrefixes` / `allowedImagePrefixes` now support protocol-only prefixes** ([#27](https://github.com/beynar/svelte-streamdown/issues/27)). Use `'https://'` to allow all HTTPS links while still blocking insecure `http://`, or `'mailto:'` / `'tel:'` for those protocols. The `'*'` wildcard continues to allow only `http`/`https`.\n  ```svelte\n  <Streamdown {content} allowedLinkPrefixes={['https://', 'mailto:']} />\n  ```\n- **Disable Mermaid mouse-wheel zoom** ([#29](https://github.com/beynar/svelte-streamdown/issues/29)). `controls.mermaid` now accepts an object `{ enabl",
+                        "notes": "### \u2728 Features\n\n- **`allowedLinkPrefixes` / `allowedImagePrefixes` now support protocol-only prefixes** ([#27](https://github.com/beynar/svelte-streamdown/issues/27)). Use `'https://'` to allow all HTTPS links while still blocking insecure `http://`, or `'mailto:'` / `'tel:'` for those protocols. The `'*'` wildcard continues to allow only `http`/`https`.\n  ```svelte\n  <Streamdown {content} allowedLinkPrefixes={['https://', 'mailto:']} />\n  ```\n- **Disable Mermaid mouse-wheel zoom** ([#29](https://github.com/beynar/svelte-streamdown/issues/29)). `controls.mermaid` now accepts an object `{ enabl",
                         "notes_truncated": true,
                         "url": "https://github.com/beynar/svelte-streamdown/releases/tag/3.1.0"
                     }
@@ -217,7 +218,7 @@
                 "latest_version": "0.6.2",
                 "last_publish": "2026-08-07",
                 "first_publish": "2026-03-23",
-                "weekly_downloads": 5326,
+                "weekly_downloads": 2344,
                 "peer_deps": {
                     "beautiful-mermaid": "^1.1.3",
                     "katex": "^0.17.0",
@@ -239,7 +240,7 @@
             "gap": "remark/rehype plugin-ecosystem compatibility",
             "held_by": "svelte-exmarkdown",
             "why": "lets users drop in any remark/rehype plugin; we ship a curated closed set of Marked extensions",
-            "worth_doing": "undecided — evaluate a plugin escape hatch"
+            "worth_doing": "undecided \u2014 evaluate a plugin escape hatch"
         },
         {
             "gap": "streaming presentation layer (reveal animations, citation UI, MDX-style components)",
@@ -251,24 +252,234 @@
             "gap": "first-party interactive mermaid parity claim",
             "held_by": "@comark/svelte",
             "why": "beautiful-mermaid shipped in-box",
-            "worth_doing": "low — we already ship a mermaid extension"
+            "worth_doing": "low \u2014 we already ship a mermaid extension"
         }
     ],
     "compare_validation": {
         "svelte-streamdown": {
             "validated_against_version": "3.1.2",
-            "validated_on": "2026-08-11"
+            "validated_on": "2026-08-18"
         },
         "svelte-exmarkdown": {
             "validated_against_version": "5.0.2",
-            "validated_on": "2026-08-11"
+            "validated_on": "2026-08-18"
         }
     },
     "watch_candidates": [
         {
             "npm": "markstream-svelte",
             "first_seen": "2026-08-11",
-            "note": "Svelte binding of cross-framework Markstream streaming renderer; 0.0.6 @ 325 wkly DL, but family has traction (markstream-core 14.6k, markstream-vue 28.1k wkly). Promote to watchlist if it keeps shipping."
+            "note": "Svelte binding of cross-framework Markstream renderer; 0.0.7 (2026-08-14) @ 327 wkly DL \u2014 still shipping but traction flat week over week. Promote only if downloads start climbing."
+        },
+        {
+            "npm": "@markdown-ui/svelte",
+            "first_seen": "2026-08-18",
+            "note": "Surfaced in discovery; 0.4.0 last published 2026-01-12, ~30 wkly DL. Too small/stale to track \u2014 recorded to avoid re-surfacing it each week."
         }
-    ]
+    ],
+    "seo": {
+        "export_date": "2026-08-18",
+        "striking_distance": [
+            {
+                "query": "svelte markdown",
+                "impressions": 272.0,
+                "position": 11.03
+            },
+            {
+                "query": "\"milkdown\" \"javascript:\" xss",
+                "impressions": 230.0,
+                "position": 7.11
+            },
+            {
+                "query": "tiptap markdown",
+                "impressions": 212.0,
+                "position": 19.46
+            },
+            {
+                "query": "tiptap svelte",
+                "impressions": 197.0,
+                "position": 17.46
+            },
+            {
+                "query": "@humanspeak/svelte-markdown",
+                "impressions": 98.0,
+                "position": 4.71
+            },
+            {
+                "query": "svelte markdown renderer",
+                "impressions": 85.0,
+                "position": 5.74
+            },
+            {
+                "query": "svelte-markdown",
+                "impressions": 62.0,
+                "position": 9.39
+            },
+            {
+                "query": "svelte-exmarkdown",
+                "impressions": 51.0,
+                "position": 10.86
+            },
+            {
+                "query": "svelte marked",
+                "impressions": 42.0,
+                "position": 8.88
+            },
+            {
+                "query": "svelte markdown editor",
+                "impressions": 37.0,
+                "position": 11.08
+            },
+            {
+                "query": "markdown playground",
+                "impressions": 35.0,
+                "position": 12.51
+            },
+            {
+                "query": "svelte render markdown",
+                "impressions": 34.0,
+                "position": 6.15
+            },
+            {
+                "query": "svelte tiptap",
+                "impressions": 30.0,
+                "position": 17.7
+            },
+            {
+                "query": "markdown svelte",
+                "impressions": 29.0,
+                "position": 6.72
+            },
+            {
+                "query": "svelte custom renderer",
+                "impressions": 26.0,
+                "position": 7.5
+            },
+            {
+                "query": "\"alerttriangle\" \"lucide-svelte\"",
+                "impressions": 26.0,
+                "position": 7.81
+            },
+            {
+                "query": "svelte-markdown npm package",
+                "impressions": 26.0,
+                "position": 9.81
+            },
+            {
+                "query": "site:svelte.page",
+                "impressions": 24.0,
+                "position": 18.21
+            },
+            {
+                "query": "svelte-markdown npm",
+                "impressions": 21.0,
+                "position": 8.81
+            },
+            {
+                "query": "marked svelte",
+                "impressions": 20.0,
+                "position": 13.7
+            }
+        ],
+        "underperforming_pages": [
+            {
+                "page": "https://markdown.svelte.page/compare/vs-milkdown",
+                "impressions": 797.0,
+                "position": 9.87,
+                "ctr": 0.63
+            },
+            {
+                "page": "https://markdown.svelte.page/compare/vs-tiptap",
+                "impressions": 639.0,
+                "position": 18.19,
+                "ctr": 0.16
+            },
+            {
+                "page": "https://markdown.svelte.page/compare/vs-bytemd",
+                "impressions": 375.0,
+                "position": 9.56,
+                "ctr": 0.27
+            },
+            {
+                "page": "https://markdown.svelte.page/compare/vs-carta",
+                "impressions": 359.0,
+                "position": 10.99,
+                "ctr": 0.84
+            },
+            {
+                "page": "https://markdown.svelte.page/docs/getting-started",
+                "impressions": 255.0,
+                "position": 13.91,
+                "ctr": 1.96
+            },
+            {
+                "page": "https://markdown.svelte.page/docs/advanced/marked-extensions",
+                "impressions": 237.0,
+                "position": 9.23,
+                "ctr": 0.84
+            },
+            {
+                "page": "https://markdown.svelte.page/compare/vs-mdsvex",
+                "impressions": 233.0,
+                "position": 14.3,
+                "ctr": 0.43
+            },
+            {
+                "page": "https://markdown.svelte.page/compare/vs-marked",
+                "impressions": 231.0,
+                "position": 14.66,
+                "ctr": 0.87
+            },
+            {
+                "page": "https://markdown.svelte.page/docs/advanced/syntax-highlighting",
+                "impressions": 222.0,
+                "position": 22.73,
+                "ctr": 0.9
+            },
+            {
+                "page": "https://markdown.svelte.page/compare",
+                "impressions": 163.0,
+                "position": 14.67,
+                "ctr": 0.61
+            },
+            {
+                "page": "https://markdown.svelte.page/docs/api/svelte-markdown",
+                "impressions": 142.0,
+                "position": 27.06,
+                "ctr": 1.41
+            },
+            {
+                "page": "https://markdown.svelte.page/compare/vs-unified-remark",
+                "impressions": 120.0,
+                "position": 17.39,
+                "ctr": 0.0
+            },
+            {
+                "page": "https://markdown.svelte.page/examples",
+                "impressions": 119.0,
+                "position": 15.23,
+                "ctr": 0.0
+            },
+            {
+                "page": "https://markdown.svelte.page/examples/github-alerts",
+                "impressions": 115.0,
+                "position": 23.84,
+                "ctr": 0.0
+            },
+            {
+                "page": "https://markdown.svelte.page/examples/llm-streaming",
+                "impressions": 110.0,
+                "position": 24.09,
+                "ctr": 0.0
+            }
+        ],
+        "recommendations_open": [
+            "rewrite vs-tiptap title/meta (639 impr, pos 18, 0.16% CTR \u2014 intent/title problem)",
+            "write dedicated markdown-XSS/security page (markdown xss KD4; milkdown-xss cluster 230 impr pos 7)",
+            "dedicated hub page for 'svelte markdown' head term (pos 11 via homepage)",
+            "dedicated 'marked in Svelte' page (rank pos 8-13 with no target URL)",
+            "fix structured-data validation errors on 11 pages",
+            "wire up IndexNow (38 eligible pages)"
+        ]
+    }
 }
