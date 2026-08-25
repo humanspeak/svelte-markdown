@@ -168,14 +168,20 @@ export class IncrementalParser {
 
     private isStableAtSourceEnd = (token: Token): boolean => {
         if (token.type === 'space') return false
+        // Code must be checked before the generic blank-line test: an
+        // UNCLOSED fence that pauses on a blank line inside the block also
+        // ends with `\n\n`, and treating it as stable freezes the half-open
+        // fence into the reused prefix — every later append then re-lexes in
+        // isolation and the rest of the block renders as plain markdown.
+        // (Indented code is conservatively unstable too: a further indented
+        // line after a blank line continues the same block.)
+        if (token.type === 'code') return CLOSED_FENCE_RE.test(token.raw)
         if (token.raw.endsWith('\n\n')) return true
 
         switch (token.type) {
             case 'heading':
             case 'hr':
                 return token.raw.endsWith('\n')
-            case 'code':
-                return CLOSED_FENCE_RE.test(token.raw)
             default:
                 return false
         }
