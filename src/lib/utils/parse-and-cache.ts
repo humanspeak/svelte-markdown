@@ -35,7 +35,13 @@ export const lexAndClean = (
     options: SvelteMarkdownOptions,
     isInline: boolean
 ): Token[] => {
-    const lexer = new Lexer(options)
+    // Shallow-copy: marked's Lexer writes its default tokenizer back onto the
+    // options object it receives. Passing the caller's object directly would
+    // pollute component-held options, and IncrementalParser reads
+    // `options.tokenizer` to decide whether the tail window is safe — a
+    // polluted object silently disables it on every parser rebuild
+    // (resetStream, streamId change).
+    const lexer = new Lexer({ ...options })
     const parsedTokens = isInline ? lexer.inlineTokens(source) : lexer.lex(source)
     return shrinkHtmlTokens(parsedTokens)
 }
