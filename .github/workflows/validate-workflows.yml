@@ -21,7 +21,7 @@ jobs:
                   fetch-depth: 0 # Fetch full history for git comparisons
 
             - name: Set up Python
-              uses: actions/setup-python@v6 # zizmor: ignore[unpinned-uses]
+              uses: actions/setup-python@v7 # zizmor: ignore[unpinned-uses]
               with:
                   python-version: '3.12'
 
