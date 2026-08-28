@@ -1,11 +1,20 @@
 import adapter from '@sveltejs/adapter-auto'
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte'
+import { markdown } from './src/lib/preprocess/index.js'
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
+    // PROTOTYPE (issue #372): treat `.md` as a Svelte component extension so
+    // both the compiler and SvelteKit's router pick up `+page.md`.
+    extensions: ['.svelte', '.md'],
+
     // Consult https://svelte.dev/docs/kit/integrations
     // for more information about preprocessors
-    preprocess: vitePreprocess(),
+    // The markdown preprocessor must run first — it replaces the whole file.
+    preprocess: [
+        markdown({ document: '$lib/preprocess/MarkdownDocument.svelte' }),
+        vitePreprocess()
+    ],
 
     kit: {
         // adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.

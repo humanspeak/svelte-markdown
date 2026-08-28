@@ -37,6 +37,10 @@ lint:
               # H1 are expected (the H1 comes from the plugin's pkgName).
               - docs/static/llms-prepend.md
               - docs/static/llms-append.md
+              # PROTOTYPE (issue #372): `.md` route files are Svelte page
+              # components compiled by the markdown preprocessor, not prose
+              # docs — inline HTML and multiple H1s are the point.
+              - src/routes/test/preprocess/**
     definitions:
         - name: prettier
           files:
