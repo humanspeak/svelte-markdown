@@ -1,5 +1,6 @@
 import * as htmlparser2 from 'htmlparser2'
 import type { Token, Tokens } from 'marked'
+import { isVoidElement } from './void-elements.js'
 
 /**
  * Matches HTML tags with comprehensive coverage of edge cases.
@@ -18,8 +19,6 @@ const htmlTagRegex = /<\/?([a-zA-Z][a-zA-Z0-9-]{0,})(?:\s+[^>]*)?>/
  * Regex pattern for self-closing HTML tags.
  * @const {RegExp}
  */
-const SELF_CLOSING_TAGS =
-    /^(br|hr|img|input|link|meta|area|base|col|embed|keygen|param|source|track|wbr)$/i
 
 /**
  * Analyzes a string to determine if it contains an HTML tag and its characteristics.
@@ -39,9 +38,7 @@ const SELF_CLOSING_TAGS =
 export const isHtmlOpenTag = (raw: string): { tag: string; isOpening: boolean } | null => {
     const match = htmlTagRegex.exec(raw)
     if (!match) return null
-    // HTML tag names are case-insensitive. Lowercasing here keeps the inline
-    // pairing path aligned with htmlparser2 (`xmlMode: false`), which already
-    // lowercases nested markup (issue #383).
+    // Canonical lowercase — see the note in `formatSelfClosingHtmlToken`.
     return { tag: match[1].toLowerCase(), isOpening: !raw.startsWith('</') }
 }
 
@@ -52,6 +49,27 @@ export const isHtmlOpenTag = (raw: string): { tag: string; isOpening: boolean } 
  * @param {Token} token - HTML token to format
  * @returns {Token} Formatted token with proper self-closing syntax
  */
+/**
+ * Whether an opening-tag source string is genuinely self-closing.
+ *
+ * A trailing `/>` is not sufficient. Per the HTML tokenizer, `/` only starts
+ * the self-closing state from before-attribute-name, after-attribute-name, or
+ * after a *quoted* value. Inside an unquoted attribute value it is an ordinary
+ * character, so `<a href=https://example.com/>` is a plain opening tag whose
+ * href ends in a slash — reading it as self-closing drops the element's
+ * children on the floor.
+ *
+ * @param raw Source text of a single opening tag, e.g. `<img src="x"/>`.
+ */
+const isSelfClosedTagSource = (raw: string): boolean => {
+    if (!raw.endsWith('/>')) return false
+    const beforeSlash = raw.slice(0, -2)
+    // `<br/>` — the slash directly follows the tag name.
+    if (/^<[a-zA-Z][^\s/>]*$/.test(beforeSlash)) return true
+    // Otherwise it only self-closes after whitespace or a quoted value.
+    return /[\s"']$/.test(beforeSlash)
+}
+
 const formatSelfClosingHtmlToken = (token: Token): Token => {
     // Extract tag name from raw HTML
     const tagMatch = token.raw.match(/<\/?([a-zA-Z][a-zA-Z0-9-]*)/i)
@@ -60,24 +78,37 @@ const formatSelfClosingHtmlToken = (token: Token): Token => {
     // pick up `.tag` or they would dispatch as a second component instance.
     if (token.raw.startsWith('</')) return token
 
+    // Canonical lowercase: HTML tag names are case-insensitive, and the nested
+    // htmlparser2 path already lowercases. Emitting one casing from every path
+    // is what lets every consumer — renderer lookup, snippet lookup, void-element
+    // checks, the sanitize hook — read `tag` directly (issue #383). The source
+    // spelling is still available on `raw`.
     const tagName = tagMatch[1].toLowerCase()
-    const isVoid = SELF_CLOSING_TAGS.test(tagName)
-    const isSelfClosingForm = token.raw.endsWith('/>')
+    // Two distinct things are self-closing: known void elements (`<br>`,
+    // which may omit the slash) and any tag explicitly written in the
+    // `<tag />` form. The allowlist decides whether the slash may be
+    // *omitted* — it must not gate whether the token gets structured
+    // `tag`/`attributes` at all, or custom tag renderers registered under
+    // `renderers.html` never resolve and `<widget />` renders nothing
+    // (issue #383).
+    const isExplicitlySelfClosed = isSelfClosedTagSource(token.raw)
+    if (!isExplicitlySelfClosed && !isVoidElement(tagName)) return token
 
-    // The void-element allowlist decides HTML self-closing *rewrites*
-    // (`<br>` → `<br/>`). Structured `.tag`/`.attributes` must still be
-    // attached for custom tags written as `<widget />`, otherwise Parser
-    // cannot dispatch `renderers.html` and the token is silently dropped
-    // (issue #383). Unclosed openings skip this so pairing/streaming can
-    // still distinguish `<widget>` from `<widget />`.
-    if (!isVoid && !isSelfClosingForm) return token
-
-    const formattedRaw = isVoid && !isSelfClosingForm ? token.raw.replace(/\s*>$/, '/>') : token.raw
+    // Self-closing tags get `.tag` and `.attributes` set so downstream
+    // code (pairing, dispatch, sanitization) has structured access. If
+    // the source already used the `<.../>` form we keep raw as-is;
+    // otherwise we normalize the `>` to `/>`.
+    const formattedRaw = token.raw.endsWith('/>') ? token.raw : token.raw.replace(/\s*>$/, '/>')
     return {
         ...token,
         raw: formattedRaw,
         tag: tagName,
-        attributes: extractAttributes(token.raw)
+        attributes: extractAttributes(token.raw),
+        // A self-closing element is fully resolved and childless. The empty
+        // array (rather than `undefined`) marks it as such, so renderers can
+        // tell it apart from an unclosed tag whose children are still unknown
+        // and must not echo the raw source as text.
+        tokens: []
     }
 }
 
@@ -188,17 +219,38 @@ const hasMultipleTags = (html: string): boolean => {
  *   - Whitespace-only text between tags is dropped.
  *
  * Post-condition (depended on by `IncrementalParser`, see #291): an html
- * token's `.tokens` array is set only when a real (non-implied) closing
- * tag was seen in the source. Unclosed openings leave `.tokens` as
- * `undefined`, which is how downstream streaming code distinguishes
- * `<div>` (still streaming) from `<div></div>` (genuinely empty).
+ * token's `.tokens` array is set only when the element is *resolved* — a
+ * real (non-implied) closing tag was seen, or the tag was self-closing
+ * (`<br/>`, `<widget />`), which resolves it with no children. Unclosed
+ * openings leave `.tokens` as `undefined`, which is how downstream
+ * streaming code distinguishes `<div>` (still streaming) from
+ * `<div></div>` (genuinely empty).
  *
  * @internal
  */
 const expandHtmlBlockNested = (html: string): Token[] => {
     const root: Token[] = []
     const stack: Token[][] = [root]
-    const opens: { tag: string; opening: Token; childTokens: Token[]; startIndex: number }[] = []
+    /**
+     * Open elements awaiting their close event.
+     *
+     * A self-closing element was already emitted whole and pushed nothing onto
+     * `stack`, but htmlparser2 still emits an implied close for it, so it must
+     * occupy a slot here — otherwise that close matches an enclosing element of
+     * the same name and pops the parent instead (`<div><div/>after</div>`
+     * orphaning `after`). It carries nothing else, since its close is only
+     * absorbed, never resolved.
+     */
+    const opens: (
+        | { tag: string; selfClosed: true }
+        | {
+              tag: string
+              selfClosed?: false
+              opening: Token
+              childTokens: Token[]
+              startIndex: number
+          }
+    )[] = []
     let currentText = ''
 
     const flushText = () => {
@@ -217,13 +269,24 @@ const expandHtmlBlockNested = (html: string): Token[] => {
         {
             onopentag: (name, attributes) => {
                 flushText()
-                if (SELF_CLOSING_TAGS.test(name)) {
+                // A void element, or a tag explicitly written `<tag />`.
+                // htmlparser2 reports the latter's close as *implied*, which
+                // would otherwise route it through the unclosed-tag branch
+                // below and leave `.tokens` undefined — making renderers echo
+                // the raw source as text (issue #383). Deciding it here, at
+                // the producer, keeps the flat and nested paths in agreement.
+                const isSelfClosed =
+                    isVoidElement(name) ||
+                    isSelfClosedTagSource(html.slice(parser.startIndex, parser.endIndex + 1))
+                if (isSelfClosed) {
                     stack[stack.length - 1].push({
                         type: 'html',
                         raw: `<${name}${serializeAttributes(attributes)}/>`,
                         tag: name,
-                        attributes
+                        attributes,
+                        tokens: []
                     } as Token)
+                    opens.push({ tag: name, selfClosed: true })
                     return
                 }
                 const childTokens: Token[] = []
@@ -246,6 +309,10 @@ const expandHtmlBlockNested = (html: string): Token[] => {
                 const top = opens[opens.length - 1]
                 if (top.tag !== name) return
                 opens.pop()
+                // A self-closing element pushed nothing onto `stack` and is
+                // already fully resolved; consuming its implied close is all
+                // that is required.
+                if (top.selfClosed) return
                 stack.pop()
                 if (!implied) {
                     // Real `</tag>` in source — fully resolved nested token.
@@ -333,8 +400,10 @@ const pairFlatHtmlTokens = (tokens: Token[]): Token[] => {
 
         // Self-closing tags (e.g. <img src="x"/>) don't participate in
         // open/close pairing — pushing them onto the stack would block
-        // a later `</tag>` from finding its real opening.
-        if (token.raw.endsWith('/>')) {
+        // a later `</tag>` from finding its real opening. A bare
+        // `endsWith('/>')` misreads `<a href=/foo/>` as self-closing and
+        // strands its `</a>`, dropping the element entirely.
+        if (isSelfClosedTagSource(token.raw)) {
             result.push(token)
             continue
         }
@@ -344,6 +413,8 @@ const pairFlatHtmlTokens = (tokens: Token[]): Token[] => {
             result.push(token)
         } else {
             const lastOpen = stack.pop()
+            // Both sides are canonical lowercase, so `<Widget>x</widget>` is
+            // one element.
             if (!lastOpen || lastOpen.tag !== tagInfo.tag) {
                 result.push(token)
                 continue
@@ -362,7 +433,7 @@ const pairFlatHtmlTokens = (tokens: Token[]): Token[] => {
             result.push({
                 type: 'html',
                 raw: openingToken.raw,
-                tag: tagInfo.tag,
+                tag: lastOpen.tag,
                 tokens: innerTokens,
                 attributes: extractAttributes(openingToken.raw),
                 sourceLength

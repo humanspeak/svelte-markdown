@@ -388,6 +388,23 @@ You can render arbitrary (non-standard) HTML tags like `<click>`, `<tooltip>`, o
 
 Both approaches work for any tag name. Snippet overrides take precedence over component renderers when both are provided.
 
+**Self-closing and empty tags** are supported alongside the paired form, and render your component with no children:
+
+```svelte
+<SvelteMarkdown source={'<click />'} renderers={{ html: { click: ClickButton } }} />
+```
+
+**Tag names are case-insensitive**, as they are in HTML. Tags are normalized to lowercase when parsed, and renderer keys and `html_*` snippet names are normalized the same way, so `<Tooltip>`, `<TOOLTIP>` and `<tooltip>` all reach the same renderer however they are registered — and identically whether the tag stands alone or is nested inside other HTML.
+
+One consequence worth knowing: a tag has exactly one entry, so registering the same tag under two casings is a duplicate rather than two renderers, and the last one wins. An entry you provide always takes precedence over the built-in renderer — including `null`, which blocks the tag entirely:
+
+```svelte
+<!-- blocks <iframe>, <IFRAME> and <IFrame> alike -->
+<SvelteMarkdown {source} renderers={{ html: { IFRAME: null } }} />
+```
+
+The `tag` passed to custom renderers and to the `sanitizeUrl` / `sanitizeAttributes` hooks is always lowercase, so `context.tag === 'iframe'` is reliable.
+
 ## Marked Extensions
 
 Use [marked extensions](https://marked.js.org/using_advanced#extensions) via the `extensions` prop. SvelteMarkdown ships first-class extensions for KaTeX, Mermaid, GitHub-style alerts, and footnotes from the `@humanspeak/svelte-markdown/extensions` subpath — no third-party packages required. Third-party extensions still work too; the component handles registering tokenizers internally and you just provide renderers for the custom token types.
