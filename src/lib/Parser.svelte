@@ -28,6 +28,22 @@
      * allocating a fresh `{}` per dispatched token.
      */
     const NO_EXTRA_PROPS = Object.freeze({})
+
+    /**
+     * HTML tag names are case-insensitive. Copy a renderer/snippet map with
+     * lowercase aliases so `widget` and `Widget` resolve the same way on both
+     * the inline pairing path and the nested htmlparser2 path (issue #383).
+     * Exact-case keys already present are left in place and win.
+     */
+    const withLowercaseHtmlKeys = <T,>(src: Record<string, T> | undefined): Record<string, T> => {
+        if (!src) return {}
+        const out: Record<string, T> = { ...src }
+        for (const key of Object.keys(src)) {
+            const lower = key.toLowerCase()
+            if (!(lower in out)) out[lower] = src[key]
+        }
+        return out
+    }
 </script>
 
 <script lang="ts">
@@ -189,6 +205,9 @@
         !(renderers as Record<string, unknown>).space && !snippetOverrides.space
     )
 
+    const htmlRenderersByLower = $derived(withLowercaseHtmlKeys(renderers.html))
+    const htmlSnippetsByLower = $derived(withLowercaseHtmlKeys(htmlSnippetOverrides))
+
     // Sanitize rest props before they reach any renderer or snippet.
     // This is the single enforcement point — custom renderers cannot bypass it.
     const sanitizedRest = $derived.by(() => {
@@ -218,29 +237,30 @@
         attributes?: Record<string, string>
         tokens?: Token[]
     }}
+    {@const htmlTagName = htmlTok.tag?.toLowerCase()}
     {@const inlineHtmlOk =
         token.type === 'html' &&
-        !!htmlTok.tag &&
+        !!htmlTagName &&
         !!renderers.html &&
-        htmlTok.tag in Html &&
-        renderers.html[htmlTok.tag] === Html[htmlTok.tag] &&
-        !htmlSnippetOverrides[htmlTok.tag]}
+        htmlTagName in Html &&
+        htmlRenderersByLower[htmlTagName] === Html[htmlTagName] &&
+        !htmlSnippetsByLower[htmlTagName]}
     {#if token.type === 'space' && inlineSpaceOk}
         <!-- inlined: space tokens render nothing -->
     {:else if token.type === 'text' && inlineTextOk && !(token as Tokens.Text).tokens}
         {(token as Tokens.Text).text ?? token.raw}
-    {:else if inlineHtmlOk && htmlTok.tag}
+    {:else if inlineHtmlOk && htmlTagName}
         {@const sanitizedAttrs = htmlTok.attributes
             ? sanitizeAttributes(
                   htmlTok.attributes,
-                  { type: 'html', tag: htmlTok.tag },
+                  { type: 'html', tag: htmlTagName },
                   sanitizeUrl
               )
             : undefined}
-        {#if SELF_CLOSING_HTML.has(htmlTok.tag)}
-            <svelte:element this={htmlTok.tag} {...sanitizedAttrs} />
+        {#if SELF_CLOSING_HTML.has(htmlTagName)}
+            <svelte:element this={htmlTagName} {...sanitizedAttrs} />
         {:else}
-            <svelte:element this={htmlTok.tag} {...sanitizedAttrs}>
+            <svelte:element this={htmlTagName} {...sanitizedAttrs}>
                 {#if htmlTok.tokens && htmlTok.tokens.length}
                     {#each htmlTok.tokens as childToken, i (renderMetadata.getStableNodeKey(childToken, i))}
                         {@render dispatch(childToken, restProps)}
@@ -460,8 +480,8 @@
         {/if}
     {:else if type === 'html'}
         {@const { tag, ...localRest } = sanitizedRest}
-        {@const htmlTag = sanitizedRest.tag as keyof typeof Html}
-        {@const htmlSnippet = htmlSnippetOverrides[htmlTag as string]}
+        {@const htmlTag = ((sanitizedRest.tag as string) ?? '').toLowerCase()}
+        {@const htmlSnippet = htmlSnippetsByLower[htmlTag]}
         {@const localRestForChildren = Object.fromEntries(
             Object.entries(localRest).filter(([key]) => key !== 'attributes')
         )}
@@ -471,24 +491,20 @@
                     {#each tokens as childToken, index (renderMetadata.getStableNodeKey(childToken, index))}
                         {@render dispatch(childToken, localRestForChildren)}
                     {/each}
-                {:else}
-                    <renderers.rawtext text={sanitizedRest.raw} {...sanitizedRest} />
                 {/if}
             {/snippet}
             {@render htmlSnippet({
                 attributes: sanitizedRest.attributes,
                 children: htmlSnippetChildren
             })}
-        {:else if renderers.html && htmlTag in renderers.html}
-            {@const HtmlComponent = renderers.html[htmlTag as keyof typeof renderers.html]}
+        {:else if htmlTag in htmlRenderersByLower}
+            {@const HtmlComponent = htmlRenderersByLower[htmlTag]}
             {#if HtmlComponent}
                 <HtmlComponent {...sanitizedRest}>
                     {#if tokens && (tokens as Token[]).length}
                         {#each tokens as childToken, index (renderMetadata.getStableNodeKey(childToken, index))}
                             {@render dispatch(childToken, localRestForChildren)}
                         {/each}
-                    {:else}
-                        <renderers.rawtext text={sanitizedRest.raw} {...sanitizedRest} />
                     {/if}
                 </HtmlComponent>
             {/if}
