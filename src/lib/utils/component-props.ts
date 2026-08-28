@@ -7,6 +7,24 @@ export type AnySnippet = Snippet<[Record<string, unknown>]>
 type RestProps = Record<string, unknown>
 
 /**
+ * Merges caller HTML tag renderers over the built-in map.
+ *
+ * Keys are canonicalized to lowercase to match the tag names emitted by the
+ * parser, so one tag has exactly one entry. Without this, `{ IFRAME: null }`
+ * would sit alongside the lowercase `iframe` default and the tag would render
+ * anyway, silently ignoring an explicit block.
+ *
+ * @param overrides Caller-supplied HTML renderers, in any casing.
+ * @returns Defaults with caller entries taking precedence, keyed by lowercase tag.
+ */
+const mergeHtmlRenderers = (overrides: NonNullable<typeof defaultRenderers.html>) => ({
+    ...defaultRenderers.html,
+    ...(Object.fromEntries(
+        Object.entries(overrides).map(([key, value]) => [key.toLowerCase(), value])
+    ) as typeof defaultRenderers.html)
+})
+
+/**
  * Merges caller renderer overrides with the built-in renderer map.
  *
  * @param renderers Partial renderer overrides from component props.
@@ -15,12 +33,7 @@ type RestProps = Record<string, unknown>
 export const buildCombinedRenderers = (renderers: Partial<typeof defaultRenderers>) => ({
     ...defaultRenderers,
     ...renderers,
-    html: renderers.html
-        ? {
-              ...defaultRenderers.html,
-              ...renderers.html
-          }
-        : defaultRenderers.html
+    html: renderers.html ? mergeHtmlRenderers(renderers.html) : defaultRenderers.html
 })
 
 /**
@@ -58,7 +71,9 @@ export const getHtmlSnippetOverrides = (rest: RestProps) =>
     Object.fromEntries(
         Object.entries(rest)
             .filter(([key, val]) => key.startsWith('html_') && val != null)
-            .map(([key, val]) => [key.slice(5), val])
+            // Lowercase to match canonical tag names emitted by the parser,
+            // so `html_DIV` and `html_div` both match a `<div>` token.
+            .map(([key, val]) => [key.slice(5).toLowerCase(), val])
     ) as Record<string, AnySnippet>
 
 /**
