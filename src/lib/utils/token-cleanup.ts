@@ -39,7 +39,10 @@ const SELF_CLOSING_TAGS =
 export const isHtmlOpenTag = (raw: string): { tag: string; isOpening: boolean } | null => {
     const match = htmlTagRegex.exec(raw)
     if (!match) return null
-    return { tag: match[1], isOpening: !raw.startsWith('</') }
+    // HTML tag names are case-insensitive. Lowercasing here keeps the inline
+    // pairing path aligned with htmlparser2 (`xmlMode: false`), which already
+    // lowercases nested markup (issue #383).
+    return { tag: match[1].toLowerCase(), isOpening: !raw.startsWith('</') }
 }
 
 /**
@@ -53,15 +56,23 @@ const formatSelfClosingHtmlToken = (token: Token): Token => {
     // Extract tag name from raw HTML
     const tagMatch = token.raw.match(/<\/?([a-zA-Z][a-zA-Z0-9-]*)/i)
     if (!tagMatch) return token
+    // Closing tags are paired separately via `isHtmlOpenTag`; they must not
+    // pick up `.tag` or they would dispatch as a second component instance.
+    if (token.raw.startsWith('</')) return token
 
-    const tagName = tagMatch[1]
-    if (!SELF_CLOSING_TAGS.test(tagName)) return token
+    const tagName = tagMatch[1].toLowerCase()
+    const isVoid = SELF_CLOSING_TAGS.test(tagName)
+    const isSelfClosingForm = token.raw.endsWith('/>')
 
-    // Self-closing tags get `.tag` and `.attributes` set so downstream
-    // code (pairing, dispatch, sanitization) has structured access. If
-    // the source already used the `<.../>` form we keep raw as-is;
-    // otherwise we normalize the `>` to `/>`.
-    const formattedRaw = token.raw.endsWith('/>') ? token.raw : token.raw.replace(/\s*>$/, '/>')
+    // The void-element allowlist decides HTML self-closing *rewrites*
+    // (`<br>` → `<br/>`). Structured `.tag`/`.attributes` must still be
+    // attached for custom tags written as `<widget />`, otherwise Parser
+    // cannot dispatch `renderers.html` and the token is silently dropped
+    // (issue #383). Unclosed openings skip this so pairing/streaming can
+    // still distinguish `<widget>` from `<widget />`.
+    if (!isVoid && !isSelfClosingForm) return token
+
+    const formattedRaw = isVoid && !isSelfClosingForm ? token.raw.replace(/\s*>$/, '/>') : token.raw
     return {
         ...token,
         raw: formattedRaw,

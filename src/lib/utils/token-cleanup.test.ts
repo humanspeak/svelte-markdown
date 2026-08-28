@@ -61,6 +61,11 @@ describe('Token Cleanup Utilities', () => {
             })
         })
 
+        it('should lowercase tag names so pairing matches the nested htmlparser2 path', () => {
+            expect(isHtmlOpenTag('<Widget>')).toEqual({ tag: 'widget', isOpening: true })
+            expect(isHtmlOpenTag('</Widget>')).toEqual({ tag: 'widget', isOpening: false })
+        })
+
         it('should correctly identify closing HTML tags', () => {
             expect(isHtmlOpenTag('</div>')).toEqual({ tag: 'div', isOpening: false })
             expect(isHtmlOpenTag('</custom-element>')).toEqual({
@@ -509,6 +514,72 @@ describe('Token Cleanup Utilities', () => {
             const result = shrinkHtmlTokens(tokens)
             expect(result).toHaveLength(1)
             expect(result[0]).toMatchObject({ type: 'html', raw: '<br/>' })
+        })
+
+        // Issue #383: custom tags written as `<widget />` must get structured
+        // `.tag`/`.attributes` so Parser can dispatch `renderers.html`. The
+        // void-element allowlist only decides whether to rewrite `>` to `/>`.
+        it('attaches tag and attributes on self-closing custom tags', () => {
+            const tokens: Token[] = [
+                {
+                    type: 'html',
+                    raw: '<widget id="w" foo="bar" />',
+                    text: '<widget id="w" foo="bar" />'
+                }
+            ]
+
+            const result = shrinkHtmlTokens(tokens)
+            expect(result).toHaveLength(1)
+            expect(result[0]).toMatchObject({
+                type: 'html',
+                raw: '<widget id="w" foo="bar" />',
+                tag: 'widget',
+                attributes: { id: 'w', foo: 'bar' }
+            })
+        })
+
+        it('lowercases self-closing custom tag names', () => {
+            const result = shrinkHtmlTokens([
+                { type: 'html', raw: '<Widget />', text: '<Widget />' }
+            ])
+            expect(result[0]).toMatchObject({ type: 'html', tag: 'widget' })
+        })
+
+        it('pairs mixed-case custom tags onto a lowercase tag name', () => {
+            const tokens: Token[] = [
+                { type: 'html', raw: '<Widget>', text: '<Widget>' },
+                { type: 'text', raw: 'x', text: 'x' },
+                { type: 'html', raw: '</widget>', text: '</widget>' }
+            ]
+
+            const result = shrinkHtmlTokens(tokens)
+            expect(result).toHaveLength(1)
+            expect(result[0]).toMatchObject({
+                type: 'html',
+                tag: 'widget',
+                tokens: [{ type: 'text', raw: 'x', text: 'x' }]
+            })
+        })
+
+        it('uses the same lowercase tag for inline pairing and nested htmlparser2', () => {
+            const inline = shrinkHtmlTokens([
+                { type: 'html', raw: '<Widget>', text: '<Widget>' },
+                { type: 'text', raw: 'x', text: 'x' },
+                { type: 'html', raw: '</Widget>', text: '</Widget>' }
+            ])
+            const nested = shrinkHtmlTokens([
+                {
+                    type: 'html',
+                    raw: '<div><Widget>x</Widget></div>',
+                    text: '<div><Widget>x</Widget></div>'
+                }
+            ])
+
+            expect((inline[0] as Token & { tag: string }).tag).toBe('widget')
+            const inner = (
+                nested[0] as Token & { tokens: Array<Token & { tag?: string }> }
+            ).tokens.find((token) => token.tag === 'widget')
+            expect(inner).toBeDefined()
         })
 
         it('should escape quotes in attribute values when parsing HTML blocks', () => {
