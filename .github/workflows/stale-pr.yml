@@ -9,7 +9,7 @@ on:
 
 jobs:
     stale:
-        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
+        runs-on: ubuntu-latest
 
         steps:
             - uses: actions/stale@v11 # zizmor: ignore[unpinned-uses]

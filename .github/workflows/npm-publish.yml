@@ -47,7 +47,7 @@ on:
 
 jobs:
     check-if-merged:
-        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
+        runs-on: ubuntu-latest
         outputs:
             should_run: ${{ steps.check.outputs.should_run }}
             has_skip_label: ${{ steps.check.outputs.has_skip_label }}
@@ -119,7 +119,7 @@ jobs:
     debug-check:
         needs: check-if-merged
         if: needs.check-if-merged.outputs.should_run == 'true'
-        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
+        runs-on: ubuntu-latest
         environment: ci
         steps:
             - name: Checkout
@@ -260,7 +260,7 @@ jobs:
     build:
         needs: [check-if-merged, debug-check]
         if: needs.check-if-merged.outputs.should_run == 'true'
-        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
+        runs-on: ubuntu-latest
         environment: ci
         strategy:
             matrix:
@@ -318,7 +318,7 @@ jobs:
         needs: [check-if-merged, debug-check]
         if: needs.check-if-merged.outputs.should_run == 'true' && needs.check-if-merged.outputs.has_skip_label != 'true'
         timeout-minutes: 60
-        runs-on: blacksmith-4vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
+        runs-on: ubuntu-latest
         environment: ci
         steps:
             - uses: actions/checkout@v7 # zizmor: ignore[unpinned-uses]
@@ -368,7 +368,7 @@ jobs:
             needs.check-if-merged.outputs.should_run == 'true' &&
             needs.build.result == 'success' &&
             (needs.playwright-tests.result == 'success' || needs.playwright-tests.result == 'skipped')
-        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
+        runs-on: ubuntu-latest
         steps:
             - name: Coveralls Finished
               uses: coverallsapp/github-action@v2 # zizmor: ignore[unpinned-uses]

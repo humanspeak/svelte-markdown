@@ -28,7 +28,7 @@ concurrency:
 jobs:
     check-labels:
         if: github.event_name == 'pull_request'
-        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
+        runs-on: ubuntu-latest
         outputs:
             skip_e2e: ${{ steps.check.outputs.skip_e2e }}
         steps:
@@ -38,7 +38,7 @@ jobs:
               run: echo "skip_e2e=$HAS_SKIP_LABEL" >> $GITHUB_OUTPUT
 
     unit-tests:
-        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
+        runs-on: ubuntu-latest
         timeout-minutes: 20
         steps:
             - name: Checkout
@@ -96,7 +96,7 @@ jobs:
     e2e-tests:
         needs: [unit-tests, check-labels]
         if: needs.check-labels.outputs.skip_e2e != 'true'
-        runs-on: blacksmith-2vcpu-ubuntu-2404 # trunk-ignore(actionlint/runner-label)
+        runs-on: ubuntu-latest
         timeout-minutes: 25
         strategy:
             fail-fast: false
