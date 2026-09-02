@@ -18,6 +18,7 @@ runtimes:
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
     disabled:
+        - actionlint
         - pinact
     ignore:
         - linters: [ALL]
@@ -59,7 +60,6 @@ lint:
     enabled:
         - grype@0.117.0
         - sort-package-json@4.0.0
-        - actionlint@1.7.12
         - checkov@3.3.9
         - eslint@10.8.1
         - git-diff-check
@@ -73,6 +73,7 @@ lint:
         - taplo@0.10.0
         - trufflehog@3.96.0
         - yamllint@1.38.0
+        - zizmor@1.30.0
 actions:
     disabled:
         - trunk-announce
