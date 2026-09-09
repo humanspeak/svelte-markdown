@@ -1,12 +1,19 @@
 # Image recovery and footnote correctness
 
+> CLOSED 2026-09-09 — Plans 001, 002 and 003 PASS. Delivered image source recovery,
+> footnote content/navigation correctness, interactive T3 demos and browser tests.
+> Branch: `fix/image-footnote-correctness`; runtime/demos committed and verified.
+> Local demo server remains running. Operator may open a PR when ready; T3 inline
+> preview visibility needs operator confirmation because its API reports hidden
+> despite open/show requests (see Plan 003 report).
+
 Generated with the improve skill on 2026-09-09 against commit `aeaa3c3`.
 Rebased on freshly fetched main `db41ab0` on 2026-09-09 at the operator's request;
 in-scope runtime files are unchanged, and the package is now 1.9.0.
 Execution branch: `fix/image-footnote-correctness`.
 The user selected these two topics following a markstream release comparison;
 no further selection or implementation approval is needed to produce these
-plans. Both runtime fixes are implemented and independently verified; interactive browser demonstrations are next.
+plans. Both runtime fixes and the interactive browser demonstrations are implemented and independently verified.
 
 ## Execution order and status
 
@@ -14,7 +21,7 @@ plans. Both runtime fixes are implemented and independently verified; interactiv
 | ------------------------------------ | ------------------------------------------------ | -------- | ------ | ---------- | ------ |
 | [001](001-image-recovery.md)         | Recover images after source changes              | P1       | S      | None       | DONE   |
 | [002](002-footnote-correctness.md)   | Preserve content and correct footnote navigation | P1       | L      | None       | DONE   |
-| [003](003-browser-demonstrations.md) | Inspect fixes in interactive browser test pages  | P1       | S      | 001, 002   | TODO   |
+| [003](003-browser-demonstrations.md) | Inspect fixes in interactive browser test pages  | P1       | S      | 001, 002   | DONE   |
 
 Status values: TODO, IN PROGRESS, DONE, BLOCKED (reason), REJECTED (reason).
 Each executor must read its whole plan and record actual red/green gate results
@@ -108,3 +115,13 @@ and remaining limitations here. Do not substitute planned commands for runs.
 - Independent Trunk/check/build/diff gates passed; check reports 0 errors / 3 existing warnings; build includes package and publint validation.
 - Guard additionally exercised the actual Marked CRLF lexer boundary: continued body, following paragraph and heading preserved.
 - Plan 003 preflight confirms all three demo/test paths are new and anchors to 57f144d. The operator requested these pages in T3; runtime fixes remain unchanged.
+
+### Plan 003 — DONE, reviewed 43cf7b6 (2026-09-09)
+
+- Two new real-library demo pages and five Playwright cases; exactly the planned three files, no runtime changes.
+- Guard found and dispatched one correction for an ambiguous paragraph locator, SSR hydration readiness, a missing UI each key, unused CSS selector and globally applied body styles. Assertions remain substantive.
+- Independent sequential Trunk/check/build/browser/diff gates passed. Check: 0 errors / 3 existing warnings. Build includes package/publint. Chromium: 5/5 passed in 4.8 seconds.
+- T3 tab_c loads `/test/footnote-correctness`; tab_d loads `/test/image-recovery`. Both received open/show requests, and T3 Code (Nightly) was foregrounded.
+- Manual T3 evidence: broken image naturalWidth 0/error true -> recovered 150/error false; appending prose retains exact image node. First reference targets fn-repeat; second backlink targets fnref-repeat:ref:2. Completion keeps 7/7 chunks, 2 refs, 2 backlinks, following paragraph and heading; reset returns the initial document.
+- T3 reports its underlying tabs as hidden despite open/show requests. macOS denied fallback assistive UI access; operator visibility confirmation was requested. Both tabs and direct local URLs remain available. No browser verification was claimed solely from status text.
+- Earlier Checkov scan on carried JSON stalled and its exact process was stopped. Normal final Trunk and commit hooks subsequently passed without disabling rules.
