@@ -4,13 +4,21 @@
 > order. Stop on the listed conditions. Update the adjacent README status and
 > evidence when finished unless a reviewer owns those updates.
 >
-> **Drift check first:** `git diff --stat db41ab0..HEAD -- src/lib/extensions/footnote src/lib/utils/footnote-render-metadata.ts src/lib/utils/footnote-render-metadata.test.ts src/lib/SvelteMarkdown.svelte src/lib/Parser.svelte src/lib/SvelteMarkdown.footnotes.test.ts src/lib/test/footnotes/FootnoteSnippetProbe.svelte README.md`
+> **Drift check first:** `git diff --stat 415df2e..HEAD -- src/lib/extensions/footnote src/lib/utils/footnote-render-metadata.ts src/lib/utils/footnote-render-metadata.test.ts src/lib/SvelteMarkdown.svelte src/lib/Parser.svelte src/lib/SvelteMarkdown.footnotes.test.ts src/lib/test/footnotes/FootnoteSnippetProbe.svelte README.md`
 > Inspect uncommitted changes to the same paths. Compare runtime excerpts before
 > proceeding. README drift from Plan 001 is expected; preserve its image edits.
 
 > Revision 2026-09-09: Rebased the plan onto freshly fetched main (`db41ab0`)
 > at the operator's request. In-scope runtime files match the original baseline;
 > package version is now 1.9.0 and current Trunk configuration remains authoritative.
+
+> Revision 2026-09-09: Preflight after image snapshot `415df2e` found only the
+> expected image paragraph change in this plan's README scope; runtime files are
+> unchanged. Rebased the drift anchor to preserve that work. The companion cannot
+> run pnpm because native binary identity verification fails before execution;
+> use the installed `node_modules/.bin/vitest` for red/green tests, which the image
+> executor verified works. Do not install or create dependency workarounds. Guard
+> owns pnpm, Trunk, typecheck, coverage, build, commits, and plan status updates.
 
 ## Status
 
@@ -21,7 +29,7 @@
 - **Category:** bug
 - **Confidence:** HIGH for content loss and duplicate reference IDs; duplicate
   definition entries are confirmed, but the renderer exception was not executed
-- **Planned at:** commit `db41ab0`, 2026-09-09
+- **Planned at:** commit `415df2e`, 2026-09-09
 
 ## Why this matters
 

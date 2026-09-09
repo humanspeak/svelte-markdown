@@ -6,13 +6,13 @@ in-scope runtime files are unchanged, and the package is now 1.9.0.
 Execution branch: `fix/image-footnote-correctness`.
 The user selected these two topics following a markstream release comparison;
 no further selection or implementation approval is needed to produce these
-plans. This batch contains implementation handoffs only; source is unchanged.
+plans. Image recovery is implemented and independently verified; footnote correctness is next.
 
 ## Execution order and status
 
 | Plan                               | Title                                            | Priority | Effort | Depends on | Status |
 | ---------------------------------- | ------------------------------------------------ | -------- | ------ | ---------- | ------ |
-| [001](001-image-recovery.md)       | Recover images after source changes              | P1       | S      | None       | TODO   |
+| [001](001-image-recovery.md)       | Recover images after source changes              | P1       | S      | None       | DONE   |
 | [002](002-footnote-correctness.md) | Preserve content and correct footnote navigation | P1       | L      | None       | TODO   |
 
 Status values: TODO, IN PROGRESS, DONE, BLOCKED (reason), REJECTED (reason).
@@ -86,3 +86,14 @@ competitors, and the remainder of the codebase were not audited. The operator ex
 
 Executors: append concise actual red failures, green commands, coverage results,
 and remaining limitations here. Do not substitute planned commands for runs.
+
+### Plan 001 — DONE, reviewed 415df2e (2026-09-09)
+
+- Guard reproduced both intended baseline failures, then 4 focused files / 52 tests passed.
+- Trunk and svelte-check passed (0 errors, 3 existing warnings).
+- Full coverage passed with `pnpm test --reporter=dot --maxWorkers=2`: 152 files / 1,034 tests; statements 96.89%, branches 91.34%, functions 97.96%, lines 97.89%.
+- Default full-suite concurrency first timed out one existing heading test; bounded-worker retry retained assertions, timeout, and coverage settings.
+- `pnpm build` passed on separate retry including packaging and publint; first packaging process was killed with exit 137 after the application build completed.
+- Whole implementation diff reviewed; no dependency, public prop, sanitizer, Parser, or keying changes. See the adjacent guard report.
+- Plan 002 preflight rebased its drift anchor to reviewed image snapshot 415df2e and documented usable direct Vitest / unavailable companion pnpm.
+- Operator requested browser test pages in T3 after completion; prepare a separate scoped demonstration handoff while Plan 002 executes.

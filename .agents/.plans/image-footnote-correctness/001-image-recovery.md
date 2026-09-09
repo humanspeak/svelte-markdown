@@ -12,6 +12,13 @@
 > at the operator's request. In-scope runtime files match the original baseline;
 > package version is now 1.9.0 and current Trunk configuration remains authoritative.
 
+> Revision 2026-09-09: Guard observed one existing large-document heading timeout
+> under default full-suite concurrency (1,033 other tests passed). The same test
+> passed the focused suite. Use `pnpm test --reporter=dot --maxWorkers=2` for the
+> full coverage gate on this machine; the retry passed all 1,034 tests with the
+> same timeout and unchanged coverage configuration and thresholds. This changes
+> test scheduling only, not acceptance assertions.
+
 ## Status
 
 - **Priority:** P1
@@ -245,7 +252,7 @@ README with command results and status; do not mark DONE with failed gates.
 
 - [ ] Both Step 1 failures were observed against baseline and now pass.
 - [ ] Focused image/integration and streaming guard commands exit 0.
-- [ ] `trunk check`, `pnpm check`, `pnpm test --reporter=dot`, `pnpm build`, and
+- [ ] `trunk check`, `pnpm check`, `pnpm test --reporter=dot --maxWorkers=2`, `pnpm build`, and
       `git diff --check` exit 0; coverage configuration is untouched.
 - [ ] No new dependencies, public props, placeholders, or unrelated edits.
 - [ ] Batch README records verification results and status.
