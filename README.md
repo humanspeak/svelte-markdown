@@ -797,7 +797,7 @@ const myCache = new TokenCache({ maxSize: 100, ttl: 10 * 60 * 1000 })
 
 ### Smart Image Lazy Loading
 
-Images automatically lazy load using native `loading="lazy"` and IntersectionObserver prefetching, with a smooth fade-in animation and error state handling. To disable lazy loading, provide a custom Image renderer:
+Images automatically lazy load using native `loading="lazy"` and IntersectionObserver prefetching, with a smooth fade-in animation and error state handling. When an image URL changes, its load/error state resets for the new request; unchanged image URLs keep their existing DOM and completed state during updates. Reusing the same failed URL does not automatically retry it. To disable lazy loading or provide custom retry behavior, provide a custom Image renderer:
 
 ```svelte
 <!-- EagerImage.svelte -->
