@@ -1,17 +1,14 @@
 {
     "project": "@humanspeak/svelte-markdown",
     "category": "component-based Svelte markdown renderer",
-
     "self_npm": "@humanspeak/svelte-markdown",
     "self_repo": "humanspeak/svelte-markdown",
-
     "ahrefs_project_id": 8934907,
     "github_handle": "jaysin586",
     "repo_triage": {
         "enabled": true,
         "_comment": "Surfaces open PRs/issues NOT opened by github_handle, and threads where someone replied after your last comment. Uses self_repo. 'since' each run = previous last_run. Set GITHUB_TOKEN in the scheduled env to raise rate limits."
     },
-
     "self_features": [
         "Marked-based parsing",
         "Secure HTML parsing via HTMLParser2 + XSS-safe defaults (protocol allowlist, on* handler stripping)",
@@ -28,18 +25,21 @@
         "streamId prop to reset state between streams",
         "Smart image lazy loading with fade-in"
     ],
-
     "non_goals": [
         "WYSIWYG / editor functionality (this is a renderer, not an editor)",
         "Remote fetching of markdown documents",
         "A bundled full DOM sanitizer (DOMPurify etc.) — ships safe-by-default URL/attribute sanitization only; full sanitization is the consumer's responsibility"
     ],
-
     "competitors": [
-        { "npm": "svelte-markdown", "repo": "pablo-abc/svelte-markdown" },
-        { "npm": "svelte-exmarkdown", "repo": "ssssota/svelte-exmarkdown" }
+        {
+            "npm": "svelte-markdown",
+            "repo": "pablo-abc/svelte-markdown"
+        },
+        {
+            "npm": "svelte-exmarkdown",
+            "repo": "ssssota/svelte-exmarkdown"
+        }
     ],
-
     "watchlist": [
         {
             "npm": "svelte-streamdown",
@@ -52,15 +52,88 @@
             "note": "batteries-included: first-party Shiki + KaTeX + beautiful-mermaid, streaming-oriented"
         }
     ],
-
     "seo": {
         "enabled": true,
         "docs_domain": "markdown.svelte.page",
         "gsc_dir": ".competitive-intel/gsc",
         "gsc_staleness_days": 14,
-        "_comment": "Cross-references the local GSC export (dropped in gsc_dir, gitignored) with Ahrefs to produce keyword/blog/site-fix recommendations. Nudges for a fresh export past gsc_staleness_days."
+        "_comment": "Cross-references the local GSC export (dropped in gsc_dir, gitignored) with Ahrefs to produce keyword/blog/site-fix recommendations. Nudges for a fresh export past gsc_staleness_days.",
+        "tracked_keywords": [
+            {
+                "keyword": "tiptap markdown",
+                "volume": 300,
+                "kd": 3,
+                "position": 19,
+                "url": "https://markdown.svelte.page/compare/vs-tiptap",
+                "location": "United States",
+                "language": "en"
+            },
+            {
+                "keyword": "tiptap svelte",
+                "volume": 200,
+                "kd": 8,
+                "position": 16,
+                "url": "https://markdown.svelte.page/compare/vs-tiptap",
+                "location": "United States",
+                "language": "en"
+            },
+            {
+                "keyword": "svelte markdown",
+                "volume": 20,
+                "kd": 16,
+                "position": 11,
+                "url": "https://markdown.svelte.page/",
+                "location": "United States",
+                "language": "en"
+            },
+            {
+                "keyword": "svelte marked",
+                "volume": 10,
+                "kd": 0,
+                "position": 7,
+                "url": "https://markdown.svelte.page/compare/vs-marked",
+                "location": "United States",
+                "language": "en"
+            },
+            {
+                "keyword": "markdown svelte",
+                "volume": 0,
+                "kd": 12,
+                "position": null,
+                "url": null,
+                "location": "United States",
+                "language": "en"
+            },
+            {
+                "keyword": "svelte custom renderer",
+                "volume": 0,
+                "kd": 3,
+                "position": 16,
+                "url": "https://markdown.svelte.page/examples/custom-renderers",
+                "location": "United States",
+                "language": "en"
+            },
+            {
+                "keyword": "svelte markdown renderer",
+                "volume": 0,
+                "kd": 12,
+                "position": 9,
+                "url": "https://markdown.svelte.page/",
+                "location": "United States",
+                "language": "en"
+            },
+            {
+                "keyword": "svelte render markdown",
+                "volume": 0,
+                "kd": 3,
+                "position": null,
+                "url": null,
+                "location": "United States",
+                "language": "en"
+            }
+        ],
+        "_tracked_keywords_comment": "Exported from Ahrefs Rank Tracker project 8934907 on 2026-09-03 before cancelling the subscription. volume/kd/position are a point-in-time snapshot — kd especially is not reproducible from free sources. This is the curated target list; GSC now supplies ongoing position/impression movement."
     },
-
     "compare_data_paths": ["docs/src/lib/compare-data.ts"],
     "page_validation": {
         "download_tolerance": 0.3,
@@ -72,12 +145,15 @@
             "script": "scripts/stream-compare-bench.mjs",
             "command": "pnpm build && pnpm preview  (then, in another shell) pnpm perf:stream-compare",
             "measures": "streaming perf claims on the page: 'Nx faster under burst backpressure', DOM-footprint element counts, p95/throughput",
-            "compares": { "svelte-streamdown": "devDependency" },
-            "measured_against": { "svelte-streamdown": "3.1.2" },
+            "compares": {
+                "svelte-streamdown": "devDependency"
+            },
+            "measured_against": {
+                "svelte-streamdown": "3.1.2"
+            },
             "_comment": "Perf numbers are only valid for the pinned devDep version. When svelte-streamdown publishes past measured_against, flag the page and prompt a human to bump the devDep + re-run the script. Do NOT auto-run in the nightly job."
         }
     ],
-
     "slack_channel": "C0BP5BF1UTX",
     "_slack_channel_comment": "#claude-reports in human-speak.slack.com (public, home workspace). Confirmed auto-send works 2026-08-10. NOTE: sends only work while the humanspeak workspace is the connected Slack — the integration is single-workspace, and from another org this same channel is a Slack Connect channel that blocks bot sends (draft-only)."
 }

@@ -1,17 +1,17 @@
 {
     "project": "@humanspeak/svelte-markdown",
-    "last_run": "2026-08-28",
+    "last_run": "2026-09-09",
     "run_type": "delta",
     "snapshot": {
-        "fetched_at": "2026-08-28T07:00:41Z",
+        "fetched_at": "2026-09-09T05:00:31Z",
         "project": "@humanspeak/svelte-markdown",
         "self": {
             "npm": "@humanspeak/svelte-markdown",
             "repo": "humanspeak/svelte-markdown",
-            "latest_version": "1.8.8",
-            "last_publish": "2026-08-25",
+            "latest_version": "1.9.0",
+            "last_publish": "2026-08-28",
             "first_publish": "2024-10-30",
-            "weekly_downloads": 29384,
+            "weekly_downloads": 35350,
             "peer_deps": {
                 "katex": ">=0.16.0",
                 "mermaid": ">=10.0.0",
@@ -20,11 +20,18 @@
             },
             "svelte_peer": "^5.0.0",
             "error": null,
-            "stars": 130,
+            "stars": 135,
             "archived": false,
-            "pushed_at": "2026-08-26",
-            "last_release": "2026-08-25",
+            "pushed_at": "2026-09-02",
+            "last_release": "2026-08-28",
             "recent_releases": [
+                {
+                    "version": "v1.9.0",
+                    "date": "2026-08-28",
+                    "notes": "Changes in this Release\nrefactor(html): canonicalize tag names and close remaining #383 gaps\n\nFor more details, see the [Pull Request](https://github.com/humanspeak/svelte-markdown/pull/385)",
+                    "notes_truncated": false,
+                    "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.9.0"
+                },
                 {
                     "version": "v1.8.8",
                     "date": "2026-08-25",
@@ -122,13 +129,6 @@
                     "notes": "Changes in this Release\nchore(test): gate coverage, declare engines, cover rAF fallback\n\nFor more details, see the [Pull Request](https://github.com/humanspeak/svelte-markdown/pull/353)",
                     "notes_truncated": false,
                     "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.7.10"
-                },
-                {
-                    "version": "v1.7.9",
-                    "date": "2026-07-09",
-                    "notes": "Changes in this Release\nchore(lint): lint test files and enable type-aware promise rules\n\nFor more details, see the [Pull Request](https://github.com/humanspeak/svelte-markdown/pull/352)",
-                    "notes_truncated": false,
-                    "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.7.9"
                 }
             ]
         },
@@ -140,7 +140,7 @@
                 "latest_version": "0.4.1",
                 "last_publish": "2023-12-25",
                 "first_publish": "2020-04-21",
-                "weekly_downloads": 46505,
+                "weekly_downloads": 25822,
                 "peer_deps": {
                     "svelte": "^4.0.0"
                 },
@@ -158,15 +158,15 @@
                 "latest_version": "5.0.2",
                 "last_publish": "2025-08-09",
                 "first_publish": "2022-04-09",
-                "weekly_downloads": 53904,
+                "weekly_downloads": 31174,
                 "peer_deps": {
                     "svelte": "^5.1.3"
                 },
                 "svelte_peer": "^5.1.3",
                 "error": null,
-                "stars": 354,
+                "stars": 353,
                 "archived": false,
-                "pushed_at": "2026-08-26",
+                "pushed_at": "2026-09-07",
                 "last_release": "2025-08-09",
                 "recent_releases": []
             }
@@ -178,13 +178,13 @@
                 "latest_version": "3.1.2",
                 "last_publish": "2026-07-01",
                 "first_publish": "2025-09-08",
-                "weekly_downloads": 32882,
+                "weekly_downloads": 25832,
                 "peer_deps": {
                     "svelte": "^5.0.0"
                 },
                 "svelte_peer": "^5.0.0",
                 "error": null,
-                "stars": 103,
+                "stars": 105,
                 "archived": false,
                 "pushed_at": "2026-07-01",
                 "last_release": "2026-07-01",
@@ -218,7 +218,7 @@
                 "latest_version": "0.6.2",
                 "last_publish": "2026-08-07",
                 "first_publish": "2026-03-23",
-                "weekly_downloads": 3958,
+                "weekly_downloads": 2482,
                 "peer_deps": {
                     "beautiful-mermaid": "^1.1.3",
                     "katex": "^0.17.0",
@@ -262,36 +262,37 @@
             "first_seen": "2026-08-28"
         }
     ],
+    "closed_gaps": [],
     "compare_validation": {
         "svelte-streamdown": {
             "validated_against_version": "3.1.2",
-            "validated_on": "2026-08-28",
+            "validated_on": "2026-09-09",
             "benchmark_measured_against": "3.1.2",
             "benchmark_valid": true
         },
         "svelte-exmarkdown": {
             "validated_against_version": "5.0.2",
-            "validated_on": "2026-08-28"
+            "validated_on": "2026-09-09"
         },
         "svelte-markdown": {
             "validated_against_version": "0.4.1",
-            "validated_on": "2026-08-28"
+            "validated_on": "2026-09-09"
         }
     },
     "watch_candidates": [
         {
             "npm": "markstream-svelte",
             "first_seen": "2026-08-11",
-            "status": "promoted-to-active-watch 2026-08-28",
-            "note": "Svelte binding of cross-framework Markstream (Simon-He95/markstream-vue, shared markstream-core). 0.0.7 -> 2.0.6 between 2026-08-18 and 2026-08-28 (8 publishes), wkly DL 327 -> 704 (+115%). Targets our exact niche: LLM token streams, SSE/WebSocket, incomplete markdown, plus Mermaid/KaTeX/D2/infographics/stream-diffs. peer svelte >=5 <6. Keywords deliberately include svelte-markdown/svelte-markdown-renderer. Still ~40x smaller by downloads; API churny post-2.0. Consider moving into config.watchlist if momentum holds.",
-            "latest_version": "2.0.6",
-            "weekly_downloads": 704,
-            "checked_on": "2026-08-28"
+            "status": "active-watch-candidate",
+            "note": "2.0.7 -> 2.0.10 (2026-09-08); publishing fast but adoption shrinking. Weekly DL 554 -> 263 (-53%). Not promoted to config.watchlist \u2014 revisit if downloads resume growth or it clears ~1.5k weekly.",
+            "latest_version": "2.0.10",
+            "weekly_downloads": 263,
+            "checked_on": "2026-09-09"
         },
         {
             "npm": "@markdown-ui/svelte",
             "first_seen": "2026-08-18",
-            "note": "Still parked. 0.4.0 (2026-01-12), 7 wkly DL. Too small/stale to track \u2014 recorded to avoid re-surfacing.",
+            "note": "Still parked. 0.4.0 (2026-01-12), single-digit weekly DL. Too small/stale to track \u2014 recorded to avoid re-surfacing.",
             "latest_version": "0.4.0",
             "weekly_downloads": 7,
             "checked_on": "2026-08-28"
@@ -299,6 +300,9 @@
     ],
     "seo": {
         "export_date": "2026-08-22",
+        "export_unchanged_since_last_run": true,
+        "export_age_days": 17,
+        "stale": true,
         "striking_distance": [
             {
                 "query": "svelte markdown",
@@ -494,19 +498,101 @@
             }
         ],
         "recommendations_open": [
-            "rewrite vs-tiptap title/meta (639 impr, pos 18, 0.16% CTR \u2014 intent/title problem)",
+            "rewrite vs-tiptap title/meta (690 impr, pos 18, 0.14% CTR \u2014 intent/title problem; corroborated by rank tracker pos 16/19 on tiptap terms)",
             "write dedicated markdown-XSS/security page (markdown xss KD4; milkdown-xss cluster 230 impr pos 7)",
             "dedicated hub page for 'svelte markdown' head term (pos 11 via homepage)",
             "dedicated 'marked in Svelte' page (rank pos 8-13 with no target URL)",
             "fix structured-data validation errors on 11 pages",
-            "wire up IndexNow (38 eligible pages)",
-            "seed Ahrefs rank tracker from GSC queries (only 1 keyword tracked, 0 ranked)"
-        ]
+            "wire up IndexNow (38 eligible pages)"
+        ],
+        "rank_tracker_add_candidates": ["svelte markdown editor", "markdown playground"]
     },
     "rank_tracker": {
-        "checked_on": "2026-08-28",
-        "tracked": 1,
-        "ranked": 0,
-        "note": "Project 8934907 has a single keyword ('svelte markdown', vol 20, KD 12); position null on 2026-08-28 vs 11 on 2026-08-21. GSC shows avg pos 11.4, so likely a tracker data gap rather than a real drop."
+        "checked_on": "2026-09-09",
+        "date_compared": "2026-09-02",
+        "summary": {
+            "tracked": 8,
+            "ranked": 7,
+            "top3": 1,
+            "top10": 4,
+            "top100": 7,
+            "improved": 5,
+            "declined": 1,
+            "avg_position": 10.3
+        },
+        "rows": [
+            {
+                "keyword": "svelte custom renderer",
+                "volume": 0,
+                "position": 3,
+                "position_diff": -13,
+                "position_prev": 16,
+                "url": "https://markdown.svelte.page/compare/vs-milkdown",
+                "kd": 0
+            },
+            {
+                "keyword": "svelte marked",
+                "volume": 10,
+                "position": 6,
+                "position_diff": -1,
+                "position_prev": 7,
+                "url": "https://markdown.svelte.page/compare/vs-marked",
+                "kd": 0
+            },
+            {
+                "keyword": "svelte markdown renderer",
+                "volume": 0,
+                "position": 9,
+                "position_diff": 0,
+                "position_prev": 9,
+                "url": "https://markdown.svelte.page/",
+                "kd": 12
+            },
+            {
+                "keyword": "svelte markdown",
+                "volume": 20,
+                "position": 10,
+                "position_diff": -1,
+                "position_prev": 11,
+                "url": "https://markdown.svelte.page/",
+                "kd": 17
+            },
+            {
+                "keyword": "tiptap svelte",
+                "volume": 250,
+                "position": 13,
+                "position_diff": -3,
+                "position_prev": 16,
+                "url": "https://markdown.svelte.page/compare/vs-tiptap",
+                "kd": 12
+            },
+            {
+                "keyword": "svelte render markdown",
+                "volume": 0,
+                "position": 14,
+                "position_diff": 14,
+                "position_prev": null,
+                "url": "https://markdown.svelte.page/",
+                "kd": 2
+            },
+            {
+                "keyword": "tiptap markdown",
+                "volume": 300,
+                "position": 17,
+                "position_diff": -2,
+                "position_prev": 19,
+                "url": "https://markdown.svelte.page/compare/vs-tiptap",
+                "kd": 0
+            },
+            {
+                "keyword": "markdown svelte",
+                "volume": 0,
+                "position": null,
+                "position_diff": null,
+                "position_prev": null,
+                "url": null,
+                "kd": 12
+            }
+        ]
     }
 }
