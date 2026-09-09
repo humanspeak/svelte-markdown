@@ -20,6 +20,14 @@
 > executor verified works. Do not install or create dependency workarounds. Guard
 > owns pnpm, Trunk, typecheck, coverage, build, commits, and plan status updates.
 
+> Revision 2026-09-09: Full coverage uses `--maxWorkers=2` on this machine.
+> Plan 001 proved the identical full suite and unchanged timeout/coverage gates
+> pass with bounded workers after default concurrency timed out an existing
+> heading test. This changes scheduling only; no assertions or thresholds change. The same
+> worker limit applies to focused/streaming gates after a guard focused run
+> lost a worker (72 assertions passed, no assertion failure). Bounded retries
+> passed all 80 footnote and 100 streaming tests.
+
 ## Status
 
 - **Priority:** P1
@@ -136,15 +144,15 @@ Commands run at repo root with installed dependencies. In a fresh executor
 checkout only, use `pnpm install --frozen-lockfile` if needed; keep the lockfile
 unchanged. Trunk is the format/lint authority, not raw ESLint/Prettier.
 
-| Purpose          | Command                                                                                                                                                                                                     | Expected on success                   |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| Footnote tests   | `pnpm test:only src/lib/extensions/footnote src/lib/SvelteMarkdown.footnotes.test.ts src/lib/utils/footnote-render-metadata.test.ts --reporter=dot`                                                         | All pass except specified red gates   |
-| Streaming guards | `pnpm test:only src/lib/utils/incremental-parser.test.ts src/lib/SvelteMarkdown.issue-328.test.ts src/lib/SvelteMarkdown.redraw-regression.test.ts src/lib/SvelteMarkdown.stream-id.test.ts --reporter=dot` | All pass                              |
-| Typecheck        | `pnpm check`                                                                                                                                                                                                | Exit 0, zero errors                   |
-| Format           | `trunk fmt`                                                                                                                                                                                                 | Only intended changed files formatted |
-| Lint             | `trunk check`                                                                                                                                                                                               | Exit 0                                |
-| Full coverage    | `pnpm test --reporter=dot`                                                                                                                                                                                  | Exit 0                                |
-| Build/package    | `pnpm build`                                                                                                                                                                                                | Exit 0, including package validation  |
+| Purpose          | Command                                                                                                                                                                                                                    | Expected on success                   |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| Footnote tests   | `pnpm test:only src/lib/extensions/footnote src/lib/SvelteMarkdown.footnotes.test.ts src/lib/utils/footnote-render-metadata.test.ts --reporter=dot --maxWorkers=2`                                                         | All pass except specified red gates   |
+| Streaming guards | `pnpm test:only src/lib/utils/incremental-parser.test.ts src/lib/SvelteMarkdown.issue-328.test.ts src/lib/SvelteMarkdown.redraw-regression.test.ts src/lib/SvelteMarkdown.stream-id.test.ts --reporter=dot --maxWorkers=2` | All pass                              |
+| Typecheck        | `pnpm check`                                                                                                                                                                                                               | Exit 0, zero errors                   |
+| Format           | `trunk fmt`                                                                                                                                                                                                                | Only intended changed files formatted |
+| Lint             | `trunk check`                                                                                                                                                                                                              | Exit 0                                |
+| Full coverage    | `pnpm test --reporter=dot --maxWorkers=2`                                                                                                                                                                                  | Exit 0                                |
+| Build/package    | `pnpm build`                                                                                                                                                                                                               | Exit 0, including package validation  |
 
 The actual `vite.config.ts` thresholds are statements 95%, branches 89%,
 functions 95%, lines 96%; do not lower any threshold. Tests use jsdom.
@@ -369,7 +377,7 @@ props, and the existing separate-document namespace limitation. Ordinary simple
 single-reference examples stay unchanged. Do not advertise full CommonMark/GFM
 footnote compatibility or Markdown rendering in bodies.
 
-Run `trunk fmt`, `trunk check`, `pnpm check`, `pnpm test --reporter=dot`, and
+Run `trunk fmt`, `trunk check`, `pnpm check`, `pnpm test --reporter=dot --maxWorkers=2`, and
 `pnpm build` → all exit 0, coverage thresholds unchanged. `git diff --check` must
 exit 0. Compare `git status --short` against the recorded initial state and
 allowlist. Record actual red/green evidence and gates in the batch README.
@@ -408,7 +416,7 @@ allowlist. Record actual red/green evidence and gates in the batch README.
 - [ ] Step 1 content-loss, duplicate-reference, and duplicate-definition failures
       were recorded and now pass without weakening assertions.
 - [ ] Complete footnote matrix and streaming guard commands exit 0.
-- [ ] `trunk check`, `pnpm check`, `pnpm test --reporter=dot`, `pnpm build`, and
+- [ ] `trunk check`, `pnpm check`, `pnpm test --reporter=dot --maxWorkers=2`, `pnpm build`, and
       `git diff --check` exit 0; coverage thresholds and dependencies unchanged.
 - [ ] No edits outside the allowlist beyond pre-existing user changes.
 - [ ] README documents the actual supported contract; batch status/evidence updated.

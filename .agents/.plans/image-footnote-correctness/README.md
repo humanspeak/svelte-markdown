@@ -6,21 +6,22 @@ in-scope runtime files are unchanged, and the package is now 1.9.0.
 Execution branch: `fix/image-footnote-correctness`.
 The user selected these two topics following a markstream release comparison;
 no further selection or implementation approval is needed to produce these
-plans. Image recovery is implemented and independently verified; footnote correctness is next.
+plans. Both runtime fixes are implemented and independently verified; interactive browser demonstrations are next.
 
 ## Execution order and status
 
-| Plan                               | Title                                            | Priority | Effort | Depends on | Status |
-| ---------------------------------- | ------------------------------------------------ | -------- | ------ | ---------- | ------ |
-| [001](001-image-recovery.md)       | Recover images after source changes              | P1       | S      | None       | DONE   |
-| [002](002-footnote-correctness.md) | Preserve content and correct footnote navigation | P1       | L      | None       | TODO   |
+| Plan                                 | Title                                            | Priority | Effort | Depends on | Status |
+| ------------------------------------ | ------------------------------------------------ | -------- | ------ | ---------- | ------ |
+| [001](001-image-recovery.md)         | Recover images after source changes              | P1       | S      | None       | DONE   |
+| [002](002-footnote-correctness.md)   | Preserve content and correct footnote navigation | P1       | L      | None       | DONE   |
+| [003](003-browser-demonstrations.md) | Inspect fixes in interactive browser test pages  | P1       | S      | 001, 002   | TODO   |
 
 Status values: TODO, IN PROGRESS, DONE, BLOCKED (reason), REJECTED (reason).
 Each executor must read its whole plan and record actual red/green gate results
-before marking DONE. The plans are independent; execute 001 first for a small
+before marking DONE. Plans 001 and 002 are independent; execute 001 first for a small
 fix and easier review. Both touch different README sections, so coordinate that
 file if implementation happens concurrently. Plan 002's content-preservation
-step precedes its streaming/navigation work internally.
+step precedes its streaming/navigation work internally. Plan 003 follows both fixes.
 
 ## Vetted findings
 
@@ -97,3 +98,13 @@ and remaining limitations here. Do not substitute planned commands for runs.
 - Whole implementation diff reviewed; no dependency, public prop, sanitizer, Parser, or keying changes. See the adjacent guard report.
 - Plan 002 preflight rebased its drift anchor to reviewed image snapshot 415df2e and documented usable direct Vitest / unavailable companion pnpm.
 - Operator requested browser test pages in T3 after completion; prepare a separate scoped demonstration handoff while Plan 002 executes.
+
+### Plan 002 — DONE, reviewed 57f144d (2026-09-09)
+
+- Executor observed all 3 intended red failures / 27 passing before runtime edits. Guard read the complete final diff and preserved assertions.
+- Guard found and dispatched one correction for fixture types/token narrowing and a Trunk false positive on ephemeral scratch Set state; normal snapshot hooks then passed.
+- Independent focused gate: 5 files / 80 passed; streaming guards: 4 files / 100 passed. Both use `--maxWorkers=2` after a default-worker focused run lost a worker with no assertion failure.
+- Independent full coverage: 154 files / 1,081 passed; statements 96.88%, branches 91.68%, functions 98.05%, lines 97.93%. Thresholds, dependencies and test timeout unchanged.
+- Independent Trunk/check/build/diff gates passed; check reports 0 errors / 3 existing warnings; build includes package and publint validation.
+- Guard additionally exercised the actual Marked CRLF lexer boundary: continued body, following paragraph and heading preserved.
+- Plan 003 preflight confirms all three demo/test paths are new and anchors to 57f144d. The operator requested these pages in T3; runtime fixes remain unchanged.
