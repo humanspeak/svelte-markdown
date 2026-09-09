@@ -1,6 +1,18 @@
-import type { TokenizerExtension } from 'marked'
+import { Marked, type Token, type TokenizerExtension, type Tokens } from 'marked'
 import { describe, expect, it } from 'vitest'
 import { markedFootnote } from './markedFootnote.js'
+
+interface FootnoteSectionToken {
+    type: 'footnoteSection'
+    raw: string
+    footnotes: Array<{ id: string; text: string }>
+}
+
+const isFootnoteSectionToken = (token: Token): token is Token & FootnoteSectionToken =>
+    token.type === 'footnoteSection' && 'footnotes' in token && Array.isArray(token.footnotes)
+
+const isCodeToken = (token: Token): token is Tokens.Code =>
+    token.type === 'code' && 'text' in token && typeof token.text === 'string'
 
 function getTokenizerDefs(): { ref: TokenizerExtension; section: TokenizerExtension } {
     const ext = markedFootnote()
@@ -11,6 +23,27 @@ function getTokenizerDefs(): { ref: TokenizerExtension; section: TokenizerExtens
 }
 
 describe('markedFootnote', () => {
+    it('preserves blocks after a footnote definition', () => {
+        const source = 'Body[^n].\n\n[^n]: Note.\n\nAfter paragraph.\n\n# Heading'
+        const tokens = new Marked(markedFootnote()).lexer(source)
+        const section = tokens.find((token) => token.type === 'footnoteSection')
+
+        expect(section).toBeDefined()
+        expect(section && isFootnoteSectionToken(section)).toBe(true)
+        if (!section || !isFootnoteSectionToken(section)) {
+            throw new Error('Missing footnote section')
+        }
+        expect(section.footnotes).toEqual([{ id: 'n', text: 'Note.' }])
+        expect(section.raw).not.toContain('After paragraph')
+        expect(section.raw).not.toContain('# Heading')
+        expect(
+            tokens.some((token) => token.type === 'paragraph' && token.text === 'After paragraph.')
+        ).toBe(true)
+        expect(tokens.some((token) => token.type === 'heading' && token.text === 'Heading')).toBe(
+            true
+        )
+    })
+
     it('should return a valid MarkedExtension', () => {
         const ext = markedFootnote()
         expect(ext).toBeDefined()
@@ -136,6 +169,15 @@ describe('markedFootnote', () => {
                 const result = section.start!.call({} as never, '')
                 expect(result).toBeUndefined()
             })
+
+            it('only finds definitions at block-line starts', () => {
+                const { section } = getTokenizerDefs()
+                expect(
+                    section.start!.call({} as never, 'prose [^n]: not a definition')
+                ).toBeUndefined()
+                expect(section.start!.call({} as never, '    [^n]: indented code')).toBeUndefined()
+                expect(section.start!.call({} as never, 'prose\n  [^n]: definition')).toBe(6)
+            })
         })
 
         describe('tokenizer()', () => {
@@ -205,7 +247,123 @@ describe('markedFootnote', () => {
                 expect(token1).not.toBe(token2)
                 expect(token1).toEqual(token2)
             })
+
+            it.each([
+                ['paragraph', 'After paragraph.'],
+                ['heading', '# Heading'],
+                ['list', '- Item'],
+                ['fence', '```js\nconst answer = 42\n```'],
+                ['HTML block', '<div>After</div>']
+            ])('stops before a following %s block', (_name, suffix) => {
+                const { section } = getTokenizerDefs()
+                const src = `[^n]: Note.\n\n${suffix}`
+                const token = section.tokenizer.call({} as never, src, [])
+
+                expect(token).toBeDefined()
+                expect(token!.raw).toBe('[^n]: Note.\n')
+                expect(src.slice(token!.raw.length)).toBe(`\n${suffix}`)
+            })
+
+            it('supports empty bodies without swallowing the next block', () => {
+                const { section } = getTokenizerDefs()
+                const src = '[^empty]:   \n\nAfter.'
+                const token = section.tokenizer.call({} as never, src, [])
+
+                expect(token).toBeDefined()
+                expect(token!.footnotes).toEqual([{ id: 'empty', text: '' }])
+                expect(token!.raw).toBe('[^empty]:   \n')
+                expect(src.slice(token!.raw.length)).toBe('\nAfter.')
+            })
+
+            it('groups adjacent definitions and keeps the first duplicate', () => {
+                const { section } = getTokenizerDefs()
+                const src = '[^n]: First.\n[^other]: Other.\n[^n]: Second.\n\nAfter.'
+                const token = section.tokenizer.call({} as never, src, [])
+
+                expect(token).toBeDefined()
+                expect(token!.footnotes).toEqual([
+                    { id: 'n', text: 'First.' },
+                    { id: 'other', text: 'Other.' }
+                ])
+                expect(token!.raw).toBe('[^n]: First.\n[^other]: Other.\n[^n]: Second.\n')
+                expect(src.slice(token!.raw.length)).toBe('\nAfter.')
+            })
+
+            it('accepts four-space and tab continuation lines', () => {
+                const { section } = getTokenizerDefs()
+                const src = '[^n]: First line\n    four spaces\n      six spaces\n\ttabbed\nAfter.'
+                const token = section.tokenizer.call({} as never, src, [])
+
+                expect(token).toBeDefined()
+                expect(token!.footnotes).toEqual([
+                    { id: 'n', text: 'First line\nfour spaces\n  six spaces\ntabbed' }
+                ])
+                expect(src.slice(token!.raw.length)).toBe('After.')
+            })
+
+            it('does not add a leading newline for a continuation-only body', () => {
+                const { section } = getTokenizerDefs()
+                const token = section.tokenizer.call(
+                    {} as never,
+                    '[^n]:\n      indented continuation',
+                    []
+                )
+
+                expect(token?.footnotes).toEqual([{ id: 'n', text: '  indented continuation' }])
+            })
+
+            it('keeps blank lines only when an indented continuation follows', () => {
+                const { section } = getTokenizerDefs()
+                const src = '[^n]: First\n\n    Second\n\nAfter.'
+                const token = section.tokenizer.call({} as never, src, [])
+
+                expect(token).toBeDefined()
+                expect(token!.footnotes).toEqual([{ id: 'n', text: 'First\n\nSecond' }])
+                expect(token!.raw).toBe('[^n]: First\n\n    Second\n')
+                expect(src.slice(token!.raw.length)).toBe('\nAfter.')
+            })
+
+            it('preserves CRLF in consumed raw source', () => {
+                const { section } = getTokenizerDefs()
+                const src = '[^n]: First\r\n    Second\r\n\r\nAfter.'
+                const token = section.tokenizer.call({} as never, src, [])
+
+                expect(token).toBeDefined()
+                expect(token!.footnotes).toEqual([{ id: 'n', text: 'First\nSecond' }])
+                expect(token!.raw).toBe('[^n]: First\r\n    Second\r\n')
+                expect(src.slice(token!.raw.length)).toBe('\r\nAfter.')
+            })
+
+            it('does not tokenize definition-looking prose or indented code', () => {
+                const { section } = getTokenizerDefs()
+                expect(
+                    section.tokenizer.call({} as never, 'prose [^n]: not a definition', [])
+                ).toBeUndefined()
+                expect(
+                    section.tokenizer.call({} as never, '    [^n]: indented code', [])
+                ).toBeUndefined()
+            })
+
+            it.each([0, 1, 2, 3])('accepts %i leading spaces', (spaces) => {
+                const { section } = getTokenizerDefs()
+                const src = `${' '.repeat(spaces)}[^n]: Note.`
+                const token = section.tokenizer.call({} as never, src, [])
+
+                expect(token?.raw).toBe(src)
+                expect(token?.footnotes).toEqual([{ id: 'n', text: 'Note.' }])
+            })
         })
+    })
+
+    it('leaves definition-looking text inside fenced code as code', () => {
+        const source = '```text\n[^n]: not a definition\n```'
+        const tokens = new Marked(markedFootnote()).lexer(source)
+
+        expect(tokens).toHaveLength(1)
+        expect(tokens[0].type).toBe('code')
+        expect(isCodeToken(tokens[0])).toBe(true)
+        if (!isCodeToken(tokens[0])) throw new Error('Expected a code token')
+        expect(tokens[0].text).toBe('[^n]: not a definition')
     })
 
     describe('factory', () => {

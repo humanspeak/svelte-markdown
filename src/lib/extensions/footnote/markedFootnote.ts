@@ -1,5 +1,81 @@
 import type { MarkedExtension } from 'marked'
 
+interface FootnoteDefinition {
+    id: string
+    text: string
+}
+
+interface ParsedDefinition {
+    end: number
+    footnote: FootnoteDefinition
+}
+
+const definitionStartPattern = /^( {0,3})\[\^([^\]\s]+)\]:[ \t]*([^\r\n]*)(\r?\n|$)/
+
+const readLine = (src: string, start: number) => {
+    const match = src.slice(start).match(/^([^\r\n]*)(\r?\n|$)/)
+    if (!match) return undefined
+
+    return {
+        content: match[1],
+        end: start + match[0].length
+    }
+}
+
+const isContinuation = (line: string) => /^(?: {4}|\t)/.test(line)
+
+const hasFollowingContinuation = (src: string, start: number) => {
+    let cursor = start
+
+    while (cursor < src.length) {
+        const line = readLine(src, cursor)
+        if (!line) return false
+        if (isContinuation(line.content)) return true
+        if (!/^[ \t]*$/.test(line.content)) return false
+        if (line.end === cursor) return false
+        cursor = line.end
+    }
+
+    return false
+}
+
+const parseDefinition = (src: string, start: number): ParsedDefinition | undefined => {
+    const match = src.slice(start).match(definitionStartPattern)
+    if (!match) return undefined
+
+    const bodyLines = [match[3]]
+    let cursor = start + match[0].length
+
+    while (cursor < src.length) {
+        const line = readLine(src, cursor)
+        if (!line) break
+
+        if (isContinuation(line.content)) {
+            bodyLines.push(
+                line.content.startsWith('\t') ? line.content.slice(1) : line.content.slice(4)
+            )
+            cursor = line.end
+            continue
+        }
+
+        if (/^[ \t]*$/.test(line.content) && hasFollowingContinuation(src, line.end)) {
+            bodyLines.push('')
+            cursor = line.end
+            continue
+        }
+
+        break
+    }
+
+    return {
+        end: cursor,
+        footnote: {
+            id: match[2],
+            text: bodyLines.join('\n').replace(/^\n/, '').trimEnd()
+        }
+    }
+}
+
 /**
  * Creates a marked extension that tokenizes footnote references (`[^id]`) and
  * footnote definitions (`[^id]: content`) into custom tokens.
@@ -53,28 +129,32 @@ export function markedFootnote(): MarkedExtension {
                 name: 'footnoteSection',
                 level: 'block',
                 start(src: string) {
-                    return src.match(/\[\^[^\]\s]+\]:/)?.index
+                    const match = src.match(/(?:^|\n) {0,3}\[\^[^\]\s]+\]:/)
+                    if (!match || match.index === undefined) return undefined
+                    return match.index + (match[0].startsWith('\n') ? 1 : 0)
                 },
                 tokenizer(src: string) {
-                    const match = src.match(
-                        /^(?:\[\^([^\]\s]+)\]:\s*([^\n]*(?:\n(?!\[\^)[^\n]*)*)(?:\n|$))+/
-                    )
-                    if (match) {
-                        const footnotes: { id: string; text: string }[] = []
-                        const defRegex = /\[\^([^\]\s]+)\]:\s*([^\n]*(?:\n(?!\[\^|\n)[^\n]*)*)/g
-                        let defMatch
-                        while ((defMatch = defRegex.exec(match[0])) !== null) {
-                            footnotes.push({
-                                id: defMatch[1],
-                                text: defMatch[2].trim()
-                            })
+                    const footnotes: FootnoteDefinition[] = []
+                    const seen = new Set<string>()
+                    let cursor = 0
+
+                    while (true) {
+                        const definition = parseDefinition(src, cursor)
+                        if (!definition) break
+
+                        if (!seen.has(definition.footnote.id)) {
+                            seen.add(definition.footnote.id)
+                            footnotes.push(definition.footnote)
                         }
-                        if (footnotes.length > 0) {
-                            return {
-                                type: 'footnoteSection',
-                                raw: match[0],
-                                footnotes
-                            }
+
+                        cursor = definition.end
+                    }
+
+                    if (cursor > 0) {
+                        return {
+                            type: 'footnoteSection',
+                            raw: src.slice(0, cursor),
+                            footnotes
                         }
                     }
                 }

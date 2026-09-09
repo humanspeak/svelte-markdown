@@ -618,7 +618,13 @@ Another claim[^note] that needs a source.
 <SvelteMarkdown {source} extensions={[markedFootnote()]} {renderers} />
 ```
 
-`FootnoteRef` renders `<sup><a href="#fn-{id}">{id}</a></sup>` and `FootnoteSection` renders an `<ol>` with bidirectional links (ref to definition and back). You can also use snippet overrides for custom rendering.
+Definitions may start with zero to three spaces. Continuation text must be indented by at least four spaces or one tab; one indentation unit is removed from the rendered plain text. A blank line belongs to a definition only when an indented continuation follows it, so an unindented paragraph, heading, list, fence, or HTML block after a definition remains normal document content. Empty definition bodies are supported. If a label is defined more than once, the first definition in document order wins.
+
+`FootnoteRef` renders `<sup><a href="#fn-{id}">{id}</a></sup>` and `FootnoteSection` renders an `<ol>` with bidirectional links. Simple labels containing only ASCII letters, digits, `_`, and `-` retain the legacy IDs (`fn-my-note` and `fnref-my-note`). Other UTF-16 code units use a deterministic `~` plus four-digit lowercase hexadecimal encoding: for example, `[^x:2]` uses `fn-x~003a2`. Repeated references retain their visible label while receiving occurrence IDs such as `fnref-note`, `fnref-note:ref:2`, and `fnref-note:ref:3`; the definition renders one backlink for each occurrence. Link fragments URI-encode these full DOM IDs.
+
+Custom component renderers and snippet overrides receive additive navigation props. A `footnoteRef` receives `{ id, referenceId? }`, where `referenceId` is the prepared occurrence DOM ID. A `footnoteSection` receives `{ footnotes }`, with each record shaped as `{ id, text, backrefs?: string[] }`; `backrefs` contains the prepared reference DOM IDs. The built-in renderers keep their legacy first-reference fallback when these optional props are omitted.
+
+IDs are coordinated within one `SvelteMarkdown` document. Separate component instances using the same labels are not automatically namespaced, so applications that place multiple rendered documents in one page should provide custom renderers if cross-document ID uniqueness is required. Footnote bodies are rendered as escaped plain text rather than Markdown, and this extension does not claim full CommonMark or GFM footnote compatibility.
 
 ### Syntax Highlighting (Shiki)
 

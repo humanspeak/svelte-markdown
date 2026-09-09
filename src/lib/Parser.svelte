@@ -61,6 +61,7 @@
     import { getContext, hasContext, setContext } from 'svelte'
     import Parser from '$lib/Parser.svelte'
     import type { AnySnippet } from '$lib/utils/component-props.js'
+    import type { FootnoteRenderMetadata } from '$lib/utils/footnote-render-metadata.js'
     import {
         defaultRenderers,
         type Renderers,
@@ -92,6 +93,7 @@
         htmlSnippetOverrides?: Record<string, AnySnippet>
         sanitizeUrl?: SanitizeUrlFn
         sanitizeAttributes?: SanitizeAttributesFn
+        footnoteMetadata?: FootnoteRenderMetadata
     }
 
     const {
@@ -105,6 +107,7 @@
         htmlSnippetOverrides = {},
         sanitizeUrl = defaultSanitizeUrl,
         sanitizeAttributes = defaultSanitizeAttributes,
+        footnoteMetadata = undefined,
         ...rest
     }: Props & {
         [key: string]: unknown
@@ -236,15 +239,23 @@
                           (token as { id?: string }).id
                   }
                 : NO_EXTRA_PROPS}
+        {@const footnoteProps =
+            token.type === 'footnoteRef'
+                ? (footnoteMetadata?.referenceProps.get(token) ?? NO_EXTRA_PROPS)
+                : token.type === 'footnoteSection'
+                  ? (footnoteMetadata?.sectionProps.get(token) ?? NO_EXTRA_PROPS)
+                  : NO_EXTRA_PROPS}
         <Parser
             {...restProps}
             {...token}
             {...headingIdProps}
+            {...footnoteProps}
             {renderers}
             {snippetOverrides}
             {htmlSnippetOverrides}
             {sanitizeUrl}
             {sanitizeAttributes}
+            {footnoteMetadata}
         />
     {/if}
 {/snippet}
