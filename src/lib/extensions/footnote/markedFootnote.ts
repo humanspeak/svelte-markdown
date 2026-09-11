@@ -24,19 +24,21 @@ const readLine = (src: string, start: number) => {
 
 const isContinuation = (line: string) => /^(?: {4}|\t)/.test(line)
 
-const hasFollowingContinuation = (src: string, start: number) => {
+const findFollowingContinuation = (src: string, start: number) => {
     let cursor = start
+    let blankLineCount = 0
 
     while (cursor < src.length) {
         const line = readLine(src, cursor)
-        if (!line) return false
-        if (isContinuation(line.content)) return true
-        if (!/^[ \t]*$/.test(line.content)) return false
-        if (line.end === cursor) return false
+        if (!line) return undefined
+        if (isContinuation(line.content)) return { start: cursor, blankLineCount }
+        if (!/^[ \t]*$/.test(line.content)) return undefined
+        if (line.end === cursor) return undefined
+        blankLineCount += 1
         cursor = line.end
     }
 
-    return false
+    return undefined
 }
 
 const parseDefinition = (src: string, start: number): ParsedDefinition | undefined => {
@@ -58,10 +60,16 @@ const parseDefinition = (src: string, start: number): ParsedDefinition | undefin
             continue
         }
 
-        if (/^[ \t]*$/.test(line.content) && hasFollowingContinuation(src, line.end)) {
-            bodyLines.push('')
-            cursor = line.end
-            continue
+        if (/^[ \t]*$/.test(line.content)) {
+            const continuation = findFollowingContinuation(src, cursor)
+            if (continuation) {
+                // Consume the whole verified run so later iterations do not scan it again.
+                for (let index = 0; index < continuation.blankLineCount; index++) {
+                    bodyLines.push('')
+                }
+                cursor = continuation.start
+                continue
+            }
         }
 
         break

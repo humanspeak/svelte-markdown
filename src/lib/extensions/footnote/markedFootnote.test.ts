@@ -1,4 +1,5 @@
 import { Marked, type Token, type TokenizerExtension, type Tokens } from 'marked'
+import { performance as realPerformance } from 'node:perf_hooks'
 import { describe, expect, it } from 'vitest'
 import { markedFootnote } from './markedFootnote.js'
 
@@ -23,6 +24,31 @@ function getTokenizerDefs(): { ref: TokenizerExtension; section: TokenizerExtens
 }
 
 describe('markedFootnote', () => {
+    it('parses thousands of blank continuation lines without repeated scanning', () => {
+        const blankLines = '\n'.repeat(5000)
+        const definition = `[^n]: Note\n${blankLines}    continuation\n`
+        const source = `${definition}\nAfter paragraph.\n\n# Heading`
+        const parser = new Marked(markedFootnote())
+
+        // Use a real monotonic clock: the shared harness fakes global performance.
+        // One second leaves ample room for linear scanning of this roughly 5 KB input.
+        const started = realPerformance.now()
+        const tokens = parser.lexer(source)
+        const elapsedMs = realPerformance.now() - started
+
+        const section = tokens.find(isFootnoteSectionToken)
+        // Marked appends the separating newline to the preceding block's raw text.
+        expect(section?.raw).toBe(`${definition}\n`)
+        expect(section?.footnotes).toEqual([{ id: 'n', text: `Note\n${blankLines}continuation` }])
+        expect(
+            tokens.some((token) => token.type === 'paragraph' && token.text === 'After paragraph.')
+        ).toBe(true)
+        expect(tokens.some((token) => token.type === 'heading' && token.text === 'Heading')).toBe(
+            true
+        )
+        expect(elapsedMs).toBeLessThan(1000)
+    })
+
     it('preserves blocks after a footnote definition', () => {
         const source = 'Body[^n].\n\n[^n]: Note.\n\nAfter paragraph.\n\n# Heading'
         const tokens = new Marked(markedFootnote()).lexer(source)
@@ -333,6 +359,35 @@ describe('markedFootnote', () => {
                 expect(token!.raw).toBe('[^n]: First\r\n    Second\r\n')
                 expect(src.slice(token!.raw.length)).toBe('\r\nAfter.')
             })
+
+            it.each(['\n', '\r\n'])(
+                'preserves multiple blank runs and leaves trailing blanks unconsumed with %j',
+                (newline) => {
+                    const { section } = getTokenizerDefs()
+                    const definition = [
+                        '[^n]: First',
+                        '',
+                        '  ',
+                        '    Second',
+                        '',
+                        '',
+                        '\tThird',
+                        ''
+                    ].join(newline)
+
+                    for (const suffix of ['', 'After.']) {
+                        const remainder = `${newline}${newline}${suffix}`
+                        const src = definition + remainder
+                        const token = section.tokenizer.call({} as never, src, [])
+
+                        expect(token?.raw).toBe(definition)
+                        expect(token?.footnotes).toEqual([
+                            { id: 'n', text: 'First\n\n\nSecond\n\n\nThird' }
+                        ])
+                        expect(src.slice(token!.raw.length)).toBe(remainder)
+                    }
+                }
+            )
 
             it('does not tokenize definition-looking prose or indented code', () => {
                 const { section } = getTokenizerDefs()
