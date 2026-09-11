@@ -1,9 +1,18 @@
 <script lang="ts">
+    import {
+        getFootnoteDefinitionId,
+        getFootnoteFragment,
+        getFootnoteReferenceId
+    } from '$lib/utils/footnote-render-metadata.js'
+
     interface Props {
         id: string
+        referenceId?: string
     }
 
-    const { id }: Props = $props()
+    const { id, referenceId = undefined }: Props = $props()
+    const resolvedReferenceId = $derived(referenceId ?? getFootnoteReferenceId(id))
+    const definitionFragment = $derived(getFootnoteFragment(getFootnoteDefinitionId(id)))
 </script>
 
-<sup class="footnote-ref"><a href="#fn-{id}" id="fnref-{id}">{id}</a></sup>
+<sup class="footnote-ref"><a href={definitionFragment} id={resolvedReferenceId}>{id}</a></sup>
