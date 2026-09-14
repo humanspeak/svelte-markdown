@@ -20,5 +20,18 @@ jobs:
               with:
                   persist-credentials: false
 
+            - uses: pnpm/action-setup@v6 # zizmor: ignore[unpinned-uses]
+
+            - name: Use Node.js - 24
+              uses: actions/setup-node@v7 # zizmor: ignore[unpinned-uses]
+              with:
+                  node-version: 24
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Generate SvelteKit configuration
+              run: pnpm exec svelte-kit sync
+
             - name: Trunk Code Quality
               uses: trunk-io/trunk-action@v1 # zizmor: ignore[unpinned-uses]
