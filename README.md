@@ -1096,11 +1096,11 @@ Part of the [Humanspeak](https://humanspeak.com) family of runes-native Svelte 5
 | [@humanspeak/svelte-motion](https://motion.svelte.page) | Framer Motion for Svelte 5 |
 | [@humanspeak/svelte-headless-table](https://table.svelte.page) | Headless data tables for Svelte |
 | [@humanspeak/svelte-diff](https://diff.svelte.page) | Diff comparison for Svelte |
-| [@humanspeak/svelte-purify](https://purify.svelte.page) | HTML sanitisation for Svelte |
 | [@humanspeak/svelte-virtual-chat](https://virtualchat.svelte.page) | Virtual chat viewport for Svelte 5 |
+| [@humanspeak/svelte-purify](https://purify.svelte.page) | HTML sanitisation for Svelte |
 | [@humanspeak/memory-cache](https://memory.svelte.page) | In-memory cache for TypeScript |
-| [@humanspeak/svelte-json-view-lite](https://jsonview.svelte.page) | JSON tree viewer for Svelte 5 |
 | [@humanspeak/svelte-scoped-props](https://scoped.svelte.page) | Scoped class props for Svelte |
+| [@humanspeak/svelte-json-view-lite](https://jsonview.svelte.page) | JSON tree viewer for Svelte 5 |
 <!-- prettier-ignore-end -->
 
 ## License
