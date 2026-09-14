@@ -25,17 +25,21 @@ test.describe('Image recovery demonstration', () => {
         const preview = page.getByTestId('image-preview')
         const image = preview.locator('img[alt="Recovery target"]')
 
+        // Visibility assertions do not scroll; lazy loading requires entering the viewport.
+        await image.scrollIntoViewIfNeeded()
         await expect
             .poll(() => image.evaluate((node) => (node as HTMLImageElement).naturalWidth))
             .toBeGreaterThan(0)
 
         await page.getByRole('button', { name: 'Load broken image' }).click()
         await expect(image).toHaveAttribute('data-src', '/missing-image-recovery-demo.png')
+        await image.scrollIntoViewIfNeeded()
         await expect(image).toHaveClass(/error/)
         expect(await image.evaluate((node) => (node as HTMLImageElement).naturalWidth)).toBe(0)
 
         await page.getByRole('button', { name: 'Recover with valid image' }).click()
         await expect(image).toHaveAttribute('data-src', '/test-image-150.png')
+        await image.scrollIntoViewIfNeeded()
         await expect
             .poll(() => image.evaluate((node) => (node as HTMLImageElement).naturalWidth))
             .toBeGreaterThan(0)
@@ -72,6 +76,7 @@ test.describe('Image recovery demonstration', () => {
 
         await page.getByRole('button', { name: 'Switch valid image' }).click()
         await expect(image).toHaveAttribute('data-src', '/test-image-50.png')
+        await image.scrollIntoViewIfNeeded()
         await expect
             .poll(() => image.evaluate((node) => (node as HTMLImageElement).naturalWidth))
             .toBeGreaterThan(0)
