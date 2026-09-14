@@ -31,10 +31,9 @@ describe('FootnoteSection', () => {
         expect(backref?.getAttribute('role')).toBe('doc-backlink')
     })
 
-    it('renders empty list for empty footnotes array', () => {
+    it('renders no landmark for an empty footnotes array', () => {
         const { container } = render(FootnoteSection, { props: { footnotes: [] } })
-        const items = container.querySelectorAll('li')
-        expect(items).toHaveLength(0)
+        expect(container.querySelector('section')).toBeNull()
     })
 
     it('renders multiple footnotes in order', () => {
@@ -50,5 +49,64 @@ describe('FootnoteSection', () => {
         expect(items[0].getAttribute('id')).toBe('fn-1')
         expect(items[1].getAttribute('id')).toBe('fn-2')
         expect(items[2].getAttribute('id')).toBe('fn-3')
+    })
+
+    it('deduplicates labels locally using the first definition', () => {
+        const footnotes = [
+            { id: 'n', text: 'First.' },
+            { id: 'n', text: 'Second.' }
+        ]
+        const { container } = render(FootnoteSection, { props: { footnotes } })
+        const items = container.querySelectorAll('li')
+
+        expect(items).toHaveLength(1)
+        expect(items[0].textContent).toContain('First.')
+        expect(items[0].textContent).not.toContain('Second.')
+    })
+
+    it('renders every prepared backlink with a distinct accessible label', () => {
+        const footnotes = [
+            {
+                id: 'n',
+                text: 'Note.',
+                backrefs: ['fnref-n', 'fnref-n:ref:2', 'fnref-n:ref:3']
+            }
+        ]
+        const { container } = render(FootnoteSection, { props: { footnotes } })
+        const backlinks = Array.from(
+            container.querySelectorAll<HTMLAnchorElement>('.footnote-backref')
+        )
+
+        expect(backlinks).toHaveLength(3)
+        expect(
+            backlinks.map((anchor) => decodeURIComponent(new URL(anchor.href).hash.slice(1)))
+        ).toEqual(footnotes[0].backrefs)
+        expect(backlinks.map((anchor) => anchor.getAttribute('aria-label'))).toEqual([
+            'Back to reference 1 for footnote n',
+            'Back to reference 2 for footnote n',
+            'Back to reference 3 for footnote n'
+        ])
+    })
+
+    it('treats explicit empty backlinks as no known references', () => {
+        const { container } = render(FootnoteSection, {
+            props: { footnotes: [{ id: 'n', text: 'Note.', backrefs: [] }] }
+        })
+
+        expect(container.querySelector('li')?.id).toBe('fn-n')
+        expect(container.querySelector('.footnote-backref')).toBeNull()
+    })
+
+    it('encodes special definition labels and legacy fallback backlinks', () => {
+        const { container } = render(FootnoteSection, {
+            props: { footnotes: [{ id: 'x:ref:2', text: 'Special.' }] }
+        })
+        const item = container.querySelector('li')
+        const backlink = container.querySelector<HTMLAnchorElement>('.footnote-backref')
+
+        expect(item?.id).toBe('fn-x~003aref~003a2')
+        expect(decodeURIComponent(new URL(backlink!.href).hash.slice(1))).toBe(
+            'fnref-x~003aref~003a2'
+        )
     })
 })

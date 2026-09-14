@@ -14,8 +14,6 @@ is displayed with reduced opacity and a grayscale filter.
 @prop {boolean} [fadeIn=true] - Enable a CSS fade-in transition on load.
 -->
 <script lang="ts">
-    import { onMount } from 'svelte'
-
     interface Props {
         href?: string
         title?: string
@@ -32,16 +30,42 @@ is displayed with reduced opacity and a grayscale filter.
         fadeIn = true
     }: Props = $props()
 
-    let img: HTMLImageElement
-    let loaded = $state(false)
-    let visible = $state(!lazy) // If not lazy, visible immediately
-    let error = $state(false)
+    interface SourceAttempt {
+        source: string | undefined
+    }
 
-    onMount(() => {
-        if (!lazy) {
-            // Not lazy loading - show immediately
-            return
+    const source = $derived(href === '' ? undefined : href)
+    const attempt = $derived<SourceAttempt>({ source })
+
+    let img = $state<HTMLImageElement>()
+    let loadedAttempt = $state.raw<SourceAttempt>()
+    let errorAttempt = $state.raw<SourceAttempt>()
+    let visible = $state(false)
+    const exposed = $derived(visible || !lazy)
+    const loaded = $derived(loadedAttempt === attempt)
+    const error = $derived(errorAttempt === attempt)
+    const nodeAttempts = new WeakMap<HTMLImageElement, SourceAttempt>()
+
+    const tagAttempt = (node: HTMLImageElement, currentAttempt: SourceAttempt) => {
+        nodeAttempts.set(node, currentAttempt)
+
+        return {
+            update(nextAttempt: SourceAttempt) {
+                nodeAttempts.set(node, nextAttempt)
+            },
+            destroy() {
+                nodeAttempts.delete(node)
+            }
         }
+    }
+
+    $effect(() => {
+        if (!lazy) visible = true
+    })
+
+    $effect(() => {
+        const target = img
+        if (exposed || !target) return
 
         // Environments without IntersectionObserver: show immediately
         if (typeof IntersectionObserver === 'undefined') {
@@ -62,40 +86,51 @@ is displayed with reduced opacity and a grayscale filter.
             }
         )
 
-        if (img) {
-            observer.observe(img)
-        }
+        observer.observe(target)
 
         return () => {
-            observer?.disconnect()
+            observer.disconnect()
         }
     })
 
-    const handleLoad = () => {
+    const handleLoad = (event: Event) => {
+        const currentAttempt = nodeAttempts.get(event.currentTarget as HTMLImageElement)
+        if (!currentAttempt) return
+
         // Don't override error state if error already occurred
-        if (error) return
-        loaded = true
+        if (errorAttempt === currentAttempt) return
+        loadedAttempt = currentAttempt
     }
 
-    const handleError = () => {
-        error = true
-        loaded = true
+    const handleError = (event: Event) => {
+        const currentAttempt = nodeAttempts.get(event.currentTarget as HTMLImageElement)
+        if (!currentAttempt) return
+
+        errorAttempt = currentAttempt
+        loadedAttempt = currentAttempt
     }
 </script>
 
-<img
-    bind:this={img}
-    src={visible ? href : undefined}
-    data-src={href}
-    {title}
-    alt={text}
-    loading={lazy ? 'lazy' : 'eager'}
-    class:fade-in={fadeIn && loaded && !error}
-    class:visible={!fadeIn && loaded && !error}
-    class:error
-    onload={handleLoad}
-    onerror={handleError}
-/>
+{#snippet image(currentAttempt: SourceAttempt)}
+    <img
+        bind:this={img}
+        use:tagAttempt={currentAttempt}
+        src={exposed ? currentAttempt.source : undefined}
+        data-src={href}
+        {title}
+        alt={text}
+        loading={lazy ? 'lazy' : 'eager'}
+        class:fade-in={fadeIn && loaded && !error}
+        class:visible={!fadeIn && loaded && !error}
+        class:error
+        onload={handleLoad}
+        onerror={handleError}
+    />
+{/snippet}
+
+{#key attempt}
+    {@render image(attempt)}
+{/key}
 
 <style>
     img {

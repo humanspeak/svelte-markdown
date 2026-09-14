@@ -8,6 +8,10 @@ if [ -z "${TRUNK_BIN}" ]; then
 	echo "⚠️  'trunk' CLI not found; skipping formatting and lint checks."
 	echo "   Install with 'brew install trunk-io' or see https://docs.trunk.io for setup."
 else
+	# Type-aware linting needs SvelteKit's generated tsconfig and $lib aliases.
+	echo "🛠️ Generating SvelteKit configuration..."
+	pnpm exec svelte-kit sync
+
 	# Capture initially staged files to preserve user's intent
 	INITIAL_STAGED=$(git diff --cached --name-only || true)
 

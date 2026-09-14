@@ -69,6 +69,7 @@
         hasAsyncExtension as getHasAsyncExtension
     } from '$lib/utils/extension-options.js'
     import { IncrementalParser } from '$lib/utils/incremental-parser.js'
+    import { prepareFootnoteRenderMetadata } from '$lib/utils/footnote-render-metadata.js'
     import { Slugger, type Token, type TokensList } from '$lib/utils/markdown-parser.js'
     import { parseAndCacheTokens, parseAndCacheTokensAsync } from '$lib/utils/parse-and-cache.js'
     import { createRenderMetadata, RENDER_METADATA_CONTEXT } from '$lib/utils/render-metadata.js'
@@ -568,6 +569,16 @@
         })
     })
 
+    const footnoteMetadata = $derived.by(() => {
+        if (!tokens) return undefined
+        const hasFootnoteExtension =
+            extensionTokenNames.includes('footnoteRef') ||
+            extensionTokenNames.includes('footnoteSection')
+        if (!Array.isArray(source) && !hasFootnoteExtension) return undefined
+
+        return prepareFootnoteRenderMetadata(tokens)
+    })
+
     $effect(() => {
         if (!tokens) return
         parsed(tokens)
@@ -590,6 +601,7 @@
 
 <Parser
     {tokens}
+    {footnoteMetadata}
     {...passThroughProps}
     options={combinedOptions}
     slug={(val: string): string => slugger.slug(val)}
