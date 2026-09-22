@@ -1,0 +1,17 @@
+$ svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "./src/lib/compare-data" without a file extension (vite.config.ts:15:35). Add the file extension
+  - import "./src/lib/docs-config" without a file extension (vite.config.ts:16:28). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+Loading svelte-check in workspace: /Users/jasonkummerl/Github/svelte-markdown/docs
+Getting Svelte diagnostics...
+
+/Users/jasonkummerl/Github/svelte-markdown/docs/src/routes/+page.svelte:1767:5
+Warn: Unused CSS selector ".brut-ai .ai-cell p code"
+https://svelte.dev/e/css_unused_selector (svelte)
+    }
+    .brut-ai .ai-cell p code {
+        font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+
+====================================
+svelte-check found 0 errors and 1 warning in 1 file

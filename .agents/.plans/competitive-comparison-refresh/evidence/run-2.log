@@ -1,0 +1,1014 @@
+$ node scripts/stream-compare-bench.mjs
+
+=== 10kb-tiny-chunks (burst, 10000 bytes / 16 chars) ===
+svelte-markdown     run 1: 83.1ms · 7569.2 chunks/s · p95 0.10ms
+svelte-markdown     run 2: 72.7ms · 8652.0 chunks/s · p95 0.10ms
+svelte-markdown     run 3: 77.2ms · 8147.7 chunks/s · p95 0.10ms
+svelte-markdown     run 4: 69.0ms · 9115.9 chunks/s · p95 0.10ms
+svelte-markdown     run 5: 70.9ms · 8871.6 chunks/s · p95 0.10ms
+svelte-streamdown   run 1: 334.2ms · 1882.1 chunks/s · p95 0.90ms
+svelte-streamdown   run 2: 318.3ms · 1976.1 chunks/s · p95 0.80ms
+svelte-streamdown   run 3: 335.3ms · 1875.9 chunks/s · p95 0.90ms
+svelte-streamdown   run 4: 324.8ms · 1936.6 chunks/s · p95 0.80ms
+svelte-streamdown   run 5: 308.5ms · 2038.9 chunks/s · p95 0.80ms
+winner: svelte-markdown (4.468x faster by median total time)
+output check: comparable normalized text lengths (ratio 1.02; hashes intentionally differ across renderer markup)
+
+=== 50kb-small-chunks (burst, 50000 bytes / 64 chars) ===
+svelte-markdown     run 1: 323.3ms · 2425.0 chunks/s · p95 0.10ms
+svelte-markdown     run 2: 324.1ms · 2419.0 chunks/s · p95 0.10ms
+svelte-markdown     run 3: 312.1ms · 2512.0 chunks/s · p95 0.10ms
+svelte-markdown     run 4: 311.3ms · 2518.5 chunks/s · p95 0.10ms
+svelte-markdown     run 5: 357.0ms · 2196.1 chunks/s · p95 0.10ms
+svelte-streamdown   run 1: 1663.7ms · 471.2 chunks/s · p95 4.90ms
+svelte-streamdown   run 2: 2123.0ms · 369.3 chunks/s · p95 6.10ms
+svelte-streamdown   run 3: 2068.5ms · 379.0 chunks/s · p95 5.10ms
+svelte-streamdown   run 4: 1737.8ms · 451.1 chunks/s · p95 4.80ms
+svelte-streamdown   run 5: 1826.2ms · 429.3 chunks/s · p95 5.70ms
+winner: svelte-markdown (5.649x faster by median total time)
+output check: comparable normalized text lengths (ratio 1.019; hashes intentionally differ across renderer markup)
+
+=== 200kb-medium-chunks (burst, 200000 bytes / 256 chars) ===
+svelte-markdown     run 1: 1346.7ms · 581.4 chunks/s · p95 0.10ms
+svelte-markdown     run 2: 1200.5ms · 652.2 chunks/s · p95 0.10ms
+svelte-markdown     run 3: 1179.0ms · 664.1 chunks/s · p95 0.10ms
+svelte-markdown     run 4: 1154.8ms · 678.0 chunks/s · p95 0.10ms
+svelte-markdown     run 5: 1198.5ms · 653.3 chunks/s · p95 0.10ms
+svelte-streamdown   run 1: 8483.9ms · 92.3 chunks/s · p95 20.00ms
+svelte-streamdown   run 2: 8568.5ms · 91.4 chunks/s · p95 19.10ms
+svelte-streamdown   run 3: 8546.7ms · 91.6 chunks/s · p95 19.50ms
+svelte-streamdown   run 4: 8508.8ms · 92.0 chunks/s · p95 18.80ms
+svelte-streamdown   run 5: 9263.9ms · 84.5 chunks/s · p95 21.40ms
+winner: svelte-markdown (7.131x faster by median total time)
+output check: comparable normalized text lengths (ratio 1.019; hashes intentionally differ across renderer markup)
+
+=== 50kb-frame-paced (frame-paced, 50000 bytes / 512 chars) ===
+svelte-markdown     run 1: 1632.9ms · 60.0 chunks/s · p95 17.80ms
+svelte-markdown     run 2: 1630.5ms · 60.1 chunks/s · p95 17.60ms
+svelte-markdown     run 3: 1625.9ms · 60.3 chunks/s · p95 17.40ms
+svelte-markdown     run 4: 1623.9ms · 60.3 chunks/s · p95 17.20ms
+svelte-markdown     run 5: 1623.8ms · 60.4 chunks/s · p95 17.30ms
+svelte-streamdown   run 1: 1615.3ms · 60.7 chunks/s · p95 17.50ms
+svelte-streamdown   run 2: 1611.9ms · 60.8 chunks/s · p95 17.50ms
+svelte-streamdown   run 3: 1626.4ms · 60.3 chunks/s · p95 17.50ms
+svelte-streamdown   run 4: 1620.8ms · 60.5 chunks/s · p95 17.40ms
+svelte-streamdown   run 5: 1616.4ms · 60.6 chunks/s · p95 17.60ms
+winner: svelte-streamdown (1.006x faster by median total time)
+output check: comparable normalized text lengths (ratio 1.019; hashes intentionally differ across renderer markup)
+
+=== JSON ===
+{
+  "metadata": {
+    "capturedAt": "2026-09-22T10:53:59.688Z",
+    "url": "http://127.0.0.1:4173/test/stream-compare",
+    "iterations": 5,
+    "warmups": 1,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36"
+  },
+  "results": {
+    "10kb-tiny-chunks": {
+      "svelte-markdown": {
+        "runs": [
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "10kb-tiny-chunks",
+            "sourceBytes": 10059,
+            "chunkSize": 16,
+            "chunks": 629,
+            "totalMs": 83.1,
+            "avgMs": 0.021,
+            "p50Ms": 0,
+            "p95Ms": 0.1,
+            "p99Ms": 0.1,
+            "peakMs": 0.8,
+            "settleMs": 69.5,
+            "chunksPerSec": 7569.194,
+            "domNodes": 571,
+            "mutations": 1649,
+            "heapDeltaKb": 11912.564,
+            "outputHash": "a900364b",
+            "outputLength": 7785
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "10kb-tiny-chunks",
+            "sourceBytes": 10059,
+            "chunkSize": 16,
+            "chunks": 629,
+            "totalMs": 72.7,
+            "avgMs": 0.019,
+            "p50Ms": 0,
+            "p95Ms": 0.1,
+            "p99Ms": 0.1,
+            "peakMs": 0.5,
+            "settleMs": 60.4,
+            "chunksPerSec": 8651.994,
+            "domNodes": 571,
+            "mutations": 1649,
+            "heapDeltaKb": 20168.24,
+            "outputHash": "a900364b",
+            "outputLength": 7785
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "10kb-tiny-chunks",
+            "sourceBytes": 10059,
+            "chunkSize": 16,
+            "chunks": 629,
+            "totalMs": 77.2,
+            "avgMs": 0.019,
+            "p50Ms": 0,
+            "p95Ms": 0.1,
+            "p99Ms": 0.1,
+            "peakMs": 0.4,
+            "settleMs": 64.9,
+            "chunksPerSec": 8147.668,
+            "domNodes": 571,
+            "mutations": 1649,
+            "heapDeltaKb": 20138.764,
+            "outputHash": "a900364b",
+            "outputLength": 7785
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "10kb-tiny-chunks",
+            "sourceBytes": 10059,
+            "chunkSize": 16,
+            "chunks": 629,
+            "totalMs": 69,
+            "avgMs": 0.02,
+            "p50Ms": 0,
+            "p95Ms": 0.1,
+            "p99Ms": 0.1,
+            "peakMs": 0.4,
+            "settleMs": 56.2,
+            "chunksPerSec": 9115.942,
+            "domNodes": 571,
+            "mutations": 1649,
+            "heapDeltaKb": 19635.58,
+            "outputHash": "a900364b",
+            "outputLength": 7785
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "10kb-tiny-chunks",
+            "sourceBytes": 10059,
+            "chunkSize": 16,
+            "chunks": 629,
+            "totalMs": 70.9,
+            "avgMs": 0.02,
+            "p50Ms": 0,
+            "p95Ms": 0.1,
+            "p99Ms": 0.1,
+            "peakMs": 0.4,
+            "settleMs": 57.9,
+            "chunksPerSec": 8871.65,
+            "domNodes": 571,
+            "mutations": 1649,
+            "heapDeltaKb": 19218.736,
+            "outputHash": "a900364b",
+            "outputLength": 7785
+          }
+        ],
+        "summary": {
+          "iterations": 5,
+          "totalMsMedian": 72.7,
+          "p95MsMedian": 0.1,
+          "peakMsMedian": 0.4,
+          "settleMsMedian": 60.4,
+          "chunksPerSecMedian": 8651.994,
+          "mutationsMedian": 1649,
+          "heapDeltaKbMedian": 19635.58,
+          "domNodes": 571,
+          "outputHash": "a900364b",
+          "outputLength": 7785
+        }
+      },
+      "svelte-streamdown": {
+        "runs": [
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "10kb-tiny-chunks",
+            "sourceBytes": 10059,
+            "chunkSize": 16,
+            "chunks": 629,
+            "totalMs": 334.2,
+            "avgMs": 0.515,
+            "p50Ms": 0.5,
+            "p95Ms": 0.9,
+            "p99Ms": 1.1,
+            "peakMs": 5,
+            "settleMs": 9.7,
+            "chunksPerSec": 1882.107,
+            "domNodes": 705,
+            "mutations": 5060,
+            "heapDeltaKb": 22535.812,
+            "outputHash": "a5857194",
+            "outputLength": 7937
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "10kb-tiny-chunks",
+            "sourceBytes": 10059,
+            "chunkSize": 16,
+            "chunks": 629,
+            "totalMs": 318.3,
+            "avgMs": 0.49,
+            "p50Ms": 0.5,
+            "p95Ms": 0.8,
+            "p99Ms": 1.1,
+            "peakMs": 5.4,
+            "settleMs": 9.2,
+            "chunksPerSec": 1976.123,
+            "domNodes": 705,
+            "mutations": 5060,
+            "heapDeltaKb": 21396.187,
+            "outputHash": "a5857194",
+            "outputLength": 7937
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "10kb-tiny-chunks",
+            "sourceBytes": 10059,
+            "chunkSize": 16,
+            "chunks": 629,
+            "totalMs": 335.3,
+            "avgMs": 0.517,
+            "p50Ms": 0.5,
+            "p95Ms": 0.9,
+            "p99Ms": 1.1,
+            "peakMs": 5.7,
+            "settleMs": 9.8,
+            "chunksPerSec": 1875.932,
+            "domNodes": 705,
+            "mutations": 5060,
+            "heapDeltaKb": 21669.011,
+            "outputHash": "a5857194",
+            "outputLength": 7937
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "10kb-tiny-chunks",
+            "sourceBytes": 10059,
+            "chunkSize": 16,
+            "chunks": 629,
+            "totalMs": 324.8,
+            "avgMs": 0.501,
+            "p50Ms": 0.5,
+            "p95Ms": 0.8,
+            "p99Ms": 1,
+            "peakMs": 4.3,
+            "settleMs": 9,
+            "chunksPerSec": 1936.576,
+            "domNodes": 705,
+            "mutations": 5060,
+            "heapDeltaKb": 21554.812,
+            "outputHash": "a5857194",
+            "outputLength": 7937
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "10kb-tiny-chunks",
+            "sourceBytes": 10059,
+            "chunkSize": 16,
+            "chunks": 629,
+            "totalMs": 308.5,
+            "avgMs": 0.476,
+            "p50Ms": 0.5,
+            "p95Ms": 0.8,
+            "p99Ms": 1,
+            "peakMs": 5.6,
+            "settleMs": 8.8,
+            "chunksPerSec": 2038.898,
+            "domNodes": 705,
+            "mutations": 5060,
+            "heapDeltaKb": 21403.132,
+            "outputHash": "a5857194",
+            "outputLength": 7937
+          }
+        ],
+        "summary": {
+          "iterations": 5,
+          "totalMsMedian": 324.8,
+          "p95MsMedian": 0.8,
+          "peakMsMedian": 5.4,
+          "settleMsMedian": 9.2,
+          "chunksPerSecMedian": 1936.576,
+          "mutationsMedian": 5060,
+          "heapDeltaKbMedian": 21554.812,
+          "domNodes": 705,
+          "outputHash": "a5857194",
+          "outputLength": 7937
+        }
+      }
+    },
+    "50kb-small-chunks": {
+      "svelte-markdown": {
+        "runs": [
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "50kb-small-chunks",
+            "sourceBytes": 50153,
+            "chunkSize": 64,
+            "chunks": 784,
+            "totalMs": 323.3,
+            "avgMs": 0.026,
+            "p50Ms": 0,
+            "p95Ms": 0.1,
+            "p99Ms": 0.1,
+            "peakMs": 0.6,
+            "settleMs": 302.6,
+            "chunksPerSec": 2424.992,
+            "domNodes": 2821,
+            "mutations": 8099,
+            "heapDeltaKb": 47961.856,
+            "outputHash": "cca2007b",
+            "outputLength": 38879
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "50kb-small-chunks",
+            "sourceBytes": 50153,
+            "chunkSize": 64,
+            "chunks": 784,
+            "totalMs": 324.1,
+            "avgMs": 0.026,
+            "p50Ms": 0,
+            "p95Ms": 0.1,
+            "p99Ms": 0.1,
+            "peakMs": 0.7,
+            "settleMs": 303.2,
+            "chunksPerSec": 2419.006,
+            "domNodes": 2821,
+            "mutations": 8099,
+            "heapDeltaKb": 47887.814,
+            "outputHash": "cca2007b",
+            "outputLength": 38879
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "50kb-small-chunks",
+            "sourceBytes": 50153,
+            "chunkSize": 64,
+            "chunks": 784,
+            "totalMs": 312.1,
+            "avgMs": 0.024,
+            "p50Ms": 0,
+            "p95Ms": 0.1,
+            "p99Ms": 0.1,
+            "peakMs": 0.6,
+            "settleMs": 292.4,
+            "chunksPerSec": 2512.015,
+            "domNodes": 2821,
+            "mutations": 8099,
+            "heapDeltaKb": 47349.931,
+            "outputHash": "cca2007b",
+            "outputLength": 38879
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "50kb-small-chunks",
+            "sourceBytes": 50153,
+            "chunkSize": 64,
+            "chunks": 784,
+            "totalMs": 311.3,
+            "avgMs": 0.027,
+            "p50Ms": 0,
+            "p95Ms": 0.1,
+            "p99Ms": 0.1,
+            "peakMs": 0.8,
+            "settleMs": 289.5,
+            "chunksPerSec": 2518.471,
+            "domNodes": 2821,
+            "mutations": 8099,
+            "heapDeltaKb": 47554.746,
+            "outputHash": "cca2007b",
+            "outputLength": 38879
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "50kb-small-chunks",
+            "sourceBytes": 50153,
+            "chunkSize": 64,
+            "chunks": 784,
+            "totalMs": 357,
+            "avgMs": 0.035,
+            "p50Ms": 0,
+            "p95Ms": 0.1,
+            "p99Ms": 0.2,
+            "peakMs": 0.9,
+            "settleMs": 329.1,
+            "chunksPerSec": 2196.078,
+            "domNodes": 2821,
+            "mutations": 8099,
+            "heapDeltaKb": 47703.388,
+            "outputHash": "cca2007b",
+            "outputLength": 38879
+          }
+        ],
+        "summary": {
+          "iterations": 5,
+          "totalMsMedian": 323.3,
+          "p95MsMedian": 0.1,
+          "peakMsMedian": 0.7,
+          "settleMsMedian": 302.6,
+          "chunksPerSecMedian": 2424.992,
+          "mutationsMedian": 8099,
+          "heapDeltaKbMedian": 47703.388,
+          "domNodes": 2821,
+          "outputHash": "cca2007b",
+          "outputLength": 38879
+        }
+      },
+      "svelte-streamdown": {
+        "runs": [
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "50kb-small-chunks",
+            "sourceBytes": 50153,
+            "chunkSize": 64,
+            "chunks": 784,
+            "totalMs": 1663.7,
+            "avgMs": 2.073,
+            "p50Ms": 1.7,
+            "p95Ms": 4.9,
+            "p99Ms": 6,
+            "peakMs": 10.2,
+            "settleMs": 38,
+            "chunksPerSec": 471.239,
+            "domNodes": 3480,
+            "mutations": 16773,
+            "heapDeltaKb": 76887.268,
+            "outputHash": "3c8b27fd",
+            "outputLength": 39631
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "50kb-small-chunks",
+            "sourceBytes": 50153,
+            "chunkSize": 64,
+            "chunks": 784,
+            "totalMs": 2123,
+            "avgMs": 2.655,
+            "p50Ms": 2.2,
+            "p95Ms": 6.1,
+            "p99Ms": 7.2,
+            "peakMs": 10.3,
+            "settleMs": 40.8,
+            "chunksPerSec": 369.289,
+            "domNodes": 3480,
+            "mutations": 16773,
+            "heapDeltaKb": 75789.338,
+            "outputHash": "3c8b27fd",
+            "outputLength": 39631
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "50kb-small-chunks",
+            "sourceBytes": 50153,
+            "chunkSize": 64,
+            "chunks": 784,
+            "totalMs": 2068.5,
+            "avgMs": 2.584,
+            "p50Ms": 2.3,
+            "p95Ms": 5.1,
+            "p99Ms": 5.9,
+            "peakMs": 11.3,
+            "settleMs": 41.8,
+            "chunksPerSec": 379.019,
+            "domNodes": 3480,
+            "mutations": 16773,
+            "heapDeltaKb": 76759.896,
+            "outputHash": "3c8b27fd",
+            "outputLength": 39631
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "50kb-small-chunks",
+            "sourceBytes": 50153,
+            "chunkSize": 64,
+            "chunks": 784,
+            "totalMs": 1737.8,
+            "avgMs": 2.166,
+            "p50Ms": 1.8,
+            "p95Ms": 4.8,
+            "p99Ms": 5.6,
+            "peakMs": 10.2,
+            "settleMs": 38.7,
+            "chunksPerSec": 451.145,
+            "domNodes": 3480,
+            "mutations": 16773,
+            "heapDeltaKb": 76529.369,
+            "outputHash": "3c8b27fd",
+            "outputLength": 39631
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "50kb-small-chunks",
+            "sourceBytes": 50153,
+            "chunkSize": 64,
+            "chunks": 784,
+            "totalMs": 1826.2,
+            "avgMs": 2.279,
+            "p50Ms": 1.7,
+            "p95Ms": 5.7,
+            "p99Ms": 6.8,
+            "peakMs": 11.4,
+            "settleMs": 39.2,
+            "chunksPerSec": 429.307,
+            "domNodes": 3480,
+            "mutations": 16773,
+            "heapDeltaKb": 75988.482,
+            "outputHash": "3c8b27fd",
+            "outputLength": 39631
+          }
+        ],
+        "summary": {
+          "iterations": 5,
+          "totalMsMedian": 1826.2,
+          "p95MsMedian": 5.1,
+          "peakMsMedian": 10.3,
+          "settleMsMedian": 39.2,
+          "chunksPerSecMedian": 429.307,
+          "mutationsMedian": 16773,
+          "heapDeltaKbMedian": 76529.369,
+          "domNodes": 3480,
+          "outputHash": "3c8b27fd",
+          "outputLength": 39631
+        }
+      }
+    },
+    "200kb-medium-chunks": {
+      "svelte-markdown": {
+        "runs": [
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "200kb-medium-chunks",
+            "sourceBytes": 200237,
+            "chunkSize": 256,
+            "chunks": 783,
+            "totalMs": 1346.7,
+            "avgMs": 0.067,
+            "p50Ms": 0.1,
+            "p95Ms": 0.1,
+            "p99Ms": 0.2,
+            "peakMs": 1.9,
+            "settleMs": 1294.2,
+            "chunksPerSec": 581.421,
+            "domNodes": 11071,
+            "mutations": 31759,
+            "heapDeltaKb": 185730.756,
+            "outputHash": "47fecba1",
+            "outputLength": 155694
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "200kb-medium-chunks",
+            "sourceBytes": 200237,
+            "chunkSize": 256,
+            "chunks": 783,
+            "totalMs": 1200.5,
+            "avgMs": 0.062,
+            "p50Ms": 0.1,
+            "p95Ms": 0.1,
+            "p99Ms": 0.2,
+            "peakMs": 1.8,
+            "settleMs": 1151.5,
+            "chunksPerSec": 652.228,
+            "domNodes": 11071,
+            "mutations": 31759,
+            "heapDeltaKb": 186286.877,
+            "outputHash": "47fecba1",
+            "outputLength": 155694
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "200kb-medium-chunks",
+            "sourceBytes": 200237,
+            "chunkSize": 256,
+            "chunks": 783,
+            "totalMs": 1179,
+            "avgMs": 0.058,
+            "p50Ms": 0.1,
+            "p95Ms": 0.1,
+            "p99Ms": 0.2,
+            "peakMs": 1.8,
+            "settleMs": 1133.6,
+            "chunksPerSec": 664.122,
+            "domNodes": 11071,
+            "mutations": 31759,
+            "heapDeltaKb": 185446.135,
+            "outputHash": "47fecba1",
+            "outputLength": 155694
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "200kb-medium-chunks",
+            "sourceBytes": 200237,
+            "chunkSize": 256,
+            "chunks": 783,
+            "totalMs": 1154.8,
+            "avgMs": 0.058,
+            "p50Ms": 0.1,
+            "p95Ms": 0.1,
+            "p99Ms": 0.2,
+            "peakMs": 1.6,
+            "settleMs": 1109.3,
+            "chunksPerSec": 678.039,
+            "domNodes": 11071,
+            "mutations": 31759,
+            "heapDeltaKb": 184667.619,
+            "outputHash": "47fecba1",
+            "outputLength": 155694
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "200kb-medium-chunks",
+            "sourceBytes": 200237,
+            "chunkSize": 256,
+            "chunks": 783,
+            "totalMs": 1198.5,
+            "avgMs": 0.062,
+            "p50Ms": 0.1,
+            "p95Ms": 0.1,
+            "p99Ms": 0.2,
+            "peakMs": 2,
+            "settleMs": 1150,
+            "chunksPerSec": 653.317,
+            "domNodes": 11071,
+            "mutations": 31759,
+            "heapDeltaKb": 184598.553,
+            "outputHash": "47fecba1",
+            "outputLength": 155694
+          }
+        ],
+        "summary": {
+          "iterations": 5,
+          "totalMsMedian": 1198.5,
+          "p95MsMedian": 0.1,
+          "peakMsMedian": 1.8,
+          "settleMsMedian": 1150,
+          "chunksPerSecMedian": 653.317,
+          "mutationsMedian": 31759,
+          "heapDeltaKbMedian": 185446.135,
+          "domNodes": 11071,
+          "outputHash": "47fecba1",
+          "outputLength": 155694
+        }
+      },
+      "svelte-streamdown": {
+        "runs": [
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "200kb-medium-chunks",
+            "sourceBytes": 200237,
+            "chunkSize": 256,
+            "chunks": 783,
+            "totalMs": 8483.9,
+            "avgMs": 10.633,
+            "p50Ms": 10.2,
+            "p95Ms": 20,
+            "p99Ms": 21,
+            "peakMs": 28.2,
+            "settleMs": 157.5,
+            "chunksPerSec": 92.292,
+            "domNodes": 13655,
+            "mutations": 38318,
+            "heapDeltaKb": 232005.348,
+            "outputHash": "ad7e3434",
+            "outputLength": 158646
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "200kb-medium-chunks",
+            "sourceBytes": 200237,
+            "chunkSize": 256,
+            "chunks": 783,
+            "totalMs": 8568.5,
+            "avgMs": 10.761,
+            "p50Ms": 11.1,
+            "p95Ms": 19.1,
+            "p99Ms": 23.3,
+            "peakMs": 46.1,
+            "settleMs": 142.3,
+            "chunksPerSec": 91.381,
+            "domNodes": 13655,
+            "mutations": 38318,
+            "heapDeltaKb": 8896.622,
+            "outputHash": "ad7e3434",
+            "outputLength": 158646
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "200kb-medium-chunks",
+            "sourceBytes": 200237,
+            "chunkSize": 256,
+            "chunks": 783,
+            "totalMs": 8546.7,
+            "avgMs": 10.727,
+            "p50Ms": 10.9,
+            "p95Ms": 19.5,
+            "p99Ms": 22.1,
+            "peakMs": 25,
+            "settleMs": 146.3,
+            "chunksPerSec": 91.614,
+            "domNodes": 13655,
+            "mutations": 38318,
+            "heapDeltaKb": 233618.004,
+            "outputHash": "ad7e3434",
+            "outputLength": 158646
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "200kb-medium-chunks",
+            "sourceBytes": 200237,
+            "chunkSize": 256,
+            "chunks": 783,
+            "totalMs": 8508.8,
+            "avgMs": 10.69,
+            "p50Ms": 10.7,
+            "p95Ms": 18.8,
+            "p99Ms": 22.5,
+            "peakMs": 42.2,
+            "settleMs": 138.1,
+            "chunksPerSec": 92.022,
+            "domNodes": 13655,
+            "mutations": 38318,
+            "heapDeltaKb": 5898.292,
+            "outputHash": "ad7e3434",
+            "outputLength": 158646
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "200kb-medium-chunks",
+            "sourceBytes": 200237,
+            "chunkSize": 256,
+            "chunks": 783,
+            "totalMs": 9263.9,
+            "avgMs": 11.627,
+            "p50Ms": 11.1,
+            "p95Ms": 21.4,
+            "p99Ms": 22.6,
+            "peakMs": 28.7,
+            "settleMs": 159.2,
+            "chunksPerSec": 84.522,
+            "domNodes": 13655,
+            "mutations": 38318,
+            "heapDeltaKb": 233008.434,
+            "outputHash": "ad7e3434",
+            "outputLength": 158646
+          }
+        ],
+        "summary": {
+          "iterations": 5,
+          "totalMsMedian": 8546.7,
+          "p95MsMedian": 19.5,
+          "peakMsMedian": 28.7,
+          "settleMsMedian": 146.3,
+          "chunksPerSecMedian": 91.614,
+          "mutationsMedian": 38318,
+          "heapDeltaKbMedian": 232005.348,
+          "domNodes": 13655,
+          "outputHash": "ad7e3434",
+          "outputLength": 158646
+        }
+      }
+    },
+    "50kb-frame-paced": {
+      "svelte-markdown": {
+        "runs": [
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "50kb-frame-paced",
+            "sourceBytes": 50153,
+            "chunkSize": 512,
+            "chunks": 98,
+            "totalMs": 1632.9,
+            "avgMs": 16.502,
+            "p50Ms": 16.7,
+            "p95Ms": 17.8,
+            "p99Ms": 19.8,
+            "peakMs": 19.8,
+            "settleMs": 15.5,
+            "chunksPerSec": 60.016,
+            "domNodes": 2821,
+            "mutations": 9252,
+            "heapDeltaKb": 52841.209,
+            "outputHash": "cca2007b",
+            "outputLength": 38879
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "50kb-frame-paced",
+            "sourceBytes": 50153,
+            "chunkSize": 512,
+            "chunks": 98,
+            "totalMs": 1630.5,
+            "avgMs": 16.47,
+            "p50Ms": 16.7,
+            "p95Ms": 17.6,
+            "p99Ms": 19.3,
+            "peakMs": 19.3,
+            "settleMs": 16.1,
+            "chunksPerSec": 60.104,
+            "domNodes": 2821,
+            "mutations": 9252,
+            "heapDeltaKb": 52779.529,
+            "outputHash": "cca2007b",
+            "outputLength": 38879
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "50kb-frame-paced",
+            "sourceBytes": 50153,
+            "chunkSize": 512,
+            "chunks": 98,
+            "totalMs": 1625.9,
+            "avgMs": 16.426,
+            "p50Ms": 16.7,
+            "p95Ms": 17.4,
+            "p99Ms": 18.1,
+            "peakMs": 18.1,
+            "settleMs": 16,
+            "chunksPerSec": 60.274,
+            "domNodes": 2821,
+            "mutations": 9252,
+            "heapDeltaKb": 52824.693,
+            "outputHash": "cca2007b",
+            "outputLength": 38879
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "50kb-frame-paced",
+            "sourceBytes": 50153,
+            "chunkSize": 512,
+            "chunks": 98,
+            "totalMs": 1623.9,
+            "avgMs": 16.398,
+            "p50Ms": 16.7,
+            "p95Ms": 17.2,
+            "p99Ms": 17.9,
+            "peakMs": 17.9,
+            "settleMs": 16.7,
+            "chunksPerSec": 60.349,
+            "domNodes": 2821,
+            "mutations": 9252,
+            "heapDeltaKb": 52744.842,
+            "outputHash": "cca2007b",
+            "outputLength": 38879
+          },
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "50kb-frame-paced",
+            "sourceBytes": 50153,
+            "chunkSize": 512,
+            "chunks": 98,
+            "totalMs": 1623.8,
+            "avgMs": 16.401,
+            "p50Ms": 16.8,
+            "p95Ms": 17.3,
+            "p99Ms": 17.7,
+            "peakMs": 17.7,
+            "settleMs": 16.3,
+            "chunksPerSec": 60.352,
+            "domNodes": 2821,
+            "mutations": 9252,
+            "heapDeltaKb": 52714.818,
+            "outputHash": "cca2007b",
+            "outputLength": 38879
+          }
+        ],
+        "summary": {
+          "iterations": 5,
+          "totalMsMedian": 1625.9,
+          "p95MsMedian": 17.4,
+          "peakMsMedian": 18.1,
+          "settleMsMedian": 16.1,
+          "chunksPerSecMedian": 60.274,
+          "mutationsMedian": 9252,
+          "heapDeltaKbMedian": 52779.529,
+          "domNodes": 2821,
+          "outputHash": "cca2007b",
+          "outputLength": 38879
+        }
+      },
+      "svelte-streamdown": {
+        "runs": [
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "50kb-frame-paced",
+            "sourceBytes": 50153,
+            "chunkSize": 512,
+            "chunks": 98,
+            "totalMs": 1615.3,
+            "avgMs": 16.385,
+            "p50Ms": 16.6,
+            "p95Ms": 17.5,
+            "p99Ms": 17.6,
+            "peakMs": 17.6,
+            "settleMs": 9,
+            "chunksPerSec": 60.67,
+            "domNodes": 3480,
+            "mutations": 8425,
+            "heapDeltaKb": 57686.372,
+            "outputHash": "3c8b27fd",
+            "outputLength": 39631
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "50kb-frame-paced",
+            "sourceBytes": 50153,
+            "chunkSize": 512,
+            "chunks": 98,
+            "totalMs": 1611.9,
+            "avgMs": 16.353,
+            "p50Ms": 16.6,
+            "p95Ms": 17.5,
+            "p99Ms": 17.7,
+            "peakMs": 17.7,
+            "settleMs": 8.8,
+            "chunksPerSec": 60.798,
+            "domNodes": 3480,
+            "mutations": 8425,
+            "heapDeltaKb": 58721.067,
+            "outputHash": "3c8b27fd",
+            "outputLength": 39631
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "50kb-frame-paced",
+            "sourceBytes": 50153,
+            "chunkSize": 512,
+            "chunks": 98,
+            "totalMs": 1626.4,
+            "avgMs": 16.512,
+            "p50Ms": 16.6,
+            "p95Ms": 17.5,
+            "p99Ms": 17.6,
+            "peakMs": 17.6,
+            "settleMs": 8,
+            "chunksPerSec": 60.256,
+            "domNodes": 3480,
+            "mutations": 8425,
+            "heapDeltaKb": 58060.481,
+            "outputHash": "3c8b27fd",
+            "outputLength": 39631
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "50kb-frame-paced",
+            "sourceBytes": 50153,
+            "chunkSize": 512,
+            "chunks": 98,
+            "totalMs": 1620.8,
+            "avgMs": 16.446,
+            "p50Ms": 16.7,
+            "p95Ms": 17.4,
+            "p99Ms": 18.5,
+            "peakMs": 18.5,
+            "settleMs": 8.9,
+            "chunksPerSec": 60.464,
+            "domNodes": 3480,
+            "mutations": 8425,
+            "heapDeltaKb": 58634.47,
+            "outputHash": "3c8b27fd",
+            "outputLength": 39631
+          },
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "50kb-frame-paced",
+            "sourceBytes": 50153,
+            "chunkSize": 512,
+            "chunks": 98,
+            "totalMs": 1616.4,
+            "avgMs": 16.4,
+            "p50Ms": 16.7,
+            "p95Ms": 17.6,
+            "p99Ms": 19.6,
+            "peakMs": 19.6,
+            "settleMs": 9.1,
+            "chunksPerSec": 60.629,
+            "domNodes": 3480,
+            "mutations": 8425,
+            "heapDeltaKb": 57713.954,
+            "outputHash": "3c8b27fd",
+            "outputLength": 39631
+          }
+        ],
+        "summary": {
+          "iterations": 5,
+          "totalMsMedian": 1616.4,
+          "p95MsMedian": 17.5,
+          "peakMsMedian": 17.7,
+          "settleMsMedian": 8.9,
+          "chunksPerSecMedian": 60.629,
+          "mutationsMedian": 8425,
+          "heapDeltaKbMedian": 58060.481,
+          "domNodes": 3480,
+          "outputHash": "3c8b27fd",
+          "outputLength": 39631
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1108 @@
+$ vitest run --coverage
+
+ RUN  v4.1.10 /Users/jasonkummerl/Github/svelte-markdown
+      Coverage enabled with v8
+
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Basic Parsing > should parse simple markdown 18ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Basic Parsing > should parse inline markdown 4ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Basic Parsing > should parse empty string 2ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Basic Parsing > should handle complex markdown 20ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Caching Behavior > should cache parsed tokens 1ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Caching Behavior > should return different tokens for different sources 4ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Caching Behavior > should return different tokens for different options 1ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Caching Behavior > should return different tokens for inline vs block parsing 6ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Performance > should be faster on cache hit 16ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Performance > should handle large documents efficiently 17ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Performance > should cache and retrieve large documents quickly 17ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Token Cleanup > should apply shrinkHtmlTokens to parsed tokens 5ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Token Cleanup > should handle mixed HTML and markdown 1ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Edge Cases > should handle whitespace-only content 1ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Edge Cases > should handle unicode content 18ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Edge Cases > should handle special characters 1ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Edge Cases > should handle malformed markdown gracefully 1ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Options Handling > should respect GFM option 3ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Options Handling > should respect breaks option 1ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Options Handling > should handle empty options object 1ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Options Handling > should invoke options.walkTokens if defined 1ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Integration with Cache > should reuse cached tokens on subsequent calls 1ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Integration with Cache > should work correctly after cache clear 1ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Integration with Cache > should handle concurrent parsing requests 2ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Async walkTokens > should invoke async walkTokens and await completion 2ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Async walkTokens > should return cached tokens on subsequent async calls 1ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Async walkTokens > should handle walkTokens that returns void (non-async) 1ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Async walkTokens > should walk nested tokens recursively 2ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Async walkTokens > should propagate walkTokens rejection 3ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Return Type > should return Token[] for block parsing 1ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Return Type > should return tokens for inline parsing 1ms
+ ✓ src/lib/utils/parse-and-cache.test.ts > parseAndCacheTokens > Return Type > should return cleaned tokens (after shrinkHtmlTokens) 1ms
+ ✓ src/lib/extensions/shiki/createShikiHighlighter.test.ts > escapeHtml > escapes the five HTML-significant characters 7ms
+ ✓ src/lib/extensions/shiki/createShikiHighlighter.test.ts > createShikiHighlighter > highlights a registered language synchronously with token spans 304ms
+ ✓ src/lib/extensions/shiki/createShikiHighlighter.test.ts > createShikiHighlighter > resolves language aliases (e.g. "js" -> javascript) 120ms
+ ✓ src/lib/extensions/shiki/createShikiHighlighter.test.ts > createShikiHighlighter > falls back to escaped plain text for an unregistered language (no throw) 10ms
+ ✓ src/lib/extensions/shiki/createShikiHighlighter.test.ts > createShikiHighlighter > falls back for empty/missing lang 6ms
+ ✓ src/lib/extensions/shiki/createShikiHighlighter.test.ts > createShikiHighlighter > escapes code containing a <script> tag — never emits an executable element 94ms
+ ✓ src/lib/extensions/shiki/createShikiHighlighter.test.ts > createShikiHighlighter > adversarial lang (injection, not just robustness) > does not emit unescaped markup originating from lang: "><img src=x onerror… 5ms
+ ✓ src/lib/extensions/shiki/createShikiHighlighter.test.ts > createShikiHighlighter > adversarial lang (injection, not just robustness) > does not emit unescaped markup originating from lang: js"><script>alert(1)… 5ms
+ ✓ src/lib/extensions/shiki/createShikiHighlighter.test.ts > createShikiHighlighter > adversarial lang (injection, not just robustness) > does not emit unescaped markup originating from lang: '><svg onload=alert(… 6ms
+ ✓ src/lib/extensions/shiki/createShikiHighlighter.test.ts > createShikiHighlighter > adversarial lang (injection, not just robustness) > does not emit unescaped markup originating from lang: javascript" onmouseo… 5ms
+6:54:25 AM [vite-plugin-svelte] src/lib/Parser.svelte:143:36 This reference only captures the initial value of `type`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+ ✓ src/lib/renderers/html/Td.test.ts > Td Component > should render with basic attributes 114ms
+ ✓ src/lib/renderers/html/Td.test.ts > Td Component > should render with table cell attributes 4ms
+ ✓ src/lib/renderers/html/Label.test.ts > Label Component > should render label element 120ms
+ ✓ src/lib/renderers/html/Label.test.ts > Label Component > should handle additional attributes 5ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > renders img with alt and title 107ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > enables lazy loading by default 4ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > disables lazy loading when lazy=false 4ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > applies fade-in class after image loads 16ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > applies error class on image load failure 7ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > recovers when a failed image source changes 9ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > clears loaded state while a replacement source is pending 8ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > preserves the node and loaded state when the source is unchanged 7ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > preserves the node and error state when the source is unchanged 6ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > ignores obsolete events across A to B to A source attempts 10ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > omits empty sources and resets state after source removal and reinsertion 10ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > recovers into visible state when fadeIn=false 9ms
+ ✓ src/lib/renderers/Heading.test.ts > Heading (markdown) > heading levels > renders h1 when depth is 1 116ms
+ ✓ src/lib/renderers/Heading.test.ts > Heading (markdown) > heading levels > renders h2 when depth is 2 6ms
+ ✓ src/lib/renderers/Heading.test.ts > Heading (markdown) > heading levels > renders h3 when depth is 3 4ms
+ ✓ src/lib/renderers/Heading.test.ts > Heading (markdown) > heading levels > renders h4 when depth is 4 3ms
+ ✓ src/lib/renderers/Heading.test.ts > Heading (markdown) > heading levels > renders h5 when depth is 5 4ms
+ ✓ src/lib/renderers/Heading.test.ts > Heading (markdown) > heading levels > renders h6 when depth is 6 3ms
+ ✓ src/lib/renderers/Heading.test.ts > Heading (markdown) > heading levels > renders raw text when depth > 6 4ms
+ ✓ src/lib/renderers/Heading.test.ts > Heading (markdown) > heading levels > renders raw text when depth is 0 3ms
+ ✓ src/lib/renderers/Heading.test.ts > Heading (markdown) > heading levels > renders raw text when depth is negative 3ms
+ ✓ src/lib/renderers/Heading.test.ts > Heading (markdown) > header IDs > renders heading with id when headerIds is true 4ms
+ ✓ src/lib/renderers/Heading.test.ts > Heading (markdown) > header IDs > renders heading without id when headerIds is false 3ms
+ ✓ src/lib/renderers/Heading.test.ts > Heading (markdown) > header IDs > renders heading with prefixed id 4ms
+ ✓ src/lib/renderers/Heading.test.ts > Heading (markdown) > header IDs > handles special characters in text for slug 3ms
+ ✓ src/lib/extensions/katex/KatexRenderer.test.ts > KatexRenderer > renders inline math by default (displayMode false) 105ms
+ ✓ src/lib/extensions/katex/KatexRenderer.test.ts > KatexRenderer > renders block math when displayMode is true 9ms
+ ✓ src/lib/extensions/katex/KatexRenderer.test.ts > KatexRenderer > renders an AMS environment passed as the full \begin/\end string 24ms
+ ✓ src/lib/extensions/katex/KatexRenderer.test.ts > KatexRenderer > renders a malformed expression as an error span instead of throwing 28ms
+ ✓ src/lib/extensions/katex/KatexRenderer.test.ts > KatexRenderer > renders empty input safely 4ms
+ ✓ src/lib/extensions/katex/KatexRenderer.test.ts > KatexRenderer > renders simple greek letters 9ms
+ ✓ src/lib/extensions/mermaid/MermaidRenderer.test.ts > MermaidRenderer > shows loading state initially 135ms
+ ✓ src/lib/extensions/mermaid/MermaidRenderer.test.ts > MermaidRenderer > renders SVG after successful mermaid load 21ms
+ ✓ src/lib/extensions/mermaid/MermaidRenderer.test.ts > MermaidRenderer > renders error state when mermaid.render fails 10ms
+ ✓ src/lib/extensions/mermaid/MermaidRenderer.test.ts > MermaidRenderer > renders error state for non-Error throws 8ms
+ ✓ src/lib/extensions/mermaid/MermaidRenderer.test.ts > MermaidRenderer > uses light theme by default 12ms
+ ✓ src/lib/extensions/mermaid/MermaidRenderer.test.ts > MermaidRenderer > uses dark theme when document has dark class 8ms
+ ✓ src/lib/extensions/mermaid/MermaidRenderer.test.ts > MermaidRenderer > accepts custom theme props 7ms
+ ✓ src/lib/extensions/mermaid/MermaidRenderer.test.ts > MermaidRenderer > initializes mermaid with strict security 7ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > observes only the latest deferred source before visibility 8ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > loads replacement sources without re-observing after visibility 9ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > reacts to lazy changes without hiding an exposed image 5ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > disconnects a pending observer when unmounted 4ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > loads immediately when IntersectionObserver is unavailable 4ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > disables fade-in when fadeIn=false 4ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > does not override error state if error already occurred 5ms
+ ✓ src/lib/renderers/Image.test.ts > Image (markdown) > should show image immediately when fadeIn=false (regression test) 5ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunked stream should converge to single-shot shape > word-by-word: div with inline strong only 29ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunked stream should converge to single-shot shape > tag-by-tag: div with inline strong only 3ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunked stream should converge to single-shot shape > word-by-word: div with ul/li only (no other inline content) 2ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunked stream should converge to single-shot shape > tag-by-tag: div with ul/li only (no other inline content) 3ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunked stream should converge to single-shot shape > word-by-word: div with strong + ul/li (the primary bug reproducer) 3ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunked stream should converge to single-shot shape > tag-by-tag: div with strong + ul/li (the primary bug reproducer) 5ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunked stream should converge to single-shot shape > word-by-word: div with nested table 2ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunked stream should converge to single-shot shape > tag-by-tag: div with nested table 7ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunked stream should converge to single-shot shape > word-by-word: two sibling divs 15ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunked stream should converge to single-shot shape > tag-by-tag: two sibling divs 4ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunked stream should converge to single-shot shape > word-by-word: div containing details/summary block 2ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunked stream should converge to single-shot shape > tag-by-tag: div containing details/summary block 2ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunked stream should converge to single-shot shape > word-by-word: deeply nested (4 levels: section > article > div > p) 3ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunked stream should converge to single-shot shape > tag-by-tag: deeply nested (4 levels: section > article > div > p) 5ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > structural invariants for the primary bug reproducer > streamed result has exactly one top-level html:div token 4ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > structural invariants for the primary bug reproducer > the streamed div has the same direct-child count as the single-shot div 3ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > structural invariants for the primary bug reproducer > does not emit any orphan <li> tokens at the top level 4ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > structural invariants for the primary bug reproducer > does not duplicate list-item text content across multiple sibling tokens 4ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > structural invariants for the primary bug reproducer > single-shot baseline shape itself is correct (sanity check) 2ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunking variants of the primary reproducer > character-by-character stream converges to single-shot shape 9ms
+ ✓ src/lib/utils/incremental-parser.nested-html.test.ts > IncrementalParser — streaming nested HTML (regression #291) > chunking variants of the primary reproducer > whole-source single update equals single-shot (baseline sanity) 2ms
+6:54:26 AM [vite-plugin-svelte] src/lib/renderers/html/_UnsupportedHTML.svelte:15:23 This reference only captures the initial value of `attributes`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+ ✓ src/lib/Parser.branches.test.ts > Parser branch coverage > table renders without head/body when components are missing 153ms
+ ✓ src/lib/Parser.branches.test.ts > Parser branch coverage > HTML tag fallback when html renderer map missing tag 26ms
+ ✓ src/lib/Parser.branches.test.ts > Parser branch coverage > table snippet override renders custom wrapper 18ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > basic rendering > renders pre>code with language class 153ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > basic rendering > renders pre>code structure 5ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > language classes > applies javascript language class 10ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > language classes > applies python language class 4ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > language classes > applies rust language class 8ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > language classes > handles empty language string 7ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > language classes > handles language with hyphen 7ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > language classes > handles language with numbers 4ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > text content > renders empty text 5ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > text content > renders multiline code 4ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > text content > preserves leading whitespace 3ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > text content > preserves trailing whitespace 3ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > text content > renders code with special characters 3ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > text content > renders code with HTML-like tags as text 12ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > text content > renders code with backticks 2ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > text content > renders code with quotes 2ms
+ ✓ src/lib/renderers/Code.test.ts > Code (markdown) > text content > renders code with ampersands 15ms
+ ✓ src/lib/Parser.branches.test.ts > Parser branch coverage > thead snippet override renders custom wrapper 90ms
+ ✓ src/lib/Parser.branches.test.ts > Parser branch coverage > tbody snippet override renders custom wrapper 34ms
+ ✓ src/lib/Parser.branches.test.ts > Parser branch coverage > tablerow snippet override renders custom wrapper 18ms
+ ✓ src/lib/Parser.branches.test.ts > Parser branch coverage > tablecell snippet override renders custom wrapper 36ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > append mode > changing streamId drops the previous message from the buffer 221ms
+ ✓ src/lib/Parser.branches.test.ts > Parser branch coverage > ordered list renders with list snippet override 20ms
+ ✓ src/lib/Parser.branches.test.ts > Parser branch coverage > unordered list renders with list snippet override 8ms
+ ✓ src/lib/Parser.branches.test.ts > Parser branch coverage > orderedlistitem snippet override is used 18ms
+ ✓ src/lib/Parser.branches.test.ts > Parser branch coverage > unorderedlistitem snippet override is used 16ms
+ ✓ src/lib/Parser.branches.test.ts > Parser branch coverage > general type snippet override (paragraph) 6ms
+ ✓ src/lib/Parser.branches.test.ts > Parser branch coverage > html snippet override for specific tag 8ms
+ ✓ src/lib/Parser.branches.test.ts > Parser branch coverage > html snippet override renders when no child tokens 6ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing initialization > accepts pre-processed tokens as source 185ms
+ ✓ src/lib/SvelteMarkdown.test.ts > extension cache invalidation > parsed callback receives updated custom token data when extension object changes 78ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > ListItem props > passes text, task, loose, and listItemIndex for plain list items 280ms
+ ✓ src/lib/SvelteMarkdown.stream-reset.test.ts > stream reset to empty > imperative resetStream("") empties the DOM 289ms
+ ✓ src/lib/SvelteMarkdown.image-recovery.test.ts > SvelteMarkdown image source recovery > recovers after replacement and omits a source blocked by the sanitizer 273ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > append mode > a pending (unflushed) chunk from the old stream is discarded 20ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > append mode > writeChunk in the same tick as a streamId change targets the new stream 49ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > renders adjacent top-level tokens with repeated zero-length spans without duplicate-key crashes 134ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > exposes writeChunk and resetStream via component exports 75ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > appends consecutive identical string chunks 37ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > batches append chunks into a single parser update per frame 25ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > uses timeout fallback when requestAnimationFrame is unavailable 17ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > cancels timeout fallback flushes on unmount 8ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 custom html tag dispatch > renders a self-closing custom tag registered in renderers.html 187ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 custom html tag dispatch > resolves PascalCase source against a lowercase renderer key 48ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > ListItem props > passes task=true and checked for task list items 90ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > List props > passes ordered=false and loose for unordered lists 58ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > streamed DOM should match non-streamed DOM > div with strong only 378ms
+ ✓ src/lib/Parser.branches.test.ts > Parser branch coverage > list fallbacks: unordered uses listitem, ordered uses orderedlistitem 48ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > append mode > same streamId keeps appending to the same buffer 74ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > offset mode > changing streamId clears the stale tail of the previous message 50ms
+ ✓ src/lib/SvelteMarkdown.stream-reset.test.ts > stream reset to empty > prop-driven source: "" while streaming empties the DOM 72ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > keeps generated heading ids stable after a full streaming reparse 181ms
+ ✓ src/lib/SvelteMarkdown.image-recovery.test.ts > SvelteMarkdown image source recovery > preserves an unchanged loaded image while trailing prose grows 107ms
+ ✓ src/lib/SvelteMarkdown.footnotes.test.ts > SvelteMarkdown footnotes > assigns unique anchors to repeated footnote references 322ms
+ ✓ src/lib/SvelteMarkdown.footnotes.test.ts > SvelteMarkdown footnotes > renders the first duplicate definition without duplicate keys 31ms
+ ✓ src/lib/SvelteMarkdown.footnotes.test.ts > SvelteMarkdown footnotes > uses the first definition across separated sections without losing intervening prose 45ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > flushes append chunks immediately when the batch size threshold is exceeded 32ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > applies offset chunks at exact positions 24ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > pads gaps with spaces for offset chunks 19ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > drops offset chunks that open an excessive gap 26ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > applies in-range offset chunks at the current buffer end 25ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 custom html tag dispatch > resolves nested PascalCase source against a PascalCase renderer key 54ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 custom html tag dispatch > does not leak the raw opening tag from an empty paired custom element 32ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 custom html tag dispatch > renders a nested self-closing custom tag without leaking raw source 20ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — custom HTML tag renderers > self-closing custom tags > renders the registered component instead of being dropped 42ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > List props > passes ordered=true and start for ordered lists 65ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > Paragraph props > passes raw and text 26ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > Heading props > passes depth, raw, and text 47ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > input-mode lock > changing streamId unlocks offset -> append without warning 39ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > input-mode lock > changing streamId unlocks append -> offset without warning 36ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > source prop interaction > changing streamId reseeds the baseline from a non-empty source prop 34ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > keeps headerPrefix on precomputed heading ids across a streaming reparse 73ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > passes stable precomputed ids to custom heading renderers during streaming reparses 72ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > streamed DOM should match non-streamed DOM > div with ul/li only 191ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — custom HTML tag renderers > self-closing custom tags > resolves identically when nested inside other HTML 22ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — custom HTML tag renderers > self-closing custom tags > still renders void elements through their default renderers 28ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — custom HTML tag renderers > empty paired custom tags > renders the component with no children rather than the raw tag 16ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — custom HTML tag renderers > tag-name casing > resolves inline: lowercase tag, lowercase key 17ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — custom HTML tag renderers > tag-name casing > resolves inline: capitalized tag, capitalized key 28ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > overwrites existing characters instead of inserting in offset mode 25ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > drops append-to-offset mode switches with a warning 22ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > drops offset-to-append mode switches with a warning 14ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > resetStream clears DOM and can seed a new baseline 29ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > changing source prop resets the internal streaming buffer 29ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > Link props > passes href, title, raw, and text 44ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > Image props > passes href, title, text, and raw 21ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > Code props > passes lang and text for fenced code blocks 13ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > Code props > passes codeBlockStyle for indented code blocks 12ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > Codespan props > passes raw and text 25ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > source prop interaction > changing streamId and source together does not double-apply the source 47ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > source prop interaction > changing streamId with a token-array source swaps the tokens 25ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > non-streaming and passthrough behavior > streamId is inert when streaming is false 18ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > non-streaming and passthrough behavior > streamId is not forwarded to the DOM as an attribute 27ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > does not emit ids when headerIds is false during streaming reparses 46ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — custom HTML tag renderers > tag-name casing > resolves inline: capitalized tag, lowercase key 17ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — custom HTML tag renderers > tag-name casing > resolves inline: lowercase tag, capitalized key 23ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — custom HTML tag renderers > tag-name casing > resolves when nested: capitalized tag, capitalized key 32ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — custom HTML tag renderers > tag-name casing > resolves when nested: capitalized tag, lowercase key 16ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — custom HTML tag renderers > tag-name casing > a null under any casing blocks the tag, even alongside a component 16ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > reuses the IncrementalParser across append-only source prop updates 41ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > batches append-only source prop updates into one parser update per frame 53ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > non-append source prop updates cancel a pending append-only prop flush 22ms
+ ✓ src/lib/SvelteMarkdown.footnotes.test.ts > SvelteMarkdown footnotes > resolves injective encoded ids for special labels 183ms
+ ✓ src/lib/SvelteMarkdown.footnotes.test.ts > SvelteMarkdown footnotes > does not create ghost backlinks from image alt token children 53ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > generates the same final heading ids regardless of streaming chunk boundaries 124ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > streamed DOM should match non-streamed DOM > div with strong + ul/li (primary) 176ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — custom HTML tag renderers > regressions > unregistered tags stay dropped rather than leaking raw source 17ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — custom HTML tag renderers > regressions > empty paired custom tags resolve when nested too 17ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — custom HTML tag renderers > regressions > default HTML renderers are unaffected 17ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — snippet overrides resolve by tag, not by casing > html_div snippet wins for lowercase tag 35ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — snippet overrides resolve by tag, not by casing > html_div snippet wins for uppercase tag 21ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > Blockquote props > passes raw and text 40ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > Em props > passes raw and text 30ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > Strong props > passes raw and text 32ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > Del props > passes raw and text 30ms
+ ✓ src/lib/SvelteMarkdown.footnotes.test.ts > SvelteMarkdown footnotes > counts nested rendered references in document order 187ms
+ ✓ src/lib/SvelteMarkdown.footnotes.test.ts > SvelteMarkdown footnotes > renders no backlink when the only reference is inside image alt text 40ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > token-array source prop updates cancel a pending append-only prop flush 35ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > unmount cancels pending append-only source prop flushes 20ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > reuses stable token objects before the streaming divergence point after full re-lex fallback 46ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > non-streaming and passthrough behavior > numeric streamId values are supported 26ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > falsy and undefined streamId values > resets when streamId transitions from 0 to another value 41ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > falsy and undefined streamId values > resets when streamId transitions from undefined to 0 31ms
+ ✓ src/lib/SvelteMarkdown.stream-id.test.ts > streamId prop > falsy and undefined streamId values > resets when streamId transitions from a value back to undefined 23ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > issue #383 — snippet overrides resolve by tag, not by casing > html_div snippet wins for uppercase tag, nested 23ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > adversarial review regressions > self-closing child sharing its parent tag name > does not prematurely close the parent (custom tags) 28ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > adversarial review regressions > self-closing child sharing its parent tag name > does not prematurely close the parent (default HTML) 26ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > adversarial review regressions > caller renderer entries win over defaults case-insensitively > an uppercase null blocks the lowercase default tag 10ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > adversarial review regressions > caller renderer entries win over defaults case-insensitively > a lowercase null still blocks (regression guard) 9ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > adversarial review regressions > caller renderer entries win over defaults case-insensitively > an uppercase component override replaces the default tag 20ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > streamed DOM should match non-streamed DOM > div with nested table 166ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > matches static duplicate heading ids when duplicates stream across chunks 154ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > reuses stable list item objects inside a diverged streaming list token 85ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > does not reuse stale tokens when appended reference definitions change inline links 40ms
+ ✓ src/lib/SvelteMarkdown.footnotes.test.ts > SvelteMarkdown footnotes > passes additive metadata to snippet overrides without leaking the internal snapshot 56ms
+ ✓ src/lib/SvelteMarkdown.footnotes.test.ts > SvelteMarkdown footnotes > restarts occurrence metadata for cached renders 89ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > TableCell props > passes header and align 127ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > Escape props > passes text and raw 33ms
+ ✓ src/lib/snippet-props.test.ts > Snippet Props Completeness > Text props > passes raw and text 24ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > adversarial review regressions > mixed-case open and close tags pair on the flat path > pairs <Widget>x</widget> 14ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > adversarial review regressions > mixed-case open and close tags pair on the flat path > pairs <widget>x</WIDGET> 23ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > adversarial review regressions > mixed-case open and close tags pair on the flat path > pairs <WIDGET>x</Widget> 25ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > unquoted attribute values ending in a slash > <div><a href=https://example.com/>Link</a></div> keeps its children 18ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > unquoted attribute values ending in a slash > <div><a href=/foo/>x</a></div> keeps its children 16ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > unquoted attribute values ending in a slash > <div><a href=https://example.com/ >Link</a></div> keeps its children 14ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > does not reuse stale closed HTML tokens after offset-mode edits 47ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > does not reuse stale tokens after streaming parser options change 34ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > writeChunk warns when streaming is false 5ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > writeChunk warns when source is a token array 26ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > writeChunk warns on invalid offset chunks 6ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > parsed callback receives updated tokens after imperative writes 18ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > resetStream cancels pending append flushes 6ms
+ ✓ src/lib/SvelteMarkdown.footnotes.test.ts > SvelteMarkdown footnotes > isolates metadata when the same frozen tokens render in two instances 78ms
+ ✓ src/lib/SvelteMarkdown.footnotes.test.ts > SvelteMarkdown footnotes > updates backlinks on a retained prefix definition when a later reference arrives 78ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > does not re-slug stable prefix headings when appending non-heading text 130ms
+ ✓ src/lib/SvelteMarkdown.test.ts > imperative streaming API > writeChunk warns and does nothing when async extensions disable streaming 7ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > renders a paragraph 32ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > parses inline when isInline is true (no paragraph wrapper) 27ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > empty string source yields empty tokens and empty DOM 8ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > renders emphasized paragraph 18ms
+ ✓ src/lib/extensions/shiki/ShikiCode.test.ts > ShikiCode component > renders highlighted output for a registered language 861ms
+ ✓ src/lib/extensions/shiki/ShikiCode.test.ts > ShikiCode component > falls back to escaped text for an unregistered language without throwing 23ms
+ ✓ src/lib/extensions/shiki/ShikiCode.test.ts > ShikiCode component > degrades to an escaped <pre> when no highlighter is available 17ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > slugs only the newly appended heading after a stable heading prefix 184ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > unquoted attribute values ending in a slash > <a href=/foo/>x</a> keeps its children 25ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > unquoted attribute values ending in a slash > <a href=https://example.com/>Link</a> keeps its children 11ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > unquoted attribute values ending in a slash > a genuinely self-closed tag with a quoted value is still self-closing 20ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > tag names are canonical regardless of which token path produced them > token tag is lowercased on both the flat and nested paths 21ms
+ ✓ src/lib/SvelteMarkdown.issue-383.test.ts > tag names are canonical regardless of which token path produced them > an uppercase snippet override prop matches a lowercase tag 27ms
+ ✓ src/lib/SvelteMarkdown.footnotes.test.ts > SvelteMarkdown footnotes > retains unchanged reference and definition nodes across streaming append 52ms
+ ✓ src/lib/extensions/shiki/ShikiCode.test.ts > ShikiCode component > never mounts a <script> element from code content 235ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > renders strong paragraph 20ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > renders a separator 23ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > renders a blockquote 31ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > renders a link > renders link with title attribute 27ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > renders a link > renders link with correct text 16ms
+ ✓ src/lib/utils/token-cache.test.ts > hashString > should generate consistent hashes for same input 14ms
+ ✓ src/lib/utils/token-cache.test.ts > hashString > should generate different hashes for different inputs 5ms
+ ✓ src/lib/utils/token-cache.test.ts > hashString > should handle empty strings 18ms
+ ✓ src/lib/utils/token-cache.test.ts > hashString > should handle large strings efficiently 20ms
+ ✓ src/lib/utils/token-cache.test.ts > hashString > should handle unicode characters 5ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Constructor > should create cache with default options 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Constructor > should create cache with custom options 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > getTokens() and setTokens() > should cache and retrieve tokens 2ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > getTokens() and setTokens() > should return undefined for non-cached content 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > getTokens() and setTokens() > should cache different tokens for different sources 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > getTokens() and setTokens() > should cache different tokens for different options 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > getTokens() and setTokens() > should handle empty markdown source 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > getTokens() and setTokens() > should handle large markdown documents 7ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > getTokens() and setTokens() > should handle unicode in markdown 2ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > hasTokens() > should return true for cached tokens 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > hasTokens() > should return false for non-cached tokens 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > hasTokens() > should return false after TTL expiration 2ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > deleteTokens() > should delete cached tokens 4ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > deleteTokens() > should return false when deleting non-cached tokens 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > deleteTokens() > should only delete specific source/options combination 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > clearAllTokens() > should clear all cached tokens 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > clearAllTokens() > should allow caching after clear 1ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > heading > renders a heading with id 482ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > heading > renders a heading (alternative syntax) 34ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > heading > renders a heading with id and prefix 18ms
+ ✓ src/lib/SvelteMarkdown.footnotes.test.ts > SvelteMarkdown footnotes > matches static output when streamed one UTF-16 code unit at a time and after completion 661ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > streamed array truncation on token count shrink (#291 follow-up) > streamed DOM has exactly one <summary>, no orphans after </details> 960ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > TTL (Time To Live) > should expire tokens after TTL 2ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > TTL (Time To Live) > should not expire tokens before TTL 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Max Size Eviction > should evict oldest entry when max size is reached 3ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Max Size Eviction > should handle max size of 1 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Performance Tests > should handle many cache operations efficiently 5ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Performance Tests > should handle many unique documents 2ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Custom Extensions and Tokenizers > should differentiate between different custom tokenizers 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Custom Extensions and Tokenizers > should differentiate between options with and without extensions 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Custom Extensions and Tokenizers > should handle circular references in options 11ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > heading > renders a heading with non-duplicate id 66ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > heading > renders a heading without id 46ms
+ ✓ src/lib/SvelteMarkdown.footnotes.test.ts > SvelteMarkdown footnotes > matches static output when streamed awkward syntax boundaries and after completion 181ms
+ ✓ src/lib/utils/incremental-parser.streaming-fence.test.ts > IncrementalParser streaming across a fenced code block with a blank line > keeps an unclosed fence open when the stream pauses on a blank line inside it 25ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Edge Cases > should handle very long markdown 173ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Edge Cases > should handle complex options objects 5ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Edge Cases > should treat similar options as different 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Hash collision safety > uses a genuine FNV-1a collision pair (self-check) 1ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Hash collision safety > does not serve tokens for a different source with a colliding hash 3ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Hash collision safety > always returns tokens matching the requested source across the shared key 10ms
+ ✓ src/lib/utils/token-cache.test.ts > TokenCache > Hash collision safety > hasTokens agrees with getTokens for a colliding different source 2ms
+ ✓ src/lib/utils/incremental-parser.streaming-fence.test.ts > IncrementalParser streaming across a fenced code block with a blank line > renders the home-page streaming demo content correctly after the final chunk 231ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > renders an image 84ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > renders a table 236ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > html rendering > short html renders properly 35ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > html rendering > renders nested html elements 32ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > html rendering > drops unknown script tags in the default configuration 23ms
+ ✓ src/lib/renderers/html/H3.test.ts > H3 Component > should render h3 element 146ms
+ ✓ src/lib/renderers/html/H3.test.ts > H3 Component > should handle additional attributes 25ms
+ ✓ src/lib/SvelteMarkdown.footnotes.test.ts > SvelteMarkdown footnotes > resets occurrence state for resetStream, streamId replacement, and shorter sources 216ms
+ ✓ src/lib/renderers/html/Details.test.ts > Details Component > should render details element with open state 168ms
+ ✓ src/lib/renderers/html/Details.test.ts > Details Component > should handle additional attributes 12ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > html rendering > drops unknown style tags in the default configuration 13ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > html rendering > drops unknown meta refresh tags in the default configuration 23ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > html rendering > drops unknown base tags in the default configuration 12ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > html rendering > renders script tags with an explicitly approved custom renderer 50ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > html rendering > continues to render supported div tags 46ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > streamed array truncation on token count shrink (#291 follow-up) > streamed DOM has exactly one <details>, no duplicates 719ms
+ ✓ src/lib/renderers/html/Var.test.ts > Var Component > should render with basic attributes 183ms
+ ✓ src/lib/renderers/html/Var.test.ts > Var Component > should render with style attribute 28ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > html rendering > continues to render supported iframe tags 108ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > html rendering > renders html with attributes 31ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > html rendering > renders mixed markdown and html 69ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > html rendering > renders nested HTML elements with proper class inheritance 73ms
+ ✓ src/lib/extensions/shiki/ShikiCode.test.ts > ShikiCode streaming compatibility > emits no async-extension warning and matches non-streaming DOM 1090ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing default renderers > html rendering > renders plain text followed by HTML tag correctly 33ms
+ ✓ src/lib/extensions/shiki/ShikiCode.test.ts > ShikiCode streaming compatibility > does NOT re-highlight an unchanged code block as later prose streams in 567ms
+ ✓ src/lib/SvelteMarkdown.test.ts > mixed markdown and HTML table rendering > renders mixed markdown-HTML table with formatting 179ms
+ ✓ src/lib/SvelteMarkdown.redraw-regression.test.ts > redraw regression harness > calibration: the DEV Parser counter is live under Vitest 439ms
+ ✓ src/lib/SvelteMarkdown.test.ts > mixed markdown and HTML table rendering > handles nested markdown within HTML in table cells 191ms
+ ✓ src/lib/SvelteMarkdown.redraw-regression.test.ts > redraw regression harness > growing the tail block in place spawns zero new Parsers 154ms
+ ✓ src/lib/SvelteMarkdown.test.ts > mixed markdown and HTML table rendering > handles complex table cell alignments with mixed content 195ms
+ ✓ src/lib/SvelteMarkdown.test.ts > async extension paths > renders markdown with async extension (walkTokens returning Promise) 47ms
+ ✓ src/lib/SvelteMarkdown.test.ts > async extension paths > async path handles pre-parsed token array 21ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > streamed array truncation on token count shrink (#291 follow-up) > streamed DOM has exactly one each of the headings 865ms
+ ✓ src/lib/SvelteMarkdown.redraw-regression.test.ts > redraw regression harness > appending a new block costs O(1) Parsers, not O(document) 95ms
+ ✓ src/lib/SvelteMarkdown.redraw-regression.test.ts > redraw regression harness > DOM node identity survives streaming flushes 86ms
+ ✓ src/lib/SvelteMarkdown.test.ts > async extension paths > async path handles empty string source 31ms
+ ✓ src/lib/SvelteMarkdown.test.ts > async extension paths > async path handles walkTokens failure gracefully 7ms
+ ✓ src/lib/SvelteMarkdown.test.ts > custom html renderers merge > merges custom html renderers with defaults 15ms
+ ✓ src/lib/SvelteMarkdown.redraw-regression.test.ts > redraw regression harness > non-streaming source replacement preserves prefix DOM with bounded delta 84ms
+ ✓ src/lib/SvelteMarkdown.test.ts > testing nested lists > renders three levels of nested lists correctly 215ms
+ ✓ src/lib/SvelteMarkdown.test.ts > URL sanitization (Issue #272) > blocks javascript: protocol in markdown links — omits href entirely 19ms
+ ✓ src/lib/SvelteMarkdown.test.ts > URL sanitization (Issue #272) > blocks mixed-case javascript: protocol — omits href entirely 26ms
+ ✓ src/lib/SvelteMarkdown.test.ts > URL sanitization (Issue #272) > blocks data: URI in markdown links — omits href entirely 15ms
+ ✓ src/lib/SvelteMarkdown.test.ts > URL sanitization (Issue #272) > blocks javascript: in image src — omits src entirely 31ms
+ ✓ src/lib/SvelteMarkdown.test.ts > URL sanitization (Issue #272) > allows safe https links 17ms
+ ✓ src/lib/SvelteMarkdown.test.ts > URL sanitization (Issue #272) > allows relative links 23ms
+ ✓ src/lib/SvelteMarkdown.test.ts > URL sanitization (Issue #272) > strips onclick from HTML <a> tags 26ms
+ ✓ src/lib/SvelteMarkdown.test.ts > URL sanitization (Issue #272) > strips onclick from HTML <div> tags 24ms
+ ✓ src/lib/SvelteMarkdown.test.ts > URL sanitization (Issue #272) > sanitizes javascript: href in HTML <a> tags 23ms
+ ✓ src/lib/renderers/html/Bdo.test.ts > Bdo Component > should render bdo element with direction 180ms
+ ✓ src/lib/renderers/html/Bdo.test.ts > Bdo Component > should handle additional attributes 8ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > streamed array truncation on token count shrink (#291 follow-up) > streamed DOM does not leak raw table-cell text as a paragraph 708ms
+ ✓ src/lib/SvelteMarkdown.test.ts > URL sanitization (Issue #272) > allows custom sanitizeUrl to override default 24ms
+ ✓ src/lib/SvelteMarkdown.test.ts > URL sanitization (Issue #272) > allows custom sanitizeAttributes to override default 11ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > details with blank-line-separated children (#291 follow-up) > streamed <details> contains <summary> as a child, not as a sibling 195ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > details with blank-line-separated children (#291 follow-up) > streamed <details> swallows all inter-content as descendants 187ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > details with blank-line-separated children (#291 follow-up) > streamed DOM matches non-streamed DOM for details + payloads 216ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > structural invariants on the rendered DOM for the primary reproducer > streamed <div> is not empty — has at least one child element 162ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > structural invariants on the rendered DOM for the primary reproducer > streamed DOM has exactly one styled <div> 183ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > structural invariants on the rendered DOM for the primary reproducer > streamed DOM contains a single <ul> with three <li> children, all inside the <div> 149ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > keeps slugger work proportional to newly appended headings across repeated flushes 151ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > structural invariants on the rendered DOM for the primary reproducer > streamed DOM has no orphan <li> outside any <ul> 126ms
+ ✓ src/lib/renderers/html/Iframe.test.ts > Iframe Component > should render iframe element with source 229ms
+ ✓ src/lib/renderers/html/Iframe.test.ts > Iframe Component > should handle security and additional attributes 49ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > structural invariants on the rendered DOM for the primary reproducer > streamed DOM does not duplicate list-item text 173ms
+ ✓ src/lib/renderers/html/Ol.test.ts > Ol Component > should render ol element 186ms
+ ✓ src/lib/renderers/html/Ol.test.ts > Ol Component > should handle additional attributes 10ms
+ ✓ src/lib/renderers/html/Ul.test.ts > Ul Component > should render with basic attributes 198ms
+ ✓ src/lib/renderers/html/Ul.test.ts > Ul Component > should render with list attributes 28ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > structural invariants on the rendered DOM for the primary reproducer > non-streamed render of the same source passes the same invariants (sanity) 59ms
+ ✓ src/lib/renderers/html/Sup.test.ts > Sup Component > should render with basic attributes 182ms
+ ✓ src/lib/renderers/html/Sup.test.ts > Sup Component > should render with style attribute 39ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > resetStream() between sessions (#291 follow-up) > resetStream after an HTML-heavy stream clears the DOM 153ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > resetStream() between sessions (#291 follow-up) > streaming new HTML after resetStream produces correct nested DOM 181ms
+ ✓ src/lib/extensions/alert/AlertRenderer.test.ts > AlertRenderer > renders note alert with correct class and title 164ms
+ ✓ src/lib/extensions/alert/AlertRenderer.test.ts > AlertRenderer > renders tip alert with correct class and title 12ms
+ ✓ src/lib/extensions/alert/AlertRenderer.test.ts > AlertRenderer > renders important alert with correct class and title 4ms
+ ✓ src/lib/extensions/alert/AlertRenderer.test.ts > AlertRenderer > renders warning alert with correct class and title 7ms
+ ✓ src/lib/extensions/alert/AlertRenderer.test.ts > AlertRenderer > renders caution alert with correct class and title 5ms
+ ✓ src/lib/extensions/alert/AlertRenderer.test.ts > AlertRenderer > renders the text content 21ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > reactive source prop with streaming=true (#291 follow-up) > mutating source prop in chunks produces correct nested DOM 240ms
+ ✓ src/lib/renderers/html/Sub.test.ts > Sub Component > should render with basic attributes 116ms
+ ✓ src/lib/renderers/html/Sub.test.ts > Sub Component > should render with style attribute 36ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > reactive source prop with streaming=true (#291 follow-up) > reactive-source streamed DOM equals writeChunk-streamed DOM 175ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > offset-mode chunks (#291 follow-up) > out-of-order offset writes converge to the same DOM as in-order chunks 67ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > streaming with custom sanitizers (#291 follow-up) > custom sanitizeUrl blocks bad URLs during streaming 52ms
+ ✓ src/lib/renderers/html/Span.test.ts > Span Component > should render with basic attributes 148ms
+ ✓ src/lib/renderers/html/Span.test.ts > Span Component > should render with data attributes 6ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > alternating html and markdown blocks (#291 follow-up) > three sibling html blocks separated by markdown stream correctly 76ms
+ ✓ src/lib/SvelteMarkdown.streaming-html.test.ts > SvelteMarkdown streaming — nested HTML (regression #291) > alternating html and markdown blocks (#291 follow-up) > alternating blocks streamed DOM equals non-streamed DOM 131ms
+ ✓ src/lib/renderers/html/H2.test.ts > H2 Component > should render h2 element 143ms
+ ✓ src/lib/renderers/html/H2.test.ts > H2 Component > should handle additional attributes 8ms
+ ✓ src/lib/renderers/html/Em.test.ts > Em Component > should render emphasis element 104ms
+ ✓ src/lib/renderers/html/Em.test.ts > Em Component > should handle additional attributes 6ms
+ ✓ src/lib/renderers/html/Samp.test.ts > Samp Component > should render sample output element 120ms
+ ✓ src/lib/renderers/html/Samp.test.ts > Samp Component > should handle additional attributes 13ms
+ ✓ src/lib/renderers/html/A.test.ts > A Component > should render anchor with href 131ms
+ ✓ src/lib/renderers/html/A.test.ts > A Component > should handle additional attributes 11ms
+ ✓ src/lib/renderers/html/Footer.test.ts > Footer Component > should render footer element 161ms
+ ✓ src/lib/renderers/html/Footer.test.ts > Footer Component > should handle additional attributes 16ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Basic Parsing > should parse simple markdown 60ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Basic Parsing > should parse empty string as empty array 13ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Basic Parsing > should parse multiple block elements 48ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Incremental Diffing > should detect unchanged tokens on identical input 21ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Incremental Diffing > should detect divergence when appending a new block 8ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Incremental Diffing > should report divergeAt 0 on first parse 1ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Incremental Diffing > should detect change in last token when appending text 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Incremental Diffing > should handle growing lists correctly 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Incremental Diffing > should preserve heading when paragraph grows 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Incremental Diffing > allows stable token reuse for append-only updates without reference syntax 4ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Incremental Diffing > disables stable token reuse when appended reference definitions can change links 3ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Incremental Diffing > disables stable token reuse for in-place source edits 13ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Code Fences > should parse complete code fences correctly 1ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Code Fences > should handle code fence streamed incrementally 1ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tables > should parse tables correctly 3ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > walkTokens Support > should call walkTokens on parsed tokens 3ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > re-lexes only the last unstable suffix for append-only streams 5ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > reuses a fully stable trailing heading boundary 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > falls back to a full re-lex when reference-style syntax could change the prefix 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > re-enables tail-window reparsing after a one-time shortcut definition re-lex 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > resolves shortcut references whose definition sits in the stable prefix 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > falls back to a full re-lex when reference syntax is split across chunks 7ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > resolves a reference definition completed across several partial appends 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > resolves a full reference use split across the append boundary 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > keeps stable token reuse for appended definitions when no reference use exists 1ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > keeps full reference syntax conservative until its definition arrives 1ms
+ ✓ src/lib/renderers/html/Dd.test.ts > Dd Component > should render description element 186ms
+ ✓ src/lib/renderers/html/Dd.test.ts > Dd Component > should handle additional attributes 8ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > keeps tail-window reparsing enabled for inline links 18ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > does not permanently disable tail-window reparsing after closed HTML blocks 3ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > keeps tail-window reparsing enabled after multiple closed HTML blocks 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > keeps tail-window reparsing enabled after self-closing HTML tags 4ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > keeps tail-window reparsing disabled while HTML spans are still open 17ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > keeps tail-window reparsing enabled for shortcut-looking citations without definitions 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > keeps tail-window reparsing enabled for task lists without definitions 3ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail Window Reparsing > falls back to a full re-lex when walkTokens is configured 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Streaming Bookkeeping Performance > does not rescan every stable prefix token to compute the tail-window offset 8ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Streaming Bookkeeping Performance > does not rescan stable closed HTML tokens when updating span-mismatch state 6ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Streaming Bookkeeping Performance > does not scan the full previous source for reference uses when no definitions exist 13ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Streaming Bookkeeping Performance > keeps the tail-window offset correct across closed HTML source spans 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Streaming Bookkeeping Performance > keeps reference definitions in the prefix visible to appended shortcut uses 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Streaming Bookkeeping Performance > does not rescan the stable prefix after a full-relex fallback has refreshed state 11ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Streaming Bookkeeping Performance > scans the definition boundary at most once per append 1ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Streaming Bookkeeping Performance > reuses the cached definition flag instead of rescanning prevSource on in-place edits 3ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Extension streaming parity > streams katex + alert content to the same tokens as a one-shot lex 125ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Extension streaming parity > matches a one-shot lex when chunk boundaries fall inside math and alerts 103ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Extension streaming parity > streams a mermaid fence split across chunks to the same tokens as a one-shot lex 13ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Extension streaming parity > keeps single-dollar inline katex parity when enabled 7ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Full-reparse metadata prefix offset > reports the absolute source offset of the first changed token on the full-reparse path 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Full-reparse metadata prefix offset > falls back to an undefined offset when an unknown HTML span sits in the reused prefix 4ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail-safe built-in extensions > engages the tail-window for katex + alert streams 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail-safe built-in extensions > produces the same tokens on the tail-window path as a one-shot lex (katex + alert) 2ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail-safe built-in extensions > marks katex, alert, and mermaid as tail-safe 1ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail-safe built-in extensions > keeps footnote streams on the full-reparse path (footnote is not tail-safe) 4ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail-safe built-in extensions > disables the tail-window when any registered extension is not tail-safe 1ms
+ ✓ src/lib/utils/incremental-parser.test.ts > IncrementalParser > Tail-safe built-in extensions > keeps a user-supplied custom extension without the marker on the full-reparse path 2ms
+ ✓ src/lib/renderers/html/Datalist.test.ts > Datalist Component > should render datalist element 220ms
+ ✓ src/lib/renderers/html/Datalist.test.ts > Datalist Component > should handle additional attributes 13ms
+ ✓ src/lib/renderers/html/Select.test.ts > Select Component > should render select element with basic attributes 230ms
+ ✓ src/lib/renderers/html/Select.test.ts > Select Component > should handle multiple selection and additional attributes 28ms
+ ✓ src/lib/renderers/html/Meter.test.ts > Meter Component > should render meter element with basic attributes 172ms
+ ✓ src/lib/renderers/html/Meter.test.ts > Meter Component > should handle additional attributes 6ms
+ ✓ src/lib/renderers/html/Tr.test.ts > Tr Component > should render with basic attributes 152ms
+ ✓ src/lib/renderers/html/Tr.test.ts > Tr Component > should render with table row attributes 5ms
+ ✓ src/lib/renderers/html/Article.test.ts > Article Component > should render article element 166ms
+ ✓ src/lib/renderers/html/Article.test.ts > Article Component > should handle additional attributes 8ms
+ ✓ src/lib/renderers/html/Optgroup.test.ts > Optgroup Component > should render optgroup element 179ms
+ ✓ src/lib/renderers/html/Optgroup.test.ts > Optgroup Component > should handle additional attributes 9ms
+ ✓ src/lib/renderers/html/Aside.test.ts > Aside Component > should render aside element 181ms
+ ✓ src/lib/renderers/html/Aside.test.ts > Aside Component > should handle additional attributes 9ms
+ ✓ src/lib/renderers/html/Form.test.ts > Form Component > should render form element with basic attributes 190ms
+ ✓ src/lib/renderers/html/Form.test.ts > Form Component > should handle additional form attributes 14ms
+ ✓ src/lib/renderers/html/Summary.test.ts > Summary Component > should render with basic attributes 161ms
+ ✓ src/lib/renderers/html/Summary.test.ts > Summary Component > should render with aria attributes 11ms
+ ✓ src/lib/renderers/html/Strong.test.ts > Strong Component > should render with basic attributes 215ms
+ ✓ src/lib/renderers/html/Strong.test.ts > Strong Component > should render with aria attributes 30ms
+ ✓ src/lib/renderers/html/Dl.test.ts > Dl Component > should render description list element 223ms
+ ✓ src/lib/renderers/html/Dl.test.ts > Dl Component > should handle additional attributes 10ms
+ ✓ src/lib/renderers/html/U.test.ts > U Component > should render with basic attributes 237ms
+ ✓ src/lib/renderers/html/U.test.ts > U Component > should render with style attribute 69ms
+ ✓ src/lib/renderers/html/Mark.test.ts > Mark Component > should render mark element 239ms
+ ✓ src/lib/renderers/html/Mark.test.ts > Mark Component > should handle additional attributes 16ms
+ ✓ src/lib/renderers/html/Option.test.ts > Option Component > should render option element with value 236ms
+ ✓ src/lib/renderers/html/Option.test.ts > Option Component > should handle disabled and additional attributes 8ms
+ ✓ src/lib/renderers/html/Option.test.ts > Option Component > should handle selected state 4ms
+ ✓ src/lib/renderers/html/Tbody.test.ts > Tbody Component > should render with basic attributes 203ms
+ ✓ src/lib/renderers/html/Tbody.test.ts > Tbody Component > should render with table-specific attributes 5ms
+ ✓ src/lib/renderers/html/B.test.ts > B Component > should render bold element 193ms
+ ✓ src/lib/renderers/html/B.test.ts > B Component > should handle additional attributes 9ms
+ ✓ src/lib/renderers/List.test.ts > List (markdown) > unordered lists > renders ul by default 161ms
+ ✓ src/lib/renderers/List.test.ts > List (markdown) > unordered lists > renders ul when ordered is false 5ms
+ ✓ src/lib/renderers/List.test.ts > List (markdown) > unordered lists > does not have start attribute on ul 10ms
+ ✓ src/lib/renderers/List.test.ts > List (markdown) > ordered lists > renders ol when ordered 30ms
+ ✓ src/lib/renderers/List.test.ts > List (markdown) > ordered lists > renders ol with default start of 1 4ms
+ ✓ src/lib/renderers/List.test.ts > List (markdown) > ordered lists > renders ol with custom start value 4ms
+ ✓ src/lib/renderers/List.test.ts > List (markdown) > ordered lists > renders ol with start value of 0 4ms
+ ✓ src/lib/renderers/List.test.ts > List (markdown) > ordered lists > handles negative start values 11ms
+ ✓ src/lib/renderers/html/Hr.test.ts > Hr Component > should render hr element 150ms
+ ✓ src/lib/renderers/html/Hr.test.ts > Hr Component > should handle additional attributes 13ms
+ ✓ src/lib/renderers/TableRow.test.ts > TableRow (markdown) > renders tr wrapper 153ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > matches static heading ids for a large streamed document 13371ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > dedupes nested and top-level headings in document order after a streaming reparse 95ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > keeps duplicate heading dedupe stable after a streaming reparse 54ms
+ ✓ src/lib/renderers/html/Hgroup.test.ts > Hgroup Component > should render hgroup element 152ms
+ ✓ src/lib/renderers/html/Hgroup.test.ts > Hgroup Component > should handle additional attributes 9ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > keeps already-rendered top-level nodes mounted during append-only streaming 88ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > keeps a stable root token mounted when a sibling is inserted before it 28ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > keeps a downstream paragraph mounted when an earlier token split preserves its source offset 64ms
+ ✓ src/lib/renderers/TableBody.test.ts > TableBody (markdown) > renders tbody wrapper 126ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > keeps a stable list item mounted when a sibling is inserted before it 24ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > keeps existing list item identity while streaming appends list siblings 71ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > keeps unchanged list item DOM mounted while a later item grows during streaming 39ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > keeps a stable table body row mounted when a sibling row is inserted before it 111ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > keeps existing table row identity while streaming appends table rows 80ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > keeps unchanged table body cell DOM mounted while a later cell grows during streaming 45ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > keeps a reused non-first list item mounted when the first item churns and the wrapper is recreated 59ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > keeps each list item mounted when two lists swap positions with recreated wrappers and reused items 39ms
+ ✓ src/lib/SvelteMarkdown.issue-328.test.ts > SvelteMarkdown streaming stability (issue #328) > assigns previous keys positionally when structurally identical roots share the same items (tie-break) 42ms
+ ✓ src/lib/renderers/html/Dt.test.ts > Dt Component > should render term element 132ms
+ ✓ src/lib/renderers/html/Dt.test.ts > Dt Component > should handle additional attributes 18ms
+ ✓ src/lib/renderers/html/Dfn.test.ts > Dfn Component > should render definition element 147ms
+ ✓ src/lib/renderers/html/Dfn.test.ts > Dfn Component > should handle additional attributes 12ms
+ ✓ src/lib/renderers/html/Legend.test.ts > Legend Component > should render legend element 145ms
+ ✓ src/lib/renderers/html/Legend.test.ts > Legend Component > should handle additional attributes 7ms
+ ✓ src/lib/renderers/html/S.test.ts > S Component > should render strikethrough element 138ms
+ ✓ src/lib/renderers/html/S.test.ts > S Component > should handle additional attributes 8ms
+ ✓ src/lib/renderers/Link.test.ts > Link (markdown) > renders anchor with href 125ms
+ ✓ src/lib/renderers/Link.test.ts > Link (markdown) > renders anchor with title attribute 6ms
+ ✓ src/lib/renderers/Link.test.ts > Link (markdown) > renders anchor without title when not provided 9ms
+ ✓ src/lib/renderers/Link.test.ts > Link (markdown) > renders anchor without href attribute when not provided 4ms
+ ✓ src/lib/renderers/Link.test.ts > Link (markdown) > handles relative URLs 4ms
+ ✓ src/lib/renderers/Link.test.ts > Link (markdown) > handles anchor links 4ms
+ ✓ src/lib/renderers/Link.test.ts > Link (markdown) > handles mailto links 7ms
+ ✓ src/lib/renderers/Link.test.ts > Link (markdown) > handles tel links 5ms
+ ✓ src/lib/renderers/Link.test.ts > Link (markdown) > handles URLs with query parameters 4ms
+ ✓ src/lib/renderers/Link.test.ts > Link (markdown) > handles URLs with special characters 10ms
+ ✓ src/lib/renderers/html/Pre.test.ts > Pre Component > should render pre element 134ms
+ ✓ src/lib/renderers/html/Pre.test.ts > Pre Component > should handle additional attributes 6ms
+ ✓ src/lib/renderers/html/Audio.test.ts > Audio Component > should render audio element with source 145ms
+ ✓ src/lib/renderers/html/Audio.test.ts > Audio Component > should handle additional attributes 9ms
+ ✓ src/lib/renderers/html/Button.test.ts > Button Component > should render button with type 200ms
+ ✓ src/lib/renderers/html/Button.test.ts > Button Component > should handle button states and attributes 12ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > isHtmlOpenTag > should correctly identify opening HTML tags 29ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > isHtmlOpenTag > should lowercase tag names so pairing matches the nested htmlparser2 path 1ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > isHtmlOpenTag > should correctly identify closing HTML tags 1ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > isHtmlOpenTag > should return null for invalid HTML 1ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should handle basic HTML token shrinking 8ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should handle nested HTML structures 2ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should handle nested Same HTML structures 1ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should handle multiple sibling HTML elements 3ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should handle complex nested structures with attributes 2ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should handle malformed HTML gracefully 1ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should handle tags with attrinutes that have spaces in them 2ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should break up multiple html tags that are in the same html block 7ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should handle empty token arrays 1ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should preserve non-HTML tokens 1ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should handle performance with large token arrays 12ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should process HTML tokens within table cells 32ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should handle list items missing tokens by injecting empty arrays 5ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should handle table cells missing tokens in header and rows 2ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should preserve unchanged list item identity across clean passes 2ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should preserve unchanged sibling list item identity when another item changes 5ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should preserve unchanged table body cell identity across clean passes 6ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should preserve unchanged sibling table body cell identity when another cell changes 1ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should keep html token unchanged when it does not contain a tag 4ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should add listItemIndex to each list item 1ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should format individual self-closing HTML tags properly 6ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should leave already self-closing tags unchanged 1ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > attaches tag and attributes on self-closing custom tags 1ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > lowercases self-closing custom tag names 9ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > pairs mixed-case custom tags onto a lowercase tag name 1ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > uses the same lowercase tag for inline pairing and nested htmlparser2 2ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should escape quotes in attribute values when parsing HTML blocks 3ms
+ ✓ src/lib/utils/token-cleanup.test.ts > Token Cleanup Utilities > shrinkHtmlTokens > should produce a single nested token from a multi-tag html block in one pass 3ms
+ ✓ src/lib/renderers/html/Main.test.ts > Main Component > should render main element 169ms
+ ✓ src/lib/renderers/html/Main.test.ts > Main Component > should handle additional attributes 8ms
+ ✓ src/lib/extensions/footnote/FootnoteSection.test.ts > FootnoteSection > renders section with footnotes list 241ms
+ ✓ src/lib/extensions/footnote/FootnoteSection.test.ts > FootnoteSection > renders correct id and backref link for each footnote 12ms
+ ✓ src/lib/extensions/footnote/FootnoteSection.test.ts > FootnoteSection > renders no landmark for an empty footnotes array 4ms
+ ✓ src/lib/extensions/footnote/FootnoteSection.test.ts > FootnoteSection > renders multiple footnotes in order 9ms
+ ✓ src/lib/extensions/footnote/FootnoteSection.test.ts > FootnoteSection > deduplicates labels locally using the first definition 16ms
+ ✓ src/lib/extensions/footnote/FootnoteSection.test.ts > FootnoteSection > renders every prepared backlink with a distinct accessible label 26ms
+ ✓ src/lib/extensions/footnote/FootnoteSection.test.ts > FootnoteSection > treats explicit empty backlinks as no known references 15ms
+ ✓ src/lib/extensions/footnote/FootnoteSection.test.ts > FootnoteSection > encodes special definition labels and legacy fallback backlinks 6ms
+ ✓ src/lib/renderers/html/P.test.ts > P Component > should render paragraph element 137ms
+ ✓ src/lib/renderers/html/P.test.ts > P Component > should handle additional attributes 11ms
+ ✓ src/lib/renderers/html/Small.test.ts > Small Component > should render small element 169ms
+ ✓ src/lib/renderers/html/Small.test.ts > Small Component > should handle additional attributes 19ms
+ ✓ src/lib/renderers/html/Canvas.test.ts > Canvas Component > should render canvas element with dimensions 154ms
+ ✓ src/lib/renderers/html/Canvas.test.ts > Canvas Component > should handle additional attributes 7ms
+ ✓ src/lib/renderers/Blockquote.test.ts > Blockquote (markdown) > renders blockquote element 125ms
+ ✓ src/lib/renderers/html/Fieldset.test.ts > Fieldset Component > should render fieldset element 147ms
+ ✓ src/lib/renderers/html/Fieldset.test.ts > Fieldset Component > should handle disabled state and additional attributes 11ms
+ ✓ src/lib/renderers/html/Code.test.ts > Code Component > should render code element 139ms
+ ✓ src/lib/renderers/html/Code.test.ts > Code Component > should handle additional attributes 10ms
+ ✓ src/lib/renderers/html/H1.test.ts > H1 Component > should render h1 element 158ms
+ ✓ src/lib/renderers/html/H1.test.ts > H1 Component > should handle additional attributes 6ms
+ ✓ src/lib/renderers/TableCell.test.ts > TableCell (markdown) > renders td by default 168ms
+ ✓ src/lib/renderers/TableCell.test.ts > TableCell (markdown) > renders th when header is true 31ms
+ ✓ src/lib/renderers/html/Track.test.ts > Track Component > should render with basic attributes 137ms
+ ✓ src/lib/renderers/html/Track.test.ts > Track Component > should render with track-specific attributes 6ms
+ ✓ src/lib/renderers/html/I.test.ts > I Component > should render i element 155ms
+ ✓ src/lib/renderers/html/I.test.ts > I Component > should handle additional attributes 7ms
+ ✓ src/lib/renderers/html/Param.test.ts > Param Component > should render param element with name and value 134ms
+ ✓ src/lib/renderers/html/Param.test.ts > Param Component > should handle additional attributes 23ms
+ ✓ src/lib/renderers/html/Kbd.test.ts > Kbd Component > should render kbd element 167ms
+ ✓ src/lib/renderers/html/Kbd.test.ts > Kbd Component > should handle additional attributes 6ms
+ ✓ src/lib/renderers/html/H6.test.ts > H6 Component > should render h6 element 128ms
+ ✓ src/lib/renderers/html/H6.test.ts > H6 Component > should handle additional attributes 14ms
+ ✓ src/lib/renderers/html/Header.test.ts > Header Component > should render header element 126ms
+ ✓ src/lib/renderers/html/Header.test.ts > Header Component > should handle additional attributes 20ms
+ ✓ src/lib/renderers/html/Section.test.ts > Section Component > should render section element 146ms
+ ✓ src/lib/renderers/html/Section.test.ts > Section Component > should handle additional attributes 27ms
+ ✓ src/lib/renderers/html/Br.test.ts > Br Component > should render br element with class attribute 179ms
+ ✓ src/lib/renderers/html/Br.test.ts > Br Component > should render br element with default empty attributes 29ms
+ ✓ src/lib/renderers/html/Br.test.ts > Br Component > should handle additional attributes 5ms
+ ✓ src/lib/renderers/Escape.test.ts > Escape (markdown) > renders provided text 72ms
+ ✓ src/lib/renderers/Escape.test.ts > Escape (markdown) > renders escaped characters 4ms
+ ✓ src/lib/renderers/Escape.test.ts > Escape (markdown) > does not parse HTML in text 37ms
+ ✓ src/lib/renderers/Escape.test.ts > Escape (markdown) > renders empty string when text is undefined 2ms
+ ✓ src/lib/renderers/Escape.test.ts > Escape (markdown) > renders empty string when text is empty 2ms
+ ✓ src/lib/renderers/Escape.test.ts > Escape (markdown) > handles special characters 4ms
+ ✓ src/lib/renderers/html/Img.test.ts > Img Component > should render image with src and alt 148ms
+ ✓ src/lib/renderers/html/Img.test.ts > Img Component > should handle loading and dimensions 6ms
+ ✓ src/lib/renderers/html/_UnsupportedHTML.test.ts > _UnsupportedHTML Component > renders the provided tag (escaped) without children 169ms
+ ✓ src/lib/renderers/html/_UnsupportedHTML.test.ts > _UnsupportedHTML Component > supports different tags (escaped) without children 4ms
+ ✓ src/lib/renderers/html/_UnsupportedHTML.test.ts > _UnsupportedHTML Component > renders with attributes 10ms
+ ✓ src/lib/renderers/html/_UnsupportedHTML.test.ts > _UnsupportedHTML Component > renders with empty attributes object 5ms
+ ✓ src/lib/renderers/html/Menu.test.ts > Menu Component > should render menu element 213ms
+ ✓ src/lib/renderers/html/Menu.test.ts > Menu Component > should handle additional attributes 8ms
+ ✓ src/lib/renderers/html/Address.test.ts > Address Component > should render address element 259ms
+ ✓ src/lib/renderers/html/Address.test.ts > Address Component > should handle additional attributes 6ms
+ ✓ src/lib/renderers/html/Progress.test.ts > Progress Component > should render progress element with value and max 184ms
+ ✓ src/lib/renderers/html/Progress.test.ts > Progress Component > should handle additional attributes 10ms
+ ✓ src/lib/renderers/html/Cite.test.ts > Cite Component > should render cite element 153ms
+ ✓ src/lib/renderers/html/Cite.test.ts > Cite Component > should handle additional attributes 9ms
+ ✓ src/lib/renderers/html/Tfoot.test.ts > Tfoot Component > should render with basic attributes 134ms
+ ✓ src/lib/renderers/html/Tfoot.test.ts > Tfoot Component > should render with table-specific attributes 7ms
+ ✓ src/lib/renderers/TableHead.test.ts > TableHead (markdown) > renders thead wrapper 124ms
+ ✓ src/lib/renderers/html/Output.test.ts > Output Component > should render output element with basic attributes 143ms
+ ✓ src/lib/renderers/html/Output.test.ts > Output Component > should handle additional attributes 8ms
+ ✓ src/lib/renderers/html/H5.test.ts > H5 Component > should render h5 element 143ms
+ ✓ src/lib/renderers/html/H5.test.ts > H5 Component > should handle additional attributes 17ms
+ ✓ src/lib/renderers/html/Dialog.test.ts > Dialog Component > should render dialog element with open state 150ms
+ ✓ src/lib/renderers/html/Dialog.test.ts > Dialog Component > should handle additional attributes 12ms
+ ✓ src/lib/renderers/html/Th.test.ts > Th Component > should render with basic attributes 155ms
+ ✓ src/lib/renderers/html/Th.test.ts > Th Component > should render with table header attributes 30ms
+ ✓ src/lib/renderers/html/Textarea.test.ts > Textarea Component > should render with basic attributes 151ms
+ ✓ src/lib/renderers/html/Textarea.test.ts > Textarea Component > should render with textarea-specific attributes 6ms
+ ✓ src/lib/renderers/html/Input.test.ts > Input Component > should render input element with basic attributes 156ms
+ ✓ src/lib/renderers/html/Input.test.ts > Input Component > should handle additional input attributes 10ms
+ ✓ src/lib/renderers/Em.test.ts > Em (markdown) > renders em element 142ms
+ ✓ src/lib/renderers/html/Li.test.ts > Li Component > should render list item element 151ms
+ ✓ src/lib/renderers/html/Li.test.ts > Li Component > should handle additional attributes 8ms
+ ✓ src/lib/renderers/html/H4.test.ts > H4 Component > should render h4 element 162ms
+ ✓ src/lib/renderers/html/H4.test.ts > H4 Component > should handle additional attributes 16ms
+ ✓ src/lib/renderers/html/Nav.test.ts > Nav Component > should render nav element 181ms
+ ✓ src/lib/renderers/html/Nav.test.ts > Nav Component > should handle additional attributes 14ms
+ ✓ src/lib/renderers/Del.test.ts > Del (markdown) > renders del element 119ms
+ ✓ src/lib/renderers/html/Bdi.test.ts > Bdi Component > should render bdi element 127ms
+ ✓ src/lib/renderers/html/Bdi.test.ts > Bdi Component > should handle bidirectional text attributes 10ms
+ ✓ src/lib/renderers/html/Del.test.ts > Del Component > should render deletion element with cite and datetime 127ms
+ ✓ src/lib/renderers/html/Del.test.ts > Del Component > should handle additional attributes 7ms
+ ✓ src/lib/renderers/html/Blockquote.test.ts > Blockquote Component > should render blockquote element with cite 129ms
+ ✓ src/lib/renderers/html/Blockquote.test.ts > Blockquote Component > should handle additional attributes 11ms
+ ✓ src/lib/renderers/html/Table.test.ts > Table Component > should render with basic attributes 155ms
+ ✓ src/lib/renderers/html/Table.test.ts > Table Component > should render with table-specific attributes 11ms
+ ✓ src/lib/renderers/html/Picture.test.ts > Picture Component > should render picture element 240ms
+ ✓ src/lib/renderers/html/Picture.test.ts > Picture Component > should handle additional attributes 15ms
+ ✓ src/lib/renderers/html/Thead.test.ts > Thead Component > should render with basic attributes 154ms
+ ✓ src/lib/renderers/html/Thead.test.ts > Thead Component > should render with table-specific attributes 4ms
+ ✓ src/lib/renderers/html/Source.test.ts > Source Component > should render source element with media attributes 144ms
+ ✓ src/lib/renderers/html/Source.test.ts > Source Component > should handle srcset and additional attributes 6ms
+ ✓ src/lib/renderers/html/Abbr.test.ts > Abbr Component > should render abbreviation with title 142ms
+ ✓ src/lib/renderers/html/Abbr.test.ts > Abbr Component > should handle additional attributes 6ms
+ ✓ src/lib/renderers/html/Div.test.ts > Div Component > should render div element 137ms
+ ✓ src/lib/renderers/html/Div.test.ts > Div Component > should handle additional attributes 6ms
+ ✓ src/lib/utils/streaming-reuse-repro.test.ts > happy path (append-only) > reuses prefix token objects by reference across appends 48ms
+ ✓ src/lib/utils/streaming-reuse-repro.test.ts > happy path (append-only) > reuses unchanged list items inside a still-growing list 4ms
+ ✓ src/lib/utils/streaming-reuse-repro.test.ts > suspected bug 1 — reference definition arriving later > first token updates to a link when its [ref] definition streams in later 13ms
+ ✓ src/lib/utils/streaming-reuse-repro.test.ts > suspected bug 2 — offset-mode edit inside a closed html block > divergeAt / reuse must not serve stale html children after in-place edit 9ms
+ ✓ src/lib/renderers/Table.test.ts > Table (markdown) > renders table wrapper 152ms
+ ✓ src/lib/utils/streaming-reuse-repro.test.ts > suspected bug 3 — parser reset with different options > does not reuse tokens parsed under old options after parser recreation 33ms
+ ✓ src/lib/renderers/ListItem.test.ts > ListItem (markdown) > renders li element 123ms
+ ✓ src/lib/renderers/Paragraph.test.ts > Paragraph (markdown) > renders p element 119ms
+ ✓ src/lib/renderers/Strong.test.ts > Strong (markdown) > renders strong element 136ms
+ ✓ src/lib/renderers/html/Embed.test.ts > Embed Component > should render embed element with source 139ms
+ ✓ src/lib/renderers/html/Embed.test.ts > Embed Component > should handle dimensions and additional attributes 7ms
+ ✓ src/lib/renderers/Hr.test.ts > Hr (markdown) > renders hr 127ms
+ ✓ src/lib/renderers/RawText.test.ts > RawText (markdown) > renders provided text 98ms
+ ✓ src/lib/renderers/RawText.test.ts > RawText (markdown) > does not parse HTML in text 30ms
+ ✓ src/lib/renderers/Codespan.test.ts > Codespan (markdown) > renders inline code from raw without backticks 167ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > parses thousands of blank continuation lines without repeated scanning 78ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > preserves blocks after a footnote definition 5ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > should return a valid MarkedExtension 8ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > should define an inline footnoteRef and a block footnoteSection 6ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteRef > start() > should return the index of a footnote reference 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteRef > start() > should return undefined when no footnote reference is present 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteRef > start() > should return 0 when footnote reference is at the start 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteRef > start() > should return undefined for empty string 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteRef > tokenizer() > should tokenize a numeric footnote reference 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteRef > tokenizer() > should tokenize an alphanumeric footnote reference 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteRef > tokenizer() > should not tokenize a footnote definition 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteRef > tokenizer() > should return undefined for plain text 10ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteRef > tokenizer() > should return undefined for empty string 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteRef > tokenizer() > should only match from the start of the string 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteRef > tokenizer() > should return a new object on each call 4ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteRef > tokenizer() > should handle hyphenated ids 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > start() > should return the index of a footnote definition 2ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > start() > should return undefined when no footnote definition is present 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > start() > should return 0 when footnote definition is at the start 2ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > start() > should return undefined for empty string 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > start() > only finds definitions at block-line starts 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > should tokenize a single footnote definition 7ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > should tokenize multiple footnote definitions 2ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > should handle alphanumeric footnote ids 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > should return undefined for plain text 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > should return undefined for empty string 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > should only match from the start of the string 3ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > should include raw in token 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > should return a new object on each call 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > stops before a following paragraph block 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > stops before a following heading block 3ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > stops before a following list block 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > stops before a following fence block 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > stops before a following HTML block block 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > supports empty bodies without swallowing the next block 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > groups adjacent definitions and keeps the first duplicate 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > accepts four-space and tab continuation lines 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > does not add a leading newline for a continuation-only body 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > keeps blank lines only when an indented continuation follows 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > preserves CRLF in consumed raw source 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > preserves multiple blank runs and leaves trailing blanks unconsumed with "\n" 2ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > preserves multiple blank runs and leaves trailing blanks unconsumed with "\r\n" 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > does not tokenize definition-looking prose or indented code 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > accepts 0 leading spaces 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > accepts 1 leading spaces 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > accepts 2 leading spaces 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > footnoteSection > tokenizer() > accepts 3 leading spaces 1ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > leaves definition-looking text inside fenced code as code 2ms
+ ✓ src/lib/extensions/footnote/markedFootnote.test.ts > markedFootnote > factory > should return a new extension object on each call 1ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultRenderers > has all expected keys from the Renderers type 28ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultRenderers > has exactly 25 keys (all Renderers type keys) 10ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultRenderers > maps heading to the Heading component 1ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultRenderers > maps paragraph to the Paragraph component 1ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultRenderers > maps code to the Code component 1ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultRenderers > maps list to the List component 1ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultRenderers > maps link to the Link component 1ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultRenderers > maps image to the Image component 1ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultRenderers > maps html to the Html tag-to-component map (not a single component) 1ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultRenderers > maps orderedlistitem and unorderedlistitem to null 1ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultRenderers > maps all non-null keys to truthy components 11ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultRenderers > has no extra keys beyond what Renderers defines 9ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultRenderers > spot-checks remaining renderer mappings 2ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultOptions > has correct standard marked defaults 4ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultOptions > has correct custom options 1ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultOptions > has null for renderer, tokenizer, and walkTokens 1ms
+ ✓ src/lib/utils/markdown-parser.test.ts > defaultOptions > has headerPrefix as empty string, not undefined 1ms
+ ✓ src/lib/utils/markdown-parser.test.ts > re-exports > Slugger is a constructor that can be instantiated 1ms
+ ✓ src/lib/utils/markdown-parser.test.ts > re-exports > Slugger.slug() produces a slug from a string 2ms
+ ✓ src/lib/utils/markdown-parser.test.ts > re-exports > Lexer is a class with a static lex method 1ms
+ ✓ src/lib/extensions/footnote/FootnoteRef.test.ts > FootnoteRef > renders sup with anchor link 176ms
+ ✓ src/lib/extensions/footnote/FootnoteRef.test.ts > FootnoteRef > handles string ids 6ms
+ ✓ src/lib/extensions/footnote/FootnoteRef.test.ts > FootnoteRef > uses a prepared occurrence id when provided 7ms
+ ✓ src/lib/extensions/footnote/FootnoteRef.test.ts > FootnoteRef > encodes punctuation, Unicode, and malformed UTF-16 labels 8ms
+ ✓ src/lib/renderers/Br.test.ts > Br (markdown) > renders a br element 134ms
+ ✓ src/lib/renderers/_Unsupported.test.ts > _Unsupported Component > renders raw text as-is 81ms
+ ✓ src/lib/utils/markdown-parser.test.ts > re-exports > Lexer.lex() produces a non-empty token array from simple markdown 56ms
+ ✓ src/lib/renderers/_Unsupported.test.ts > _Unsupported Component > does not interpret HTML in raw 33ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > returns an extension with both inline and block tokenizers 83ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block extension is level "block", inline is level "inline" 5ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block start() > returns the index of \[ 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block start() > returns the index of $$ 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block start() > returns the index of \begin{ 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block start() > returns the earliest delimiter when multiple are present 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block start() > returns undefined when no delimiter is present 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block tokenizer() > matches \[ ... \] and produces a block token with displayMode true 6ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block tokenizer() > matches $$ ... $$ block form 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block tokenizer() > matches \begin{equation}...\end{equation} and passes the full env to the renderer 2ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block tokenizer() > matches all five AMS environment names 2ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block tokenizer() > matches all five starred AMS variants 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block tokenizer() > handles multi-line content inside \[ \] 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block tokenizer() > matches single-line $$x$$ as block 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block tokenizer() > matches single-line \[x\] as block 12ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block tokenizer() > returns undefined for unclosed \[ block 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block tokenizer() > returns undefined for plain text 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > block tokenizer() > only matches from the start of the string 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > inline tokenizer() > matches \( ... \) and produces an inline token with displayMode false 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > inline tokenizer() > does NOT match $...$ by default (singleDollarInline off) 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > inline tokenizer() > does NOT match currency strings like $5,000 by default 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > inline tokenizer() > inline start() returns undefined for a $-only string when singleDollarInline is off 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > inline tokenizer() > inline start() locates $ when singleDollarInline is on 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > inline tokenizer() > matches $...$ when singleDollarInline is true (whitespace-bounded) 6ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > inline tokenizer() > still rejects $5,000-style currency even with singleDollarInline on 3ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > inline tokenizer() > returns undefined for unclosed \( 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > inline tokenizer() > only matches from the start of the string 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > inline tokenizer() > matches $...$ followed by ) as boundary 3ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > inline tokenizer() > matches $...$ followed by ] as boundary 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > inline tokenizer() > matches $...$ followed by } as boundary 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > inline tokenizer() > does not match when a digit follows the closing $ 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > factory > returns a new extension object on each call 2ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > factory > accepts an empty options object 1ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > factory > emits a serializable config marker so the token cache can distinguish options 9ms
+ ✓ src/lib/extensions/katex/markedKatex.test.ts > markedKatex > factory > marker survives JSON serialization of the options object 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > safe protocols > allows http URLs 33ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > safe protocols > allows https URLs 2ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > safe protocols > allows mailto links 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > safe protocols > allows tel links 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > relative URLs > allows hash anchors 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > relative URLs > allows root-relative paths 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > relative URLs > allows query strings 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > relative URLs > allows dot-relative paths 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > relative URLs > allows bare paths without protocol 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > dangerous protocols > blocks javascript: protocol 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > dangerous protocols > blocks mixed-case javascript: protocol 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > dangerous protocols > blocks data: URIs 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > dangerous protocols > blocks vbscript: protocol 3ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > dangerous protocols > blocks blob: URIs 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > edge cases > returns empty string for empty input 2ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > edge cases > allows URLs with leading whitespace 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > edge cases > blocks javascript: with leading whitespace 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > context awareness > receives link context for markdown links 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > context awareness > receives image context for markdown images 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeUrl > context awareness > receives html context with tag for HTML elements 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeAttributes > strips onclick handler 3ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeAttributes > strips onerror handler 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeAttributes > strips all on* handlers 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeAttributes > sanitizes href with javascript: protocol 14ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeAttributes > sanitizes src with data: URI 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeAttributes > sanitizes action attribute 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeAttributes > preserves safe URL attributes 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeAttributes > preserves non-URL non-event attributes 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeAttributes > uses custom sanitizeUrl function 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeAttributes > does not mutate the input object 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeAttributes > strips srcdoc attribute from iframes 1ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeAttributes > strips srcdoc regardless of case 4ms
+ ✓ src/lib/utils/sanitize.test.ts > defaultSanitizeAttributes > passes context through to sanitizeUrl 1ms
+ ✓ src/lib/utils/incremental-parser.options-pollution.test.ts > parser options are not polluted by marked > lexAndClean does not mutate the options object 71ms
+ ✓ src/lib/utils/incremental-parser.options-pollution.test.ts > parser options are not polluted by marked > keeps the tail window enabled for a parser rebuilt from the same options object 9ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported helpers > buildUnsupportedHTML maps all tags to UnsupportedHTML 17ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported helpers > allowHtmlOnly allows defaults for listed tags 3ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported helpers > allowHtmlOnly supports [tag, component] tuples 1ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported helpers > excludeHtmlOnly excludes only listed tags (others default) 1ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported helpers > excludeHtmlOnly supports overrides for non-excluded tags 1ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported HTML negative tests > allowHtmlOnly with empty array maps every key to UnsupportedHTML 6ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported HTML negative tests > allowHtmlOnly with all invalid tags maps every key to UnsupportedHTML 6ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported HTML negative tests > excludeHtmlOnly with invalid tags silently ignores them 5ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported HTML boundary tests > buildUnsupportedHTML returns a new object each call 6ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported HTML boundary tests > result key count matches htmlRendererKeysInternal length 4ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported HTML boundary tests > excludeHtmlOnly with empty array preserves all defaults 6ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported HTML boundary tests > excludeHtmlOnly with empty overrides array is the same as without 2ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported HTML spot-check tag families > semantic tags are present 1ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported HTML spot-check tag families > form tags are present 1ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported HTML spot-check tag families > media tags are present 1ms
+ ✓ src/lib/utils/unsupportedHtmlRenderers.test.ts > unsupported HTML spot-check tag families > heading tags are present 2ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > buildUnsupported > returns all keys mapped to unsupported component 13ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > buildUnsupported > includes all defined keys 6ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > buildUnsupported > returns a new object each time 2ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > allowOnly > allows specified key with default component 3ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > allowOnly > allows multiple keys with default components 1ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > allowOnly > allows key with custom component via tuple 1ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > allowOnly > allows mix of default and custom components 1ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > allowOnly > ignores invalid keys 3ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > allowOnly > ignores invalid keys in tuples 1ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > allowOnly > returns all unsupported when empty array provided 1ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > allowOnly > allows null as custom component 12ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > excludeOnly > excludes specified key 1ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > excludeOnly > excludes multiple keys 1ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > excludeOnly > keeps all defaults when empty array provided 1ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > excludeOnly > applies overrides to non-excluded keys 1ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > excludeOnly > exclusions take precedence over overrides 3ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > excludeOnly > ignores invalid keys in exclusions 3ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > excludeOnly > ignores invalid keys in overrides 1ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > excludeOnly > applies multiple overrides 3ms
+ ✓ src/lib/utils/createFilterUtilities.test.ts > createFilterUtilities > factory isolation > creates independent instances 1ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > appends string chunks to the pending buffer 15ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > commits a pending append buffer 3ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > does not commit an empty append buffer 1ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > detects when the append buffer reaches the flush threshold 1ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > creates append instructions for string chunks 1ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > drops string chunks when offset mode is active 1ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > creates offset instructions for valid offset chunks 1ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > drops invalid offset chunk objects 1ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > drops offset chunks with invalid offsets 1ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > drops offset chunks when append mode is active 1ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > drops offset chunks that open a gap over the maximum 1ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > allows offset chunks exactly at the maximum gap boundary 1ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > keeps mode-mismatch warnings ahead of excessive-gap warnings 3ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > keeps invalid-offset warnings ahead of excessive-gap warnings 2ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > applies offset chunks at exact positions 1ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > pads gaps for offset chunks 2ms
+ ✓ src/lib/utils/streaming-chunks.test.ts > streaming chunk utilities > clamps direct offset padding to the maximum gap 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > should return a valid MarkedExtension 22ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > should define a block-level extension named "alert" 2ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > start() > should return the index of an alert marker 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > start() > should return undefined when no alert marker is present 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > start() > should return 0 when alert marker is at the start 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > start() > should return undefined for empty string 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > start() > should match regular blockquote that starts with > [! 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should tokenize a NOTE alert 2ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should tokenize a TIP alert 2ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should tokenize an IMPORTANT alert 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should tokenize a WARNING alert 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should tokenize a CAUTION alert 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should be case-insensitive for alert type 3ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should handle mixed case alert types 2ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should reject unknown alert types 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should handle multi-line alert content 4ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should strip leading > from content lines 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should handle content with > and a space 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should return undefined for plain text 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should return undefined for regular blockquote 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should return undefined for empty string 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should only match from the start of the string 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should handle alert with empty body 1ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should return a new object on each call 5ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > tokenizer() > should include raw in token 21ms
+ ✓ src/lib/extensions/alert/markedAlert.test.ts > markedAlert > factory > should return a new extension object on each call 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > should return a valid MarkedExtension 14ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > should define a block-level extension named "mermaid" 2ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > start() > should return the index of a mermaid fence 3ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > start() > should return undefined when no mermaid fence is present 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > start() > should return 0 when mermaid fence is at the start 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > start() > should return undefined for empty string 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > start() > should not match case-insensitive variants 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > start() > should not match partial fence like ```mermaidx 2ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > tokenizer() > should tokenize a fenced mermaid block 2ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > tokenizer() > should trim whitespace from the diagram text 2ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > tokenizer() > should return undefined for non-mermaid content 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > tokenizer() > should return undefined for plain text 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > tokenizer() > should handle multi-line diagram content 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > tokenizer() > should return undefined for empty string 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > tokenizer() > should return empty text for an empty mermaid block 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > tokenizer() > should return undefined for unclosed mermaid fence 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > tokenizer() > should not match case-insensitive variants 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > tokenizer() > should not match ```mermaidx (extra characters after mermaid) 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > tokenizer() > should only match from the start of the string 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > tokenizer() > should match only the first closing fence 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > tokenizer() > should handle diagram text with special characters 1ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > tokenizer() > should return a new object on each call 4ms
+ ✓ src/lib/extensions/mermaid/markedMermaid.test.ts > markedMermaid > factory > should return a new extension object on each call 2ms
+ ✓ src/lib/renderers/Text.test.ts > Text (markdown) > renders without wrapper 61ms
+ ✓ src/lib/index.test.ts > index.ts exports > should export SvelteMarkdown as default export 12ms
+ ✓ src/lib/index.test.ts > index.ts exports > should export all required types 2ms
+ ✓ src/lib/index.test.ts > index.ts exports > should export SvelteMarkdownProps type 2ms
+ ✓ src/lib/index.test.ts > index.ts exports > should export imperative streaming chunk types 3ms
+ ✓ src/lib/index.test.ts > index.ts exports > should export defaultRenderers map and rendererKeys 6ms
+ ✓ src/lib/index.test.ts > index.ts exports > should export Html map and htmlRendererKeys 2ms
+ ✓ src/lib/index.test.ts > index.ts exports > should export Unsupported and UnsupportedHTML components 1ms
+ ✓ src/lib/index.test.ts > index.ts exports > should export helper functions for overrides 1ms
+ ✓ src/lib/index.test.ts > index.ts exports > should re-export key lists (public names) 1ms
+ ✓ src/lib/renderers/html/index.test.ts > HTML Renderers > should export all HTML components 26ms
+ ✓ src/lib/renderers/html/index.test.ts > HTML Renderers > should have correct type for HtmlRenderers interface 2ms
+ ✓ src/lib/renderers/html/index.test.ts > HTML Renderers > should export Html as default export 2ms
+ ✓ src/lib/renderers/html/index.test.ts > HTML Renderers > should have matching component names and values 5ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > should extract basic attributes 17ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > should handle attributes with spaces in values 2ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > should handle single quotes 1ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > should handle boolean attributes 1ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > should handle data attributes 1ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > should handle empty attributes 1ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > should handle no attributes 1ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > should handle malformed HTML gracefully 1ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > should handle attributes with special characters 2ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > should handle attributes with equals signs in values 1ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > should not treat words inside a quoted value as boolean attributes (issue 297) 2ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > should ignore tokens inside multiple quoted values that look like boolean attrs 1ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > should ignore tokens inside single-quoted values with spaces 1ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > should keep real boolean attributes alongside a quoted value with spaces 1ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > should not capture the value of an unclosed quoted attribute as a boolean attr 1ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > preserves an apostrophe inside a double-quoted value 1ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > preserves a double quote inside a single-quoted value 1ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > does not truncate URLs containing an apostrophe 1ms
+ ✓ src/lib/utils/extract-attributes.test.ts > extractAttributes > closes an unclosed value containing an other-type quote at end of string 1ms
+ ✓ src/lib/utils/unsupportedRenderers.test.ts > unsupported renderers helpers > buildUnsupportedRenderers maps all non-html keys to Unsupported (preserving null defaults) 14ms
+ ✓ src/lib/utils/unsupportedRenderers.test.ts > unsupported renderers helpers > allowRenderersOnly allows defaults for listed keys 2ms
+ ✓ src/lib/utils/unsupportedRenderers.test.ts > unsupported renderers helpers > allowRenderersOnly supports [key, component] tuples and ignores invalid keys 1ms
+ ✓ src/lib/utils/unsupportedRenderers.test.ts > unsupported renderers helpers > excludeRenderersOnly excludes only listed keys (others default) 1ms
+ ✓ src/lib/utils/unsupportedRenderers.test.ts > unsupported renderers helpers > excludeRenderersOnly honors overrides and gives precedence to exclusions 1ms
+ ✓ src/lib/utils/unsupportedRenderers.test.ts > unsupported renderers negative tests > allowRenderersOnly with empty array maps every key to Unsupported (preserving null defaults) 2ms
+ ✓ src/lib/utils/unsupportedRenderers.test.ts > unsupported renderers negative tests > allowRenderersOnly with all invalid keys maps every key to Unsupported (preserving null defaults) 3ms
+ ✓ src/lib/utils/unsupportedRenderers.test.ts > unsupported renderers negative tests > excludeRenderersOnly with invalid keys silently ignores them 3ms
+ ✓ src/lib/utils/unsupportedRenderers.test.ts > unsupported renderers boundary tests > buildUnsupportedRenderers returns a new object each call 4ms
+ ✓ src/lib/utils/unsupportedRenderers.test.ts > unsupported renderers boundary tests > result key count matches rendererKeysInternal length 3ms
+ ✓ src/lib/utils/unsupportedRenderers.test.ts > unsupported renderers boundary tests > excludeRenderersOnly with empty array preserves all defaults 3ms
+ ✓ src/lib/utils/unsupportedRenderers.test.ts > unsupported renderers boundary tests > excludeRenderersOnly with empty overrides array is the same as without 5ms
+ ✓ src/lib/utils/unsupportedRenderers.test.ts > unsupported renderers spot-check completeness > block elements are covered 2ms
+ ✓ src/lib/utils/unsupportedRenderers.test.ts > unsupported renderers spot-check completeness > inline elements are covered 1ms
+ ✓ src/lib/utils/unsupportedRenderers.test.ts > unsupported renderers spot-check completeness > table elements are covered 2ms
+ ✓ src/lib/utils/streaming-token-reuse.test.ts > reuseStableTokenArray > returns the next token array unchanged when no stable identity can be reused 12ms
+ ✓ src/lib/utils/streaming-token-reuse.test.ts > reuseStableTokenArray > reuses previous token objects before divergeAt while preserving changed tail tokens 4ms
+ ✓ src/lib/utils/streaming-token-reuse.test.ts > reuseStableTokenArray > clamps divergeAt to the shared token range 4ms
+ ✓ src/lib/utils/streaming-token-reuse.test.ts > reuseStableTokenArray > reuses stable list items and nested inline tokens inside a diverged list token 4ms
+ ✓ src/lib/utils/streaming-token-reuse.test.ts > reuseStableTokenArray > reuses stable table header cells and existing body rows inside a diverged table token 3ms
+ ✓ src/lib/utils/streaming-token-reuse.test.ts > reuseStableTokenArray > does not reuse an HTML token when child tokens appear after streaming closure 1ms
+ ✓ src/lib/utils/streaming-token-reuse.test.ts > reuseStableTokenArray > does not reuse a stale HTML parent when child counts differ, but still reuses stable children 2ms
+ ✓ src/lib/utils/streaming-token-reuse.test.ts > reuseStableTokenArray > does not over-reuse a token when a child under a custom key changes 1ms
+ ✓ src/lib/extensions/barrel-optional-deps.test.ts > extensions barrel optional-dependency invariant > never reaches a shiki import through its plain-JS module graph 16ms
+ ✓ src/lib/extensions/barrel-optional-deps.test.ts > extensions barrel optional-dependency invariant > does not re-export the shiki subpath 2ms
+ ✓ src/lib/utils/rendererKeys.test.ts > rendererKeys internals > rendererKeysInternal matches defaultRenderers (excludes html) 13ms
+ ✓ src/lib/utils/rendererKeys.test.ts > rendererKeys internals > htmlRendererKeysInternal matches Html keys 2ms
+ ✓ src/lib/utils/rendererKeys.test.ts > rendererKeys internals > public keys equal internal keys 1ms
+ ✓ src/lib/utils/rendererKeys.test.ts > rendererKeysInternal boundary and validation > has no duplicate keys 1ms
+ ✓ src/lib/utils/rendererKeys.test.ts > rendererKeysInternal boundary and validation > all keys are non-empty strings 4ms
+ ✓ src/lib/utils/rendererKeys.test.ts > rendererKeysInternal boundary and validation > does not include the html key 3ms
+ ✓ src/lib/utils/rendererKeys.test.ts > rendererKeysInternal boundary and validation > has a reasonable minimum length (>= 20) 1ms
+ ✓ src/lib/utils/rendererKeys.test.ts > htmlRendererKeysInternal boundary and validation > has no duplicate keys 1ms
+ ✓ src/lib/utils/rendererKeys.test.ts > htmlRendererKeysInternal boundary and validation > all keys are non-empty strings 5ms
+ ✓ src/lib/utils/rendererKeys.test.ts > htmlRendererKeysInternal boundary and validation > has a reasonable minimum length (>= 70) 1ms
+ ✓ src/lib/utils/rendererKeys.test.ts > spot-check expected keys > rendererKeysInternal contains core markdown keys 2ms
+ ✓ src/lib/utils/rendererKeys.test.ts > spot-check expected keys > htmlRendererKeysInternal contains core HTML tags 2ms
+ ✓ src/lib/utils/streaming.test.ts > streaming utilities > detects offset chunks 9ms
+ ✓ src/lib/utils/streaming.test.ts > streaming utilities > does not treat string chunks as offset chunks 1ms
+ ✓ src/lib/utils/streaming.test.ts > streaming utilities > does not treat nullish or unrelated objects as offset chunks 1ms
+ ✓ src/lib/extensions/index.test.ts > extensions barrel exports > should export markedMermaid function 9ms
+ ✓ src/lib/extensions/index.test.ts > extensions barrel exports > should export MermaidRenderer component 1ms
+ ✓ src/lib/extensions/index.test.ts > extensions barrel exports > should export markedAlert function 1ms
+ ✓ src/lib/extensions/index.test.ts > extensions barrel exports > should export AlertRenderer component 1ms
+ ✓ src/lib/extensions/index.test.ts > extensions barrel exports > should export markedFootnote function 1ms
+ ✓ src/lib/extensions/index.test.ts > extensions barrel exports > should export FootnoteRef component 1ms
+ ✓ src/lib/extensions/index.test.ts > extensions barrel exports > should export FootnoteSection component 1ms
+ ✓ src/lib/utils/extension-options.test.ts > extension option utilities > extracts custom token names from all extensions 8ms
+ ✓ src/lib/utils/extension-options.test.ts > extension option utilities > detects async extensions only when marked async is true 1ms
+ ✓ src/lib/utils/extension-options.test.ts > extension option utilities > returns no extension defaults when no extensions are provided 1ms
+ ✓ src/lib/utils/extension-options.test.ts > extension option utilities > resolves marked extension defaults for custom tokenizers 1ms
+ ✓ src/lib/utils/extension-options.test.ts > extension option utilities > merges default options, extension defaults, and caller options 2ms
+ ✓ src/lib/utils/extension-options.test.ts > extension option utilities > does not add the internal cache signature without extensions 1ms
+ ✓ src/lib/utils/extension-options.test.ts > extension option utilities > keeps cache signatures stable for the same extension objects 1ms
+ ✓ src/lib/utils/extension-options.test.ts > extension option utilities > changes cache signatures when an equivalent extension object is replaced 1ms
+ ✓ src/lib/utils/extension-options.test.ts > extension option utilities > includes tokenizer metadata and function identities in the signature 1ms
+ ✓ src/lib/utils/component-props.test.ts > component prop utilities > merges custom markdown renderers with defaults 8ms
+ ✓ src/lib/utils/component-props.test.ts > component prop utilities > merges custom HTML renderers without dropping default HTML renderers 1ms
+ ✓ src/lib/utils/component-props.test.ts > component prop utilities > combines built-in renderer keys with extension token names 2ms
+ ✓ src/lib/utils/component-props.test.ts > component prop utilities > collects markdown snippet overrides for built-in and extension token keys 1ms
+ ✓ src/lib/utils/component-props.test.ts > component prop utilities > collects HTML snippet overrides and strips the html_ prefix 1ms
+ ✓ src/lib/utils/component-props.test.ts > component prop utilities > passes through non-snippet props only 1ms
+ ✓ src/lib/utils/footnote-render-metadata.test.ts > footnote render metadata > encodes special labels injectively and preserves simple legacy ids 10ms
+ ✓ src/lib/utils/footnote-render-metadata.test.ts > footnote render metadata > counts rendered references through nested token containers in document order 2ms
+ ✓ src/lib/utils/footnote-render-metadata.test.ts > footnote render metadata > uses token identity for occurrences and includes references after definitions 1ms
+ ✓ src/lib/utils/footnote-render-metadata.test.ts > footnote render metadata > applies first-definition-wins across separated sections 1ms
+ ✓ src/lib/utils/footnote-render-metadata.test.ts > footnote render metadata > does not count reference-looking image alt tokens or leaf contents 1ms
+ ✓ src/lib/utils/footnote-render-metadata.test.ts > footnote render metadata > prepares no backlinks when a reference appears only in image alt tokens 1ms
+ ✓ src/lib/utils/footnote-render-metadata.test.ts > footnote render metadata > returns fresh snapshots whose occurrence counts restart per document 2ms
+
+ Test Files  154 passed (154)
+      Tests  1084 passed (1084)
+   Start at  06:54:20
+   Duration  45.61s (transform 46.02s, setup 98.93s, import 109.50s, tests 60.08s, environment 429.57s)
+
+JUNIT report written to /Users/jasonkummerl/Github/svelte-markdown/junit-vitest.xml
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.98% ( 2089/2154 )
+Branches     : 91.87% ( 995/1083 )
+Functions    : 98.05% ( 654/667 )
+Lines        : 98.05% ( 1616/1648 )
+================================================================================
