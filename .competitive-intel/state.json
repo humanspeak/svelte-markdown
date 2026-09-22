@@ -1,9 +1,9 @@
 {
     "project": "@humanspeak/svelte-markdown",
-    "last_run": "2026-09-21",
+    "last_run": "2026-09-22",
     "run_type": "delta",
     "snapshot": {
-        "fetched_at": "2026-09-21T14:28:20Z",
+        "fetched_at": "2026-09-22T05:00:17Z",
         "project": "@humanspeak/svelte-markdown",
         "self": {
             "npm": "@humanspeak/svelte-markdown",
@@ -20,7 +20,7 @@
             },
             "svelte_peer": "^5.0.0",
             "error": null,
-            "stars": 140,
+            "stars": 141,
             "archived": false,
             "pushed_at": "2026-09-14",
             "last_release": "2026-09-14",
@@ -166,7 +166,7 @@
                 "error": null,
                 "stars": 354,
                 "archived": false,
-                "pushed_at": "2026-09-20",
+                "pushed_at": "2026-09-22",
                 "last_release": "2025-08-09",
                 "recent_releases": []
             }
@@ -316,11 +316,11 @@
         },
         "svelte-exmarkdown": {
             "validated_against_version": "5.0.2",
-            "validated_on": "2026-09-21"
+            "validated_on": "2026-09-22"
         },
         "svelte-markdown": {
             "validated_against_version": "0.4.1",
-            "validated_on": "2026-09-21"
+            "validated_on": "2026-09-22"
         }
     },
     "watch_candidates": [
@@ -328,10 +328,10 @@
             "npm": "markstream-svelte",
             "first_seen": "2026-08-11",
             "status": "active-watch-candidate",
-            "note": "Fading: 2.0.12 (2026-09-11), weekly DL 532 -> 139. Well under ~1.5k bar for promotion.",
-            "latest_version": "2.0.12",
+            "note": "Fading: 2.0.13 (patch, seen 2026-09-22), weekly DL ~139. Well under ~1.5k bar for promotion.",
+            "latest_version": "2.0.13",
             "weekly_downloads": 139,
-            "checked_on": "2026-09-21"
+            "checked_on": "2026-09-22"
         },
         {
             "npm": "@markdown-ui/svelte",
@@ -339,7 +339,7 @@
             "note": "Still parked. 0.4.0 (2026-01-12), 11 weekly DL. Too small/stale to track - recorded to avoid re-surfacing.",
             "latest_version": "0.4.0",
             "weekly_downloads": 2,
-            "checked_on": "2026-09-21"
+            "checked_on": "2026-09-22"
         },
         {
             "npm": "@modal-labs/svelte-markdown",
@@ -347,8 +347,8 @@
             "status": "parked",
             "note": "Likely org fork; 0.5.0 last published 2025-05-16, ~1.3k weekly DL. Recorded to avoid re-surfacing.",
             "latest_version": "0.5.0",
-            "weekly_downloads": 1290,
-            "checked_on": "2026-09-21"
+            "weekly_downloads": 1288,
+            "checked_on": "2026-09-22"
         },
         {
             "npm": "@immich/svelte-markdown-preprocess",
@@ -356,13 +356,13 @@
             "status": "parked",
             "note": "Build-time preprocessor, not a runtime renderer. ~1.8k weekly DL.",
             "latest_version": "0.8.0",
-            "weekly_downloads": 1838,
-            "checked_on": "2026-09-21"
+            "weekly_downloads": 1908,
+            "checked_on": "2026-09-22"
         }
     ],
     "seo": {
-        "export_date": "2026-09-21",
-        "export_unchanged_since_last_run": false,
+        "export_date": "2026-09-22",
+        "export_unchanged_since_last_run": true,
         "export_age_days": 0,
         "stale": false,
         "striking_distance": [
@@ -594,11 +594,12 @@
             "resolve 'svelte custom renderer' cannibalization (ranking URL flipped vs-milkdown -> docs/getting-started, pos 3 -> 13)",
             "add high-impression GSC queries to Ahrefs rank tracker (milkdown-xss cluster, svelte markdown editor, markdown playground, svelte-exmarkdown, svelte streamdown)",
             "fix vs-svelte-exmarkdown title/meta (201 impr, pos 12, 0% CTR)"
-        ]
+        ],
+        "_export_note": "2026-09-22 export re-dropped but striking-distance + underperforming lists identical to 2026-09-21"
     },
     "rank_tracker": {
-        "checked_on": "2026-09-21",
-        "date_compared": "2026-09-14",
+        "checked_on": "2026-09-22",
+        "date_compared": "2026-09-15",
         "project_id": 8934907,
         "summary": {
             "tracked": 8,
@@ -607,7 +608,7 @@
             "top10": 4,
             "top100": 8,
             "improved": 0,
-            "declined": 5,
+            "declined": 0,
             "avg_position": 12.4
         },
         "rows": [
@@ -615,8 +616,8 @@
                 "keyword": "svelte marked",
                 "volume": 10,
                 "position": 7,
-                "position_diff": 1,
-                "position_prev": 6,
+                "position_diff": 0,
+                "position_prev": 7,
                 "url": "https://markdown.svelte.page/compare/vs-marked",
                 "kd": 0
             },
@@ -633,8 +634,8 @@
                 "keyword": "markdown svelte",
                 "volume": 0,
                 "position": 10,
-                "position_diff": 10,
-                "position_prev": null,
+                "position_diff": 0,
+                "position_prev": 10,
                 "url": "https://markdown.svelte.page/",
                 "kd": 16
             },
@@ -651,8 +652,8 @@
                 "keyword": "svelte custom renderer",
                 "volume": 0,
                 "position": 13,
-                "position_diff": 10,
-                "position_prev": 3,
+                "position_diff": 0,
+                "position_prev": 13,
                 "url": "https://markdown.svelte.page/docs/getting-started",
                 "kd": 3
             },
@@ -669,8 +670,8 @@
                 "keyword": "tiptap markdown",
                 "volume": 300,
                 "position": 18,
-                "position_diff": 1,
-                "position_prev": 17,
+                "position_diff": 0,
+                "position_prev": 18,
                 "url": "https://markdown.svelte.page/compare/vs-tiptap",
                 "kd": 5
             },
@@ -678,13 +679,12 @@
                 "keyword": "tiptap svelte",
                 "volume": 150,
                 "position": 18,
-                "position_diff": 5,
-                "position_prev": 13,
+                "position_diff": 0,
+                "position_prev": 18,
                 "url": "https://markdown.svelte.page/compare/vs-tiptap",
                 "kd": 10
             }
         ],
-        "unchanged_since_last_run": true,
-        "_note": "Ahrefs counts a keyword entering the index from unranked (position_prev null) as 'declined'; 'markdown svelte' at 10 is in fact a new ranking, so the honest read is 1 up / 4 down."
+        "unchanged_since_last_run": true
     }
 }
