@@ -1,0 +1,828 @@
+[WebServer] (node:79417) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:79505) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] $ tsx ./scripts/fetch-github-stats.ts && vite build
+
+[WebServer] (node:79560) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:79566) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] Wrote github-stats.json: 141 stars
+
+[WebServer] (node:79568) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+[WebServer]   - import "./src/lib/compare-data" without a file extension (vite.config.ts:15:35). Add the file extension
+[WebServer]   - import "./src/lib/docs-config" without a file extension (vite.config.ts:16:28). Add the file extension
+[WebServer] Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+[WebServer] vite v8.2.1 building ssr environment for production...
+
+[WebServer] Found 42 pages + 0 blog posts + 12 extras with social card data
+
+[WebServer] Generating 110 social card images...
+
+[WebServer]   [1/110] og: Svelte Markdown Blog
+
+[WebServer]   [2/110] og: Svelte Markdown
+[WebServer]   [3/110] twitter: Svelte Markdown
+[WebServer]   [4/110] twitter: Svelte Markdown Blog
+
+[WebServer]   [5/110] og: Rendering AI Agent Output
+
+[WebServer]   [6/110] og: Allow/Deny
+[WebServer]   [7/110] twitter: Rendering AI Agent Output
+
+[WebServer]   [8/110] twitter: Allow/Deny
+
+[WebServer]   [9/110] og: Headless Parser
+
+[WebServer]   [10/110] twitter: Headless Parser
+[WebServer]   [11/110] twitter: LLM Streaming
+[WebServer]   [12/110] og: Marked Extensions
+[WebServer]   [13/110] og: LLM Streaming
+[WebServer]   [14/110] twitter: Marked Extensions
+[WebServer]   [15/110] og: Security
+
+[WebServer]   [16/110] twitter: Security
+
+[WebServer]   [17/110] og: Syntax Highlighting (Shiki)
+
+[WebServer]   [18/110] twitter: Token Caching
+[WebServer]   [19/110] og: Token Caching
+[WebServer]   [20/110] twitter: Syntax Highlighting (Shiki)
+[WebServer]   [21/110] twitter: Tree Shaking
+[WebServer]   [22/110] og: Component API
+[WebServer]   [23/110] og: Tree Shaking
+[WebServer]   [24/110] twitter: Component API
+
+[WebServer]   [25/110] og: Types & Exports
+
+[WebServer]   [26/110] twitter: Types & Exports
+[WebServer]   [27/110] og: Usage Examples
+[WebServer]   [28/110] twitter: Usage Examples
+[WebServer]   [29/110] og: Basic Rendering
+[WebServer]   [30/110] og: Custom Renderers
+[WebServer]   [31/110] twitter: Basic Rendering
+
+[WebServer]   [32/110] twitter: Custom Renderers
+
+[WebServer]   [33/110] og: HTML Filtering
+
+[WebServer]   [34/110] og: Inline Rendering
+[WebServer]   [35/110] twitter: HTML Filtering
+[WebServer]   [36/110] twitter: Inline Rendering
+[WebServer]   [37/110] og: Linked Headings
+[WebServer]   [38/110] og: Parsed Callback
+[WebServer]   [39/110] twitter: Parsed Callback
+[WebServer]   [40/110] twitter: Linked Headings
+
+[WebServer]   [41/110] og: Snippet Overrides
+
+[WebServer]   [42/110] og: Getting Started
+
+[WebServer]   [43/110] twitter: Getting Started
+
+[WebServer]   [44/110] twitter: Migration Guide
+[WebServer]   [45/110] twitter: Snippet Overrides
+[WebServer]   [46/110] og: Custom Renderers
+[WebServer]   [47/110] og: Migration Guide
+
+[WebServer]   [48/110] twitter: Custom Renderers
+
+[WebServer]   [49/110] og: HTML Renderers
+
+[WebServer]   [50/110] og: Markdown Renderers
+[WebServer]   [51/110] twitter: HTML Renderers
+[WebServer]   [52/110] og: Snippet Overrides
+[WebServer]   [53/110] twitter: Markdown Renderers
+[WebServer]   [54/110] twitter: Snippet Overrides
+[WebServer]   [55/110] twitter: Interactive Examples
+[WebServer]   [56/110] og: Interactive Examples
+
+[WebServer]   [57/110] og: Custom Renderers
+
+[WebServer]   [58/110] twitter: Custom Renderers
+[WebServer]   [59/110] og: Caching Performance
+[WebServer]   [60/110] twitter: AI Agent Output Demo
+[WebServer]   [61/110] og: AI Agent Output Demo
+[WebServer]   [62/110] og: Code Formatting
+[WebServer]   [63/110] twitter: Caching Performance
+
+[WebServer]   [64/110] twitter: Code Formatting
+
+[WebServer]   [65/110] twitter: HTML Filtering
+
+[WebServer]   [66/110] twitter: Linked Headings
+[WebServer]   [67/110] og: Linked Headings
+[WebServer]   [68/110] og: HTML Filtering
+[WebServer]   [69/110] og: Footnotes
+[WebServer]   [70/110] twitter: Footnotes
+[WebServer]   [71/110] twitter: GitHub Alerts
+[WebServer]   [72/110] og: GitHub Alerts
+
+[WebServer]   [73/110] og: LLM Streaming Demo
+
+[WebServer]   [74/110] twitter: Marked Extensions
+[WebServer]   [75/110] twitter: LLM Streaming Demo
+[WebServer]   [76/110] og: Marked Extensions
+[WebServer]   [77/110] og: Mermaid Diagrams
+[WebServer]   [78/110] twitter: Mermaid Diagrams
+[WebServer]   [79/110] og: Live Playground
+
+[WebServer]   [80/110] twitter: Live Playground
+
+[WebServer]   [81/110] og: Snippet Overrides
+
+[WebServer]   [82/110] twitter: Snippet Overrides
+[WebServer]   [83/110] og: Syntax Highlighting (Shiki)
+[WebServer]   [84/110] twitter: Reactive Extensions
+[WebServer]   [85/110] og: Reactive Extensions
+[WebServer]   [86/110] twitter: Syntax Highlighting (Shiki)
+[WebServer]   [87/110] og: Compare
+
+[WebServer]   [88/110] twitter: Compare
+
+[WebServer]   [89/110] og: vs MDsveX
+
+[WebServer]   [90/110] og: vs Svelte Streamdown
+[WebServer]   [91/110] twitter: vs Svelte Streamdown
+[WebServer]   [92/110] og: vs Tiptap
+[WebServer]   [93/110] twitter: vs Tiptap
+[WebServer]   [94/110] og: vs markdown-it
+
+[WebServer]   [95/110] twitter: vs MDsveX
+
+[WebServer]   [96/110] twitter: vs markdown-it
+
+[WebServer]   [97/110] og: vs svelte-exmarkdown
+
+[WebServer]   [98/110] og: vs marked
+[WebServer]   [99/110] twitter: vs Milkdown
+[WebServer]   [100/110] twitter: vs svelte-exmarkdown
+[WebServer]   [101/110] og: vs Carta
+[WebServer]   [102/110] twitter: vs Carta
+
+[WebServer]   [103/110] twitter: vs marked
+[WebServer]   [104/110] og: vs Milkdown
+
+[WebServer]   [105/110] og: vs ByteMD
+
+[WebServer]   [106/110] og: vs unified / remark
+[WebServer]   [107/110] twitter: vs ByteMD
+[WebServer]   [108/110] twitter: vs unified / remark
+[WebServer]   [109/110] og: vs ProseMirror
+[WebServer]   [110/110] twitter: vs ProseMirror
+[WebServer] 
+[WebServer] Done! Generated 110 images in 37.5s
+
+[WebServer] 
+
+[WebServer] transforming...
+
+[WebServer] 6:40:57 AM [vite-plugin-svelte] /Users/jasonkummerl/Github/svelte-markdown/docs/src/routes/docs/advanced/llm-streaming/+page.svx:1:8 `context="module"` is deprecated, use the `module` attribute instead
+[WebServer] https://svelte.dev/e/script_context_deprecated
+
+[WebServer] 1: <script context="module">
+[WebServer]                            ^
+[WebServer] 2:   export const metadata = {"title":"LLM Streaming","description":"Render AI chat responses in real time with @humanspeak/svelte-markdown, using token-by-token streaming for ChatGPT-style Svelte app interfaces."};
+[WebServer] 3:   const { title, description } = metadata;
+
+[WebServer] 6:40:58 AM [vite-plugin-svelte] src/routes/+page.svelte:1767:4 Unused CSS selector ".brut-ai .ai-cell p code"
+[WebServer] https://svelte.dev/e/css_unused_selector
+
+[WebServer] 1765:         margin: 0;
+[WebServer] 1766:     }
+[WebServer] 1767:     .brut-ai .ai-cell p code {
+[WebServer]                                   ^
+[WebServer] 1768:         font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+[WebServer] 1769:         background: var(--brut-bg-2);
+
+[WebServer] 6:40:59 AM [vite-plugin-svelte] /Users/jasonkummerl/Github/svelte-markdown/dist/renderers/html/_UnsupportedHTML.svelte:15:23 This reference only captures the initial value of `attributes`. Did you mean to reference it inside a closure instead?
+[WebServer] https://svelte.dev/e/state_referenced_locally
+
+[WebServer] 13: 
+[WebServer] 14:     const attributesString =
+[WebServer] 15:         Object.entries(attributes || {})
+[WebServer]                                      ^
+[WebServer] 16:             .map(([key, value]) => `${key}="${value}"`)
+[WebServer] 17:             .join(' ') || ''
+
+[WebServer] 6:41:07 AM [vite-plugin-svelte] /Users/jasonkummerl/Github/svelte-markdown/dist/Parser.svelte:143:36 This reference only captures the initial value of `type`. Did you mean to reference it inside a closure instead?
+[WebServer] https://svelte.dev/e/state_referenced_locally
+
+[WebServer] 141:         }
+[WebServer] 142:         const w = window as SVMWindow
+[WebServer] 143:         const initialType: string = type ?? '<root>'
+[WebServer]                                              ^
+[WebServer] 144:         w.__svmParserCount = (w.__svmParserCount ?? 0) + 1
+[WebServer] 145:         const byType = (w.__svmParserByType = w.__svmParserByType ?? {})
+
+[WebServer] ✓ 9119 modules transformed.
+
+[WebServer] rendering chunks...
+
+[WebServer] (node:79568) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+[WebServer]   - import "./src/lib/compare-data" without a file extension (vite.config.ts:15:35). Add the file extension
+[WebServer]   - import "./src/lib/docs-config" without a file extension (vite.config.ts:16:28). Add the file extension
+[WebServer] Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+[WebServer] (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+[WebServer]   - import "./src/lib/compare-data" without a file extension (vite.config.ts:15:35). Add the file extension
+[WebServer]   - import "./src/lib/docs-config" without a file extension (vite.config.ts:16:28). Add the file extension
+[WebServer] Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+[WebServer] vite v8.2.1 building client environment for production...
+
+[WebServer] 
+transforming...
+
+[WebServer] 6:41:17 AM [vite-plugin-svelte] /Users/jasonkummerl/Github/svelte-markdown/docs/src/routes/docs/advanced/llm-streaming/+page.svx:1:8 `context="module"` is deprecated, use the `module` attribute instead
+[WebServer] https://svelte.dev/e/script_context_deprecated
+
+[WebServer] 1: <script context="module">
+[WebServer]                            ^
+[WebServer] 2:   export const metadata = {"title":"LLM Streaming","description":"Render AI chat responses in real time with @humanspeak/svelte-markdown, using token-by-token streaming for ChatGPT-style Svelte app interfaces."};
+[WebServer] 3:   const { title, description } = metadata;
+
+[WebServer] 6:41:17 AM [vite-plugin-svelte] src/routes/+page.svelte:1767:4 Unused CSS selector ".brut-ai .ai-cell p code"
+[WebServer] https://svelte.dev/e/css_unused_selector
+
+[WebServer] 1765:         margin: 0;
+[WebServer] 1766:     }
+[WebServer] 1767:     .brut-ai .ai-cell p code {
+[WebServer]                                   ^
+[WebServer] 1768:         font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+[WebServer] 1769:         background: var(--brut-bg-2);
+
+[WebServer] 6:41:19 AM [vite-plugin-svelte] /Users/jasonkummerl/Github/svelte-markdown/dist/renderers/html/_UnsupportedHTML.svelte:15:23 This reference only captures the initial value of `attributes`. Did you mean to reference it inside a closure instead?
+[WebServer] https://svelte.dev/e/state_referenced_locally
+
+[WebServer] 13: 
+[WebServer] 14:     const attributesString =
+[WebServer] 15:         Object.entries(attributes || {})
+[WebServer]                                      ^
+[WebServer] 16:             .map(([key, value]) => `${key}="${value}"`)
+[WebServer] 17:             .join(' ') || ''
+
+[WebServer] 6:41:22 AM [vite-plugin-svelte] /Users/jasonkummerl/Github/svelte-markdown/dist/Parser.svelte:143:36 This reference only captures the initial value of `type`. Did you mean to reference it inside a closure instead?
+[WebServer] https://svelte.dev/e/state_referenced_locally
+
+[WebServer] 141:         }
+[WebServer] 142:         const w = window as SVMWindow
+[WebServer] 143:         const initialType: string = type ?? '<root>'
+[WebServer]                                              ^
+[WebServer] 144:         w.__svmParserCount = (w.__svmParserCount ?? 0) + 1
+[WebServer] 145:         const byType = (w.__svmParserByType = w.__svmParserByType ?? {})
+
+[WebServer] ✓ 11291 modules transformed.
+
+[WebServer] rendering chunks...
+
+[WebServer] computing gzip size...
+
+[WebServer] .svelte-kit/output/client/_app/version.json                                                               0.02 kB │ gzip:   0.04 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/jetbrains-mono-vietnamese-wght-normal.Bt-aOZkq.woff2      7.50 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/jetbrains-mono-greek-wght-normal.Bw9x6K1M.woff2           9.00 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/inter-vietnamese-wght-normal.CBcvBZtf.woff2              10.25 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/inter-greek-ext-wght-normal.DlzME5K_.woff2               11.23 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/jetbrains-mono-cyrillic-wght-normal.D73BlboJ.woff2       12.10 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/jetbrains-mono-latin-ext-wght-normal.DBQx-q_a.woff2      15.19 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/inter-cyrillic-wght-normal.DqGufNeO.woff2                18.74 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/inter-greek-wght-normal.CkhJZR-_.woff2                   18.99 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/Lato-ThinItalic.BH0bHREE.woff2                           20.48 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/Lato-LightItalic.DmdkUCGz.woff2                          21.19 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/inter-cyrillic-ext-wght-normal.BOeWTOD4.woff2            25.96 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/Lato-Thin.BWlK3axh.woff2                                 26.02 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/Lato-Black.COE_gpf2.woff2                                27.43 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/Lato-Bold.Rb4gKapq.woff2                                 27.81 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/Lato-Light.D4yUbpus.woff2                                27.88 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/Lato-Regular.DqL9ngKx.woff2                              28.41 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/Lato-BlackItalic.GCcOyL-5.woff2                          28.83 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/Lato-Italic.BZch5XPb.woff2                               29.55 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/Lato-BoldItalic.Ocqcw2Zm.woff2                           29.64 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/jetbrains-mono-latin-wght-normal.B9CIFXIH.woff2          40.40 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/inter-latin-wght-normal.Dx4kXJAl.woff2                   48.25 kB
+[WebServer] .svelte-kit/output/client/.vite/manifest.json                                                            66.10 kB │ gzip:   6.36 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/inter-latin-ext-wght-normal.DO1Apj_S.woff2               85.06 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/Lato-ExtraBold.BcL-8tlJ.woff2                           201.78 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/Lato-ExtraBoldItalic.cTZKM4wU.woff2                     220.22 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/svelte-motion.BvP4ioMK.css                                0.06 kB │ gzip:   0.07 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/48.BqNwK28E.css                                           0.47 kB │ gzip:   0.22 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/43.Cb4sKHD2.css                                           0.76 kB │ gzip:   0.38 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/45.CdKoAycK.css                                           1.43 kB │ gzip:   0.48 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/52.MX0IX6OE.css                                           1.69 kB │ gzip:   0.54 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/55.BmFuUD4y.css                                           1.82 kB │ gzip:   0.59 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/50.f6yHZQXl.css                                           1.91 kB │ gzip:   0.43 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/54.DjS7l_eF.css                                           1.98 kB │ gzip:   0.48 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/51.Dsngczrv.css                                           2.22 kB │ gzip:   0.52 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/46.D7Bc3G4Z.css                                           3.11 kB │ gzip:   0.66 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/42.C1aq_BGU.css                                           4.88 kB │ gzip:   1.15 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/26.fFjKjGYj.css                                           5.08 kB │ gzip:   1.07 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/47.DFggc7p_.css                                           5.25 kB │ gzip:   1.03 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/jetbrains-mono.Bb3RZpLq.css                               6.39 kB │ gzip:   2.81 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/41.CVydFEWY.css                                           6.50 kB │ gzip:   1.43 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/49.Bethpz0O.css                                           7.17 kB │ gzip:   1.53 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/Header.B-nOaqZo.css                                       7.39 kB │ gzip:   1.58 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/53.B-QyZpho.css                                           7.46 kB │ gzip:   1.79 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/blog.C9hY1p1p.css                                        15.82 kB │ gzip:   2.45 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/6.fg9hFnPI.css                                           34.71 kB │ gzip:   3.75 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/dist.1YPAB5Fp.css                                        40.56 kB │ gzip:   5.51 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/assets/0.DruZGYf3.css                                           72.30 kB │ gzip:  12.86 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/BvRk9kiK2.js                                              0.00 kB │ gzip:   0.02 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/8_c9mY1t.js                                               0.02 kB │ gzip:   0.04 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/10.CUI6VR8q.js                                             0.06 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/11.DasduZ4G.js                                             0.06 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/8.BmoMBJUV.js                                              0.06 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/9.vbwh4qFS.js                                              0.06 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/NjXmJ0ck.js                                               0.06 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/BY63yVn0.js                                               0.06 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/D_BkLGx4.js                                               0.06 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/gx78QZJu.js                                               0.06 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/CWQxnUlp.js                                               0.06 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/cVMgZMyy.js                                               0.06 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/p4XC2OEf.js                                               0.06 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/C0HC9_kK.js                                               0.07 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/CRBL5W3u.js                                               0.07 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/CcA8Vaw0.js                                               0.07 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/L40J0Yzo.js                                               0.07 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/BXLAvQkH.js                                               0.07 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/BYx9txp6.js                                               0.07 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/CnThQ0r-.js                                               0.07 kB │ gzip:   0.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/DfxvMyA8.js                                               0.07 kB │ gzip:   0.09 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/entry/start.DzfUUYak.js                                          0.08 kB │ gzip:   0.09 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/D5C60Ss0.js                                               0.28 kB │ gzip:   0.23 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/BWypiKIH.js                                               0.33 kB │ gzip:   0.18 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/1.DwRaVMLf.js                                              0.35 kB │ gzip:   0.25 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/CPP0remc.js                                               0.36 kB │ gzip:   0.27 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/Bth3Rn4p.js                                               0.37 kB │ gzip:   0.28 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/61TkdraB.js                                               0.37 kB │ gzip:   0.27 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/CmIQwDkQ.js                                               0.39 kB │ gzip:   0.30 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/Ps7JZTSs.js                                               0.39 kB │ gzip:   0.27 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/BrkXJQ4e.js                                               0.39 kB │ gzip:   0.29 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/GwBi6BG7.js                                               0.40 kB │ gzip:   0.31 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/CM-jmMFK.js                                               0.40 kB │ gzip:   0.30 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/DGRjmD6M.js                                               0.41 kB │ gzip:   0.30 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/BGW7tSlo.js                                               0.42 kB │ gzip:   0.25 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/Br_xJaoA.js                                               0.43 kB │ gzip:   0.33 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/BKzNaCz3.js                                               0.46 kB │ gzip:   0.32 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/Ctz78HNt.js                                               0.53 kB │ gzip:   0.31 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/BVnKNsgj.js                                               0.54 kB │ gzip:   0.33 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/13.BSezUxoF.js                                             0.54 kB │ gzip:   0.32 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/FWI_Wz9u.js                                               0.54 kB │ gzip:   0.32 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/12.Bvai0mVz.js                                             0.55 kB │ gzip:   0.35 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/0.D1bbDo2u.js                                              0.58 kB │ gzip:   0.37 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/CzCLFLiK.js                                               0.59 kB │ gzip:   0.35 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/OEig8HXr.js                                               0.64 kB │ gzip:   0.42 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/DlRMVlVA.js                                               0.67 kB │ gzip:   0.40 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/5.BbR3fbVa.js                                              0.68 kB │ gzip:   0.40 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/PxvlNhYy.js                                               0.70 kB │ gzip:   0.36 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/hePW80VL.js                                               0.71 kB │ gzip:   0.42 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/2.DTbIcoFK.js                                              0.72 kB │ gzip:   0.41 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/DMvH8xLZ.js                                               0.86 kB │ gzip:   0.46 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/7.BSCsM9hw.js                                              1.07 kB │ gzip:   0.54 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/3.BdjOWuEt.js                                              1.09 kB │ gzip:   0.62 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/Bjy-W4x2.js                                               1.36 kB │ gzip:   0.65 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/Cg3kXQlp.js                                               3.16 kB │ gzip:   0.83 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/DHc6lWRJ.js                                               4.36 kB │ gzip:   1.68 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/40.Cyaf7hcE.js                                             4.39 kB │ gzip:   1.94 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/4.Deiwj3Wj.js                                              4.83 kB │ gzip:   1.69 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/52.Dpwm4aj3.js                                             4.92 kB │ gzip:   2.45 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/26.Dv1j-73l.js                                             5.72 kB │ gzip:   2.20 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/44.D_ZK5p6R.js                                             6.34 kB │ gzip:   2.29 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/43.BoDq9uGa.js                                             7.97 kB │ gzip:   3.25 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/46.DgydPEE2.js                                             8.12 kB │ gzip:   3.23 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/47.B0ZZOcUJ.js                                             8.82 kB │ gzip:   2.98 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/42.B47ZagwV.js                                             9.11 kB │ gzip:   3.88 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/55.CQnepIxc.js                                             9.21 kB │ gzip:   3.30 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/48.DC6vi3gW.js                                             9.29 kB │ gzip:   3.18 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/50.Bcp3wDyw.js                                             9.33 kB │ gzip:   3.66 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/45.5n4Jq11Y.js                                             9.69 kB │ gzip:   3.76 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/41.CUs8djAO.js                                             9.79 kB │ gzip:   4.31 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/51.SU2jkQz3.js                                             9.92 kB │ gzip:   3.72 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/DbbyEvP02.js                                             10.35 kB │ gzip:   1.51 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/53.DiPn6nWA.js                                            10.47 kB │ gzip:   4.35 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/KPdYA0b4.js                                              10.52 kB │ gzip:   4.00 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/DH_cj1q7.js                                              10.65 kB │ gzip:   3.30 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/CVvP9TP92.js                                             11.42 kB │ gzip:   1.60 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/BqxOFbbd2.js                                             11.91 kB │ gzip:   1.73 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/_cWBjYpc2.js                                             12.59 kB │ gzip:   1.77 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/entry/app.BpfPJKeg.js                                           14.08 kB │ gzip:   3.76 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/49.DngBnsmG.js                                            15.02 kB │ gzip:   5.94 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/CuNyoyUl2.js                                             15.29 kB │ gzip:   1.95 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/34.BtNVIucA.js                                            17.31 kB │ gzip:   3.26 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/C1N7UQ092.js                                             23.76 kB │ gzip:   2.47 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/6.OpEi-HnV.js                                             24.77 kB │ gzip:   8.04 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/CRZeb_Qq.js                                              24.97 kB │ gzip:   9.10 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/BcClGCgd2.js                                             25.89 kB │ gzip:   2.98 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/MUDj2Wr42.js                                             26.25 kB │ gzip:   2.87 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/22.YhXIcmd5.js                                            26.88 kB │ gzip:   4.95 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/37.CnwDn0p_.js                                            28.65 kB │ gzip:   5.09 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/38.C_7UNOnC.js                                            28.71 kB │ gzip:   4.71 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/CfFK6dZn.js                                              28.72 kB │ gzip:   6.30 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/21.DrdSg5mG.js                                            29.28 kB │ gzip:   6.15 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/30.DDkMQFVr.js                                            30.33 kB │ gzip:   4.14 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/C0bLorWt.js                                              33.93 kB │ gzip:   3.48 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/23.BXvztp-l.js                                            34.46 kB │ gzip:   5.10 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/DSmLmYpq2.js                                             34.76 kB │ gzip:   3.18 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/35.DaoreTvb.js                                            35.86 kB │ gzip:   4.91 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/ZPQMiN7C.js                                              36.02 kB │ gzip:   6.46 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/Do21F3vj.js                                              36.05 kB │ gzip:   3.42 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/Bz6xUxAt.js                                              37.04 kB │ gzip:  13.97 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/17.caz7lc4M.js                                            37.36 kB │ gzip:   6.86 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/DDvh2uJo.js                                              37.68 kB │ gzip:  10.19 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/D1kwkEK62.js                                             39.33 kB │ gzip:   3.63 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/DLllzbEd.js                                              41.48 kB │ gzip:   6.74 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/bKdd8rRA2.js                                             47.72 kB │ gzip:   3.68 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/B_QpXvY-2.js                                             48.40 kB │ gzip:   4.30 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/TdVhm64J2.js                                             51.62 kB │ gzip:   4.54 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/31.C5dHNE_v.js                                            52.13 kB │ gzip:   5.80 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/Cqr-YRKG2.js                                             52.30 kB │ gzip:   4.67 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/15.B17KfRk2.js                                            53.29 kB │ gzip:   8.92 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/r6x7SEBy2.js                                             53.73 kB │ gzip:   4.61 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/BByk5Jxo2.js                                             54.26 kB │ gzip:   4.61 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/u5cDsBgC2.js                                             54.34 kB │ gzip:   4.57 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/C27_smTl2.js                                             54.81 kB │ gzip:   4.36 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/Cx2V34wO2.js                                             55.26 kB │ gzip:   4.34 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/B6Vbc2lr.js                                              57.54 kB │ gzip:  10.19 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/29.CitV1k_3.js                                            58.74 kB │ gzip:   6.97 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/16.D91W-1QZ.js                                            63.51 kB │ gzip:   6.48 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/27.ovjLgDd0.js                                            64.58 kB │ gzip:   6.21 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/D5OnqKyN2.js                                             64.65 kB │ gzip:   4.71 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/24.CQtzqTTs.js                                            65.39 kB │ gzip:   8.73 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/C1PqIX5B2.js                                             70.06 kB │ gzip:   5.29 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/32.BMk6IFHm.js                                            75.14 kB │ gzip:   8.07 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/20.BAHbwjeO.js                                            76.54 kB │ gzip:  10.47 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/19.gNw8kZfG.js                                            82.31 kB │ gzip:  10.25 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/28.DdMme53b.js                                            88.55 kB │ gzip:   9.20 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/B-ciE6st2.js                                             88.94 kB │ gzip:   5.93 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/XzWY1YnL2.js                                             94.14 kB │ gzip:   7.76 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/B6SzX7KL.js                                              94.98 kB │ gzip:  31.93 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/25.Dx9vH1Nc.js                                            96.70 kB │ gzip:   9.89 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/39.BK5cydWa.js                                           115.86 kB │ gzip:  11.15 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/33.h6Io7zEz.js                                           126.68 kB │ gzip:  12.01 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/18.BltYZqWf.js                                           127.27 kB │ gzip:  14.28 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/36.BHR6AIaZ.js                                           148.02 kB │ gzip:  14.68 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/C3yC4qoZ.js                                             180.70 kB │ gzip:  12.86 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/bI_-EmjL2.js                                            192.78 kB │ gzip:  12.43 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/DjLLAXi1.js                                             223.25 kB │ gzip:  78.56 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/B_kqsKk2.js                                             242.36 kB │ gzip:  82.08 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/DwEMOMHr.js                                             267.17 kB │ gzip:  17.77 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/CLleHF_U2.js                                            372.06 kB │ gzip:  23.68 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/BbrxK_9R.js                                             518.23 kB │ gzip: 154.54 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/nodes/54.BbmZ8qPI.js                                           538.85 kB │ gzip:  91.44 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/XMvzauev.js                                           1,575.41 kB │ gzip: 394.63 kB
+[WebServer] .svelte-kit/output/client/_app/immutable/chunks/Lh7Hzg5M.js                                           3,095.70 kB │ gzip: 830.80 kB
+[WebServer] 
+
+[WebServer] [IMPORT_IS_UNDEFINED] Import `resolveConfig` will always be undefined because there is no matching export in '../node_modules/.pnpm/prettier@3.9.6/node_modules/prettier/standalone.mjs'
+[WebServer]     ╭─[ ../node_modules/.pnpm/marked-code-format@1.1.6_marked@18.0.9_prettier@3.9.6/node_modules/marked-code-format/dist/index.js:98:15 ]
+[WebServer]     │
+[WebServer]  98 │         await n.resolveConfig(process.cwd())
+[WebServer]     │               ───────┬───────  
+[WebServer]     │                      ╰───────── 
+[WebServer] ────╯
+[WebServer] 
+
+[WebServer] [plugin builtin:vite-reporter] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+[WebServer] ✓ built in 18.32s
+
+[WebServer] [PLUGIN_TIMINGS] Your build spent 95% of 18.3s inside plugin hooks (17.4s).
+[WebServer] Measured inside the callback, so queue time is excluded and time the callback itself awaited is not:
+[WebServer]   - vite-plugin-svelte:compile transform (30%, 5.5s, 5833 calls)
+[WebServer]   - vite-plugin-svelte:preprocess transform (22%, 4.1s, 5833 calls)
+[WebServer]   - docs-kit:demo-manifest buildStart (11%, 2.0s, 1 call)
+[WebServer] Those rows are 63% of the build; the rest of the 95% is below.
+[WebServer] Not measurable — 3 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:
+[WebServer]   - vite-plugin-sveltekit-guard resolveId (36947 calls)
+[WebServer]   - @tailwindcss/vite:generate:build transform (54 calls)
+[WebServer]   - vite:css transform (54 calls)
+[WebServer] See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
+[WebServer] 
+
+[WebServer] (node:79568) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+[WebServer]   - import "./src/lib/compare-data" without a file extension (vite.config.ts:15:35). Add the file extension
+[WebServer]   - import "./src/lib/docs-config" without a file extension (vite.config.ts:16:28). Add the file extension
+[WebServer] Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+[WebServer] computing gzip size...
+
+[WebServer] (node:79568) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/jetbrains-mono-vietnamese-wght-normal.Bt-aOZkq.woff2         7.50 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/jetbrains-mono-greek-wght-normal.Bw9x6K1M.woff2              9.00 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/inter-vietnamese-wght-normal.CBcvBZtf.woff2                 10.25 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/inter-greek-ext-wght-normal.DlzME5K_.woff2                  11.23 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/jetbrains-mono-cyrillic-wght-normal.D73BlboJ.woff2          12.10 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/jetbrains-mono-latin-ext-wght-normal.DBQx-q_a.woff2         15.19 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/inter-cyrillic-wght-normal.DqGufNeO.woff2                   18.74 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/inter-greek-wght-normal.CkhJZR-_.woff2                      18.99 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/Lato-ThinItalic.BH0bHREE.woff2                              20.48 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/Lato-LightItalic.DmdkUCGz.woff2                             21.19 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/inter-cyrillic-ext-wght-normal.BOeWTOD4.woff2               25.96 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/Lato-Thin.BWlK3axh.woff2                                    26.02 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/Lato-Black.COE_gpf2.woff2                                   27.43 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/Lato-Bold.Rb4gKapq.woff2                                    27.81 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/Lato-Light.D4yUbpus.woff2                                   27.88 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/Lato-Regular.DqL9ngKx.woff2                                 28.41 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/Lato-BlackItalic.GCcOyL-5.woff2                             28.83 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/Lato-Italic.BZch5XPb.woff2                                  29.55 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/Lato-BoldItalic.Ocqcw2Zm.woff2                              29.64 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/jetbrains-mono-latin-wght-normal.B9CIFXIH.woff2             40.40 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/inter-latin-wght-normal.Dx4kXJAl.woff2                      48.25 kB
+[WebServer] .svelte-kit/output/server/.vite/manifest.json                                                               59.15 kB │ gzip:   4.94 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/inter-latin-ext-wght-normal.DO1Apj_S.woff2                  85.06 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/Lato-ExtraBold.BcL-8tlJ.woff2                              201.78 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/Lato-ExtraBoldItalic.cTZKM4wU.woff2                        220.22 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/svelte-motion.BvP4ioMK.css                                   0.06 kB │ gzip:   0.07 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.BqNwK28E.css                                           0.47 kB │ gzip:   0.22 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.Cb4sKHD2.css                                           0.76 kB │ gzip:   0.38 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.CdKoAycK.css                                           1.43 kB │ gzip:   0.48 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.CsfydckI.css                                           1.64 kB │ gzip:   0.54 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.BmFuUD4y.css                                           1.82 kB │ gzip:   0.59 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.f6yHZQXl.css                                           1.91 kB │ gzip:   0.43 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.DjS7l_eF.css                                           1.98 kB │ gzip:   0.48 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.Dsngczrv.css                                           2.22 kB │ gzip:   0.52 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.D7Bc3G4Z.css                                           3.11 kB │ gzip:   0.66 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.C1aq_BGU.css                                           4.88 kB │ gzip:   1.15 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.fFjKjGYj.css                                           5.08 kB │ gzip:   1.07 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.DFggc7p_.css                                           5.25 kB │ gzip:   1.03 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/jetbrains-mono.Bb3RZpLq.css                                  6.39 kB │ gzip:   2.81 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.CVydFEWY.css                                           6.50 kB │ gzip:   1.43 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.ZtEdz8iQ.css                                           7.08 kB │ gzip:   1.52 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/Header.B-nOaqZo.css                                          7.39 kB │ gzip:   1.58 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.B-QyZpho.css                                           7.46 kB │ gzip:   1.79 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/blog.Cvv7_-AV.css                                           15.79 kB │ gzip:   2.44 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_page.COBs_1M5.css                                          34.67 kB │ gzip:   3.74 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/dist.Dv4PKh-1.css                                           40.50 kB │ gzip:   5.50 kB
+[WebServer] .svelte-kit/output/server/_app/immutable/assets/_layout.rPZkdP54.css                                        72.13 kB │ gzip:  12.85 kB
+[WebServer] .svelte-kit/output/server/chunks/Seo.context.js                                                              0.03 kB │ gzip:   0.04 kB
+[WebServer] .svelte-kit/output/server/entries/pages/_layout.ts.js                                                        0.10 kB │ gzip:   0.10 kB
+[WebServer] .svelte-kit/output/server/entries/pages/blog/preventing-markdown-xss-in-svelte/_page.svx.js                  0.12 kB │ gzip:   0.10 kB
+[WebServer] .svelte-kit/output/server/entries/pages/blog/rendering-agent-html-safely/_page.svx.js                        0.12 kB │ gzip:   0.10 kB
+[WebServer] .svelte-kit/output/server/entries/pages/blog/rendering-markdown-in-svelte/_page.svx.js                       0.12 kB │ gzip:   0.10 kB
+[WebServer] .svelte-kit/output/server/entries/pages/blog/using-marked-in-svelte/_page.svx.js                             0.12 kB │ gzip:   0.10 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/_page.server.ts.js                                              0.17 kB │ gzip:   0.15 kB
+[WebServer] .svelte-kit/output/server/env.js                                                                             0.22 kB │ gzip:   0.14 kB
+[WebServer] .svelte-kit/output/server/chunks/env.js                                                                      0.28 kB │ gzip:   0.17 kB
+[WebServer] .svelte-kit/output/server/entries/pages/compare/_slug_/_page.ts.js                                           0.32 kB │ gzip:   0.19 kB
+[WebServer] .svelte-kit/output/server/internal.js                                                                        0.40 kB │ gzip:   0.19 kB
+[WebServer] .svelte-kit/output/server/chunks/logo.js                                                                     0.43 kB │ gzip:   0.32 kB
+[WebServer] .svelte-kit/output/server/chunks/rolldown-runtime.js                                                         0.49 kB │ gzip:   0.31 kB
+[WebServer] .svelte-kit/output/server/chunks/code.js                                                                     0.52 kB │ gzip:   0.33 kB
+[WebServer] .svelte-kit/output/server/entries/fallbacks/error.svelte.js                                                  0.57 kB │ gzip:   0.35 kB
+[WebServer] .svelte-kit/output/server/chunks/link.js                                                                     0.62 kB │ gzip:   0.38 kB
+[WebServer] .svelte-kit/output/server/chunks/funnel.js                                                                   0.63 kB │ gzip:   0.40 kB
+[WebServer] .svelte-kit/output/server/chunks/zap.js                                                                      0.64 kB │ gzip:   0.41 kB
+[WebServer] .svelte-kit/output/server/chunks/shield.js                                                                   0.64 kB │ gzip:   0.42 kB
+[WebServer] .svelte-kit/output/server/entries/pages/compare/_slug_/_page.svelte.js                                       0.65 kB │ gzip:   0.34 kB
+[WebServer] .svelte-kit/output/server/chunks/triangle-alert.js                                                           0.66 kB │ gzip:   0.40 kB
+[WebServer] .svelte-kit/output/server/chunks/book-open.js                                                                0.66 kB │ gzip:   0.41 kB
+[WebServer] .svelte-kit/output/server/entries/pages/compare/_page.svelte.js                                              0.67 kB │ gzip:   0.40 kB
+[WebServer] .svelte-kit/output/server/chunks/lightbulb.js                                                                0.67 kB │ gzip:   0.41 kB
+[WebServer] .svelte-kit/output/server/chunks/wrench.js                                                                   0.68 kB │ gzip:   0.43 kB
+[WebServer] .svelte-kit/output/server/chunks/scissors.js                                                                 0.73 kB │ gzip:   0.39 kB
+[WebServer] .svelte-kit/output/server/chunks/package.js                                                                  0.75 kB │ gzip:   0.44 kB
+[WebServer] .svelte-kit/output/server/entries/pages/_layout.svelte.js                                                    0.76 kB │ gzip:   0.39 kB
+[WebServer] .svelte-kit/output/server/chunks/layers.js                                                                   0.80 kB │ gzip:   0.42 kB
+[WebServer] .svelte-kit/output/server/chunks/docs-config.js                                                              0.84 kB │ gzip:   0.46 kB
+[WebServer] .svelte-kit/output/server/chunks/sparkles.js                                                                 0.89 kB │ gzip:   0.47 kB
+[WebServer] .svelte-kit/output/server/chunks/paintbrush.js                                                               0.92 kB │ gzip:   0.52 kB
+[WebServer] .svelte-kit/output/server/chunks/puzzle.js                                                                   0.94 kB │ gzip:   0.47 kB
+[WebServer] .svelte-kit/output/server/chunks/play.js                                                                     0.99 kB │ gzip:   0.44 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/_layout.svelte.js                                           1.01 kB │ gzip:   0.46 kB
+[WebServer] .svelte-kit/output/server/entries/pages/blog/_layout.svelte.js                                               1.03 kB │ gzip:   0.46 kB
+[WebServer] .svelte-kit/output/server/chunks/terminal.js                                                                 1.03 kB │ gzip:   0.43 kB
+[WebServer] .svelte-kit/output/server/chunks/internal.js                                                                 1.31 kB │ gzip:   0.54 kB
+[WebServer] .svelte-kit/output/server/chunks/shield-off.js                                                               1.39 kB │ gzip:   0.58 kB
+[WebServer] .svelte-kit/output/server/entries/pages/blog/_page.svelte.js                                                 1.57 kB │ gzip:   0.63 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/_layout.server.ts.js                                            1.68 kB │ gzip:   0.86 kB
+[WebServer] .svelte-kit/output/server/entries/pages/compare/_layout.svelte.js                                            2.60 kB │ gzip:   1.08 kB
+[WebServer] .svelte-kit/output/server/entries/endpoints/sitemap.xml/_server.ts.js                                        2.63 kB │ gzip:   1.11 kB
+[WebServer] .svelte-kit/output/server/chunks/sitemap-manifest.js                                                         2.68 kB │ gzip:   0.62 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/_layout.svelte.js                                               3.04 kB │ gzip:   1.32 kB
+[WebServer] .svelte-kit/output/server/chunks/createFilterUtilities.js                                                    3.50 kB │ gzip:   1.25 kB
+[WebServer] .svelte-kit/output/server/entries/pages/_page.server.ts.js                                                   4.17 kB │ gzip:   1.96 kB
+[WebServer] .svelte-kit/output/server/chunks/package2.js                                                                 5.28 kB │ gzip:   1.78 kB
+[WebServer] .svelte-kit/output/server/entries/hooks.server.js                                                            5.39 kB │ gzip:   1.85 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/_page.svelte.js                                             5.67 kB │ gzip:   2.10 kB
+[WebServer] .svelte-kit/output/server/chunks/demo-loaders.js                                                             5.93 kB │ gzip:   1.72 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/playground/_page.svelte.js                                  6.44 kB │ gzip:   2.56 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/examples/_page.svelte.js                                        6.73 kB │ gzip:   2.17 kB
+[WebServer] .svelte-kit/output/server/chunks/state.js                                                                    7.10 kB │ gzip:   2.60 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/code-formatting/_page.svelte.js                             8.27 kB │ gzip:   2.79 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/agent-output/_page.svelte.js                                9.13 kB │ gzip:   2.93 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/custom-renderers/_page.svelte.js                            9.22 kB │ gzip:   2.76 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/caching-performance/_page.svelte.js                        10.12 kB │ gzip:   3.48 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_linked-headings_2Fdemos_2FDefaultHeadings.js                11.13 kB │ gzip:   1.62 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/snippet-overrides/_page.svelte.js                          11.79 kB │ gzip:   3.31 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_linked-headings_2Fdemos_2FRendererHeadings.js               12.26 kB │ gzip:   1.72 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/mermaid/_page.svelte.js                                    12.26 kB │ gzip:   3.50 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/github-alerts/_page.svelte.js                              12.31 kB │ gzip:   3.78 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/linked-headings/_page.svelte.js                            12.37 kB │ gzip:   3.24 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_snippet-overrides_2Fdemos_2FDefaultRendering.js             12.78 kB │ gzip:   1.84 kB
+[WebServer] .svelte-kit/output/server/chunks/exports.js                                                                 12.79 kB │ gzip:   3.97 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/html-filtering/_page.svelte.js                             13.14 kB │ gzip:   3.73 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_custom-renderers_2Fdemos_2FDefaultRenderers.js              13.52 kB │ gzip:   1.88 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/llm-streaming/_page.svelte.js                              14.02 kB │ gzip:   4.33 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/shiki/_page.svelte.js                                      14.10 kB │ gzip:   4.63 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/reactive-extensions/_page.svelte.js                        14.37 kB │ gzip:   4.38 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/footnotes/_page.svelte.js                                  15.30 kB │ gzip:   4.49 kB
+[WebServer] .svelte-kit/output/server/entries/pages/examples/marked-extensions/_page.svelte.js                          15.35 kB │ gzip:   4.91 kB
+[WebServer] .svelte-kit/output/server/chunks/blog.js                                                                    15.65 kB │ gzip:   4.49 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_custom-renderers_2Fdemos_2FFilteredRenderers.js             16.38 kB │ gzip:   2.07 kB
+[WebServer] .svelte-kit/output/server/chunks/jetbrains-mono.js                                                          18.02 kB │ gzip:   4.26 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/getting-started/_page.svx.js                                   18.05 kB │ gzip:   3.30 kB
+[WebServer] .svelte-kit/output/server/chunks/internal2.js                                                               24.71 kB │ gzip:   7.36 kB
+[WebServer] .svelte-kit/output/server/entries/pages/_page.svelte.js                                                     25.17 kB │ gzip:   6.45 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_linked-headings_2Fdemos_2FLinkedHeading.js                  25.31 kB │ gzip:   2.60 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_linked-headings_2Fdemos_2FSnippetHeadings.js                27.48 kB │ gzip:   3.11 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_footnotes_2Fdemos_2FComponentRendered.js                    27.76 kB │ gzip:   2.99 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/advanced/token-caching/_page.svx.js                            27.96 kB │ gzip:   5.05 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/renderers/html-renderers/_page.svx.js                          29.48 kB │ gzip:   5.20 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/renderers/markdown-renderers/_page.svx.js                      29.49 kB │ gzip:   4.78 kB
+[WebServer] .svelte-kit/output/server/chunks/_page3.js                                                                  29.91 kB │ gzip:   6.53 kB
+[WebServer] .svelte-kit/output/server/chunks/shared.js                                                                  29.93 kB │ gzip:   8.08 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/advanced/syntax-highlighting/_page.svx.js                      30.43 kB │ gzip:   6.30 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/examples/inline-rendering/_page.svx.js                         31.91 kB │ gzip:   4.24 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_code-formatting_2Fdemos_2FPrettierExtension.js              35.88 kB │ gzip:   3.65 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/advanced/tree-shaking/_page.svx.js                             36.01 kB │ gzip:   5.23 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_shiki_2Fdemos_2FFallbackRendered.js                         36.80 kB │ gzip:   3.35 kB
+[WebServer] .svelte-kit/output/server/chunks/utils.js                                                                   37.47 kB │ gzip:  10.85 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/migration/_page.svx.js                                         37.50 kB │ gzip:   5.01 kB
+[WebServer] .svelte-kit/output/server/chunks/_page.js                                                                   37.68 kB │ gzip:   6.71 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_code-formatting_2Fdemos_2FSnippetRendered.js                38.19 kB │ gzip:   3.60 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/advanced/headless-parser/_page.svx.js                          39.00 kB │ gzip:   7.04 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_html-filtering_2Fdemos_2FBlockAllHtml.js                    41.75 kB │ gzip:   3.81 kB
+[WebServer] .svelte-kit/output/server/chunks/_page4.js                                                                  43.49 kB │ gzip:   6.99 kB
+[WebServer] .svelte-kit/output/server/chunks/compare-data.js                                                            45.15 kB │ gzip:  10.70 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_github-alerts_2Fdemos_2FComponentRendered.js                50.43 kB │ gzip:   3.83 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_mermaid_2Fdemos_2FComponentRendered.js                      51.20 kB │ gzip:   4.48 kB
+[WebServer] .svelte-kit/output/server/chunks/Header.js                                                                  52.06 kB │ gzip:  12.96 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_marked-extensions_2Fdemos_2FSnippetRendered.js              54.68 kB │ gzip:   4.74 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/examples/linked-headings/_page.svx.js                          54.88 kB │ gzip:   5.97 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_marked-extensions_2Fdemos_2FComponentRendered.js            55.38 kB │ gzip:   4.84 kB
+[WebServer] .svelte-kit/output/server/remote-entry.js                                                                   55.47 kB │ gzip:  12.13 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/advanced/agent-output/_page.svx.js                             55.58 kB │ gzip:   9.33 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_shiki_2Fdemos_2FComponentRendered.js                        56.76 kB │ gzip:   4.78 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_playground_2Fdemos_2FMarkdownPlayground.js                  57.38 kB │ gzip:   4.79 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_mermaid_2Fdemos_2FSnippetRendered.js                        57.49 kB │ gzip:   4.74 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_footnotes_2Fdemos_2FSnippetRendered.js                      57.98 kB │ gzip:   4.54 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_html-filtering_2Fdemos_2FAllowOnlySafe.js                   58.57 kB │ gzip:   4.54 kB
+[WebServer] .svelte-kit/output/server/chunks/_page2.js                                                                  60.01 kB │ gzip:  10.78 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/examples/html-filtering/_page.svx.js                           61.80 kB │ gzip:   7.15 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/advanced/allow-deny/_page.svx.js                               66.38 kB │ gzip:   6.54 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/examples/basic-rendering/_page.svx.js                          67.85 kB │ gzip:   6.37 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/api/svelte-markdown/_page.svx.js                               68.29 kB │ gzip:   8.93 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_github-alerts_2Fdemos_2FSnippetRendered.js                  68.32 kB │ gzip:   5.03 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_html-filtering_2Fdemos_2FAllowAllHtml.js                    74.15 kB │ gzip:   5.55 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/examples/parsed-callback/_page.svx.js                          79.18 kB │ gzip:   8.30 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/advanced/security/_page.svx.js                                 79.90 kB │ gzip:  10.78 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/advanced/marked-extensions/_page.svx.js                        86.04 kB │ gzip:  10.79 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/examples/custom-renderers/_page.svx.js                         93.32 kB │ gzip:   9.33 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_reactive-extensions_2Fdemos_2FDisplayButtonRenderer.js      94.11 kB │ gzip:   6.17 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/advanced/llm-streaming/_page.svx.js                            95.62 kB │ gzip:  12.91 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_snippet-overrides_2Fdemos_2FWithSnippets.js                 99.50 kB │ gzip:   8.00 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/api/types/_page.svx.js                                        100.92 kB │ gzip:   9.85 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/renderers/snippet-overrides/_page.svx.js                      121.38 kB │ gzip:  11.34 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/examples/snippet-overrides/_page.svx.js                       133.16 kB │ gzip:  12.08 kB
+[WebServer] .svelte-kit/output/server/index.js                                                                         133.57 kB │ gzip:  33.51 kB
+[WebServer] .svelte-kit/output/server/entries/pages/docs/renderers/custom-renderers/_page.svx.js                       155.63 kB │ gzip:  15.19 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_caching-performance_2Fdemos_2FCachingBenchmark.js          190.73 kB │ gzip:  13.13 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_reactive-extensions_2Fdemos_2FReactiveExtensionConsole.js  203.63 kB │ gzip:  12.76 kB
+[WebServer] .svelte-kit/output/server/chunks/dist.js                                                                   247.15 kB │ gzip:  58.17 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_agent-output_2Fdemos_2FAgentConsole.js                     282.03 kB │ gzip:  18.20 kB
+[WebServer] .svelte-kit/output/server/chunks/_docs-kit_demo_llm-streaming_2Fdemos_2FStreamingConsole.js                392.59 kB │ gzip:  24.28 kB
+[WebServer] .svelte-kit/output/server/chunks/svelte-motion.js                                                          594.65 kB │ gzip: 152.99 kB
+[WebServer] 
+
+[WebServer] ✓ built in 1m 20s
+
+[WebServer] 
+[WebServer] Run npm run preview to preview your production build locally.
+
+[WebServer] 
+[WebServer] > Using @sveltejs/adapter-cloudflare
+
+[WebServer]   ✔ done
+
+[WebServer] [PLUGIN_TIMINGS] Your build spent 100% of 79.9s inside plugin hooks (79.8s).
+[WebServer] Measured inside the callback, so queue time is excluded and time the callback itself awaited is not:
+[WebServer]   - docs-kit:social-cards buildStart (47%, 37.5s, 1 call)
+[WebServer]   - vite-plugin-sveltekit-compile writeBundle (31%, 24.6s, 1 call)
+[WebServer]   - vite-plugin-svelte:compile transform (8%, 6.1s, 5833 calls)
+[WebServer]   - vite-plugin-svelte:preprocess transform (5%, 4.1s, 5833 calls)
+[WebServer]   - docs-kit:demo-manifest buildStart (3%, 2.3s, 1 call)
+[WebServer] Those rows are 93% of the build; the rest of the 100% is below.
+[WebServer] Not measurable — 3 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:
+[WebServer]   - vite-plugin-sveltekit-guard resolveId (24968 calls)
+[WebServer]   - @tailwindcss/vite:generate:build transform (54 calls)
+[WebServer]   - vite:css transform (54 calls)
+[WebServer] See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
+[WebServer] 
+
+[WebServer] (node:81015) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:81057) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] $ vite preview --host 127.0.0.1 --port 4174 --strictPort
+
+[WebServer] (node:81156) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+[WebServer]   - import "./src/lib/compare-data" without a file extension (vite.config.ts:15:35). Add the file extension
+[WebServer]   - import "./src/lib/docs-config" without a file extension (vite.config.ts:16:28). Add the file extension
+[WebServer] Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+[WebServer]   ➜  Local:   http://127.0.0.1:4174/
+
+[WebServer] (node:81156) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 31 tests using 1 worker
+
+(node:81190) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/getting-started
+[2/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/migration
+[3/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/api/svelte-markdown
+[4/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/api/types
+[5/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/renderers/markdown-renderers
+[6/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/renderers/html-renderers
+[7/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/renderers/custom-renderers
+[8/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/renderers/snippet-overrides
+[9/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/agent-output
+[10/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/llm-streaming
+[11/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/headless-parser
+[12/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/security
+[13/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/token-caching
+[14/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/tree-shaking
+[15/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/allow-deny
+[16/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/marked-extensions
+[17/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/syntax-highlighting
+[18/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples
+[19/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/basic-rendering
+[20/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/custom-renderers
+[21/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/snippet-overrides
+[22/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/html-filtering
+[23/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/inline-rendering
+[24/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/parsed-callback
+[25/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/linked-headings
+[26/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs
+  1) [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs ────────────────────
+
+    Error: /docs: unexpected response or redirect
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 301
+
+      127 |     test(`SSR breadcrumbs: ${path}`, async ({ request, baseURL }) => {
+      128 |         const response = await request.get(path, { maxRedirects: 0 })
+    > 129 |         expect(response.status(), `${path}: unexpected response or redirect`).toBe(200)
+          |                                                                               ^
+      130 |         expect(response.url()).toBe(new URL(path, baseURL).href)
+      131 |         expect(response.headers()['content-type']).toContain('text/html')
+      132 |         assertBreadcrumbs(ssrBreadcrumbs(await response.text()), path)
+        at /Users/jasonkummerl/Github/svelte-markdown/docs/tests/breadcrumbs.test.ts:129:79
+
+    Error Context: test-results/docs/breadcrumbs-SSR-breadcrumbs-docs-chromium/error-context.md
+
+
+(node:81197) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[27/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /compare/vs-svelte-streamdown
+[28/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /examples/github-alerts
+[29/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /blog/rendering-markdown-in-svelte
+[30/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /
+[31/31] [chromium] › docs/tests/breadcrumbs.test.ts:143:1 › hydration and client navigation preserve UI groups without stale schema
+  1 failed
+    [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs ─────────────────────
+  30 passed (1.6m)

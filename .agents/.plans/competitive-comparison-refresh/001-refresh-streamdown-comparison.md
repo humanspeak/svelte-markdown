@@ -3,9 +3,18 @@
 > Execute each step and its verification before continuing. Honor the STOP
 > conditions. Update the adjacent README status when complete.
 >
-> Drift check: `git diff 1767041..HEAD -- package.json pnpm-lock.yaml docs/src/lib/compare-data.ts scripts/stream-compare-bench.mjs src/routes/test/stream-compare/+page.svelte .competitive-intel/config.json .competitive-intel/state.json`.
+> Drift check: `git diff f7d3a60..HEAD -- package.json pnpm-lock.yaml docs/src/lib/compare-data.ts scripts/stream-compare-bench.mjs src/routes/test/stream-compare/+page.svelte .competitive-intel/config.json .competitive-intel/state.json`.
 > The findings commit intentionally updates state. Preserve that snapshot and
 > inspect any newer nightly changes; do not restore state to the baseline.
+
+> Revision 2026-09-22: Dispatch preflight rebaselines source to `f7d3a60`.
+> Plan 002 legitimately changed the docs-kit lockfile resolution; comparison data,
+> Streamdown pin and harness are unchanged. Preserve the unrelated September 22
+> nightly state diff. The guard runs installation/lockfile generation and browser
+> checks outside the executor sandbox; source edits remain executor-owned.
+> Evidence is authored here while active, then retired with the batch under
+> `.agents/.plans-closed/competitive-comparison-refresh/evidence/`; use that final
+> path in durable resolution references. Latest registry version rechecked: 4.2.0.
 
 ## Status
 
@@ -14,7 +23,7 @@
 - Risk: Medium for benchmark comparability; low for copy corrections
 - Depends on: none
 - Category: docs / dependency migration / performance validation
-- Planned at: `1767041`, 2026-09-21, package version 1.9.1
+- Planned at: `f7d3a60`, 2026-09-22, package version 1.9.1
 - Branch: `docs/competitive-comparison-refresh`
 
 ## Why this matters

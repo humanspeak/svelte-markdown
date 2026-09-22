@@ -1,0 +1,8 @@
+Scope: all 2 workspace projects
+✓ Lockfile passes supply-chain policies (verified 4m ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+. prepare$ husky
+. prepare: Done
+Done in 1.3s using pnpm v11.9.0

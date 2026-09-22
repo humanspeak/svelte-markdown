@@ -14,7 +14,7 @@
 - Category: bug / SEO
 - Planned at: `0b08a1d`, 2026-09-22
 - Branch: `docs/competitive-comparison-refresh`
-- Implementation: TODO
+- Implementation: DONE locally; see guard report
 - Deployment / Google validation: pending
 
 ## Problem and verified evidence
@@ -165,15 +165,15 @@ runtime unit-test additions required. Preserve ignored generated docs output.
 
 ## Done criteria
 
-- [ ] Component regression reproduces the defect against original docs-kit and
+- [x] Component regression reproduces the defect against original docs-kit and
       passes against the fixed component; existing docs-kit tests and types pass.
-- [ ] The actual docs-kit serializer filters only non-navigable ancestors,
+- [x] The actual docs-kit serializer filters only non-navigable ancestors,
       preserves final unlinked crumbs, and does not mutate UI breadcrumb context.
-- [ ] Consumer uses the verified immutable, fetchable docs-kit Git commit.
-- [ ] Registered docs routes pass SSR checks; hydration/client navigation keeps
+- [x] Consumer uses the verified immutable, fetchable docs-kit Git commit.
+- [x] Registered docs routes pass SSR checks; hydration/client navigation keeps
       valid, nonduplicated schema; Home emits none; visible grouping is preserved.
-- [ ] Root/docs type checks, Trunk, and diff checks pass with scope preserved.
-- [ ] Guard records cross-repository SHAs and local completion separately from
+- [x] Root/docs type checks, Trunk, and diff checks pass with scope preserved.
+- [x] Guard records cross-repository SHAs and local completion separately from
       deployment and Google validation.
 
 ## Post-deployment follow-through
