@@ -149,7 +149,7 @@
                 "svelte-streamdown": "devDependency"
             },
             "measured_against": {
-                "svelte-streamdown": "3.1.2"
+                "svelte-streamdown": "4.2.0"
             },
             "_comment": "Perf numbers are only valid for the pinned devDep version. When svelte-streamdown publishes past measured_against, flag the page and prompt a human to bump the devDep + re-run the script. Do NOT auto-run in the nightly job."
         }

@@ -1,30 +1,37 @@
 {
     "project": "@humanspeak/svelte-markdown",
-    "last_run": "2026-09-13",
+    "last_run": "2026-09-22",
     "run_type": "delta",
     "snapshot": {
-        "fetched_at": "2026-09-13T05:00:22Z",
+        "fetched_at": "2026-09-22T05:00:17Z",
         "project": "@humanspeak/svelte-markdown",
         "self": {
             "npm": "@humanspeak/svelte-markdown",
             "repo": "humanspeak/svelte-markdown",
-            "latest_version": "1.9.0",
-            "last_publish": "2026-08-28",
+            "latest_version": "1.9.1",
+            "last_publish": "2026-09-14",
             "first_publish": "2024-10-30",
-            "weekly_downloads": 30332,
+            "weekly_downloads": 23740,
             "peer_deps": {
                 "katex": ">=0.16.0",
-                "mermaid": ">=10.0.0",
                 "shiki": ">=4.0.0",
-                "svelte": "^5.0.0"
+                "svelte": "^5.0.0",
+                "mermaid": ">=10.0.0"
             },
             "svelte_peer": "^5.0.0",
             "error": null,
-            "stars": 138,
+            "stars": 141,
             "archived": false,
-            "pushed_at": "2026-09-11",
-            "last_release": "2026-08-28",
+            "pushed_at": "2026-09-14",
+            "last_release": "2026-09-14",
             "recent_releases": [
+                {
+                    "version": "v1.9.1",
+                    "date": "2026-09-14",
+                    "notes": "Changes in this Release\nfix: recover images and correct footnote parsing and navigation\n\nFor more details, see the [Pull Request](https://github.com/humanspeak/svelte-markdown/pull/389)",
+                    "notes_truncated": false,
+                    "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.9.1"
+                },
                 {
                     "version": "v1.9.0",
                     "date": "2026-08-28",
@@ -63,35 +70,35 @@
                 {
                     "version": "v1.8.4",
                     "date": "2026-07-14",
-                    "notes": "> [!IMPORTANT]\n> **This release fixes v1.8.0\u2013v1.8.3**, which are deprecated on npm: those versions broke module resolution (`Could not resolve \"shiki/core\"`) for anyone importing from `@humanspeak/svelte-markdown/extensions` without the optional `shiki` peer dependency installed.\n>\n> **If you use the shiki extension**, update your import \u2014 everything else is unchanged:\n>\n> ```diff\n> - import { createShikiHighlighter, ShikiCode, setShikiHighlighter } from '@humanspeak/svelte-markdown/extensions'\n> + import { createShikiHighlighter, ShikiCode, setShikiHighlighter } from '@humanspeak/svelte-markd",
+                    "notes": "> [!IMPORTANT]\n> **This release fixes v1.8.0–v1.8.3**, which are deprecated on npm: those versions broke module resolution (`Could not resolve \"shiki/core\"`) for anyone importing from `@humanspeak/svelte-markdown/extensions` without the optional `shiki` peer dependency installed.\n>\n> **If you use the shiki extension**, update your import — everything else is unchanged:\n>\n> ```diff\n> - import { createShikiHighlighter, ShikiCode, setShikiHighlighter } from '@humanspeak/svelte-markdown/extensions'\n> + import { createShikiHighlighter, ShikiCode, setShikiHighlighter } from '@humanspeak/svelte-markd",
                     "notes_truncated": true,
                     "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4"
                 },
                 {
                     "version": "v1.8.3",
                     "date": "2026-07-14",
-                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm \u2014 use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
+                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm — use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
                     "notes_truncated": true,
                     "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.3"
                 },
                 {
                     "version": "v1.8.2",
                     "date": "2026-07-13",
-                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm \u2014 use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
+                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm — use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
                     "notes_truncated": true,
                     "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.2"
                 },
                 {
                     "version": "v1.8.1",
                     "date": "2026-07-13",
-                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm \u2014 use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
+                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm — use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
                     "notes_truncated": true,
                     "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.1"
                 },
                 {
                     "version": "v1.8.0",
                     "date": "2026-07-13",
-                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm \u2014 use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
+                    "notes": "> [!CAUTION]\n> **This release is broken and deprecated on npm — use [v1.8.4](https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.4) or later.**\n>\n> Importing **anything** from `@humanspeak/svelte-markdown/extensions` (even just `markedAlert`) fails with `Could not resolve \"shiki/core\"` unless the optional `shiki` peer dependency is installed. The barrel mistakenly re-exported the shiki extension, whose static `shiki/core` import forces bundlers to resolve shiki for every barrel consumer. Fixed in v1.8.4 ([#369](https://github.com/humanspeak/svelte-markdown/pull/369)).\n>\n> **If you ",
                     "notes_truncated": true,
                     "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.8.0"
                 },
@@ -122,13 +129,6 @@
                     "notes": "Changes in this Release\nfix(html): stop attribute values truncating at embedded quotes\n\nFor more details, see the [Pull Request](https://github.com/humanspeak/svelte-markdown/pull/357)",
                     "notes_truncated": false,
                     "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.7.11"
-                },
-                {
-                    "version": "v1.7.10",
-                    "date": "2026-07-09",
-                    "notes": "Changes in this Release\nchore(test): gate coverage, declare engines, cover rAF fallback\n\nFor more details, see the [Pull Request](https://github.com/humanspeak/svelte-markdown/pull/353)",
-                    "notes_truncated": false,
-                    "url": "https://github.com/humanspeak/svelte-markdown/releases/tag/v1.7.10"
                 }
             ]
         },
@@ -140,7 +140,7 @@
                 "latest_version": "0.4.1",
                 "last_publish": "2023-12-25",
                 "first_publish": "2020-04-21",
-                "weekly_downloads": 25259,
+                "weekly_downloads": 29118,
                 "peer_deps": {
                     "svelte": "^4.0.0"
                 },
@@ -158,15 +158,15 @@
                 "latest_version": "5.0.2",
                 "last_publish": "2025-08-09",
                 "first_publish": "2022-04-09",
-                "weekly_downloads": 26255,
+                "weekly_downloads": 23940,
                 "peer_deps": {
                     "svelte": "^5.1.3"
                 },
                 "svelte_peer": "^5.1.3",
                 "error": null,
-                "stars": 353,
+                "stars": 354,
                 "archived": false,
-                "pushed_at": "2026-09-13",
+                "pushed_at": "2026-09-22",
                 "last_release": "2025-08-09",
                 "recent_releases": []
             }
@@ -175,10 +175,10 @@
             {
                 "npm": "svelte-streamdown",
                 "repo": "beynar/svelte-streamdown",
-                "latest_version": "3.1.2",
-                "last_publish": "2026-07-01",
+                "latest_version": "4.2.0",
+                "last_publish": "2026-09-14",
                 "first_publish": "2025-09-08",
-                "weekly_downloads": 22626,
+                "weekly_downloads": 22875,
                 "peer_deps": {
                     "svelte": "^5.0.0"
                 },
@@ -186,27 +186,62 @@
                 "error": null,
                 "stars": 105,
                 "archived": false,
-                "pushed_at": "2026-07-01",
-                "last_release": "2026-07-01",
+                "pushed_at": "2026-09-14",
+                "last_release": "2026-09-14",
                 "recent_releases": [
+                    {
+                        "version": "4.2.0",
+                        "date": "2026-09-14",
+                        "notes": "Feature release: the five items from the September upstream audit judged worth porting. Every new prop defaults to off; the only 4.1.1 renders that change are the two noted below.\n\n### ⚠️ Behaviour changes\n- **The table toolbar has a third action**, so turning copy and download off no longer removes the bar; add `fullscreen: false` or use `{ table: false }`.\n- **The exported `parseIncompleteMarkdown` strips a half-typed HTML tag by default** (`live` defaults to `true`); pass `{ live: false }` for finished text. `Streamdown` passes it for you: only the last block is live, and only its last line",
+                        "notes_truncated": true,
+                        "url": "https://github.com/beynar/svelte-streamdown/releases/tag/4.2.0"
+                    },
+                    {
+                        "version": "4.1.1",
+                        "date": "2026-09-14",
+                        "notes": "Patch release: two fixes found while reviewing 4.1.0 and measuring the demo.\n\n### 🐛 Bug Fixes\n- **A fenced code block inside a list item no longer grows a stray empty code block after the list.** The fence scanner accepted an opener behind a list marker but rejected its closer once the item's content indent reached four spaces — every nested bullet and every numbered step from `10.` up — so the fence looked open forever and the completer appended a second closer, on complete content too. Closers are now measured against the opener's depth, and the completer emits its own closer at that depth. ",
+                        "notes_truncated": true,
+                        "url": "https://github.com/beynar/svelte-streamdown/releases/tag/4.1.1"
+                    },
+                    {
+                        "version": "4.1.0",
+                        "date": "2026-09-14",
+                        "notes": "Feature release: the LaTeX math delimiters LLMs actually emit, an `incomplete` signal for the block still streaming, a `controls` umbrella that configures the toolbars instead of only switching them off, height caps with pinned auto-scroll, a full accessibility and translation pass, and a completer that no longer goes quadratic on a long line.\n\n### ⚠️ Behaviour changes\n- `\\(…\\)` and `\\[…\\]` are now math everywhere, static rendering included, and an unterminated one is auto-closed while streaming like `$`/`$$` already were. A document that used those sequences as literal-bracket escapes changes",
+                        "notes_truncated": true,
+                        "url": "https://github.com/beynar/svelte-streamdown/releases/tag/4.1.0"
+                    },
+                    {
+                        "version": "4.0.1",
+                        "date": "2026-09-14",
+                        "notes": "Bug-fix release: the Jan–Sep 2026 fixes from [vercel/streamdown](https://github.com/vercel/streamdown) that applied to this port, plus the port-specific defects found while auditing them. No API changes.\n\n### ⚠️ Two behaviour changes\n- **Raw HTML is shown literally instead of vanishing.** With `renderHtml` off (the default) an html token was dropped text and all, so an answer containing `<h2>` or `<details>` silently lost that content. It now renders as escaped text, like CommonMark and upstream.\n- **`mailto:` and `tel:` links are no longer blocked** under the default `allowedLinkPrefixes={['*",
+                        "notes_truncated": true,
+                        "url": "https://github.com/beynar/svelte-streamdown/releases/tag/4.0.1"
+                    },
+                    {
+                        "version": "4.0.0",
+                        "date": "2026-09-13",
+                        "notes": "### 💥 Breaking: shiki replaced by `@tanstack/highlight`\n- Highlighting is now synchronous, isomorphic and zero-dependency (~31 KB min / ~11 KB gzip for all 30 languages and 2 themes): it runs during SSR, the skeleton/loading state is gone, and nothing is lazy-loaded.\n- Props renamed: `shikiTheme` → `highlightTheme`, `shikiThemes` → `highlightThemes` (`Record<string, HighlightTheme>`, themes imported from `@tanstack/highlight/themes/<name>`), `shikiLanguages` → `highlightLanguages` (`LanguageDefinition[]` built with the new `defineLanguage` export).\n- Removed exports `bundledLanguagesInfo`, `cr",
+                        "notes_truncated": true,
+                        "url": "https://github.com/beynar/svelte-streamdown/releases/tag/4.0.0"
+                    },
                     {
                         "version": "3.1.2",
                         "date": "2026-07-01",
-                        "notes": "### \ud83d\udd12 Security\n- Bumped `mermaid` to `^11.15.0`, clearing 4 moderate advisories flagged by `pnpm audit` (#32, thanks @polvallverdu).\n\n### \ud83d\udc1b Bug Fixes\n- List no longer absorbs a following paragraph after a blank line (#34, thanks @snayerman).\n- Inline citations with no matching source now render as plain text instead of vanishing (#31).",
+                        "notes": "### 🔒 Security\n- Bumped `mermaid` to `^11.15.0`, clearing 4 moderate advisories flagged by `pnpm audit` (#32, thanks @polvallverdu).\n\n### 🐛 Bug Fixes\n- List no longer absorbs a following paragraph after a blank line (#34, thanks @snayerman).\n- Inline citations with no matching source now render as plain text instead of vanishing (#31).",
                         "notes_truncated": false,
                         "url": "https://github.com/beynar/svelte-streamdown/releases/tag/3.1.2"
                     },
                     {
                         "version": "3.1.1",
                         "date": "2026-07-01",
-                        "notes": "### \ud83d\udc1b Bug Fixes\n- Removed the doubled bottom border on the final table row (#23, thanks @ieedan).",
+                        "notes": "### 🐛 Bug Fixes\n- Removed the doubled bottom border on the final table row (#23, thanks @ieedan).",
                         "notes_truncated": false,
                         "url": "https://github.com/beynar/svelte-streamdown/releases/tag/3.1.1"
                     },
                     {
                         "version": "3.1.0",
                         "date": "2026-06-10",
-                        "notes": "### \u2728 Features\n\n- **`allowedLinkPrefixes` / `allowedImagePrefixes` now support protocol-only prefixes** ([#27](https://github.com/beynar/svelte-streamdown/issues/27)). Use `'https://'` to allow all HTTPS links while still blocking insecure `http://`, or `'mailto:'` / `'tel:'` for those protocols. The `'*'` wildcard continues to allow only `http`/`https`.\n  ```svelte\n  <Streamdown {content} allowedLinkPrefixes={['https://', 'mailto:']} />\n  ```\n- **Disable Mermaid mouse-wheel zoom** ([#29](https://github.com/beynar/svelte-streamdown/issues/29)). `controls.mermaid` now accepts an object `{ enabl",
+                        "notes": "### ✨ Features\n\n- **`allowedLinkPrefixes` / `allowedImagePrefixes` now support protocol-only prefixes** ([#27](https://github.com/beynar/svelte-streamdown/issues/27)). Use `'https://'` to allow all HTTPS links while still blocking insecure `http://`, or `'mailto:'` / `'tel:'` for those protocols. The `'*'` wildcard continues to allow only `http`/`https`.\n  ```svelte\n  <Streamdown {content} allowedLinkPrefixes={['https://', 'mailto:']} />\n  ```\n- **Disable Mermaid mouse-wheel zoom** ([#29](https://github.com/beynar/svelte-streamdown/issues/29)). `controls.mermaid` now accepts an object `{ enabl",
                         "notes_truncated": true,
                         "url": "https://github.com/beynar/svelte-streamdown/releases/tag/3.1.0"
                     }
@@ -218,7 +253,7 @@
                 "latest_version": "0.7.0",
                 "last_publish": "2026-09-10",
                 "first_publish": "2026-03-23",
-                "weekly_downloads": 2100,
+                "weekly_downloads": 2369,
                 "peer_deps": {
                     "beautiful-mermaid": "^1.1.3",
                     "katex": "^0.17.0",
@@ -240,43 +275,52 @@
             "gap": "remark/rehype plugin-ecosystem compatibility",
             "held_by": "svelte-exmarkdown",
             "why": "lets users drop in any remark/rehype plugin; we ship a curated closed set of Marked extensions",
-            "worth_doing": "undecided \u2014 evaluate a plugin escape hatch"
+            "worth_doing": "undecided — evaluate a plugin escape hatch"
         },
         {
-            "gap": "streaming presentation layer (reveal animations, citation UI, MDX-style components)",
+            "gap": "synchronous / isomorphic SSR code highlighting",
+            "held_by": "svelte-streamdown",
+            "why": "@tanstack/highlight (4.0.0) highlights during SSR with no async, no lazy chunk, no loading skeleton, ~11 KB gzip for 30 languages; our Shiki extension is opt-in and async so SSR HTML ships unhighlighted",
+            "worth_doing": "evaluate — architecture difference, not presentation polish",
+            "first_seen": "2026-09-17"
+        },
+        {
+            "gap": "streaming presentation layer (reveal animations, citation UI, MDX-style components, table fullscreen, code line numbers, height caps)",
             "held_by": "svelte-streamdown",
             "why": "batteries-included AI chat UIs get these in-box; our position is deliberately lower-level/unstyled",
-            "worth_doing": "watch-not-build unless users ask; perf gap resolved 2026-08-10 (benchmark: 2-4x faster under burst, tied frame-paced)"
+            "worth_doing": "watch-not-build unless users ask; NOTE the 2026-08-10 'perf gap resolved' finding is unverified — it rested on a benchmark against 3.1.2 and they are now on 4.2.0"
         },
         {
             "gap": "first-party interactive mermaid parity claim",
             "held_by": "@comark/svelte",
             "why": "beautiful-mermaid shipped in-box",
-            "worth_doing": "low \u2014 we already ship a mermaid extension"
+            "worth_doing": "low — we already ship a mermaid extension"
         },
         {
             "gap": "D2 diagrams, infographics, stream-diffs code blocks",
             "held_by": "markstream-svelte",
             "why": "rich-content surface beyond our KaTeX/Mermaid/Shiki set",
-            "worth_doing": "low \u2014 presentation-layer breadth; same watch-not-build logic as svelte-streamdown",
+            "worth_doing": "low — presentation-layer breadth; same watch-not-build logic as svelte-streamdown",
             "first_seen": "2026-08-28"
         }
     ],
     "closed_gaps": [],
     "compare_validation": {
         "svelte-streamdown": {
-            "validated_against_version": "3.1.2",
-            "validated_on": "2026-09-13",
-            "benchmark_measured_against": "3.1.2",
-            "benchmark_valid": true
+            "validated_against_version": "4.2.0",
+            "validated_on": "2026-09-22",
+            "benchmark_measured_against": "4.2.0",
+            "benchmark_valid": true,
+            "findings": [],
+            "findings_status": "Resolved locally on 2026-09-22: highlighting, URL-default and benchmark findings verified with evidence at .agents/.plans-closed/competitive-comparison-refresh/evidence/. Docs deployment pending."
         },
         "svelte-exmarkdown": {
             "validated_against_version": "5.0.2",
-            "validated_on": "2026-09-13"
+            "validated_on": "2026-09-22"
         },
         "svelte-markdown": {
             "validated_against_version": "0.4.1",
-            "validated_on": "2026-09-13"
+            "validated_on": "2026-09-22"
         }
     },
     "watch_candidates": [
@@ -284,30 +328,58 @@
             "npm": "markstream-svelte",
             "first_seen": "2026-08-11",
             "status": "active-watch-candidate",
-            "note": "2.0.10 -> 2.0.12 (2026-09-11). Downloads rebounded 263 -> 532 (+102%) after last week's -53% drop. Still ~3x under the ~1.5k weekly bar for promotion to config.watchlist; revisit next run to see if the rebound holds.",
-            "latest_version": "2.0.12",
-            "weekly_downloads": 532,
-            "checked_on": "2026-09-13"
+            "note": "Fading: 2.0.13 (patch, seen 2026-09-22), weekly DL ~139. Well under ~1.5k bar for promotion.",
+            "latest_version": "2.0.13",
+            "weekly_downloads": 139,
+            "checked_on": "2026-09-22"
         },
         {
             "npm": "@markdown-ui/svelte",
             "first_seen": "2026-08-18",
             "note": "Still parked. 0.4.0 (2026-01-12), 11 weekly DL. Too small/stale to track - recorded to avoid re-surfacing.",
             "latest_version": "0.4.0",
-            "weekly_downloads": 11,
-            "checked_on": "2026-09-13"
+            "weekly_downloads": 2,
+            "checked_on": "2026-09-22"
+        },
+        {
+            "npm": "@modal-labs/svelte-markdown",
+            "first_seen": "2026-09-21",
+            "status": "parked",
+            "note": "Likely org fork; 0.5.0 last published 2025-05-16, ~1.3k weekly DL. Recorded to avoid re-surfacing.",
+            "latest_version": "0.5.0",
+            "weekly_downloads": 1288,
+            "checked_on": "2026-09-22"
+        },
+        {
+            "npm": "@immich/svelte-markdown-preprocess",
+            "first_seen": "2026-09-21",
+            "status": "parked",
+            "note": "Build-time preprocessor, not a runtime renderer. ~1.8k weekly DL.",
+            "latest_version": "0.8.0",
+            "weekly_downloads": 1908,
+            "checked_on": "2026-09-22"
         }
     ],
     "seo": {
-        "export_date": "2026-08-22",
+        "export_date": "2026-09-22",
         "export_unchanged_since_last_run": true,
-        "export_age_days": 21,
-        "stale": true,
+        "export_age_days": 0,
+        "stale": false,
         "striking_distance": [
             {
                 "query": "svelte markdown",
-                "impressions": 296.0,
-                "position": 11.38
+                "impressions": 397.0,
+                "position": 10.9
+            },
+            {
+                "query": "tiptap svelte",
+                "impressions": 380.0,
+                "position": 16.22
+            },
+            {
+                "query": "tiptap markdown",
+                "impressions": 317.0,
+                "position": 19.56
             },
             {
                 "query": "\"milkdown\" \"javascript:\" xss",
@@ -315,74 +387,84 @@
                 "position": 7.11
             },
             {
-                "query": "tiptap markdown",
-                "impressions": 225.0,
-                "position": 19.47
-            },
-            {
-                "query": "tiptap svelte",
-                "impressions": 215.0,
-                "position": 17.26
+                "query": "svelte markdown renderer",
+                "impressions": 135.0,
+                "position": 6.54
             },
             {
                 "query": "@humanspeak/svelte-markdown",
-                "impressions": 99.0,
-                "position": 4.71
-            },
-            {
-                "query": "svelte markdown renderer",
-                "impressions": 90.0,
-                "position": 5.73
-            },
-            {
-                "query": "svelte-markdown",
-                "impressions": 64.0,
-                "position": 9.28
-            },
-            {
-                "query": "svelte-exmarkdown",
-                "impressions": 58.0,
-                "position": 13.28
-            },
-            {
-                "query": "svelte marked",
-                "impressions": 45.0,
-                "position": 8.69
-            },
-            {
-                "query": "svelte markdown editor",
-                "impressions": 42.0,
-                "position": 10.93
+                "impressions": 117.0,
+                "position": 4.81
             },
             {
                 "query": "markdown playground",
-                "impressions": 41.0,
-                "position": 12.07
+                "impressions": 114.0,
+                "position": 10.61
             },
             {
-                "query": "svelte render markdown",
-                "impressions": 34.0,
-                "position": 6.15
-            },
-            {
-                "query": "svelte tiptap",
-                "impressions": 34.0,
-                "position": 17.44
-            },
-            {
-                "query": "markdown svelte",
-                "impressions": 31.0,
-                "position": 6.71
+                "query": "svelte-markdown",
+                "impressions": 94.0,
+                "position": 10.86
             },
             {
                 "query": "svelte custom renderer",
-                "impressions": 30.0,
-                "position": 7.4
+                "impressions": 82.0,
+                "position": 9.62
+            },
+            {
+                "query": "svelte-exmarkdown",
+                "impressions": 75.0,
+                "position": 11.67
+            },
+            {
+                "query": "svelte marked",
+                "impressions": 72.0,
+                "position": 11.11
+            },
+            {
+                "query": "svelte markdown editor",
+                "impressions": 67.0,
+                "position": 11.25
+            },
+            {
+                "query": "svelte tiptap",
+                "impressions": 63.0,
+                "position": 16.9
+            },
+            {
+                "query": "markdown svelte",
+                "impressions": 52.0,
+                "position": 6.92
+            },
+            {
+                "query": "svelte render markdown",
+                "impressions": 50.0,
+                "position": 8.08
+            },
+            {
+                "query": "mdsvex",
+                "impressions": 44.0,
+                "position": 18.36
+            },
+            {
+                "query": "site:markdown.svelte.page",
+                "impressions": 39.0,
+                "position": 8.44
             },
             {
                 "query": "\"alerttriangle\" \"lucide-svelte\"",
-                "impressions": 26.0,
-                "position": 7.81
+                "impressions": 28.0,
+                "position": 7.82
+            },
+            {
+                "query": "marked svelte",
+                "impressions": 28.0,
+                "position": 11.75
+            },
+            {
+                "query": "tiptap editor markdown",
+                "impressions": 27.0,
+                "position": 18.07
             },
             {
                 "query": "svelte-markdown npm package",
@@ -391,68 +473,97 @@
             },
             {
                 "query": "site:svelte.page",
-                "impressions": 24.0,
-                "position": 18.21
+                "impressions": 25.0,
+                "position": 17.56
+            },
+            {
+                "query": "\"createhighlightercoresync\" shiki",
+                "impressions": 22.0,
+                "position": 7.36
+            },
+            {
+                "query": "svelte streamdown",
+                "impressions": 22.0,
+                "position": 9.64
             },
             {
                 "query": "svelte-markdown npm",
                 "impressions": 21.0,
                 "position": 8.81
-            },
-            {
-                "query": "marked svelte",
-                "impressions": 21.0,
-                "position": 13.38
             }
         ],
         "underperforming_pages": [
             {
-                "page": "https://markdown.svelte.page/compare/vs-milkdown",
-                "impressions": 824.0,
-                "position": 9.86,
-                "ctr": 0.61
-            },
-            {
                 "page": "https://markdown.svelte.page/compare/vs-tiptap",
-                "impressions": 690.0,
-                "position": 18.09,
-                "ctr": 0.14
+                "impressions": 1230.0,
+                "position": 16.7,
+                "ctr": 0.16
             },
             {
-                "page": "https://markdown.svelte.page/compare/vs-bytemd",
-                "impressions": 386.0,
-                "position": 9.53,
-                "ctr": 0.26
-            },
-            {
-                "page": "https://markdown.svelte.page/compare/vs-carta",
-                "impressions": 370.0,
-                "position": 11.0,
-                "ctr": 0.81
+                "page": "https://markdown.svelte.page/compare/vs-milkdown",
+                "impressions": 1055.0,
+                "position": 9.56,
+                "ctr": 0.47
             },
             {
                 "page": "https://markdown.svelte.page/docs/getting-started",
-                "impressions": 290.0,
-                "position": 16.91,
-                "ctr": 1.72
+                "impressions": 820.0,
+                "position": 14.7,
+                "ctr": 1.34
+            },
+            {
+                "page": "https://markdown.svelte.page/compare/vs-bytemd",
+                "impressions": 551.0,
+                "position": 8.92,
+                "ctr": 0.36
+            },
+            {
+                "page": "https://markdown.svelte.page/compare/vs-carta",
+                "impressions": 483.0,
+                "position": 10.49,
+                "ctr": 1.04
             },
             {
                 "page": "https://markdown.svelte.page/compare/vs-marked",
-                "impressions": 250.0,
-                "position": 14.1,
-                "ctr": 0.8
+                "impressions": 478.0,
+                "position": 11.81,
+                "ctr": 0.42
             },
             {
                 "page": "https://markdown.svelte.page/docs/advanced/syntax-highlighting",
-                "impressions": 248.0,
-                "position": 23.92,
-                "ctr": 0.81
+                "impressions": 456.0,
+                "position": 22.93,
+                "ctr": 0.44
             },
             {
                 "page": "https://markdown.svelte.page/compare/vs-mdsvex",
-                "impressions": 241.0,
-                "position": 14.51,
-                "ctr": 0.41
+                "impressions": 366.0,
+                "position": 12.72,
+                "ctr": 0.27
+            },
+            {
+                "page": "https://markdown.svelte.page/compare",
+                "impressions": 292.0,
+                "position": 13.95,
+                "ctr": 1.03
+            },
+            {
+                "page": "https://markdown.svelte.page/examples",
+                "impressions": 271.0,
+                "position": 24.39,
+                "ctr": 0.0
+            },
+            {
+                "page": "https://markdown.svelte.page/docs/api/svelte-markdown",
+                "impressions": 264.0,
+                "position": 29.88,
+                "ctr": 0.76
+            },
+            {
+                "page": "https://markdown.svelte.page/docs/renderers/markdown-renderers",
+                "impressions": 262.0,
+                "position": 26.34,
+                "ctr": 0.76
             },
             {
                 "page": "https://markdown.svelte.page/docs/advanced/marked-extensions",
@@ -461,86 +572,58 @@
                 "ctr": 0.84
             },
             {
-                "page": "https://markdown.svelte.page/compare",
-                "impressions": 169.0,
-                "position": 15.72,
-                "ctr": 0.59
+                "page": "https://markdown.svelte.page/examples/playground",
+                "impressions": 214.0,
+                "position": 10.24,
+                "ctr": 0.47
             },
             {
-                "page": "https://markdown.svelte.page/docs/api/svelte-markdown",
-                "impressions": 155.0,
-                "position": 29.05,
-                "ctr": 1.29
-            },
-            {
-                "page": "https://markdown.svelte.page/examples",
-                "impressions": 127.0,
-                "position": 18.29,
-                "ctr": 0.0
-            },
-            {
-                "page": "https://markdown.svelte.page/examples/github-alerts",
-                "impressions": 122.0,
-                "position": 23.34,
-                "ctr": 0.0
-            },
-            {
-                "page": "https://markdown.svelte.page/compare/vs-unified-remark",
-                "impressions": 121.0,
-                "position": 17.32,
-                "ctr": 0.0
-            },
-            {
-                "page": "https://markdown.svelte.page/examples/llm-streaming",
-                "impressions": 111.0,
-                "position": 24.05,
+                "page": "https://markdown.svelte.page/compare/vs-svelte-exmarkdown",
+                "impressions": 201.0,
+                "position": 11.97,
                 "ctr": 0.0
             }
         ],
         "recommendations_open": [
-            "rewrite vs-tiptap title/meta (690 impr, pos 18, 0.14% CTR \u2014 intent/title problem; corroborated by rank tracker pos 16/19 on tiptap terms)",
+            "rewrite vs-tiptap title/meta (1230 impr, pos 16.7, 0.16% CTR — intent/title problem; corroborated by rank tracker pos 16/19 on tiptap terms)",
             "write dedicated markdown-XSS/security page (markdown xss KD4; milkdown-xss cluster 230 impr pos 7)",
             "dedicated hub page for 'svelte markdown' head term (pos 11 via homepage)",
             "dedicated 'marked in Svelte' page (rank pos 8-13 with no target URL)",
             "fix structured-data validation errors on 11 pages",
-            "wire up IndexNow (38 eligible pages)"
-        ]
+            "wire up IndexNow (38 eligible pages)",
+            "resolve 'svelte custom renderer' cannibalization (ranking URL flipped vs-milkdown -> docs/getting-started, pos 3 -> 13)",
+            "add high-impression GSC queries to Ahrefs rank tracker (milkdown-xss cluster, svelte markdown editor, markdown playground, svelte-exmarkdown, svelte streamdown)",
+            "fix vs-svelte-exmarkdown title/meta (201 impr, pos 12, 0% CTR)"
+        ],
+        "_export_note": "2026-09-22 export re-dropped but striking-distance + underperforming lists identical to 2026-09-21"
     },
     "rank_tracker": {
-        "checked_on": "2026-09-13",
-        "date_compared": "2026-09-06",
+        "checked_on": "2026-09-22",
+        "date_compared": "2026-09-15",
+        "project_id": 8934907,
         "summary": {
             "tracked": 8,
-            "ranked": 7,
-            "top3": 1,
+            "ranked": 8,
+            "top3": 0,
             "top10": 4,
-            "top100": 7,
-            "improved": 5,
-            "declined": 1,
-            "avg_position": 10.3
+            "top100": 8,
+            "improved": 0,
+            "declined": 0,
+            "avg_position": 12.4
         },
         "rows": [
             {
-                "keyword": "svelte custom renderer",
-                "volume": 0,
-                "position": 3,
-                "position_diff": -13,
-                "position_prev": 16,
-                "url": "https://markdown.svelte.page/compare/vs-milkdown",
-                "kd": 0
-            },
-            {
                 "keyword": "svelte marked",
                 "volume": 10,
-                "position": 6,
-                "position_diff": -1,
+                "position": 7,
+                "position_diff": 0,
                 "position_prev": 7,
                 "url": "https://markdown.svelte.page/compare/vs-marked",
                 "kd": 0
             },
             {
                 "keyword": "svelte markdown renderer",
-                "volume": 0,
+                "volume": 10,
                 "position": 9,
                 "position_diff": 0,
                 "position_prev": 9,
@@ -548,49 +631,58 @@
                 "kd": 12
             },
             {
+                "keyword": "markdown svelte",
+                "volume": 0,
+                "position": 10,
+                "position_diff": 0,
+                "position_prev": 10,
+                "url": "https://markdown.svelte.page/",
+                "kd": 16
+            },
+            {
                 "keyword": "svelte markdown",
                 "volume": 20,
                 "position": 10,
-                "position_diff": -1,
-                "position_prev": 11,
+                "position_diff": 0,
+                "position_prev": 10,
                 "url": "https://markdown.svelte.page/",
-                "kd": 17
-            },
-            {
-                "keyword": "tiptap svelte",
-                "volume": 250,
-                "position": 13,
-                "position_diff": -3,
-                "position_prev": 16,
-                "url": "https://markdown.svelte.page/compare/vs-tiptap",
                 "kd": 12
             },
             {
-                "keyword": "svelte render markdown",
+                "keyword": "svelte custom renderer",
                 "volume": 0,
+                "position": 13,
+                "position_diff": 0,
+                "position_prev": 13,
+                "url": "https://markdown.svelte.page/docs/getting-started",
+                "kd": 3
+            },
+            {
+                "keyword": "svelte render markdown",
+                "volume": 10,
                 "position": 14,
-                "position_diff": 14,
-                "position_prev": null,
+                "position_diff": 0,
+                "position_prev": 14,
                 "url": "https://markdown.svelte.page/",
-                "kd": 2
+                "kd": 3
             },
             {
                 "keyword": "tiptap markdown",
                 "volume": 300,
-                "position": 17,
-                "position_diff": -2,
-                "position_prev": 19,
+                "position": 18,
+                "position_diff": 0,
+                "position_prev": 18,
                 "url": "https://markdown.svelte.page/compare/vs-tiptap",
-                "kd": 0
+                "kd": 5
             },
             {
-                "keyword": "markdown svelte",
-                "volume": 0,
-                "position": null,
-                "position_diff": null,
-                "position_prev": null,
-                "url": null,
-                "kd": 12
+                "keyword": "tiptap svelte",
+                "volume": 150,
+                "position": 18,
+                "position_diff": 0,
+                "position_prev": 18,
+                "url": "https://markdown.svelte.page/compare/vs-tiptap",
+                "kd": 10
             }
         ],
         "unchanged_since_last_run": true

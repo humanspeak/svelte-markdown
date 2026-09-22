@@ -1,0 +1,19 @@
+Scope: all 2 workspace projects
+✓ Lockfile passes supply-chain policies (verified 14m ago)
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 66, reused 64, downloaded 1, added 0
+Progress: resolved 293, reused 290, downloaded 2, added 0
+Progress: resolved 300, reused 297, downloaded 3, added 0
+Progress: resolved 676, reused 555, downloaded 3, added 0
+Packages: +3 -8
++++--------
+Progress: resolved 849, reused 739, downloaded 3, added 3, done
+. prepare$ husky
+. prepare: Done
+[WARN] Issues with peer dependencies found. Run "pnpm peers check" to list them.
+
+devDependencies:
+- svelte-streamdown 3.1.2
++ svelte-streamdown 4.2.0
+
+Done in 6.6s using pnpm v11.9.0

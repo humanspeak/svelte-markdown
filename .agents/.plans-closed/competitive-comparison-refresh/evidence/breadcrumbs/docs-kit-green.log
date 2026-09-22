@@ -1,0 +1,23 @@
+$ pnpm build && node --test src/lib/vite/*.test.mjs src/lib/components/*.test.mjs
+$ svelte-kit sync && svelte-package
+src/lib -> dist
+✔ omits an unlinked grouping ancestor and retains the final current page (3.988429ms)
+✔ omits multiple unlinked ancestors, including an empty href (0.472538ms)
+✔ preserves a linked final crumb (0.319609ms)
+✔ preserves an already valid trail with an unlinked final crumb (0.280755ms)
+✔ retains a sole unlinked current page after Home (0.229704ms)
+✔ emits no BreadcrumbList for empty or absent context (0.305616ms)
+✔ orders named competitors first and rejects invalid priority slugs (2.678626ms)
+✔ serializes complete, escaped, normalized, self-contained mirrors (1.046763ms)
+✔ writer removes stale markdown pages but preserves unrelated files and directories (14.267993ms)
+✔ single llms comparisons input writes mirrors and md discovery links with html notes (4.692239ms)
+✔ llms-full appends comparison index and pages after docs with a boundary (4.661569ms)
+✔ omitting comparisons preserves the existing llms output shape (1.69127ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 524.486321

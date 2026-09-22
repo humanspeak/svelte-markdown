@@ -1,0 +1,97 @@
+✖ omits an unlinked grouping ancestor and retains the final current page (4.050901ms)
+✖ omits multiple unlinked ancestors, including an empty href (0.873013ms)
+✔ preserves a linked final crumb (0.750418ms)
+✔ preserves an already valid trail with an unlinked final crumb (0.277039ms)
+✔ retains a sole unlinked current page after Home (0.237751ms)
+✔ emits no BreadcrumbList for empty or absent context (0.508718ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 4
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 505.83443
+
+✖ failing tests:
+
+test at .svelte-kit/guard-red-002/src/lib/components/breadcrumb-json-ld.test.mjs:60:1
+✖ omits an unlinked grouping ancestor and retains the final current page (4.050901ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    [
+      {
+        '@type': 'ListItem',
+        item: 'https://example.test/',
+        name: 'Home',
+  ...
+        '@type': 'ListItem',
+  +     name: 'Renderers',
+  -     name: 'HTML',
+        position: 3
+      },
+  +   {
+  +     '@type': 'ListItem',
+  +     name: 'HTML',
+  +     position: 4
+  +   }
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/jasonkummerl/Github/docs-kit/.svelte-kit/guard-red-002/src/lib/components/breadcrumb-json-ld.test.mjs:61:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://example.test/' }, { '@type': 'ListItem', position: 2, name: 'Docs', item: 'https://example.test/docs' }, { '@type': 'ListItem', position: 3, name: 'Renderers' }, { '@type': 'ListItem', position: 4, name: 'HTML' } ],
+    expected: [ { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://example.test/' }, { '@type': 'ListItem', position: 2, name: 'Docs', item: 'https://example.test/docs' }, { '@type': 'ListItem', position: 3, name: 'HTML' } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at .svelte-kit/guard-red-002/src/lib/components/breadcrumb-json-ld.test.mjs:67:1
+✖ omits multiple unlinked ancestors, including an empty href (0.873013ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    [
+      {
+        '@type': 'ListItem',
+        item: 'https://example.test/',
+        name: 'Home',
+  ...
+        '@type': 'ListItem',
+  +     name: 'Advanced',
+  -     name: 'HTML',
+        position: 3
+      },
+  +   {
+  +     '@type': 'ListItem',
+  +     name: 'Renderers',
+  +     position: 4
+  +   },
+  +   {
+  +     '@type': 'ListItem',
+  +     name: 'HTML',
+  +     position: 5
+  +   }
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/jasonkummerl/Github/docs-kit/.svelte-kit/guard-red-002/src/lib/components/breadcrumb-json-ld.test.mjs:68:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://example.test/' }, { '@type': 'ListItem', position: 2, name: 'Docs', item: 'https://example.test/docs' }, { '@type': 'ListItem', position: 3, name: 'Advanced' }, { '@type': 'ListItem', position: 4, name: 'Renderers' }, { '@type': 'ListItem', position: 5, name: 'HTML' } ],
+    expected: [ { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://example.test/' }, { '@type': 'ListItem', position: 2, name: 'Docs', item: 'https://example.test/docs' }, { '@type': 'ListItem', position: 3, name: 'HTML' } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
