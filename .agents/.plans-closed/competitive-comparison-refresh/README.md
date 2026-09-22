@@ -3,8 +3,9 @@
 > CLOSED 2026-09-22 — Plans 002 and 001 both PASS. Shared docs-kit breadcrumb
 > serialization is fixed and pinned here; the Streamdown 4.2.0 comparison is
 > corrected with two complete production benchmark suites and retained evidence.
-> Docs-kit feature commit `2e6c93b` is pushed for the immutable dependency pin;
-> consumer changes are committed locally. Next: PR review/integration, deployment,
+> Docs-kit PR 21 is merged and release `2026.9.1` is published; consumer commit
+> `9682d73` pins that version tag and passes the production regressions.
+> Consumer changes are committed locally. Next: PR review/integration, deployment,
 > then live breadcrumb and Search Console validation. No deployment or Google
 > validation has been performed. Unrelated nightly state remains uncommitted.
 

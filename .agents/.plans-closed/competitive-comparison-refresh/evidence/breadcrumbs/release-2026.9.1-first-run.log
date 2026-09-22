@@ -1,0 +1,71 @@
+Running 31 tests using 1 worker
+
+(node:49355) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/getting-started
+[2/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/migration
+[3/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/api/svelte-markdown
+[4/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/api/types
+[5/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/renderers/markdown-renderers
+[6/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/renderers/html-renderers
+[7/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/renderers/custom-renderers
+[8/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/renderers/snippet-overrides
+[9/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/agent-output
+[10/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/llm-streaming
+[11/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/headless-parser
+[12/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/security
+[13/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/token-caching
+[14/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/tree-shaking
+[15/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/allow-deny
+[16/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/marked-extensions
+[17/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/syntax-highlighting
+[18/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples
+[19/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/basic-rendering
+[20/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/custom-renderers
+[21/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/snippet-overrides
+[22/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/html-filtering
+[23/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/inline-rendering
+[24/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/parsed-callback
+[25/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/linked-headings
+[26/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs
+[27/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /compare/vs-svelte-streamdown
+[28/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /examples/github-alerts
+[29/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /blog/rendering-markdown-in-svelte
+[30/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /
+[31/31] [chromium] › docs/tests/breadcrumbs.test.ts:151:1 › hydration and client navigation preserve UI groups without stale schema
+  1) [chromium] › docs/tests/breadcrumbs.test.ts:151:1 › hydration and client navigation preserve UI groups without stale schema 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator:  getByRole('button', { name: 'Dark', exact: true })
+    Expected: "true"
+    Received: "false"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveAttribute" with timeout 5000ms
+      - waiting for getByRole('button', { name: 'Dark', exact: true })
+        14 × locator resolved to <button type="button" aria-label="Dark" aria-pressed="false" class="dk-theme-cell svelte-1v9it3">…</button>
+           - unexpected value "false"
+
+
+    Call Log:
+    - Test timeout of 60000ms exceeded
+
+      161 |         await darkButton.click()
+      162 |         await expect(darkButton).toHaveAttribute('aria-pressed', 'true')
+    > 163 |     }).toPass()
+          |        ^
+      164 |     const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb', exact: true })
+      165 |     await expect(breadcrumb.getByText('Renderers', { exact: true })).toBeVisible()
+      166 |     await expect(breadcrumb.locator('[aria-current="page"]')).toHaveText('HTML')
+        at /Users/jasonkummerl/Github/svelte-markdown/docs/tests/breadcrumbs.test.ts:163:8
+
+    Error Context: test-results/docs/breadcrumbs-hydration-and--b861a-groups-without-stale-schema-chromium/error-context.md
+
+
+  1 failed
+    [chromium] › docs/tests/breadcrumbs.test.ts:151:1 › hydration and client navigation preserve UI groups without stale schema 
+  30 passed (2.8m)

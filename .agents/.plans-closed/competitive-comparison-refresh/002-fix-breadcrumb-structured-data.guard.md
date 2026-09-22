@@ -57,3 +57,27 @@ Consumer `97de3f8`; shared docs-kit `2e6c93b8672a2f670c058efe122a2f245a5c3d3b`.
 - Consumer navigation/layout/library source unchanged. Feature ref is remotely
   available at the exact pinned SHA. No deployment, release, or Search Console action.
 - Guard updated index/status. PR deferred under dispatch batch workflow.
+
+## Checkpoint 5 — 2026-09-22 08:42 — ON TRACK (release pin PASS)
+
+Consumer `9682d73` · docs-kit release `2026.9.1`.
+
+- Operator clarified that consumer dependencies must use released version tags.
+- After the requested five-minute wait, GitHub reported PR 21 merged at
+  2026-09-22T12:23:53Z and release 2026.9.1 published at 12:24:26Z.
+- Tag resolves to `e65933a409be4be8d4663220d0271e3f0e654ab5`; its complete tree
+  `6cae5078f299075b6d9f1ebf2008bbd38ca1fe81` is identical to tested 2e6c93b.
+- Executor replaced the manifest SHA with `github:humanspeak/docs-kit#2026.9.1`
+  and updated the exact pnpm build-approval key. Guard generated the lockfile.
+  The lockfile and build approval retain the resolved commit, as pnpm requires.
+- Pnpm generated an obsolete old-SHA approval placeholder; executor removed only
+  that line. Final frozen install passes with the existing policy preserved.
+- Initial browser run passed 30 SSR cases but failed hydration. Browser diagnostics
+  showed HTML initializing `__sveltekit_40fm8j` while client code accessed
+  `__sveltekit_1417rha.data`. Guard had run type generation concurrently with the
+  build. A serial production rebuild and unchanged test suite passed 31/31.
+  Both test outputs are retained; no test assertion or source was changed.
+- Docs types: 0 errors, 1 existing CSS warning. Source commit hooks passed Trunk
+  and root types. Full source diff is only three dependency/lock/policy files.
+- Unrelated nightly state remains byte-identical to the pre-update backup.
+  Deployment and Google validation still pending.

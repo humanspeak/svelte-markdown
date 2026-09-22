@@ -6,6 +6,11 @@
 > Drift check: `git diff 0b08a1d..HEAD -- docs/src/lib/docsNav.ts docs/package.json pnpm-lock.yaml docs/src/routes/+layout.svelte docs/playwright.config.ts docs/tests/breadcrumbs.test.ts`.
 > Reconcile differences against the current-state excerpts before proceeding.
 
+> Release follow-up 2026-09-22: The operator requires version tags. Consumer
+> commit `9682d73` pins published docs-kit `2026.9.1`, resolving to `e65933a`.
+> This supersedes the original pre-release SHA-pin instructions below; the
+> released source tree is identical to the verified shared fix.
+
 ## Status
 
 - Priority: P1; execute before Plan 001, with no dependency on it

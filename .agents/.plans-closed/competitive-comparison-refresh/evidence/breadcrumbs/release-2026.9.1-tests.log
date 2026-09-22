@@ -1,0 +1,38 @@
+Running 31 tests using 1 worker
+
+(node:63854) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/getting-started
+[2/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/migration
+[3/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/api/svelte-markdown
+[4/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/api/types
+[5/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/renderers/markdown-renderers
+[6/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/renderers/html-renderers
+[7/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/renderers/custom-renderers
+[8/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/renderers/snippet-overrides
+[9/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/agent-output
+[10/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/llm-streaming
+[11/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/headless-parser
+[12/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/security
+[13/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/token-caching
+[14/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/tree-shaking
+[15/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/allow-deny
+[16/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/marked-extensions
+[17/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/advanced/syntax-highlighting
+[18/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples
+[19/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/basic-rendering
+[20/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/custom-renderers
+[21/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/snippet-overrides
+[22/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/html-filtering
+[23/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/inline-rendering
+[24/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/parsed-callback
+[25/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs/examples/linked-headings
+[26/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /docs
+[27/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /compare/vs-svelte-streamdown
+[28/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /examples/github-alerts
+[29/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /blog/rendering-markdown-in-svelte
+[30/31] [chromium] › docs/tests/breadcrumbs.test.ts:127:5 › SSR breadcrumbs: /
+[31/31] [chromium] › docs/tests/breadcrumbs.test.ts:151:1 › hydration and client navigation preserve UI groups without stale schema
+  31 passed (1.9m)
