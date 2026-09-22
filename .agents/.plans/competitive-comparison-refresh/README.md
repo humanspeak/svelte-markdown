@@ -8,10 +8,15 @@ The user selected all three open Streamdown findings. The
 limits. The [implementation plan](001-refresh-streamdown-comparison.md) supplies
 the upgrade, measurement, publication, and verification steps.
 
+Added September 22: [Plan 002](002-fix-breadcrumb-structured-data.md) fixes the
+Search Console Breadcrumbs issue, reproduced on live nested docs pages. Execute
+it first; it is independent of the comparison and benchmark work.
+
 ## Execution order and status
 
 | Plan | Title                                               | Priority | Effort | Depends on | Status |
 | ---- | --------------------------------------------------- | -------- | ------ | ---------- | ------ |
+| 002  | Fix missing breadcrumb item URLs                    | P1       | S–M    | None       | TODO   |
 | 001  | Refresh Streamdown comparison with current evidence | P1       | M      | None       | TODO   |
 
 Correct the two factual claims first. Pin 4.2.0 and capture production benchmark
@@ -35,4 +40,6 @@ The implementation has not started; the findings remain open.
 Audited the cited comparison rows and related prose, competitor release notes
 and package metadata, benchmark route/script, generated-doc pipeline, and relevant
 verification configuration. Library correctness, full security posture, other
-comparison claims, SEO, and repository triage were not audited.
+comparison claims, broader SEO, and repository triage were not audited. The
+September 22 addition covers breadcrumb generation and sampled live JSON-LD;
+the exact Search Console affected-URL export and validation status remain pending.
