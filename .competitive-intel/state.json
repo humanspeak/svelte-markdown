@@ -312,7 +312,7 @@
             "benchmark_measured_against": "4.2.0",
             "benchmark_valid": true,
             "findings": [],
-            "findings_status": "Resolved locally on 2026-09-22: highlighting, URL-default and benchmark findings verified with evidence at .agents/.plans-closed/competitive-comparison-refresh/evidence/ (final retired path; currently under .plans until batch retirement). Docs deployment pending."
+            "findings_status": "Resolved locally on 2026-09-22: highlighting, URL-default and benchmark findings verified with evidence at .agents/.plans-closed/competitive-comparison-refresh/evidence/. Docs deployment pending."
         },
         "svelte-exmarkdown": {
             "validated_against_version": "5.0.2",
