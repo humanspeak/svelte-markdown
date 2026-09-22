@@ -96,15 +96,15 @@ export const competitors: Competitor[] = [
             },
             {
                 name: 'Measured Streaming Performance',
-                us: '2–4× faster under burst backpressure',
-                them: 'Effectively tied when updates are frame-paced',
-                note: 'Production Chromium benchmark against svelte-streamdown 3.1.2. Across 10–200 KB append-only streams, Svelte Markdown completed burst workloads in roughly half to one quarter of the time by coalescing updates per animation frame. At one 512-character update per frame over 50 KB, both sustained about 59 updates/second. The 50 KB output used 2,821 descendant elements with Svelte Markdown versus 3,480 with Svelte Streamdown. Reproduce with pnpm perf:stream-compare.'
+                us: 'Lower measured burst medians; ~60 frame-paced updates/s',
+                them: 'Higher measured burst medians; ~60 frame-paced updates/s',
+                note: 'Measured against svelte-streamdown 4.2.0 on 2026-09-22 in production Chromium 151: append-only cumulative-prop updates with animation, controls and highlighting off; two suites, each with one warmup and five measured iterations per renderer/scenario. Streamdown / Svelte Markdown median completion-time ratios: 4.47–5.03 for 10 KB tiny chunks (10,059 bytes, 16-character chunks); 4.79–5.65 for 50 KB small chunks (50,153 bytes, 64-character chunks); 7.13–9.09 for 200 KB medium chunks (200,237 bytes, 256-character chunks). KB sizes are minimum targets. With one 512-character update per frame over 50,153 bytes, both sustained about 60 updates/s (ours 60.274–60.315; Streamdown 60.438–60.629), with Streamdown slightly lower elapsed medians. These observations apply to these workloads, not pure parsing or imperative chunk ingestion. Reproduce with pnpm perf:stream-compare.'
             },
             {
                 name: 'Measured DOM Footprint (50 KB)',
                 us: '2,821 descendant elements',
                 them: '3,480 descendant elements',
-                note: 'Measured by the production Chromium streaming benchmark with animations and optional rich-content controls disabled. The difference reflects each renderer’s output structure; Svelte Streamdown’s additional presentation features may justify that structure for applications that use them.'
+                note: 'Freshly measured against svelte-streamdown 4.2.0 on 2026-09-22 in production Chromium 151 using the actual 50,153-byte corpus (50 KB minimum target), append-only cumulative-prop updates, and animation, controls and highlighting off. Two suites, each with one warmup and five measured iterations per renderer/scenario: counts were stable across all 20 measured runs per renderer combining 64-character burst chunks and 512-character frame-paced chunks. Svelte Markdown used about 19% fewer descendant elements (2,821 versus 3,480); these counts measure elements, not all DOM nodes or memory. Matching semantic content was verified; table/list whitespace and code wrappers differ.'
             },
             {
                 name: 'Custom Renderers',
@@ -166,8 +166,8 @@ export const competitors: Competitor[] = [
             'Native out-of-order chunk assembly with offset-addressed writes',
             'Mid-stream replacement writes for corrections and retransmission',
             'Explicit resetStream() and streamId lifecycle boundaries',
-            'Measured 2–4× faster than svelte-streamdown 3.1.2 under burst backpressure',
-            'Measured about 19% fewer descendant elements on the 50 KB benchmark',
+            'Lower median completion times than svelte-streamdown 4.2.0 in each measured burst workload (10/50/200 KB minimum targets; 2026-09-22)',
+            'About 19% fewer descendant elements than svelte-streamdown 4.2.0 on the freshly measured 50,153-byte corpus (2026-09-22; animation, controls and highlighting off)',
             'Configurable LRU cache also accelerates repeated non-streaming documents',
             'Broad raw HTML support with per-tag renderers and allow/deny helpers',
             'Default URL and attribute sanitizers with customizable hooks',

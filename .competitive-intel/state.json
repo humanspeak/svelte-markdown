@@ -308,15 +308,11 @@
     "compare_validation": {
         "svelte-streamdown": {
             "validated_against_version": "4.2.0",
-            "validated_on": "2026-09-21",
-            "benchmark_measured_against": "3.1.2",
-            "benchmark_valid": false,
-            "findings": [
-                "perf + DOM-footprint claims measured against 3.1.2, one major version behind — bump devDep to 4.2.0 and re-run pnpm perf:stream-compare",
-                "'Code Highlighting → them: Opt-in Shiki component' stale: 4.0.0 replaced Shiki with @tanstack/highlight",
-                "'URL Safety Defaults → them: allow all by default' overstated: '*' allows only http/https, plus mailto:/tel: since 4.0.1"
-            ],
-            "findings_status": "still open as of 2026-09-21"
+            "validated_on": "2026-09-22",
+            "benchmark_measured_against": "4.2.0",
+            "benchmark_valid": true,
+            "findings": [],
+            "findings_status": "Resolved locally on 2026-09-22: highlighting, URL-default and benchmark findings verified with evidence at .agents/.plans-closed/competitive-comparison-refresh/evidence/ (final retired path; currently under .plans until batch retirement). Docs deployment pending."
         },
         "svelte-exmarkdown": {
             "validated_against_version": "5.0.2",
