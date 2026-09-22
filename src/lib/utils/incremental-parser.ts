@@ -527,6 +527,23 @@ export class IncrementalParser {
     }
 
     /**
+     * Reference definitions can change inline children without changing raw,
+     * so definitions alongside reference-style uses require a full rerender.
+     * Append-only updates reuse the invalidation flag computed during parsing
+     * to avoid rescanning the accumulated source. Other edits check both sources.
+     */
+    private isReferenceSensitiveUpdate = (
+        source: string,
+        isAppendOnly: boolean,
+        referenceInvalidatesTail: boolean
+    ): boolean =>
+        isAppendOnly
+            ? referenceInvalidatesTail
+            : (this.prevHasReferenceDefinition || this.hasReferenceDefinition(source)) &&
+              (this.hasPotentialReferenceUse(this.prevSource) ||
+                  this.hasPotentialReferenceUse(source))
+
+    /**
      * Parses the full source and diffs against the previous result.
      *
      * @param source - The full accumulated markdown source string
@@ -559,15 +576,11 @@ export class IncrementalParser {
             }
         }
 
-        // Reference definitions can change inline children without changing raw,
-        // so force a full rerender when definitions are present alongside
-        // reference-style uses. Shortcut-looking text alone stays reusable.
-        // The append-only case reuses `referenceInvalidatesTail` computed above.
-        const referenceSensitive = isAppendOnly
-            ? referenceInvalidatesTail
-            : (this.prevHasReferenceDefinition || this.hasReferenceDefinition(source)) &&
-              (this.hasPotentialReferenceUse(this.prevSource) ||
-                  this.hasPotentialReferenceUse(source))
+        const referenceSensitive = this.isReferenceSensitiveUpdate(
+            source,
+            isAppendOnly,
+            referenceInvalidatesTail
+        )
         const canReuse = isAppendOnly && !referenceSensitive
 
         // Find first divergence point. We compare `.raw` for fast equality,

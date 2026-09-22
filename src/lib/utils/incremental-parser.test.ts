@@ -149,6 +149,95 @@ describe('IncrementalParser', () => {
         })
     })
 
+    describe('Reference-link invalidation', () => {
+        it.each([
+            {
+                name: 'introducing a definition during an in-place edit',
+                before: 'See [docs]\n\nOld tail.',
+                after: 'See [docs]\n\nNew tail.\n\n[docs]: /new',
+                href: '/new'
+            },
+            {
+                name: 'changing an existing definition destination',
+                before: 'See [docs]\n\n[docs]: /old',
+                after: 'See [docs]\n\n[docs]: /new',
+                href: '/new'
+            },
+            {
+                name: 'removing the last definition',
+                before: 'See [docs]\n\n[docs]: /old',
+                after: 'See [docs]\n\nPlain tail.',
+                href: undefined
+            }
+        ])('invalidates unchanged paragraph text when $name', ({ before, after, href }) => {
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            const previous = parser.update(before)
+
+            const result = parser.update(after)
+
+            expect(result.tokens[0].raw).toBe(previous.tokens[0].raw)
+            expect(result.tokens).toEqual(parseAndCacheModule.lexAndClean(after, options, false))
+            expect(result.canReuse).toBe(false)
+            expect(result.usedTailWindow).toBe(false)
+            expect(result.divergeAt).toBe(0)
+            expect(result.divergeOffset).toBe(0)
+            if (href) {
+                expect(result.tokens[0]).toMatchObject({
+                    tokens: expect.arrayContaining([
+                        expect.objectContaining({ type: 'link', href })
+                    ])
+                })
+            } else {
+                expect(result.tokens[0]).toMatchObject({
+                    tokens: [expect.objectContaining({ type: 'text', text: 'See [docs]' })]
+                })
+            }
+        })
+
+        it('preserves the divergence offset for an edit with unresolved references only', () => {
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            const prefix = 'See [docs]\n\n'
+            parser.update(`${prefix}Old tail.`)
+
+            const source = `${prefix}New tail.`
+            const result = parser.update(source)
+
+            expect(result.tokens).toEqual(parseAndCacheModule.lexAndClean(source, options, false))
+            expect(result.canReuse).toBe(false)
+            expect(result.divergeAt).toBeGreaterThan(0)
+            expect(result.divergeOffset).toBe(prefix.length)
+        })
+
+        it.each([
+            { tail: 'More plain text.', canReuse: true },
+            { tail: '[docs]: /docs', canReuse: false }
+        ])('avoids full-source reference scans when appending "$tail"', ({ tail, canReuse }) => {
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            const previous = '# Stable heading\n\nSee [docs]\n\n'
+            parser.update(previous)
+            const internal = asInternalParser(parser)
+            const uses = vi.spyOn(internal, 'hasPotentialReferenceUse')
+            const definitions = vi.spyOn(internal, 'hasReferenceDefinition')
+            const boundaryScans = vi.spyOn(internal, 'appendIntroducesMatch')
+            const source = `${previous}${tail}`
+
+            const result = parser.update(source)
+
+            expect(result.canReuse).toBe(canReuse)
+            expect(result.tokens).toEqual(parseAndCacheModule.lexAndClean(source, options, false))
+            for (const scan of [uses, definitions]) {
+                expect(scan).not.toHaveBeenCalledWith(previous)
+                expect(scan).not.toHaveBeenCalledWith(source)
+            }
+            expect(
+                boundaryScans.mock.calls.filter(([, matches]) => matches === definitions)
+            ).toHaveLength(1)
+        })
+    })
+
     describe('Code Fences', () => {
         it('should parse complete code fences correctly', () => {
             const parser = new IncrementalParser(createDefaultOptions())
