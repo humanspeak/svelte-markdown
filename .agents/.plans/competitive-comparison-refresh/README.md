@@ -12,6 +12,10 @@ Added September 22: [Plan 002](002-fix-breadcrumb-structured-data.md) fixes the
 Search Console Breadcrumbs issue, reproduced on live nested docs pages. Execute
 it first; it is independent of the comparison and benchmark work.
 
+Revision September 22: per the operator, fix shared breadcrumb serialization in
+`docs-kit` and pin the verified commit here, preserving visible navigation.
+Execution uses separate GPT executors and guard verification.
+
 ## Execution order and status
 
 | Plan | Title                                               | Priority | Effort | Depends on | Status |
