@@ -25,6 +25,7 @@
 - Category: docs / dependency migration / performance validation
 - Planned at: `f7d3a60`, 2026-09-22, package version 1.9.1
 - Branch: `docs/competitive-comparison-refresh`
+- Implementation: DONE locally; see guard report
 
 ## Why this matters
 
@@ -308,14 +309,14 @@ skip that requirement. Timing ratios are observations, never CI pass thresholds.
 
 ## Done criteria
 
-- [ ] All three version records and installed Streamdown are exactly 4.2.0.
-- [ ] Two complete suites, 40 measured runs each, parseable JSON and provenance
+- [x] All three version records and installed Streamdown are exactly 4.2.0.
+- [x] Two complete suites, 40 measured runs each, parseable JSON and provenance
       are committed under `evidence/`; no page errors or missing output.
-- [ ] Every numerical page claim reconciles to captured results.
-- [ ] Stale highlighting and URL wording is gone; generated mirrors agree.
-- [ ] `pnpm build`, root/docs checks, docs build, `pnpm test`, and Trunk pass.
-- [ ] Only scope-listed tracked files changed; the plan index is DONE.
-- [ ] Three findings are resolved with evidence; other competitor state is preserved.
+- [x] Every numerical page claim reconciles to captured results.
+- [x] Stale highlighting and URL wording is gone; generated mirrors agree.
+- [x] `pnpm build`, root/docs checks, docs build, `pnpm test`, and Trunk pass.
+- [x] Only scope-listed tracked files changed; the plan index is DONE.
+- [x] Three findings are resolved with evidence; other competitor state is preserved.
 
 ## STOP conditions and maintenance
 

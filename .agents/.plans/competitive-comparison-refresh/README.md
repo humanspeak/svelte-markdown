@@ -18,14 +18,14 @@ Execution uses separate GPT executors and guard verification.
 
 ## Execution order and status
 
-| Plan | Title                                               | Priority | Effort | Depends on | Status      |
-| ---- | --------------------------------------------------- | -------- | ------ | ---------- | ----------- |
-| 002  | Fix missing breadcrumb item URLs                    | P1       | S–M    | None       | DONE        |
-| 001  | Refresh Streamdown comparison with current evidence | P1       | M      | None       | IN PROGRESS |
+| Plan | Title                                               | Priority | Effort | Depends on | Status |
+| ---- | --------------------------------------------------- | -------- | ------ | ---------- | ------ |
+| 002  | Fix missing breadcrumb item URLs                    | P1       | S–M    | None       | DONE   |
+| 001  | Refresh Streamdown comparison with current evidence | P1       | M      | None       | DONE   |
 
 Correct the two factual claims first. Pin 4.2.0 and capture production benchmark
 evidence before replacing numerical claims or advancing the benchmark baseline.
-Breadcrumbs are locally verified; Streamdown findings remain open pending fresh measurements.
+Both plans passed guard verification locally. Streamdown findings are resolved against the retained 4.2.0 evidence; deployment and Google validation remain pending.
 
 ## Considered and rejected
 

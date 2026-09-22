@@ -1,0 +1,17 @@
+{
+    "url": "http://127.0.0.1:4174/compare/vs-svelte-streamdown",
+    "status": 200,
+    "featureRows": 24,
+    "checkedRows": [
+        "Measured Streaming Performance",
+        "Measured DOM Footprint (50 KB)",
+        "URL Safety Defaults",
+        "Code Highlighting"
+    ],
+    "prosUs": 20,
+    "consThem": 6,
+    "verdictMatches": true,
+    "generatedMirrorsMatch": true,
+    "pageErrors": [],
+    "capturedAt": "2026-09-22T11:02:10.662Z"
+}
