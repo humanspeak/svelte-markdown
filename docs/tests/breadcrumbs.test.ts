@@ -125,11 +125,19 @@ const samples = [
 
 for (const path of samples) {
     test(`SSR breadcrumbs: ${path}`, async ({ request, baseURL }) => {
-        const response = await request.get(path, { maxRedirects: 0 })
-        expect(response.status(), `${path}: unexpected response or redirect`).toBe(200)
-        expect(response.url()).toBe(new URL(path, baseURL).href)
+        let response = await request.get(path, { maxRedirects: 0 })
+        let expectedPath = path
+        if (path === '/docs') {
+            expect(response.status()).toBe(301)
+            expect(response.headers().location).toBe('/docs/getting-started')
+            expect(response.url()).toBe(new URL(path, baseURL).href)
+            expectedPath = '/docs/getting-started'
+            response = await request.get(expectedPath, { maxRedirects: 0 })
+        }
+        expect(response.status(), `${expectedPath}: unexpected response or redirect`).toBe(200)
+        expect(response.url()).toBe(new URL(expectedPath, baseURL).href)
         expect(response.headers()['content-type']).toContain('text/html')
-        assertBreadcrumbs(ssrBreadcrumbs(await response.text()), path)
+        assertBreadcrumbs(ssrBreadcrumbs(await response.text()), expectedPath)
     })
 }
 
