@@ -119,8 +119,8 @@ export const competitors: Competitor[] = [
             {
                 name: 'URL Safety Defaults',
                 us: 'Protocol allowlist + attribute sanitization',
-                them: 'Configurable prefixes (allow all by default)',
-                note: 'Svelte Streamdown exposes link and image prefix controls; their documented default is ["*"].'
+                them: 'Configurable prefixes + default protocol allowlist',
+                note: 'The default ["*"] permits HTTP/HTTPS URLs across origins and mailto:/tel: links; it blocks javascript:, data:, and vbscript:. Prefix lists can restrict destinations further.'
             },
             {
                 name: 'Streaming Animations',
@@ -147,7 +147,7 @@ export const competitors: Competitor[] = [
             {
                 name: 'Code Highlighting',
                 us: 'Opt-in Shiki extension',
-                them: 'Opt-in Shiki component + copy button'
+                them: 'Opt-in @tanstack/highlight component + copy button'
             },
             {
                 name: 'Marked Extensions',
@@ -170,7 +170,7 @@ export const competitors: Competitor[] = [
             'Measured about 19% fewer descendant elements on the 50 KB benchmark',
             'Configurable LRU cache also accelerates repeated non-streaming documents',
             'Broad raw HTML support with per-tag renderers and allow/deny helpers',
-            'Stricter URL and attribute sanitization enabled by default',
+            'Default URL and attribute sanitizers with customizable hooks',
             'Unstyled core integrates without requiring Tailwind'
         ],
         prosThem: [
@@ -191,12 +191,11 @@ export const competitors: Competitor[] = [
             'No native offset-addressed assembly for out-of-order chunks or earlier-range corrections',
             'Stream resets and response isolation are managed in caller-owned content state',
             'No reusable LRU cache for switching among previously rendered documents',
-            'Link and image prefix controls allow all origins by default',
             'Opinionated styling requires Tailwind setup or theme overrides',
             'A newer, single-maintainer port that tracks the upstream React project'
         ],
         verdict:
-            'Choose Svelte Streamdown when you want a batteries-included AI response UI with animated reveals, citations, MDX-style components, interactive diagrams, and Tailwind styling. Choose @humanspeak/svelte-markdown when you want a lower-level, unstyled renderer with direct and out-of-order chunk ingestion, explicit stream lifecycle controls, frame-coalesced updates, reusable document caching, broad raw-HTML customization, and stricter security defaults. Both are credible Svelte 5 choices for incomplete streaming markdown; the deciding factor is whether you want an opinionated presentation layer or a composable rendering primitive.',
+            'Choose Svelte Streamdown when you want a batteries-included AI response UI with animated reveals, citations, MDX-style components, interactive diagrams, and Tailwind styling. Choose @humanspeak/svelte-markdown when you want a lower-level, unstyled renderer with direct and out-of-order chunk ingestion, explicit stream lifecycle controls, frame-coalesced updates, reusable document caching, broad raw-HTML customization, and configurable URL and attribute sanitization. Both are credible Svelte 5 choices for incomplete streaming markdown; the deciding factor is whether you want an opinionated presentation layer or a composable rendering primitive.',
         keywords: [
             'svelte-streamdown',
             'svelte streamdown',
