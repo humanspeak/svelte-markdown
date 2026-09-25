@@ -4,19 +4,21 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "tsx ./scripts/fetch-github-stats.ts && vite build",
-        "build:indexnow": "tsx ./scripts/fetch-github-stats.ts && vite build --mode indexnow",
+        "build": "tsx ./scripts/fetch-github-stats.ts && vite build && node ./scripts/check-favicon.mjs",
+        "build:indexnow": "tsx ./scripts/fetch-github-stats.ts && vite build --mode indexnow && node ./scripts/check-favicon.mjs",
         "cf-typegen": "wrangler types && mv worker-configuration.d.ts src/",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
         "deploy": "pnpm run build:indexnow && wrangler deploy",
         "dev": "vite dev",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "check:favicon": "node ./scripts/check-favicon.mjs",
+        "generate:favicon": "node ./scripts/check-favicon.mjs --generate"
     },
     "dependencies": {
         "@fontsource-variable/inter": "^5.3.0",
         "@fontsource-variable/jetbrains-mono": "^5.3.0",
-        "@humanspeak/docs-kit": "github:humanspeak/docs-kit#2026.9.1",
+        "@humanspeak/docs-kit": "github:humanspeak/docs-kit#2026.9.3",
         "@humanspeak/svelte-markdown": "workspace:*",
         "katex": "^0.18.2",
         "marked-code-format": "^1.1.6",
