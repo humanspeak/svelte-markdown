@@ -61,7 +61,7 @@ jobs:
             # skip-publish/major/minor labels and release notes) from the commit.
             - id: pr
               if: github.event_name == 'push'
-              uses: actions/github-script@v9 # zizmor: ignore[unpinned-uses]
+              uses: actions/github-script@v9.0.0 # zizmor: ignore[unpinned-uses]
               with:
                   script: |
                       const { owner, repo } = context.repo
@@ -123,7 +123,7 @@ jobs:
         environment: ci
         steps:
             - name: Checkout
-              uses: actions/checkout@v7 # zizmor: ignore[unpinned-uses]
+              uses: actions/checkout@v7.0.1 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
                   token: ${{ secrets.ACTIONS_KEY }}
@@ -213,7 +213,7 @@ jobs:
 
             - name: Upload Results
               if: failure() && github.event_name == 'push' && needs.check-if-merged.outputs.pr_number != ''
-              uses: actions/github-script@v9 # zizmor: ignore[unpinned-uses]
+              uses: actions/github-script@v9.0.0 # zizmor: ignore[unpinned-uses]
               env:
                   PR_NUMBER: ${{ needs.check-if-merged.outputs.pr_number }}
               with:
@@ -270,15 +270,15 @@ jobs:
             packages: write
         steps:
             - name: Checkout
-              uses: actions/checkout@v7 # zizmor: ignore[unpinned-uses]
+              uses: actions/checkout@v7.0.1 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
                   token: ${{ secrets.ACTIONS_KEY }}
 
-            - uses: pnpm/action-setup@v6 # zizmor: ignore[unpinned-uses]
+            - uses: pnpm/action-setup@v6.1.0 # zizmor: ignore[unpinned-uses]
 
             - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v7 # zizmor: ignore[unpinned-uses]
+              uses: actions/setup-node@v7.0.0 # zizmor: ignore[unpinned-uses]
               with:
                   node-version: ${{ matrix.node-version }}
 
@@ -297,14 +297,14 @@ jobs:
               # (a "fetch failed" here blocked the svelte-motion v0.9.0 publish
               # on 2026-08-12).
               continue-on-error: true
-              uses: trunk-io/analytics-uploader@main # zizmor: ignore[unpinned-uses]
+              uses: trunk-io/analytics-uploader@v2.1.5 # zizmor: ignore[unpinned-uses]
               with:
                   junit-paths: junit-vitest.xml
                   org-slug: ${{ secrets.TRUNK_ORG_SLUG }}
                   token: ${{ secrets.TRUNK_TOKEN }}
 
             - name: Upload coverage to Coveralls
-              uses: coverallsapp/github-action@v2 # zizmor: ignore[unpinned-uses]
+              uses: coverallsapp/github-action@v2.3.8 # zizmor: ignore[unpinned-uses]
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   flag-name: node-${{ matrix.node-version }}
@@ -321,14 +321,14 @@ jobs:
         runs-on: ubuntu-latest
         environment: ci
         steps:
-            - uses: actions/checkout@v7 # zizmor: ignore[unpinned-uses]
+            - uses: actions/checkout@v7.0.1 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
                   token: ${{ secrets.ACTIONS_KEY }}
 
-            - uses: pnpm/action-setup@v6 # zizmor: ignore[unpinned-uses]
+            - uses: pnpm/action-setup@v6.1.0 # zizmor: ignore[unpinned-uses]
 
-            - uses: actions/setup-node@v7 # zizmor: ignore[unpinned-uses]
+            - uses: actions/setup-node@v7.0.0 # zizmor: ignore[unpinned-uses]
               with:
                   node-version: 24
 
@@ -347,13 +347,13 @@ jobs:
               # (a "fetch failed" here blocked the svelte-motion v0.9.0 publish
               # on 2026-08-12).
               continue-on-error: true
-              uses: trunk-io/analytics-uploader@main # zizmor: ignore[unpinned-uses]
+              uses: trunk-io/analytics-uploader@v2.1.5 # zizmor: ignore[unpinned-uses]
               with:
                   junit-paths: test-results/junit-playwright.xml
                   org-slug: ${{ secrets.TRUNK_ORG_SLUG }}
                   token: ${{ secrets.TRUNK_TOKEN }}
 
-            - uses: actions/upload-artifact@v7 # zizmor: ignore[unpinned-uses]
+            - uses: actions/upload-artifact@v7.0.1 # zizmor: ignore[unpinned-uses]
               if: always()
               with:
                   name: playwright-results
@@ -371,7 +371,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Coveralls Finished
-              uses: coverallsapp/github-action@v2 # zizmor: ignore[unpinned-uses]
+              uses: coverallsapp/github-action@v2.3.8 # zizmor: ignore[unpinned-uses]
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   parallel-finished: true
@@ -397,16 +397,16 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v7 # zizmor: ignore[unpinned-uses]
+              uses: actions/checkout@v7.0.1 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
                   token: ${{ secrets.GITHUB_TOKEN }}
                   fetch-depth: 0
 
-            - uses: pnpm/action-setup@v6 # zizmor: ignore[unpinned-uses]
+            - uses: pnpm/action-setup@v6.1.0 # zizmor: ignore[unpinned-uses]
 
             - name: Use Node.js - 24
-              uses: actions/setup-node@v7 # zizmor: ignore[unpinned-uses,cache-poisoning]
+              uses: actions/setup-node@v7.0.0 # zizmor: ignore[unpinned-uses,cache-poisoning]
               with:
                   node-version: 24
 
@@ -444,7 +444,7 @@ jobs:
 
             - name: Create Comment on Skip
               if: github.event_name == 'push' && steps.publish-check.outputs.should_publish == 'false' && needs.check-if-merged.outputs.pr_number != ''
-              uses: actions/github-script@v9 # zizmor: ignore[unpinned-uses]
+              uses: actions/github-script@v9.0.0 # zizmor: ignore[unpinned-uses]
               env:
                   PR_NUMBER: ${{ needs.check-if-merged.outputs.pr_number }}
               with:
@@ -460,7 +460,7 @@ jobs:
             - name: Import GPG key
               if: steps.publish-check.outputs.should_publish == 'true'
               id: import_gpg
-              uses: crazy-max/ghaction-import-gpg@v7 # zizmor: ignore[unpinned-uses]
+              uses: crazy-max/ghaction-import-gpg@v7.0.0 # zizmor: ignore[unpinned-uses]
               with:
                   gpg_private_key: ${{ secrets.ACTIONS_GPG_PRIVATE_KEY }}
                   passphrase: ${{ secrets.ACTIONS_GPG_PASSPHRASE }}
@@ -631,7 +631,7 @@ jobs:
 
             - name: Notify on failure
               if: failure() && needs.check-if-merged.outputs.pr_number != ''
-              uses: actions/github-script@v9 # zizmor: ignore[unpinned-uses]
+              uses: actions/github-script@v9.0.0 # zizmor: ignore[unpinned-uses]
               env:
                   PR_NUMBER: ${{ needs.check-if-merged.outputs.pr_number }}
               with:

@@ -499,6 +499,25 @@ The package includes built-in `markedMermaid` and `MermaidRenderer` helpers for 
 npm install mermaid
 ```
 
+Mermaid 12.0.0 pulls in Chevrotain packages that pin `lodash-es` 4.17.23,
+which is affected by [CVE-2026-4800](https://github.com/advisories/GHSA-r5fr-rjxr-66jc)
+and [CVE-2026-2950](https://github.com/advisories/GHSA-f23m-r3pf-42rh).
+Until those upstream pins are updated, consumers using this dependency tree
+should override `lodash-es` to `^4.18.1` in their application and regenerate
+their lockfile. For npm, add this to the application's root `package.json`:
+
+```json
+{
+    "overrides": {
+        "lodash-es": "^4.18.1"
+    }
+}
+```
+
+For pnpm, add `overrides: { 'lodash-es@<4.18.0': '^4.18.1' }` to the application's
+`pnpm-workspace.yaml`. This repository applies that override for its own tests
+and docs; library overrides do not propagate to consumer applications.
+
 Then use the built-in helpers — no boilerplate needed:
 
 ```svelte
