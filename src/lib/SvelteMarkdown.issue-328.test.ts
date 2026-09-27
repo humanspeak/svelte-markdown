@@ -328,6 +328,111 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(chunkedIds).toEqual(staticIds)
     })
 
+    test('matches a cold render at each flush with unstable duplicates and nested headings', async () => {
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+        let source = ''
+        const chunks = [
+            '# foo\n\n# foo\n\n# foo',
+            '!',
+            '!',
+            '\n\n> # foo\n\n',
+            '- # foo\n\n',
+            '<div class="nested-heading-test">\n\n# foo\n\n</div>\n\n',
+            '# foo',
+            '!'
+        ]
+
+        for (const chunk of chunks) {
+            source += chunk
+            await act(() => component.writeChunk(chunk))
+            await flushStreamingBatch()
+            const cold = render(SvelteMarkdown, { props: { source } })
+            expect(headingIds(container)).toEqual(headingIds(cold.container))
+            cold.unmount()
+        }
+
+        expect(container.querySelector('blockquote h1')).toHaveAttribute('id', 'foo-3')
+        expect(container.querySelector('li h1')).toHaveAttribute('id', 'foo-4')
+        expect(container.querySelector('.nested-heading-test h1')).toHaveAttribute('id', 'foo-5')
+        expect(headingIds(container)).toEqual([
+            'foo',
+            'foo-1',
+            'foo-2',
+            'foo-3',
+            'foo-4',
+            'foo-5',
+            'foo-6'
+        ])
+    })
+
+    test('keeps nested heading ids stable when repeated definitions shift tail source offsets', async () => {
+        const initial = '[ref]: /url\n[ref]: /url\n```md\n```\n> # foo\n> ## f'
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: initial, streaming: true }
+        })
+        await flushStreamingBatch()
+        expect(headingIds(container)).toEqual(['foo', 'f'])
+
+        await act(() => component.writeChunk('He'))
+        await flushStreamingBatch()
+
+        const cold = render(SvelteMarkdown, { props: { source: `${initial}He` } })
+        expect(headingIds(cold.container)).toEqual(['foo', 'fhe'])
+        expect(headingIds(container)).toEqual(headingIds(cold.container))
+        cold.unmount()
+    })
+
+    test('matches a cold render after offset chunks rewrite earlier collided headings', async () => {
+        const initial = '# foo\n\n# foo-1\n\n# foo\n\n# foo\n\n'
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: initial, streaming: true }
+        })
+        await flushStreamingBatch()
+        let source = initial
+
+        for (const { offset, value } of [
+            { offset: 2, value: 'bar' },
+            { offset: initial.indexOf('foo-1'), value: 'foo-2' },
+            { offset: 2, value: 'foo' }
+        ]) {
+            source = source.slice(0, offset) + value + source.slice(offset + value.length)
+            await act(() => component.writeChunk({ offset, value }))
+            await flushStreamingBatch()
+            const cold = render(SvelteMarkdown, { props: { source } })
+            expect(headingIds(container)).toEqual(headingIds(cold.container))
+            cold.unmount()
+        }
+
+        expect(headingIds(container)).toEqual(['foo', 'foo-2', 'foo-1', 'foo-3'])
+    })
+
+    test('resets heading history when headerPrefix or headerIds changes mid-stream', async () => {
+        const source = '# foo\n\n# foo\n\n# foo'
+        const { component, container, rerender } = render(SvelteMarkdown, {
+            props: { source, streaming: true }
+        })
+        await flushStreamingBatch()
+
+        for (const options of [
+            { headerPrefix: 'docs-' },
+            { headerPrefix: 'docs-', headerIds: false },
+            { headerPrefix: 'other-', headerIds: true },
+            { headerPrefix: '', headerIds: true }
+        ]) {
+            await rerender({ source, streaming: true, options })
+            await flushStreamingBatch()
+            const cold = render(SvelteMarkdown, { props: { source, options } })
+            expect(headingIds(container)).toEqual(headingIds(cold.container))
+            cold.unmount()
+        }
+
+        await act(() => component.writeChunk('!\n\n# foo'))
+        await flushStreamingBatch()
+        expect(headingIds(container)).toEqual(['foo', 'foo-1', 'foo-2', 'foo-3'])
+    })
+
     test('does not re-slug stable prefix headings when appending non-heading text', async () => {
         const slugSpy = vi.spyOn(Slugger.prototype, 'slug')
 
