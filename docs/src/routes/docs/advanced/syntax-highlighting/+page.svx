@@ -1,6 +1,6 @@
 ---
 title: Syntax Highlighting
-description: Add opt-in Shiki syntax highlighting to @humanspeak/svelte-markdown with a streaming-compatible, synchronous code renderer that stays out of the core bundle.
+description: Add opt-in syntax highlighting to @humanspeak/svelte-markdown with one streaming-compatible HighlightedCode renderer and your choice of engine — Shiki or TanStack Highlight — both tree-shaken out of the core bundle.
 ---
 
 <script>
@@ -8,55 +8,157 @@ description: Add opt-in Shiki syntax highlighting to @humanspeak/svelte-markdown
 
     const seo = getSeoContext()
     if (seo) {
-        seo.title = 'Syntax Highlighting (Shiki) | Svelte Markdown'
-        seo.description = 'Add opt-in Shiki syntax highlighting to @humanspeak/svelte-markdown with a streaming-compatible, synchronous code renderer that stays out of the core bundle.'
-        seo.ogTitle = 'Syntax Highlighting (Shiki)'
-        seo.ogTagline = 'Streaming-safe code highlighting, opt-in and tree-shaken.'
-        seo.ogFeatures = ['Shiki', 'Streaming-safe', 'Tree-shaken', 'SSR-friendly']
+        seo.title = 'Syntax Highlighting (Shiki or TanStack) | Svelte Markdown'
+        seo.description = 'Add opt-in syntax highlighting to @humanspeak/svelte-markdown with one streaming-compatible HighlightedCode renderer and your choice of engine — Shiki or TanStack Highlight — both tree-shaken out of the core bundle.'
+        seo.ogTitle = 'Syntax Highlighting'
+        seo.ogTagline = 'One code renderer. Two engines. Streaming-safe, opt-in, tree-shaken.'
+        seo.ogFeatures = ['Shiki', 'TanStack Highlight', 'Streaming-safe', 'Tree-shaken', 'SSR-friendly']
         seo.ogSlug = 'docs-advanced-syntax-highlighting'
     }
 </script>
 
 # Syntax Highlighting
 
-`@humanspeak/svelte-markdown` ships an **opt-in Shiki syntax-highlighting extension** from the dedicated `@humanspeak/svelte-markdown/extensions/shiki` subpath (deliberately not re-exported from the `extensions` barrel, so consumers who skip highlighting never need `shiki` installed). It highlights fenced code blocks by replacing the default `code` renderer with `ShikiCode` — no marked tokenizer, no `extensions` prop entry, and (critically) **no async work on the render path**, so streaming stays enabled.
+`@humanspeak/svelte-markdown` ships **one engine-agnostic code renderer** and **two opt-in engines**:
+
+| Subpath | What it gives you | Pulls in |
+|---|---|---|
+| `@humanspeak/svelte-markdown/extensions/highlight` | `HighlightedCode` renderer, `CodeHighlighter` type, `HIGHLIGHT_CONTEXT_KEY`, `setCodeHighlighter` | Nothing — no engine |
+| `@humanspeak/svelte-markdown/extensions/shiki` | `createShikiHighlighter` (TextMate grammars, inline theme colors) | `shiki` |
+| `@humanspeak/svelte-markdown/extensions/tanstack-highlight` | `createTanstackHighlighter` (hand-written scanners, semantic `th-*` classes) | `@tanstack/highlight` |
+
+You pick an engine at setup time. The renderer, the context key, and the singleton are the same regardless of engine, so switching is a one-line factory change and two engines can coexist on one page. Both engines are synchronous, so **streaming stays enabled**. Neither is re-exported from the `extensions` barrel, so consumers who skip highlighting never need either peer installed.
 
 ## Why It's a Renderer, Not a Marked Extension
 
-KaTeX, Mermaid, alerts, and footnotes are [marked extensions](/docs/advanced/marked-extensions): they add custom token types via the `extensions` prop. Highlighting is different. A code fence is already a first-class `code` token, so there is nothing new to tokenize — the work is purely at render time. `ShikiCode` is therefore a **drop-in replacement for the built-in `code` renderer** with the same `Props` shape (`lang`, `text`):
+KaTeX, Mermaid, alerts, and footnotes are [marked extensions](/docs/advanced/marked-extensions): they add custom token types via the `extensions` prop. Highlighting is different. A code fence is already a first-class `code` token, so there is nothing new to tokenize — the work is purely at render time. `HighlightedCode` is therefore a **drop-in replacement for the built-in `code` renderer** with the same `Props` shape (`lang`, `text`):
 
 ```svelte
-<SvelteMarkdown {source} renderers={{ code: ShikiCode }} />
+<SvelteMarkdown {source} renderers={{ code: HighlightedCode }} />
 ```
 
-This distinction matters for **streaming**. An async marked extension (one that returns a promise from `walkTokens`) forces `SvelteMarkdown` to disable streaming — the incremental parser can't reconcile a tail window against pending async work. `ShikiCode` stays **fully synchronous**: it wraps Shiki's `createHighlighterCoreSync` with the pure-JavaScript regex engine, so `codeToHtml` returns a string immediately with no WASM load and no top-level `await`. The `code` renderer never trips the `hasAsyncExtension` guard, and `streaming` is never silently turned off. (Contrast this with `MermaidRenderer`, which is intentionally async and browser-only.)
+This distinction matters for **streaming**. An async marked extension (one that returns a promise from `walkTokens`) forces `SvelteMarkdown` to disable streaming — the incremental parser can't reconcile a tail window against pending async work. Both engines here return a string immediately with no top-level `await`, so the `code` renderer never trips the `hasAsyncExtension` guard and `streaming` is never silently turned off.
+
+## The `CodeHighlighter` Contract
+
+Every engine factory returns the same two-method object:
+
+```ts
+interface CodeHighlighter {
+    /** Synchronous. Must never throw — degrade to an escaped fallback instead. */
+    highlight(code: string, lang: string): string
+    /** Whether `lang` (name or alias) is registered. */
+    hasLang(lang: string): boolean
+}
+```
+
+That is the whole integration surface. You can implement it yourself to wrap any other highlighter (Prism, highlight.js, a server round-trip you cache) and `HighlightedCode` will use it unchanged. The one hard rule is in the comment: `highlight` sits on the streaming render path, so it must be synchronous and must never throw on a half-streamed fence.
+
+## Choosing an Engine
+
+| | Shiki | TanStack Highlight |
+|---|---|---|
+| Accuracy | TextMate grammars (the ones VS Code runs) — best for JSX/TSX, embedded languages, unusual syntax | Hand-written scanners for 25 languages — good for docs and chat, weaker on exotic code |
+| Bundle (core + `ts`, `js`, `json`) | **87 KB gzip** (534 KB minified) with one theme | **4.2 KB gzip** (10 KB minified) |
+| Output | Inline `style="color:…"` per token | Semantic `th-keyword`, `th-string`, … classes; no inline colors |
+| Theming | Themes are data; light/dark needs dual output or re-highlight | Themes are CSS variables via `createThemeCss`; light/dark is a CSS toggle |
+| Languages | 200+ grammars | 25 (`ts`, `tsx`, `js`, `jsx`, `json`, `css`, `html`, `svelte`, `vue`, `python`, `go`, `sql`, `shell`, `yaml`, `markdown`, …) |
+| Streaming cost on an open fence | Re-highlights the whole block per flush; ~1–2 ms per line with the JS engine | Re-highlights the whole block per flush; well under a millisecond for typical blocks |
+| Maturity | Stable | 0.1.x — the API can still move; pin your version |
+| Unknown language | Escaped `<pre class="shiki-fallback">` | Engine plaintext (`<pre class="th-code th-code--plaintext">`) so it still picks up your theme; or the escaped fallback with `plaintextFallback: false` |
+
+Sizes above were measured with esbuild (`--bundle --minify`, gzip -9) against `shiki@4.4` and `@tanstack/highlight@0.1.0`. See the [live side-by-side](/examples/highlight-engines) for per-engine highlight timings while streaming.
+
+**Rule of thumb:** documentation sites that want exact editor colors pick Shiki. Chat and agent UIs that stream a lot of code and care about bundle size pick TanStack Highlight. Both are streaming-safe; the tradeoff is fidelity versus weight.
 
 ## Install
 
-`shiki` is an optional peer dependency — install it yourself:
+Each engine is an optional peer dependency — install the one you use:
 
 ```bash
-pnpm add shiki
+pnpm add shiki                # for createShikiHighlighter
+pnpm add @tanstack/highlight  # for createTanstackHighlighter
 ```
 
-## Wire It Up
+## Wire It Up — TanStack Highlight
 
-Import only the languages and themes you need — each is a separate ESM module, and **only what you import is bundled**. Build a highlighter, register it, then map `ShikiCode` to the `code` renderer:
+Import only the languages you need (each is a separate ESM module), build a highlighter, register it, and map `HighlightedCode` to the `code` renderer. TanStack emits semantic classes only, so also emit a theme stylesheet:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import {
+        createTanstackHighlighter,
+        HighlightedCode,
+        setCodeHighlighter
+    } from '@humanspeak/svelte-markdown/extensions/tanstack-highlight'
+    import { ts } from '@tanstack/highlight/languages/ts'
+    import { json } from '@tanstack/highlight/languages/json'
+    import { createThemeCss } from '@tanstack/highlight/theme'
+    import githubDark from '@tanstack/highlight/themes/github-dark'
+    import githubLight from '@tanstack/highlight/themes/github-light'
+
+    // Register once — every HighlightedCode instance resolves this singleton.
+    setCodeHighlighter(createTanstackHighlighter({ languages: [ts, json] }))
+
+    // Colors live in CSS variables; `darkSelector` must match how your app
+    // toggles dark mode (`html.dark`, `.dark`, `[data-theme="dark"]`, …).
+    const themeCss = createThemeCss({
+        light: githubLight,
+        dark: githubDark,
+        darkSelector: 'html.dark'
+    })
+
+    const source = `
+\`\`\`ts
+const answer: number = 42
+console.log(answer)
+\`\`\`
+`
+</script>
+
+<svelte:head>
+    {@html `<style>${themeCss}</style>`}
+</svelte:head>
+
+<SvelteMarkdown {source} renderers={{ code: HighlightedCode }} />
+```
+
+Language **aliases** are resolved by the engine — registering `ts` also matches `typescript`. Output looks like:
+
+```html
+<pre class="th-code th-code--ts" data-language="ts"><code><span class="th-token th-keyword">const</span> answer: <span class="th-token th-type">number</span> = <span class="th-token th-number">42</span></code></pre>
+```
+
+Style the block background with `--th-background` and the base text color with `--th-token`; both come from the theme stylesheet.
+
+### Unregistered Languages
+
+By default an unregistered `lang` renders through the engine's own plaintext path, so the block keeps the `th-code` wrapper and your theme's background. If you would rather get the shared escaped fallback (a bare `<pre class="th-code th-code--fallback" data-lang="…">`), pass `plaintextFallback: false`:
+
+```ts
+createTanstackHighlighter({ languages: [ts], plaintextFallback: false })
+```
+
+Either way the untrusted `lang` never reaches markup unescaped: the engine normalizes unknown values to `plaintext`, and the fallback escapes it into `data-lang`.
+
+## Wire It Up — Shiki
+
+Import only the languages and themes you need, build a highlighter, register it, and map the renderer:
 
 ```svelte
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import {
         createShikiHighlighter,
-        ShikiCode,
-        setShikiHighlighter
+        HighlightedCode,
+        setCodeHighlighter
     } from '@humanspeak/svelte-markdown/extensions/shiki'
     import js from 'shiki/langs/javascript.mjs'
     import ts from 'shiki/langs/typescript.mjs'
     import githubDark from 'shiki/themes/github-dark.mjs'
 
-    // Register once — every ShikiCode instance resolves this singleton.
-    setShikiHighlighter(
+    setCodeHighlighter(
         createShikiHighlighter({ langs: [js, ts], themes: [githubDark] })
     )
 
@@ -68,36 +170,10 @@ console.log(answer)
 `
 </script>
 
-<SvelteMarkdown {source} renderers={{ code: ShikiCode }} />
+<SvelteMarkdown {source} renderers={{ code: HighlightedCode }} />
 ```
 
-Language **aliases** come for free — registering `javascript` also matches `js`, `cjs`, and `mjs`, so a ` ```js ` fence highlights without registering a separate language.
-
-### Choosing How to Inject the Highlighter
-
-`ShikiCode` resolves its highlighter in priority order:
-
-1. An explicit `highlighter` **prop** — only reachable if you wrap `ShikiCode` in your own component. Use it as an escape hatch.
-2. A Svelte **context** set under `SHIKI_CONTEXT_KEY` by an ancestor of `<SvelteMarkdown>`. Use this when you need per-subtree themes or SSR request isolation (multiple themes on one page, or a per-request highlighter on the server).
-3. The module **singleton** set via `setShikiHighlighter`. The simplest default for an app with a single global theme.
-
-```svelte
-<script lang="ts">
-    import { setContext } from 'svelte'
-    import { createShikiHighlighter, SHIKI_CONTEXT_KEY } from '@humanspeak/svelte-markdown/extensions/shiki'
-    import ts from 'shiki/langs/typescript.mjs'
-    import githubLight from 'shiki/themes/github-light.mjs'
-
-    setContext(
-        SHIKI_CONTEXT_KEY,
-        createShikiHighlighter({ langs: [ts], themes: [githubLight] })
-    )
-</script>
-```
-
-## Theme Selection
-
-Pass every theme you want available in `themes`, and pick the active one with `theme` (it must match one of the loaded theme names). When omitted, the first loaded theme is used:
+Language **aliases** come for free — registering `javascript` also matches `js`, `cjs`, and `mjs`. Shiki inlines theme colors per token, so no stylesheet is needed; pass every theme you want available in `themes` and pick the active one with `theme`:
 
 ```ts
 createShikiHighlighter({
@@ -107,41 +183,72 @@ createShikiHighlighter({
 })
 ```
 
+### Backward-Compatible Names
+
+The `extensions/shiki` subpath still exports `ShikiCode`, `SHIKI_CONTEXT_KEY`, `setShikiHighlighter`, `getShikiHighlighter`, and the `ShikiHighlighter` type. They are aliases: `ShikiCode` **is** `HighlightedCode`, `SHIKI_CONTEXT_KEY` is the same symbol as `HIGHLIGHT_CONTEXT_KEY`, and the setters write the same singleton. Existing code keeps working; new code should use the `extensions/highlight` names. One visible change: when **no highlighter is configured at all**, the renderer's fallback `<pre>` now carries the engine-agnostic class `highlight-fallback` instead of `shiki-fallback`. The Shiki factory's own unregistered-language fallback is unchanged (`shiki-fallback`).
+
+## Choosing How to Inject the Highlighter
+
+`HighlightedCode` resolves its highlighter in priority order:
+
+1. An explicit `highlighter` **prop** — only reachable if you wrap `HighlightedCode` in your own component. Use it as an escape hatch.
+2. A Svelte **context** set under `HIGHLIGHT_CONTEXT_KEY` by an ancestor of `<SvelteMarkdown>`. Use this when you need per-subtree engines or themes, or SSR request isolation (a per-request highlighter on the server).
+3. The module **singleton** set via `setCodeHighlighter`. The simplest default for an app with a single engine and theme.
+
+```svelte
+<script lang="ts">
+    import { setContext } from 'svelte'
+    import { HIGHLIGHT_CONTEXT_KEY } from '@humanspeak/svelte-markdown/extensions/highlight'
+    import { createTanstackHighlighter } from '@humanspeak/svelte-markdown/extensions/tanstack-highlight'
+    import { ts } from '@tanstack/highlight/languages/ts'
+
+    setContext(HIGHLIGHT_CONTEXT_KEY, createTanstackHighlighter({ languages: [ts] }))
+</script>
+```
+
+Because both engines produce the same `CodeHighlighter`, the [side-by-side demo](/examples/highlight-engines) runs Shiki in one subtree and TanStack in another with no singleton cross-talk — each pane just sets its own context.
+
 ## Unregistered Languages and Failures
 
-Highlighting must never throw mid-stream — an exception on a partially-streamed fence would tear down the render. So for an **unregistered or empty** language, and for **any per-block highlighting failure**, `ShikiCode` degrades to an escaped fallback instead of throwing:
+Highlighting must never throw mid-stream — an exception on a partially-streamed fence would tear down the render. So for an **unregistered or empty** language, and for **any per-block highlighting failure**, every factory degrades to an escaped fallback instead of throwing:
 
 ```html
 <pre class="shiki-fallback" data-lang="rust"><code>fn main() {}</code></pre>
 ```
 
-The code text is HTML-escaped and the (untrusted) `lang` is emitted **only** as an escaped `data-lang` attribute — never interpolated as raw markup. Style `.shiki-fallback` to match your registered-language blocks.
+The code text is HTML-escaped and the (untrusted) `lang` is emitted **only** as an escaped `data-lang` attribute — never interpolated as raw markup. Style `.shiki-fallback`, `.th-code--fallback`, and `.highlight-fallback` to match your registered-language blocks.
+
+## Streaming Behavior
+
+`html` inside `HighlightedCode` is `$derived` purely from `(text, lang)` and the resolved highlighter, so a **completed** fence is never re-highlighted as later prose streams in. An **open** fence is re-highlighted on every flush because its text changes; that per-flush cost is where the two engines differ most. Watch the `calls` and `last` counters in the [side-by-side demo](/examples/highlight-engines): both stop climbing the moment a block closes.
 
 ## Security — the `{@html}` Sink
 
-`ShikiCode` injects the highlighter's HTML string via `{@html}`, the same sink `KatexRenderer` and `MermaidRenderer` already use. The trust model is the same, and slightly stronger:
+`HighlightedCode` injects the highlighter's HTML string via `{@html}`, the same sink `KatexRenderer` and `MermaidRenderer` already use. The trust model is the same, and slightly stronger:
 
-- **Code text** is tokenized and escaped by Shiki (it emits `&#x3C;` for `<`), so user- or agent-supplied code content is never live markup. The fallback path independently escapes the code text.
-- **The `lang` (fenced info string) is untrusted** — in this package's headline agent/LLM-streaming use case it is attacker-influenced. The registered path passes `lang` to Shiki only as a lookup key (never into markup); the fallback path **escapes, never interpolates** it.
+- **Code text** is tokenized and escaped by the engine (Shiki emits `&#x3C;`, TanStack emits `&lt;`), so user- or agent-supplied code content is never live markup. The fallback path independently escapes the code text.
+- **The `lang` (fenced info string) is untrusted** — in this package's headline agent/LLM-streaming use case it is attacker-influenced. Shiki uses it only as a lookup key; TanStack normalizes unknown values to `plaintext`; the fallback path **escapes, never interpolates** it. Adversarial strings like `"><img src=x onerror=alert(1)>` are covered by tests on every path.
 
-Net: the `{@html}` sink only ever receives Shiki-generated or explicitly-escaped markup — the same trust class as the existing KaTeX/Mermaid renderers. Highlighting does not replace HTML sanitization; keep your usual [security](/docs/advanced/security) posture for the rest of the document.
+Net: the `{@html}` sink only ever receives engine-generated or explicitly-escaped markup. Highlighting does not replace HTML sanitization; keep your usual [security](/docs/advanced/security) posture for the rest of the document.
 
 ## Bundle Size — Why It's Opt-in
 
-A highlighter with the pure-JS engine plus two languages (js, ts) and one theme (github-dark) adds roughly **85 KB gzip** (~516 KB minified), dominated by the TextMate grammars and the regex engine. That is far larger than the core package, which is exactly why highlighting is opt-in:
+Both engines are opt-in for the same reason: the core `SvelteMarkdown` bundle must stay engine-free, and it does — enforced by `scripts/tree-shaking.mjs` and covered on the [Tree Shaking](/docs/advanced/tree-shaking) page.
 
-- The cost lands **only** when you import and construct a highlighter with `createShikiHighlighter`. The core `SvelteMarkdown` bundle stays completely shiki-free — enforced by `scripts/tree-shaking.mjs`, and covered on the [Tree Shaking](/docs/advanced/tree-shaking) page.
-- Importing `ShikiCode` **without** building a highlighter pulls in nothing from Shiki (the renderer only depends on the escaped fallback).
-- Import narrowly: every extra `shiki/langs/*` and `shiki/themes/*` you add is bundled. Register only the languages your content actually uses.
+- Importing `HighlightedCode` (from any subpath) **without** building a highlighter pulls in nothing from either engine.
+- The cost lands **only** when you construct a highlighter. Shiki with the JS engine, `ts`/`js`/`json`, and one theme is about **87 KB gzip**; TanStack with the same three languages is about **4.2 KB gzip**.
+- The engines never leak into each other: the Shiki factory bundles nothing from TanStack and vice versa.
+- Import narrowly: every extra grammar, language, or theme you import is bundled. Register only what your content uses.
 
-## JS Engine vs. Oniguruma
+## JS Engine vs. Oniguruma (Shiki only)
 
-The default pure-JavaScript regex engine has **no WASM**, which keeps SSR trivial (the sync core server-renders fully-highlighted markup with no asset or loader concerns) — the right default for most apps. Its tradeoff is per-block cost: highlighting is roughly linear at ~1.2–1.7 ms per line, so a large block being actively streamed can exceed a single frame. Completed blocks are memoized (`html` is `$derived` from `(text, lang)`), so they are not re-highlighted as later prose streams in. For highlight-heavy, client-rendered apps, Shiki's **oniguruma-WASM** engine is ~2.5× faster per block and is still streaming-safe (the WASM loads once at setup; per-block highlighting stays synchronous) — at the cost of shipping a WASM asset and an async setup step.
+Shiki's default pure-JavaScript regex engine has **no WASM**, which keeps SSR trivial (the sync core server-renders fully-highlighted markup with no asset or loader concerns) — the right default for most apps. Its tradeoff is per-block cost: highlighting is roughly linear at ~1.2–1.7 ms per line, so a large block being actively streamed can exceed a single frame. For highlight-heavy, client-rendered apps, Shiki's **oniguruma-WASM** engine is ~2.5× faster per block and is still streaming-safe (the WASM loads once at setup; per-block highlighting stays synchronous) — at the cost of shipping a WASM asset and an async setup step. TanStack Highlight has no engine choice to make; it is already synchronous and dependency-free.
 
 ## Related
 
+- [Highlight Engines Side-by-Side](/examples/highlight-engines) -- stream one response through both engines with live timings
+- [Shiki Interactive Demo](/examples/shiki) -- Shiki with fallback and live editing
 - [Marked Extensions](/docs/advanced/marked-extensions) -- KaTeX, Mermaid, alerts, and footnotes via the `extensions` prop
 - [LLM Streaming](/docs/advanced/llm-streaming) -- why synchronous rendering keeps streaming enabled
-- [Tree Shaking](/docs/advanced/tree-shaking) -- how the core bundle stays shiki-free
+- [Tree Shaking](/docs/advanced/tree-shaking) -- how the core bundle stays engine-free
 - [Security](/docs/advanced/security) -- sanitization defaults and the `{@html}` trust model
-- [Shiki Interactive Demo](/examples/shiki) -- try live highlighting with fallback and streaming

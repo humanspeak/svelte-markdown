@@ -1,5 +1,5 @@
 /**
- * SPIKE — streaming-compatible Shiki syntax highlighting.
+ * Streaming-compatible Shiki engine.
  *
  * This module wraps Shiki's **synchronous** core highlighter
  * ({@link createHighlighterCoreSync}) with the pure-JavaScript regex engine so
@@ -7,6 +7,10 @@
  * `await`. That is the property that keeps the streaming diff path intact: the
  * `code` renderer stays synchronous, so `SvelteMarkdown`'s `hasAsyncExtension`
  * guard never trips and `streaming` is never silently disabled.
+ *
+ * The factory produces the shared {@link CodeHighlighter} contract consumed by
+ * the engine-agnostic `HighlightedCode` renderer (re-exported from this subpath
+ * as `ShikiCode` for backward compatibility).
  *
  * The consumer supplies explicitly-imported languages and themes, e.g.
  *
@@ -35,34 +39,18 @@ import {
     type ThemeRegistrationAny
 } from 'shiki/core'
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
+import { renderFallback, type CodeHighlighter } from '../highlight/codeHighlighter.js'
+
+export { escapeHtml } from '../highlight/codeHighlighter.js'
 
 /**
- * Escape the five HTML-significant characters so untrusted text can never break
- * out of its element or attribute context. Used by the unregistered-language
- * fallback, which must **escape, never interpolate** its inputs — the fenced
- * code `lang` is untrusted (agent/LLM-streamed) input in this package's
- * headline use case.
+ * Backward-compatible alias for the shared {@link CodeHighlighter} contract.
+ * New code should import `CodeHighlighter` from `extensions/highlight`.
  */
-export const escapeHtml = (value: string): string =>
-    value
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;')
+export type ShikiHighlighter = CodeHighlighter
 
-/** A minimal, synchronous highlighter facade consumed by `ShikiCode.svelte`. */
-export interface ShikiHighlighter {
-    /**
-     * Highlight `code` for `lang`, returning an HTML string. For an
-     * unregistered (or empty) `lang`, returns an escaped `<pre><code>` fallback
-     * instead of throwing — critical mid-stream, where an exception would tear
-     * down the render.
-     */
-    highlight(_code: string, _lang: string): string
-    /** Whether `lang` (name or alias) is registered on the highlighter. */
-    hasLang(_lang: string): boolean
-}
+/** Class used by this engine's escaped fallback `<pre>`. */
+export const SHIKI_FALLBACK_CLASS = 'shiki-fallback'
 
 export interface CreateShikiHighlighterOptions {
     /** Explicitly-imported Shiki languages (e.g. `import js from 'shiki/langs/javascript.mjs'`). */
@@ -77,25 +65,18 @@ export interface CreateShikiHighlighterOptions {
 }
 
 /**
- * Escaped, dependency-free fallback for unregistered languages. Deliberately
- * does **not** interpolate `lang` as raw markup; when present it is emitted as
- * an escaped `data-lang` attribute value only.
- */
-const renderFallback = (code: string, lang: string): string => {
-    const langAttr = lang ? ` data-lang="${escapeHtml(lang)}"` : ''
-    return `<pre class="shiki-fallback"${langAttr}><code>${escapeHtml(code)}</code></pre>`
-}
-
-/**
- * Build a synchronous {@link ShikiHighlighter} from explicit languages/themes.
+ * Build a synchronous {@link CodeHighlighter} from explicit languages/themes.
+ *
+ * For an **unregistered or empty** `lang`, and for any per-block highlighting
+ * failure, the result degrades to an escaped `<pre class="shiki-fallback">`
+ * rather than throwing mid-stream. The untrusted `lang` is emitted only as an
+ * escaped `data-lang` attribute.
  *
  * @throws If `createHighlighterCoreSync` itself fails (e.g. a malformed
  *   language registration) — construction is a one-time setup concern, not a
  *   per-block/mid-stream one, so it is allowed to surface.
  */
-export const createShikiHighlighter = (
-    options: CreateShikiHighlighterOptions
-): ShikiHighlighter => {
+export const createShikiHighlighter = (options: CreateShikiHighlighterOptions): CodeHighlighter => {
     const highlighter = createHighlighterCoreSync({
         engine: createJavaScriptRegexEngine(),
         // Shiki's sync-mode types demand already-resolved registrations, but its
@@ -114,14 +95,14 @@ export const createShikiHighlighter = (
         hasLang: (lang: string): boolean => loadedLangs.has(lang),
         highlight(code: string, lang: string): string {
             if (!lang || !loadedLangs.has(lang)) {
-                return renderFallback(code, lang)
+                return renderFallback(code, lang, SHIKI_FALLBACK_CLASS)
             }
             try {
                 return highlighter.codeToHtml(code, { lang, theme })
             } catch {
                 // Defensive: any per-block failure degrades to escaped text
                 // rather than throwing mid-stream.
-                return renderFallback(code, lang)
+                return renderFallback(code, lang, SHIKI_FALLBACK_CLASS)
             }
         }
     }

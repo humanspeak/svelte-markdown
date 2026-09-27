@@ -123,7 +123,72 @@ const cases = [
             import { createShikiHighlighter } from '@humanspeak/svelte-markdown/extensions/shiki'
             console.log(createShikiHighlighter)
         `,
-        expectInitialPresent: ['node_modules/@shikijs']
+        expectInitialPresent: ['node_modules/@shikijs'],
+        expectAllMissing: ['node_modules/@tanstack/highlight']
+    },
+    {
+        // The core component must stay free of TanStack Highlight exactly as
+        // it stays free of Shiki — highlighting is opt-in per engine.
+        name: 'core component stays tanstack-highlight-free',
+        source: `
+            import SvelteMarkdown from '@humanspeak/svelte-markdown/SvelteMarkdown'
+            console.log(SvelteMarkdown)
+        `,
+        expectInitialMissing: ['node_modules/@tanstack/highlight'],
+        expectAllMissing: ['node_modules/@tanstack/highlight']
+    },
+    {
+        // The extensions barrel must never reach TanStack Highlight either —
+        // same optional-peer invariant as Shiki (see barrel-optional-deps.test).
+        name: 'extensions barrel stays tanstack-highlight-free',
+        source: `
+            import { markedAlert } from '@humanspeak/svelte-markdown/extensions'
+            console.log(markedAlert().extensions?.length)
+        `,
+        expectInitialMissing: ['node_modules/@tanstack/highlight'],
+        expectAllMissing: ['node_modules/@tanstack/highlight']
+    },
+    {
+        // The engine-agnostic renderer subpath pulls in NO engine: consumers
+        // can import HighlightedCode + the context key without installing
+        // either optional peer.
+        name: 'shared highlight renderer stays engine-free',
+        source: `
+            import { HighlightedCode, setCodeHighlighter } from '@humanspeak/svelte-markdown/extensions/highlight'
+            console.log(HighlightedCode, setCodeHighlighter)
+        `,
+        expectInitialMissing: [
+            'node_modules/shiki',
+            'node_modules/@shikijs',
+            'node_modules/@tanstack/highlight'
+        ],
+        expectAllMissing: [
+            'node_modules/shiki',
+            'node_modules/@shikijs',
+            'node_modules/@tanstack/highlight'
+        ]
+    },
+    {
+        // Importing only the renderer from the tanstack subpath must not bundle
+        // the engine — mirrors 'shiki renderer stays shiki-free'.
+        name: 'tanstack-highlight renderer stays engine-free',
+        source: `
+            import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/tanstack-highlight'
+            console.log(HighlightedCode)
+        `,
+        expectInitialMissing: ['node_modules/@tanstack/highlight', 'node_modules/shiki'],
+        expectAllMissing: ['node_modules/@tanstack/highlight', 'node_modules/shiki']
+    },
+    {
+        // Opting into the TanStack factory bundles its core and nothing from
+        // Shiki — the two engines never leak into each other.
+        name: 'tanstack-highlight highlighter factory',
+        source: `
+            import { createTanstackHighlighter } from '@humanspeak/svelte-markdown/extensions/tanstack-highlight'
+            console.log(createTanstackHighlighter)
+        `,
+        expectInitialPresent: ['node_modules/@tanstack/highlight'],
+        expectAllMissing: ['node_modules/shiki', 'node_modules/@shikijs']
     }
 ]
 
