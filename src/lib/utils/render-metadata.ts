@@ -1,6 +1,6 @@
 import type { SvelteMarkdownOptions } from '$lib/types.js'
 import type { Token, TokensList } from '$lib/utils/markdown-parser.js'
-import Slugger from 'github-slugger'
+import Slugger, { slug as slugBase } from 'github-slugger'
 
 /**
  * Per-SvelteMarkdown-instance render metadata.
@@ -20,10 +20,9 @@ import Slugger from 'github-slugger'
  * key from that nested identity; otherwise root and nested tokens both fall
  * through to object identity.
  *
- * Heading ids are recomputed in document order every pass because duplicate
- * heading slugs are global across nesting boundaries. That walk is intentional:
- * it resets slugger state for the render pass before any Heading component
- * renders.
+ * Heading ids share one slugger across nesting boundaries. An undo log ordered
+ * by top-level token index lets streaming passes rewind only the divergent tail.
+ * Full renders and configuration changes reset that state and walk all headings.
  */
 type RenderMetadataNode = Record<string, unknown> & {
     raw?: string
@@ -36,11 +35,11 @@ type RenderMetadataNode = Record<string, unknown> & {
     rows?: unknown
 }
 
-type SluggerOccurrences = Slugger['occurrences']
-
-interface PreparedHeadingSnapshot {
-    offset: number
-    occurrences: SluggerOccurrences
+interface HeadingUndoEntry {
+    rootIndex: number
+    base: string
+    result: string
+    previousCount: number | undefined
 }
 
 // A `Pick<>` utility type, not an object-literal shape: an empty
@@ -88,24 +87,8 @@ const getNodeSourceLength = (node: RenderMetadataNode) => {
 }
 
 /**
- * Shallow-clones a github-slugger `occurrences` map so a dedup snapshot can be
- * taken or restored without aliasing the live slugger's mutable state.
- *
- * @param occurrences - The slugger's `occurrences` record (`slug → count`).
- * @returns A new object with the same `slug → count` entries.
- * @example
- * ```ts
- * const snapshot = cloneSluggerOccurrences(slugger.occurrences)
- * slugger.slug('intro') // does not mutate `snapshot`
- * ```
- */
-const cloneSluggerOccurrences = (occurrences: SluggerOccurrences): SluggerOccurrences => ({
-    ...occurrences
-})
-
-/**
- * Captures the heading-id options that affect slug output, so a stored dedup
- * snapshot can be invalidated when they change between passes.
+ * Captures the heading-id options that affect slug output, so stored dedup
+ * state can be invalidated when they change between passes.
  *
  * @param options - The active {@link SvelteMarkdownOptions}.
  * @returns The `headerIds`/`headerPrefix` pair that identifies the slugger's
@@ -130,7 +113,7 @@ const getHeadingSluggerSignature = (options: SvelteMarkdownOptions): HeadingSlug
  * @example
  * ```ts
  * if (headingSluggerSignaturesMatch(preparedHeadingSignature, current)) {
- *     // safe to restore the occurrences snapshot
+ *     // safe to rewind the heading undo log
  * }
  * ```
  */
@@ -166,9 +149,9 @@ const headingSluggerSignaturesMatch = (
 export const createRenderMetadata = (): RenderMetadata => {
     const renderKeys = new WeakMap<object, unknown>()
     const headingIds = new WeakMap<object, string | undefined>()
-    const sourceOffsets = new WeakMap<object, number>()
-    let preparedHeadingNodes: RenderMetadataNode[] = []
-    let preparedHeadingSnapshots: Array<PreparedHeadingSnapshot | undefined> = []
+    const headingSlugger = new Slugger()
+    const headingUndoLog: HeadingUndoEntry[] = []
+    let headingStateReusable = false
     let preparedHeadingSignature: HeadingSluggerSignature | undefined
     let previousSourceLessRoots: SourceLessRootRecord[] = []
 
@@ -188,12 +171,6 @@ export const createRenderMetadata = (): RenderMetadata => {
         return `${index}:${String(node)}`
     }
 
-    // Source offsets are recorded as numbers when keys are assigned, so the
-    // streaming heading-seed loop can read them without re-parsing the `src:`
-    // key string on every prior heading each flush.
-    const getSourceOffset = (node: RenderMetadataNode): number | undefined =>
-        sourceOffsets.get(node)
-
     const assignSequentialSourceKeys = (
         nodes: RenderMetadataNode[] | undefined,
         absoluteOffset = 0,
@@ -208,7 +185,6 @@ export const createRenderMetadata = (): RenderMetadata => {
             const node = nodes[index]
             const spanLength = getNodeSourceLength(node)
             const nodeOffset = absoluteOffset + cursor
-            sourceOffsets.set(node, nodeOffset)
 
             if (spanLength === 0) {
                 setRenderKey(node, `src:${nodeOffset}:zero:${index}`)
@@ -330,231 +306,67 @@ export const createRenderMetadata = (): RenderMetadata => {
     const assignHeadingIds = (
         nodes: RenderMetadataNode[] | undefined,
         options: SvelteMarkdownOptions,
-        slugger: Slugger,
-        nextHeadingNodes: RenderMetadataNode[],
-        nextHeadingSnapshots: Array<PreparedHeadingSnapshot | undefined>,
-        startIndex = 0
+        startIndex = 0,
+        rootIndex?: number
     ) => {
         if (!nodes) return
 
         for (let index = startIndex; index < nodes.length; index++) {
             const node = nodes[index]
+            const headingRootIndex = rootIndex ?? index
             if (node.type === 'heading') {
-                seedHeadingSlugger(node, options, slugger)
-                rememberPreparedHeading(node, slugger, nextHeadingNodes, nextHeadingSnapshots)
+                prepareHeadingId(node, options, headingRootIndex)
             }
 
-            assignHeadingIds(
-                asNodeArray(node.tokens),
-                options,
-                slugger,
-                nextHeadingNodes,
-                nextHeadingSnapshots
-            )
-            assignHeadingIds(
-                asNodeArray(node.items),
-                options,
-                slugger,
-                nextHeadingNodes,
-                nextHeadingSnapshots
-            )
-            assignHeadingIds(
-                asNodeArray(node.header),
-                options,
-                slugger,
-                nextHeadingNodes,
-                nextHeadingSnapshots
-            )
+            assignHeadingIds(asNodeArray(node.tokens), options, 0, headingRootIndex)
+            assignHeadingIds(asNodeArray(node.items), options, 0, headingRootIndex)
+            assignHeadingIds(asNodeArray(node.header), options, 0, headingRootIndex)
             const rows = asNodeArray(node.rows)
             if (rows) {
                 for (const row of rows) {
-                    assignHeadingIds(
-                        asNodeArray(row),
-                        options,
-                        slugger,
-                        nextHeadingNodes,
-                        nextHeadingSnapshots
-                    )
+                    assignHeadingIds(asNodeArray(row), options, 0, headingRootIndex)
                 }
             }
         }
     }
 
-    const seedHeadingSlugger = (
+    const prepareHeadingId = (
         node: RenderMetadataNode,
         options: SvelteMarkdownOptions,
-        slugger: Slugger
+        rootIndex: number
     ) => {
-        headingIds.set(
-            node,
-            options.headerIds && typeof node.text === 'string'
-                ? `${options.headerPrefix}${slugger.slug(node.text)}`
-                : undefined
-        )
-    }
-
-    /**
-     * Records a just-slugged heading and captures the slugger's `occurrences`
-     * state immediately after it, so a later append-only pass can restore dedup
-     * state at this exact boundary instead of replaying every prior heading. A
-     * heading with no source offset stores an `undefined` snapshot, which forces
-     * the safe replay path on the next pass.
-     *
-     * @param node - The heading node whose id was just assigned.
-     * @param slugger - The slugger whose post-slug `occurrences` is snapshotted.
-     * @param nextHeadingNodes - Ordered heading list being built for this pass;
-     *   `node` is appended.
-     * @param nextHeadingSnapshots - Parallel snapshot list; the snapshot (or
-     *   `undefined`) for `node` is appended in lockstep with `nextHeadingNodes`.
-     * @returns Nothing; both arrays are mutated in place.
-     * @example
-     * ```ts
-     * seedHeadingSlugger(node, options, slugger)
-     * rememberPreparedHeading(node, slugger, nextHeadingNodes, nextHeadingSnapshots)
-     * ```
-     */
-    const rememberPreparedHeading = (
-        node: RenderMetadataNode,
-        slugger: Slugger,
-        nextHeadingNodes: RenderMetadataNode[],
-        nextHeadingSnapshots: Array<PreparedHeadingSnapshot | undefined>
-    ) => {
-        nextHeadingNodes.push(node)
-
-        const headingOffset = getSourceOffset(node)
-        nextHeadingSnapshots.push(
-            headingOffset === undefined
-                ? undefined
-                : {
-                      offset: headingOffset,
-                      occurrences: cloneSluggerOccurrences(slugger.occurrences)
-                  }
-        )
-    }
-
-    /**
-     * Counts the leading prepared headings that fall strictly before
-     * `startOffset` and whose stored snapshot offsets still line up — i.e. the
-     * stable prefix a restore may reuse. Returns `undefined` if any prepared
-     * heading lacks a source offset or its snapshot has drifted, signalling the
-     * caller to fall back to full replay.
-     *
-     * @param startOffset - The parser's divergence offset for this append pass.
-     * @returns The number of reusable prefix headings, or `undefined` when the
-     *   prefix cannot be trusted and replay is required.
-     * @example
-     * ```ts
-     * const prefixCount = getPreparedHeadingPrefixCount(startOffset)
-     * if (prefixCount === undefined) return false // caller replays
-     * ```
-     */
-    const getPreparedHeadingPrefixCount = (startOffset: number) => {
-        let prefixCount = 0
-
-        for (const heading of preparedHeadingNodes) {
-            const headingOffset = getSourceOffset(heading)
-            if (headingOffset === undefined) return undefined
-            if (headingOffset >= startOffset) break
-
-            const snapshot = preparedHeadingSnapshots[prefixCount]
-            if (!snapshot || snapshot.offset !== headingOffset) return undefined
-
-            prefixCount++
+        if (!options.headerIds || typeof node.text !== 'string') {
+            headingIds.set(node, undefined)
+            return
         }
 
-        return prefixCount
+        const base = slugBase(node.text)
+        const previousCount = headingSlugger.occurrences[base]
+        const result = headingSlugger.slug(node.text)
+        headingIds.set(node, `${options.headerPrefix}${result}`)
+
+        headingUndoLog.push({ rootIndex, base, result, previousCount })
     }
 
     /**
-     * Fast path for append-only passes: restores the slugger's `occurrences`
-     * from the snapshot taken at the stable-prefix boundary and carries the
-     * prefix headings forward without re-slugging them, making heading-id dedup
-     * O(tail) instead of O(H). Bails (returning `false`) when the option
-     * signature changed or the prefix cannot be trusted, so the caller replays.
-     *
-     * @param slugger - The fresh slugger to seed via snapshot restore.
-     * @param options - The active options, checked against the stored signature.
-     * @param startOffset - The parser's divergence offset for this pass.
-     * @param nextHeadingNodes - Heading list being built; the reused prefix is
-     *   appended.
-     * @param nextHeadingSnapshots - Parallel snapshot list; the prefix snapshots
-     *   are appended in lockstep.
-     * @returns `true` if the snapshot was restored (prefix reused); `false` if
-     *   the caller must fall back to {@link replayPreparedHeadingPrefix}.
-     * @example
-     * ```ts
-     * const restored = restorePreparedHeadingSluggerSnapshot(
-     *     slugger, options, startOffset, nextHeadingNodes, nextHeadingSnapshots
-     * )
-     * if (!restored) replayPreparedHeadingPrefix(...)
-     * ```
+     * github-slugger 2.x creates one final id and advances only the base's
+     * counter (possibly several times when suffixes are already occupied).
+     * Undo in reverse order: later headings may themselves use a generated id
+     * as their base. Restore the exact saved counter, not count minus one.
+     * Revisit this invariant when upgrading github-slugger's implementation.
      */
-    const restorePreparedHeadingSluggerSnapshot = (
-        slugger: Slugger,
-        options: SvelteMarkdownOptions,
-        startOffset: number,
-        nextHeadingNodes: RenderMetadataNode[],
-        nextHeadingSnapshots: Array<PreparedHeadingSnapshot | undefined>
-    ) => {
-        const currentSignature = getHeadingSluggerSignature(options)
-        if (!headingSluggerSignaturesMatch(preparedHeadingSignature, currentSignature)) {
-            return false
-        }
-
-        const prefixCount = getPreparedHeadingPrefixCount(startOffset)
-        if (prefixCount === undefined) return false
-
-        nextHeadingNodes.push(...preparedHeadingNodes.slice(0, prefixCount))
-        nextHeadingSnapshots.push(...preparedHeadingSnapshots.slice(0, prefixCount))
-
-        if (prefixCount === 0) return true
-
-        const snapshot = preparedHeadingSnapshots[prefixCount - 1]
-        if (!snapshot) return false
-
-        slugger.occurrences = cloneSluggerOccurrences(snapshot.occurrences)
-        return true
-    }
-
-    /**
-     * Safe fallback path: re-slugs every prepared heading strictly before
-     * `startOffset` to rebuild dedup state (the original O(H) behavior),
-     * repopulating the snapshot array as it goes so subsequent passes can use
-     * the fast restore path again. Used whenever
-     * {@link restorePreparedHeadingSluggerSnapshot} declines.
-     *
-     * @param slugger - The fresh slugger to re-seed by replay.
-     * @param options - The active options passed to `seedHeadingSlugger`.
-     * @param startOffset - The parser's divergence offset for this pass.
-     * @param nextHeadingNodes - Heading list being built; each replayed prefix
-     *   heading is appended.
-     * @param nextHeadingSnapshots - Parallel snapshot list, repopulated in
-     *   lockstep for future passes.
-     * @returns Nothing; both arrays and the slugger are mutated in place.
-     * @example
-     * ```ts
-     * if (!restored) {
-     *     replayPreparedHeadingPrefix(
-     *         slugger, options, startOffset, nextHeadingNodes, nextHeadingSnapshots
-     *     )
-     * }
-     * ```
-     */
-    const replayPreparedHeadingPrefix = (
-        slugger: Slugger,
-        options: SvelteMarkdownOptions,
-        startOffset: number,
-        nextHeadingNodes: RenderMetadataNode[],
-        nextHeadingSnapshots: Array<PreparedHeadingSnapshot | undefined>
-    ) => {
-        for (const heading of preparedHeadingNodes) {
-            const headingOffset = getSourceOffset(heading)
-            if (headingOffset === undefined || headingOffset >= startOffset) {
-                continue
+    const rewindHeadingIds = (startIndex: number) => {
+        let entry = headingUndoLog.at(-1)
+        // Source offsets can shift between parses (e.g. discarded duplicate
+        // reference definitions). The parser's unchanged top-level token prefix
+        // is the reuse boundary; every heading in a reprocessed root must undo.
+        while (entry && entry.rootIndex >= startIndex) {
+            delete headingSlugger.occurrences[entry.result]
+            if (entry.previousCount !== undefined) {
+                headingSlugger.occurrences[entry.base] = entry.previousCount
             }
-
-            seedHeadingSlugger(heading, options, slugger)
-            rememberPreparedHeading(heading, slugger, nextHeadingNodes, nextHeadingSnapshots)
+            headingUndoLog.pop()
+            entry = headingUndoLog.at(-1)
         }
     }
 
@@ -563,41 +375,29 @@ export const createRenderMetadata = (): RenderMetadata => {
         options: SvelteMarkdownOptions,
         preparation?: RenderPreparation
     ) => {
-        const slugger = new Slugger()
-        const nextHeadingNodes: RenderMetadataNode[] = []
-        const nextHeadingSnapshots: Array<PreparedHeadingSnapshot | undefined> = []
+        const signature = getHeadingSluggerSignature(options)
+        const { source, startIndex = 0 } = preparation ?? {}
+        const canReuse =
+            source !== undefined &&
+            startIndex > 0 &&
+            headingStateReusable &&
+            headingSluggerSignaturesMatch(preparedHeadingSignature, signature)
 
-        if (preparation?.source !== undefined && preparation.startOffset !== undefined) {
-            const restored = restorePreparedHeadingSluggerSnapshot(
-                slugger,
-                options,
-                preparation.startOffset,
-                nextHeadingNodes,
-                nextHeadingSnapshots
-            )
-
-            if (!restored) {
-                replayPreparedHeadingPrefix(
-                    slugger,
-                    options,
-                    preparation.startOffset,
-                    nextHeadingNodes,
-                    nextHeadingSnapshots
-                )
+        if (canReuse) {
+            rewindHeadingIds(startIndex)
+        } else {
+            headingSlugger.reset()
+            headingUndoLog.length = 0
+            headingStateReusable = source !== undefined
+            // A reset also visits the prefix. Refresh its offsets if the caller
+            // supplied a partial pass, e.g. after options or source mode changed.
+            if (source !== undefined && startIndex > 0) {
+                assignSequentialSourceKeys(nodes)
             }
         }
 
-        assignHeadingIds(
-            nodes,
-            options,
-            slugger,
-            nextHeadingNodes,
-            nextHeadingSnapshots,
-            preparation?.startIndex ?? 0
-        )
-        preparedHeadingNodes = nextHeadingNodes
-        preparedHeadingSnapshots = nextHeadingSnapshots
-        preparedHeadingSignature = getHeadingSluggerSignature(options)
+        assignHeadingIds(nodes, options, canReuse ? startIndex : 0)
+        preparedHeadingSignature = signature
     }
 
     return {

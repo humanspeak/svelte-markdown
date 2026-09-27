@@ -127,6 +127,14 @@ const x: number = 42
 \`\`\`
 `
 
+    // Large finished documents expose cumulative heading-history costs that
+    // short chat messages do not. Include duplicates to verify deduplication.
+    const generateHeadingHeavy = (count: number): string =>
+        Array.from(
+            { length: count },
+            (_, index) => `# ${index % 10 === 0 ? 'Overview' : `Section ${index}`}\n\n`
+        ).join('')
+
     const generateHtmlHeavy = (rows: number): string => {
         const out: string[] = ['# HTML Heavy Corpus\n']
         for (let i = 0; i < rows; i++) {
@@ -753,6 +761,15 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             scenarioLoafScriptMaxMs: observerSnap.loafScriptMaxMs
         }
 
+        if (label === 'parse-heading-heavy') {
+            const expected = collectExpectedHeadingIds(cold)
+            const headingIdMismatches = countHeadingIdMismatches(getRenderedHeadingIds(), expected)
+            stat = { ...stat, headingCount: expected.length, headingIdMismatches }
+            if (headingIdMismatches > 0) {
+                throw new Error(`parse-heading-heavy: ${headingIdMismatches} heading id mismatches`)
+            }
+        }
+
         scenario = `${label}-done`
     }
 
@@ -1374,6 +1391,12 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             onclick={() => runDocScenario('parse-realistic', generateRealistic(120))}
         >
             Parse realistic
+        </button>
+        <button
+            data-testid="parse-heading-heavy"
+            onclick={() => runDocScenario('parse-heading-heavy', generateHeadingHeavy(2_000))}
+        >
+            Parse 2,000 headings
         </button>
         <button
             data-testid="parse-50kb-overridden"
