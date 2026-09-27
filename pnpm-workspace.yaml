@@ -11,7 +11,7 @@ overrides:
 
 allowBuilds:
     '@humanspeak/docs-kit@git+https://github.com/humanspeak/docs-kit.git': true
-    '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/5d2dc04f47eff8df92a181dabdcf59bf2b1c94db': true
+    '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/47475084e800eba2b8eaf5d783b1b9bdf3f65278': true
     esbuild: true
     sharp: true
     workerd: true
