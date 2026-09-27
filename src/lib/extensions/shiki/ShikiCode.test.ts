@@ -22,7 +22,7 @@ import { afterEach, beforeEach, describe, expect, type Mock, test, vi } from 'vi
 import SvelteMarkdown from '../../SvelteMarkdown.svelte'
 import { tokenCache } from '../../utils/token-cache.js'
 import { createShikiHighlighter, type ShikiHighlighter } from './createShikiHighlighter.js'
-import ShikiCode from './ShikiCode.svelte'
+import { ShikiCode } from './index.js'
 import { setShikiHighlighter } from './shikiContext.js'
 
 /** A highlighter whose `highlight` is spied so tests can count invocations. */
@@ -120,7 +120,9 @@ describe('ShikiCode component', () => {
         const { container } = render(ShikiCode, {
             props: { lang: 'javascript', text: 'a < b & c' }
         })
-        expect(container.innerHTML).toContain('shiki-fallback')
+        // The unconfigured fallback is engine-agnostic (shared renderer), so it
+        // carries the shared class rather than the Shiki factory's.
+        expect(container.innerHTML).toContain('highlight-fallback')
         expect(container.innerHTML).toContain('a &lt; b &amp; c')
         expect(container.querySelector('span')).toBeNull()
     })

@@ -207,6 +207,11 @@ export const docsSections: NavSection[] = [
             { title: 'Marked Extensions', href: '/examples/marked-extensions', icon: Puzzle },
             { title: 'Mermaid Diagrams', href: '/examples/mermaid', icon: Workflow },
             { title: 'Syntax Highlighting', href: '/examples/shiki', icon: Highlighter },
+            {
+                title: 'Highlight Engines',
+                href: '/examples/highlight-engines',
+                icon: Highlighter
+            },
             { title: 'GitHub Alerts', href: '/examples/github-alerts', icon: TriangleAlert },
             { title: 'Footnotes', href: '/examples/footnotes', icon: Superscript },
             { title: 'Code Formatting', href: '/examples/code-formatting', icon: Code },

@@ -123,6 +123,13 @@
             tag: 'STREAMING',
             description:
                 'Watch a simulated agent stream mixed markdown and HTML — with a live log of every javascript: URL and on*= handler the sanitizer blocks.'
+        },
+        {
+            slug: 'highlight-engines',
+            title: 'Highlight Engines',
+            tag: 'STREAMING',
+            description:
+                'Stream one code-heavy response through Shiki and TanStack Highlight side by side with a single HighlightedCode renderer — live per-engine timings.'
         }
     ]
 

@@ -51,18 +51,41 @@ const collectPlainModuleGraph = (entry: string): Map<string, string[]> => {
     return graph
 }
 
-describe('extensions barrel optional-dependency invariant', () => {
-    it('never reaches a shiki import through its plain-JS module graph', () => {
-        const offenders = [...collectPlainModuleGraph(BARREL)]
-            .filter(([, specifiers]) =>
-                specifiers.some((s) => s === 'shiki' || s.startsWith('shiki/'))
-            )
-            .map(([file]) => file)
-        expect(offenders).toEqual([])
-    })
+/**
+ * Optional peer packages whose plain-JS imports must never be reachable from
+ * the barrel. Each highlighting engine statically imports its package from a
+ * `.ts` factory, so the same invariant applies to every engine subpath.
+ */
+const OPTIONAL_ENGINE_PACKAGES = ['shiki', '@tanstack/highlight']
 
-    it('does not re-export the shiki subpath', () => {
+const HIGHLIGHT_RENDERER = resolve(__dirname, 'highlight/index.ts')
+
+const reachesPackage = (graph: Map<string, string[]>, pkg: string): string[] =>
+    [...graph]
+        .filter(([, specifiers]) => specifiers.some((s) => s === pkg || s.startsWith(`${pkg}/`)))
+        .map(([file]) => file)
+
+describe('extensions barrel optional-dependency invariant', () => {
+    for (const pkg of OPTIONAL_ENGINE_PACKAGES) {
+        it(`never reaches a ${pkg} import through its plain-JS module graph`, () => {
+            expect(reachesPackage(collectPlainModuleGraph(BARREL), pkg)).toEqual([])
+        })
+    }
+
+    it('does not re-export the shiki or tanstack-highlight subpaths', () => {
         const barrelImports = importSpecifiers(readFileSync(BARREL, 'utf-8'))
         expect(barrelImports.filter((s) => s.includes('shiki'))).toEqual([])
+        expect(barrelImports.filter((s) => s.includes('tanstack'))).toEqual([])
     })
+})
+
+describe('shared highlight renderer optional-dependency invariant', () => {
+    // `extensions/highlight` is the engine-agnostic renderer subpath. It must
+    // stay free of every engine so consumers can import the renderer, context
+    // key, and singleton without installing either optional peer.
+    for (const pkg of OPTIONAL_ENGINE_PACKAGES) {
+        it(`never reaches a ${pkg} import from extensions/highlight`, () => {
+            expect(reachesPackage(collectPlainModuleGraph(HIGHLIGHT_RENDERER), pkg)).toEqual([])
+        })
+    }
 })
