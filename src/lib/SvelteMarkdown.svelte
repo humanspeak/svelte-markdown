@@ -84,6 +84,7 @@
         STREAM_MAX_OFFSET_GAP,
         type StreamingInputMode
     } from '$lib/utils/streaming-chunks.js'
+    import { profileStreamFlush } from '$lib/utils/stream-flush-profile.js'
     import { reuseStableTokenArray } from '$lib/utils/streaming-token-reuse.js'
 
     type StreamFlushHandle =
@@ -204,9 +205,7 @@
         return true
     }
 
-    const flushPendingStreamChanges = (forceNewParser = false) => {
-        cancelScheduledStreamFlush()
-
+    const runPendingStreamFlush = (forceNewParser: boolean) => {
         if (pendingStreamFullSource !== null) {
             const nextSource = pendingStreamFullSource
             pendingStreamFullSource = null
@@ -219,6 +218,17 @@
         if (!commitPendingAppendBuffer()) return
 
         applyStreamingSource(streamSourceBuffer, forceNewParser)
+    }
+
+    // Opt-in User Timing measure (`svelte-markdown:stream-flush`) around the
+    // parse + diff + state write. Off unless `globalThis.__svelteMarkdownProfile`
+    // is set; see stream-flush-profile.ts for what the measure does and does
+    // not cover.
+    const flushPendingStreamChanges = (forceNewParser = false) => {
+        cancelScheduledStreamFlush()
+        profileStreamFlush(() => runPendingStreamFlush(forceNewParser), {
+            sourceLength: streamSourceBuffer.length
+        })
     }
 
     const scheduleStreamFlush = () => {

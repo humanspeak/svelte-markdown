@@ -144,7 +144,7 @@
             "page": "vs-svelte-streamdown",
             "script": "scripts/stream-compare-bench.mjs",
             "command": "pnpm build && pnpm preview  (then, in another shell) pnpm perf:stream-compare",
-            "measures": "streaming perf claims on the page: 'Nx faster under burst backpressure', DOM-footprint element counts, p95/throughput",
+            "measures": "streaming perf claims on the page: per-frame main-thread work (total, p95, frames over 16.7 ms, growth) per corpus at one and four updates per frame, DOM-footprint element counts per corpus",
             "compares": {
                 "svelte-streamdown": "devDependency"
             },

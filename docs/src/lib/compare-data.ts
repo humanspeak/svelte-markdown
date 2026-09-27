@@ -95,16 +95,16 @@ export const competitors: Competitor[] = [
                 note: 'Both avoid needlessly parsing stable content. Svelte Markdown additionally coalesces bursts of incoming updates at the animation-frame boundary.'
             },
             {
-                name: 'Measured Streaming Performance',
-                us: 'Lower measured burst medians; ~60 frame-paced updates/s',
-                them: 'Higher measured burst medians; ~60 frame-paced updates/s',
-                note: 'Measured against svelte-streamdown 4.2.0 on 2026-09-22 in production Chromium 151: append-only cumulative-prop updates with animation, controls and highlighting off; two suites, each with one warmup and five measured iterations per renderer/scenario. Streamdown / Svelte Markdown median completion-time ratios: 4.47–5.03 for 10 KB tiny chunks (10,059 bytes, 16-character chunks); 4.79–5.65 for 50 KB small chunks (50,153 bytes, 64-character chunks); 7.13–9.09 for 200 KB medium chunks (200,237 bytes, 256-character chunks). KB sizes are minimum targets. With one 512-character update per frame over 50,153 bytes, both sustained about 60 updates/s (ours 60.274–60.315; Streamdown 60.438–60.629), with Streamdown slightly lower elapsed medians. These observations apply to these workloads, not pure parsing or imperative chunk ingestion. Reproduce with pnpm perf:stream-compare.'
+                name: 'Measured Per-Frame Streaming Work',
+                us: 'Less work when several updates land per frame; more work at one update per frame',
+                them: 'Less work at one update per frame; more work and dropped frames when updates burst',
+                note: 'Measured against svelte-streamdown 4.2.0 on 2026-09-27 in headless production Chromium: cumulative-prop updates of 32 characters over ~24 KB corpora, animation, controls and highlighting off; two suites, each one warmup and five measured iterations per renderer/scenario. The metric is main-thread work per animation frame (synchronous update time plus deferred frame work plus forced layout), which replaces earlier completion-time figures that only timed a deferred prop write. Median total work, Svelte Markdown vs Streamdown: mixed prose at one update per frame 3,261–3,767 ms vs 2,655–2,818 ms (Streamdown 1.16–1.42x less; no frames over 16.7 ms for either); the same corpus at four updates per frame 1,135–1,211 ms vs 1,363–1,490 ms (Svelte Markdown 1.20–1.23x less, 0 frames over budget vs 4–5); one 200-item open bullet list 16,317–16,758 ms vs 10,928–11,581 ms (both over budget on most frames: 407–418 vs 246–269 of 754); one open code fence 2,668–2,916 ms vs 1,378–1,407 ms (Streamdown 1.9–2.1x less); citation-heavy prose with 40 trailing [n]: url definitions 4,750–5,323 ms vs 1,716–1,769 ms (Streamdown 2.8–3.0x less; Svelte Markdown spends 44 frames over budget, one per definition line). These observations apply to these workloads, not pure parsing or imperative chunk ingestion. Reproduce with pnpm perf:stream-compare; raw evidence lives in the repository under .agents/.plans-closed/stream-bench-frame-work/evidence.'
             },
             {
-                name: 'Measured DOM Footprint (50 KB)',
-                us: '2,821 descendant elements',
-                them: '3,480 descendant elements',
-                note: 'Freshly measured against svelte-streamdown 4.2.0 on 2026-09-22 in production Chromium 151 using the actual 50,153-byte corpus (50 KB minimum target), append-only cumulative-prop updates, and animation, controls and highlighting off. Two suites, each with one warmup and five measured iterations per renderer/scenario: counts were stable across all 20 measured runs per renderer combining 64-character burst chunks and 512-character frame-paced chunks. Svelte Markdown used about 19% fewer descendant elements (2,821 versus 3,480); these counts measure elements, not all DOM nodes or memory. Matching semantic content was verified; table/list whitespace and code wrappers differ.'
+                name: 'Measured DOM Footprint (~24 KB)',
+                us: '1,384 elements on mixed prose; 4 on a code fence; 776 on citation-heavy prose',
+                them: '1,704 elements on mixed prose; 797 on a code fence; 519 on citation-heavy prose',
+                note: 'Descendant element counts at the end of each 2026-09-27 stream against svelte-streamdown 4.2.0 (animation, controls and highlighting off), stable across all measured runs. Svelte Markdown emits about 19% fewer elements on mixed prose (1,384 vs 1,704) and no per-line wrappers inside code blocks (4 vs 797), the two renderers are equal on a plain bullet list (768 vs 769), and Svelte Markdown emits about 50% more elements on citation-heavy prose (776 vs 519). Counts measure elements, not all DOM nodes or memory; matching normalized text content was verified within 2.5% on every corpus.'
             },
             {
                 name: 'Custom Renderers',
@@ -166,8 +166,8 @@ export const competitors: Competitor[] = [
             'Native out-of-order chunk assembly with offset-addressed writes',
             'Mid-stream replacement writes for corrections and retransmission',
             'Explicit resetStream() and streamId lifecycle boundaries',
-            'Lower median completion times than svelte-streamdown 4.2.0 in each measured burst workload (10/50/200 KB minimum targets; 2026-09-22)',
-            'About 19% fewer descendant elements than svelte-streamdown 4.2.0 on the freshly measured 50,153-byte corpus (2026-09-22; animation, controls and highlighting off)',
+            'Frame-coalesced updates: about 1.2x less main-thread work than svelte-streamdown 4.2.0 and no frames over budget when four updates land per frame on mixed prose (2026-09-27)',
+            'About 19% fewer descendant elements than svelte-streamdown 4.2.0 on mixed prose and no per-line wrappers inside code blocks (2026-09-27; animation, controls and highlighting off)',
             'Configurable LRU cache also accelerates repeated non-streaming documents',
             'Broad raw HTML support with per-tag renderers and allow/deny helpers',
             'Default URL and attribute sanitizers with customizable hooks',
@@ -184,13 +184,15 @@ export const competitors: Competitor[] = [
             ...shared.consUs,
             'No built-in token reveal animations or citation UI',
             'No MDX-style component syntax inside markdown',
-            'Requires application styling by design'
+            'Requires application styling by design',
+            'More main-thread work per frame than svelte-streamdown 4.2.0 at one update per frame on every measured corpus (1.2–3x; 2026-09-27), with frame drops on citation-heavy prose and on long open lists'
         ],
         consThem: [
             'No imperative chunk-ingestion API — callers update the complete content string',
             'No native offset-addressed assembly for out-of-order chunks or earlier-range corrections',
             'Stream resets and response isolation are managed in caller-owned content state',
             'No reusable LRU cache for switching among previously rendered documents',
+            'Parses on every content assignment, so bursts of several updates per frame cost more work and drop frames (2026-09-27 measurement)',
             'Opinionated styling requires Tailwind setup or theme overrides',
             'A newer, single-maintainer port that tracks the upstream React project'
         ],
