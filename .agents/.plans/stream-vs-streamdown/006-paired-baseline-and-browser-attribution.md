@@ -8,10 +8,21 @@
 > dispatched you and told you they maintain the index.
 >
 > **Drift check (run first)**:
-> `git diff --stat 7dea763..HEAD -- src/routes/test/stream-compare/+page.svelte scripts/stream-compare-bench.mjs src/lib/utils/stream-flush-profile.ts`
+> `git diff --stat 770f983..HEAD -- src/routes/test/stream-compare/+page.svelte scripts/stream-compare-bench.mjs src/lib/utils/stream-flush-profile.ts`
 > If any in-scope file changed since this plan was written, compare the
 > "Current state" excerpts against the live code before proceeding; on a
 > mismatch, treat it as a STOP condition.
+
+> **Revision 2026-09-28 (guard):** Steps 1–5 landed (snapshots `e2f05da`,
+> `770f983`; parity 0 everywhere after plans 008/013). The executor found a
+> metric defect: when a frame overruns, the next `requestAnimationFrame`
+> timestamp is EARLIER than the end of the previous measured window, so
+> `frameWorkMs = now − timestamp` re-counts time already charged to the
+> previous frame (18.7% of `long-list` total, 8.4% of `citations`, 2.0% of
+> `prefix-384kb`; ~0 on under-budget scenarios). Step 2b added: clamp each
+> frame window's start to the end of the previous window, then re-run the
+> paired suites and attribution so the archived baseline uses the corrected
+> metric. Baseline re-stamped to `770f983`.
 
 ## Status
 
@@ -20,7 +31,7 @@
 - **Risk**: LOW
 - **Depends on**: none
 - **Category**: perf (measurement)
-- **Planned at**: commit `7dea763`, 2026-09-28
+- **Planned at**: commit `770f983`, 2026-09-28 (amended; original `7dea763`)
 
 ## Why this matters
 
@@ -161,6 +172,39 @@ README, not silenced in code.
 end; temporarily corrupt the check (e.g. compare against a parse of
 `source + 'x'`) → mismatches > 0; revert the corruption.
 
+### Step 2b (added 2026-09-28): Do not double-count overlapping frame windows
+
+In `measureFrame` (`src/routes/test/stream-compare/+page.svelte`), the frame
+window is `frameWorkMs = performance.now() − frameTimestamp` where
+`frameTimestamp` is the rAF callback's argument. When the previous frame
+overran its budget, the browser's next frame timestamp is earlier than the
+moment the previous window ended, so part of that time is charged twice.
+
+Fix: keep a `previousWindowEnd` (a `let` in `run`, reset per run) that is set
+to `performance.now()` at the end of every measured window (both the sync
+window and the frame window). In `measureFrame`, compute
+`const frameStart = Math.max(frameTimestamp, previousWindowEnd)` and use it
+for `frameWorkMs`; also emit the `stream-bench:frame-work` User Timing
+measure with `start: frameStart` so the attribution script's windows match.
+The sync windows already start after the previous window (sequential
+`await`s) — leave them. Record `overlapClampedMs` (sum of
+`frameTimestamp < previousWindowEnd ? previousWindowEnd − frameTimestamp : 0`)
+on the result so the correction is visible. Keep everything else identical.
+
+Then re-run: both paired suites (5 iterations, 1 warmup, all scenarios) and
+the attribution script for `prose-mixed`, `long-list`, `long-code-fence`,
+`citations`, `prefix-384kb`. Replace the tables in `evidence/006/README.md`
+with the corrected numbers, keep the pre-clamp files under
+`evidence/006/pre-clamp/` for the record, and state the metric change in the
+README's Method section. Check machine load (`uptime`) before each suite and
+say what it was.
+
+**Verify**: on `long-code-fence` and `prose-mixed` (no overruns) the new
+totals are within noise of the pre-clamp ones and `overlapClampedMs ≈ 0`; on
+`long-list` `overlapClampedMs` is on the order of the previously reported
+3,250 ms and totals drop accordingly for BOTH renderers; parity still 0
+everywhere.
+
 ### Step 3: Prefix-scaling and input-mode scenarios
 
 Add scenarios that keep the appended tail identical while the closed prefix
@@ -237,7 +281,7 @@ batch README under "Attribution baseline".
 - [ ] Page reports `parityMismatches` (ours) and `domProjectionMatches` (cross-renderer)
 - [ ] Scenarios `prefix-24kb`, `prefix-96kb`, `prefix-384kb`, `prose-mixed-writechunk`, `large-closed-block` exist and run
 - [ ] `scripts/stream-compare-attribute.mjs` exists; attribution table archived for 5 scenarios
-- [ ] `evidence/006/README.md` written; batch README has the attribution table
+- [ ] `evidence/006/README.md` written with the CLAMPED metric (Step 2b); pre-clamp files retained under `evidence/006/pre-clamp/`; batch README has the attribution table
 - [ ] `pnpm check` 0 errors; `trunk check` clean; `pnpm test` green
 - [ ] No files under `src/lib/` modified
 
