@@ -135,7 +135,9 @@
     // Invariant (#291): only ever reassign this array wholesale — never
     // push/splice/index-write/shrink it in place. See the rationale comment
     // in applyStreamingSource before touching any write site.
-    let streamTokens = $state<Token[]>([])
+    // `$state.raw` enforces this — in-place mutation is not reactive, so
+    // every write site MUST reassign.
+    let streamTokens = $state.raw<Token[]>([])
     let streamRenderMetadataStartIndex = 0
     let streamRenderMetadataStartOffset = 0
 

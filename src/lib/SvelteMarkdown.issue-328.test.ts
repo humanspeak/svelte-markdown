@@ -632,6 +632,37 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(mounted.filter((entry) => entry.text === 'Intro paragraph')).toHaveLength(1)
     })
 
+    test('keeps the first three paragraph nodes when a fourth streams in (wholesale-replacement guard)', async () => {
+        // Guard for the #291 invariant on `streamTokens`: every write reassigns
+        // the array wholesale. If a write site ever mutated it in place, a
+        // non-deep (`$state.raw`) array would stop rendering the new paragraph.
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        for (const chunk of ['First paragraph', '\n\nSecond paragraph', '\n\nThird paragraph']) {
+            await act(() => component.writeChunk(chunk))
+            await flushStreamingBatch()
+        }
+
+        const before = Array.from(container.querySelectorAll('p'))
+        expect(before.map((paragraph) => paragraph.textContent)).toEqual([
+            'First paragraph',
+            'Second paragraph',
+            'Third paragraph'
+        ])
+
+        await act(() => component.writeChunk('\n\nFourth paragraph'))
+        await flushStreamingBatch()
+
+        const after = Array.from(container.querySelectorAll('p'))
+        expect(after).toHaveLength(4)
+        expect(after[0]).toBe(before[0])
+        expect(after[1]).toBe(before[1])
+        expect(after[2]).toBe(before[2])
+        expect(after[3].textContent).toBe('Fourth paragraph')
+    })
+
     test('keeps a stable root token mounted when a sibling is inserted before it', async () => {
         const stableParagraph = paragraphToken('More')
         const insertedParagraph = paragraphToken('Inserted')
