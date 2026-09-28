@@ -1,4 +1,5 @@
-const WT = '/home/jason-kummerl/GitHub/svelte-markdown/.claude/worktrees/agent-a8973dc5429cda016'
+// Repo root whose built dist/ is exercised; override with REPRO_ROOT.
+const WT = process.env.REPRO_ROOT ?? '/home/jason-kummerl/GitHub/svelte-markdown'
 const { IncrementalParser } = await import(`${WT}/dist/utils/incremental-parser.js`)
 const { reuseStableTokenArray } = await import(`${WT}/dist/utils/streaming-token-reuse.js`)
 const { lexAndClean } = await import(`${WT}/dist/utils/parse-and-cache.js`)
@@ -34,6 +35,7 @@ const source = '# Long streaming benchmark\n\n' + section(0) + section(1)
 // Find the first 32-byte step at which streamed and fresh top-level shapes diverge.
 const parser = new IncrementalParser(options)
 let tokens = []
+let diverged = false
 for (let o = 32; o < source.length + 32; o += 32) {
     const slice = source.slice(0, Math.min(o, source.length))
     const r = parser.update(slice)
@@ -42,6 +44,7 @@ for (let o = 32; o < source.length + 32; o += 32) {
     const st = tokens.map((t) => t.type).join(',')
     const ft = fresh.map((t) => t.type).join(',')
     if (st !== ft) {
+        diverged = true
         console.log(`first divergence at ${slice.length} bytes`)
         console.log('streamed:', st)
         console.log('fresh:   ', ft)
@@ -60,3 +63,7 @@ for (let o = 32; o < source.length + 32; o += 32) {
         break
     }
 }
+if (!diverged)
+    console.log(
+        `no divergence: streamed and fresh top-level shapes match at every 32-byte step (${source.length} bytes)`
+    )

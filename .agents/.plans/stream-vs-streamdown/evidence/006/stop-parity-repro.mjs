@@ -1,5 +1,6 @@
 // Node reproduction of the streaming parity mismatches against built dist/.
-const WT = '/home/jason-kummerl/GitHub/svelte-markdown/.claude/worktrees/agent-a8973dc5429cda016'
+// Repo root whose built dist/ is exercised; override with REPRO_ROOT.
+const WT = process.env.REPRO_ROOT ?? '/home/jason-kummerl/GitHub/svelte-markdown'
 const { IncrementalParser } = await import(`${WT}/dist/utils/incremental-parser.js`)
 const { reuseStableTokenArray } = await import(`${WT}/dist/utils/streaming-token-reuse.js`)
 const { lexAndClean } = await import(`${WT}/dist/utils/parse-and-cache.js`)
