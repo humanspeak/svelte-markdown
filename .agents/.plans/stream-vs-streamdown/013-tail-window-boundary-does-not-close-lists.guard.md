@@ -16,3 +16,10 @@
 - Guard probed marked directly (Node, `new Lexer({gfm:true})`): every block type moves its trailing newline into the following `space` token when a blank line arrives; no block raw ever ends in `\n\n`. The per-type stability rules are therefore unsound as a class, not one by one.
 - Classification: PLAN DEFECT (third variant of one mechanism). Executor honored STOP, changed no tests; `trunk` clean on both snapshots; `pnpm check` 0 errors.
 - Action: Revision 2 — Step 2d: `isStableAtSourceEnd` returns false unconditionally. Fix-dispatch (opus, fresh, in-tree). Guard will re-run everything at final.
+
+## Checkpoint 3 — 2026-09-28 06:21 — ON TRACK (final: PASS)
+
+2fa41e4 · fix executor delivered Step 2d + Step 3; guard reproduced every done criterion (see `013-…guard-report.md`): 160 files / 1176 tests green, coverage 98.5/93.0, `pnpm check` 0 errors, `trunk check` clean, greps match, sweep asserts parity after every chunk at sizes 1/7/32/64.
+
+- Diff read (`incremental-parser.ts:476-535`): `isStableAtSourceEnd` deleted; cut = `tokens.length - 1` with the list/indented-code walk-back; comments cite marked evidence; `canContinueAcrossBlankLine` JSDoc corrected.
+- Action: README row → DONE; 006 re-dispatched from Step 3 (Step 2 verify repeated first).
