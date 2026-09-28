@@ -1000,6 +1000,34 @@ Default heading ids are precomputed per render pass during streaming, so duplica
 
 See the [full streaming documentation](https://markdown.svelte.page/docs/advanced/llm-streaming) and [interactive demo](https://markdown.svelte.page/examples/llm-streaming).
 
+#### Advanced: `IncrementalParser`
+
+`SvelteMarkdown` drives its streaming mode with the exported `IncrementalParser`. Advanced consumers can use it directly to parse a growing document and learn which tokens changed:
+
+```typescript
+import { IncrementalParser } from '@humanspeak/svelte-markdown'
+
+const parser = new IncrementalParser({ gfm: true })
+let buffer = '# Title\n\n'
+parser.update(buffer)
+
+const previous = buffer
+buffer += 'Streamed paragraph'
+const result = parser.update(buffer, previous) // `buffer` is known to start with `previous`
+```
+
+`update(source, appendsTo?)` parses the full accumulated `source` and diffs it against the previous update. The optional `appendsTo` is a string you have already verified `source` starts with (typically your buffer before appending a chunk); when it is the previously parsed source, the parser skips its own full-length append check. Passing a string that `source` does not start with breaks parsing, so omit it when unsure.
+
+The returned `IncrementalUpdateResult` contains:
+
+- `tokens` — the full new token array.
+- `divergeAt` — index of the first root token that differs from the previous update.
+- `divergeOffset` — source offset where that token begins, when known without scanning the stable prefix (otherwise `undefined`).
+- `canReuse` — whether the first `divergeAt` token objects can be reused as-is.
+- `reuseMode` — `'prefix'` (the first `divergeAt` roots are stable), `'tree'` (append-only, but a reference definition may have changed inline children anywhere, so compare the whole tree), or `'none'` (not append-only; replace the array).
+- `reusedPrefixCount` — leading roots of `tokens` that are the same objects, at the same indices, as in the previous result (0 unless only the appended tail was re-lexed); a consumer that rendered the previous array unchanged can skip these indices.
+- `usedTailWindow` — whether this update re-lexed only the appended tail rather than the whole source.
+
 ## Available Renderers
 
 - `text` - Text within other elements
@@ -1023,6 +1051,8 @@ See the [full streaming documentation](https://markdown.svelte.page/docs/advance
 - `code` - Block of code (`<pre><code>`)
 - `html` - HTML node
 - `rawtext` - All other text that is going to be included in an object above
+
+Child tokens rendered inside list items and table cells receive only their own token fields; they do not inherit the parent list's or table's `raw`, `text`, or other fields through props.
 
 ### Optional List Renderers
 
@@ -1080,6 +1110,8 @@ The component emits a `parsed` event when tokens are calculated:
 
 <SvelteMarkdown {source} parsed={handleParsed} />
 ```
+
+`parsed` is optional; when it is omitted, no token snapshot is taken per update.
 
 ## Props
 

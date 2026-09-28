@@ -144,7 +144,7 @@
             "page": "vs-svelte-streamdown",
             "script": "scripts/stream-compare-bench.mjs",
             "command": "pnpm build && pnpm preview  (then, in another shell) pnpm perf:stream-compare",
-            "measures": "streaming perf claims on the page: per-frame main-thread work (total, p95, frames over 16.7 ms, growth) per corpus at one and four updates per frame, DOM-footprint element counts per corpus",
+            "measures": "streaming perf claims on the page: paired (alternating-order) per-frame main-thread work with clamped non-overlapping frame windows and a forced layout per frame (total, paired delta, theirs/ours ratio, p95, frames over 16.7 ms), parity-checked against a fresh one-shot parse, plus final-frame DOM projection and descendant element counts; scenarios prose-mixed, prose-mixed-4x, long-list, long-table, long-code-fence, citations, prose-mixed-writechunk (ours only), prefix-24kb, prefix-96kb, prefix-384kb, large-closed-block",
             "compares": {
                 "svelte-streamdown": "devDependency"
             },
