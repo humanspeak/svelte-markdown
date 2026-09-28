@@ -8,10 +8,27 @@
 > dispatched you and told you they maintain the index.
 >
 > **Drift check (run first)**:
-> `git diff --stat 7dea763..HEAD -- src/lib/Parser.svelte src/lib/utils/render-metadata.ts src/lib/utils/streaming-token-reuse.ts`
+> `git diff --stat 8fd84a7..HEAD -- src/lib/Parser.svelte src/lib/utils/render-metadata.ts src/lib/utils/streaming-token-reuse.ts`
 > Plans 008/009 may have changed the reuse util and added a dev counter to
 > `Parser.svelte`. Re-read live code for every excerpt; proceed if the
 > differences are only those; otherwise STOP.
+
+> **Revision 2026-09-28 (guard pre-flight):** Plans 006, 007, 008, 009 and
+> 013 have landed (tip `8fd84a7`). Facts that changed since the excerpts
+> below: (1) `streamTokens` is `$state.raw` (007) — the deep-state proxy `get`
+> trap is gone from the profiles, and `long-list` is ALREADY below Streamdown
+> on total work (Plan 007 B: 5,854–6,046 ms vs Streamdown ~9,150 ms) with 3–19
+> over-budget frames of 754, p95 11.9–14.5 ms; (2) the dev-only
+> `window.__svmParserUpdateCount` exists (`Parser.svelte:197-215`, added by 009) — reuse it, do not add another; (3) the comparator is semantic (008),
+> so `areRecordsSemanticallyEqual` is what the `long-list` profile now shows
+> at ~6% self time (was 14.9%); (4) line numbers drifted: list branches at
+> `Parser.svelte:~414` and `:~443`, table body cells at `:~353`.
+> Re-target the Step 5 gate accordingly: `long-list` must reach ZERO
+> over-budget frames (batch contract) and keep its lead; `long-table`
+> (new in Step 1) gets its own before/after and must not be behind
+> Streamdown. Use the same-build A/B recipe (`STREAM_COMPARE_URL_A/_B`,
+> A = git worktree at the pre-change tip; see `evidence/007/README.md`).
+> Baseline re-stamped to `8fd84a7`.
 
 ## Status
 
@@ -20,7 +37,7 @@
 - **Risk**: MED
 - **Depends on**: 006 (attribution), 007 (decided), 009 Step 1 (update counter)
 - **Category**: perf
-- **Planned at**: commit `7dea763`, 2026-09-28
+- **Planned at**: commit `8fd84a7`, 2026-09-28 (amended pre-flight; original `7dea763`)
 
 ## Why this matters
 
@@ -132,7 +149,7 @@ Prefix with `export PATH=~/.local/share/pnpm/bin:$PATH &&`.
 
 ## Git workflow
 
-- Branch: `perf/list-table-render-work` off `main` after 007/009.
+- Work on `perf/stream-bench-flush-timing` (batch branch); the reviewer commits.
 - Commits per confirmed fix: `perf(render): <what was cut> (H<n>)`.
 - Do NOT push or open a PR unless instructed.
 
