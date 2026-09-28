@@ -1,0 +1,7 @@
+first divergence at 384 bytes
+streamed: heading,space,heading,space,paragraph,space,list,space,list,space,blockquote
+fresh:    heading,space,heading,space,paragraph,space,list,space,blockquote
+streamed[6] list raw: "- Item 0.1 with a short explanation\n- Item 0.2 with another **formatted value**\n- Item 0.3 with a nested detail\n  - Nested 0.a"
+streamed[8] list raw: "  - Nested 0.b"
+fresh[6] list raw:    "- Item 0.1 with a short explanation\n- Item 0.2 with another **formatted value**\n- Item 0.3 with a nested detail\n  - Nested 0.a\n  - Nested 0.b"
+previous slice tail: "ted value**\n- Item 0.3 with a nested detail\n  - Nested 0.a\n "

@@ -1,5 +1,8 @@
 <script lang="ts">
     import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
+    import type { Token, TokensList } from '$lib/utils/markdown-parser.js'
+    import { buildParserOptions } from '$lib/utils/extension-options.js'
+    import { parseAndCacheTokens } from '$lib/utils/parse-and-cache.js'
     import {
         STREAM_FLUSH_MEASURE,
         STREAM_FLUSH_PROFILE_FLAG
@@ -41,26 +44,75 @@
      * Corpora mirror common LLM output shapes: mixed prose, one long bullet
      * list (a single block that stays open until the end), one long code fence
      * (same), and a citation-heavy answer with `[n]` markers and a trailing
-     * `[n]: url` definitions block.
+     * `[n]: url` definitions block. Prefix-scaling scenarios mount a closed
+     * prefix of growing size (24 / 96 / 384 KB) and then stream the same short
+     * tail, so work that scales with document length shows up as growth in
+     * `avgWorkMs` across the three. `large-closed-block` does the same with a
+     * 20 KB closed nested list as the prefix.
+     *
+     * Correctness checks (outside the measured windows):
+     *
+     *   parityMismatches   Svelte Markdown only. Every PARITY_EVERY frames and
+     *                      on the final frame, the streamed token tree (from
+     *                      the `parsed` callback) is compared against a fresh
+     *                      parse of the same cumulative source through the
+     *                      library's own parse path, key by key.
+     *   domProjection      Both renderers. A normalized projection of the final
+     *                      DOM (headings, links, images, table shapes, code
+     *                      texts) that the runner compares across renderers.
+     *
+     * Input modes: `prop` re-assigns the cumulative `source`/`content` prop;
+     * `writeChunk` (Svelte Markdown only) holds a component ref and appends the
+     * delta through the imperative `writeChunk()` API.
      */
 
     type Renderer = 'svelte-markdown' | 'svelte-streamdown'
     type CorpusKind = 'prose-mixed' | 'long-list' | 'long-code-fence' | 'citations'
+    type PrefixKind = 'closed-paragraphs' | 'closed-nested-list'
+    type InputMode = 'prop' | 'writeChunk'
 
     interface Scenario {
         id: string
+        /** Streamed corpus (the tail, when `prefix` is set). */
         corpus: CorpusKind
         targetBytes: number
         /** Characters appended per update. */
         chunkSize: number
-        /** Cumulative prop assignments per animation frame. */
+        /** Cumulative prop assignments (or `writeChunk` calls) per animation frame. */
         updatesPerFrame: number
+        /** How updates reach the renderer. `writeChunk` is Svelte Markdown only. */
+        inputMode: InputMode
+        /** Renderers that support this scenario; the runner skips the others. */
+        renderers: Renderer[]
+        /** Closed content mounted (unmeasured) before streaming starts. */
+        prefix?: { kind: PrefixKind; bytes: number }
+    }
+
+    interface RunOptions {
+        /** Run the semantic parity check (Svelte Markdown only). Default true. */
+        parity?: boolean
+        /**
+         * Emit `stream-bench:sync` / `stream-bench:frame-work` User Timing
+         * measures for every measured window, so a trace can be clipped to
+         * exactly the work this page reports. Default false.
+         */
+        traceWindows?: boolean
+    }
+
+    interface DomProjection {
+        headings: { tag: string; text: string }[]
+        links: { href: string; text: string }[]
+        images: { src: string; alt: string }[]
+        tables: { rows: number; cols: number }[]
+        codeBlocks: string[]
     }
 
     interface RunResult {
         renderer: Renderer
         scenario: string
         corpus: CorpusKind
+        inputMode: InputMode
+        prefixBytes: number
         sourceBytes: number
         chunkSize: number
         updatesPerFrame: number
@@ -84,12 +136,26 @@
         heapDeltaKb: number | null
         outputHash: string
         outputLength: number
+        /** Parity checks performed (null for the competitor or when disabled). */
+        parityChecks: number | null
+        /** Checks whose streamed tokens differed from a fresh parse. */
+        parityMismatches: number | null
+        /** Path of the first differing field, e.g. `[3].tokens[1].href`. */
+        firstParityMismatch: string | null
+        /** Up to five mismatches (path, values, cumulative source length). */
+        parityMismatchSamples: string[] | null
+        /** Normalized final-DOM projection for cross-renderer comparison. */
+        domProjection: DomProjection
     }
 
     interface BenchWindow extends Window {
         __streamBenchmark?: {
             scenarios: Scenario[]
-            run: (_renderer: Renderer, _scenarioId: string) => Promise<RunResult>
+            run: (
+                _renderer: Renderer,
+                _scenarioId: string,
+                _options?: RunOptions
+            ) => Promise<RunResult>
             clear: () => Promise<void>
         }
         [STREAM_FLUSH_PROFILE_FLAG]?: boolean
@@ -100,6 +166,12 @@
     }
 
     const FRAME_BUDGET_MS = 1000 / 60
+    const PARITY_EVERY = 25
+    const TRACE_SYNC_MEASURE = 'stream-bench:sync'
+    const TRACE_FRAME_MEASURE = 'stream-bench:frame-work'
+    const BOTH: Renderer[] = ['svelte-markdown', 'svelte-streamdown']
+    const OURS_ONLY: Renderer[] = ['svelte-markdown']
+    const TAIL_BYTES = 2_000
 
     // 32 chars/frame ≈ 480 tokens/s at 60 fps — a fast model, and a fixed
     // per-frame input so both renderers see identical work.
@@ -109,40 +181,90 @@
             corpus: 'prose-mixed',
             targetBytes: 24_000,
             chunkSize: 32,
-            updatesPerFrame: 1
+            updatesPerFrame: 1,
+            inputMode: 'prop',
+            renderers: BOTH
         },
         {
             id: 'prose-mixed-4x',
             corpus: 'prose-mixed',
             targetBytes: 24_000,
             chunkSize: 32,
-            updatesPerFrame: 4
+            updatesPerFrame: 4,
+            inputMode: 'prop',
+            renderers: BOTH
         },
         {
             id: 'long-list',
             corpus: 'long-list',
             targetBytes: 24_000,
             chunkSize: 32,
-            updatesPerFrame: 1
+            updatesPerFrame: 1,
+            inputMode: 'prop',
+            renderers: BOTH
         },
         {
             id: 'long-code-fence',
             corpus: 'long-code-fence',
             targetBytes: 24_000,
             chunkSize: 32,
-            updatesPerFrame: 1
+            updatesPerFrame: 1,
+            inputMode: 'prop',
+            renderers: BOTH
         },
         {
             id: 'citations',
             corpus: 'citations',
             targetBytes: 24_000,
             chunkSize: 32,
-            updatesPerFrame: 1
+            updatesPerFrame: 1,
+            inputMode: 'prop',
+            renderers: BOTH
+        },
+        {
+            id: 'prose-mixed-writechunk',
+            corpus: 'prose-mixed',
+            targetBytes: 24_000,
+            chunkSize: 32,
+            updatesPerFrame: 1,
+            inputMode: 'writeChunk',
+            renderers: OURS_ONLY
+        },
+        // Prefix scaling: identical ~2 KB tail, growing closed prefix.
+        ...[24_000, 96_000, 384_000].map((bytes): Scenario => ({
+            id: `prefix-${bytes / 1000}kb`,
+            corpus: 'prose-mixed',
+            targetBytes: TAIL_BYTES,
+            chunkSize: 32,
+            updatesPerFrame: 1,
+            inputMode: 'prop',
+            renderers: BOTH,
+            prefix: { kind: 'closed-paragraphs', bytes }
+        })),
+        {
+            id: 'large-closed-block',
+            corpus: 'prose-mixed',
+            targetBytes: TAIL_BYTES,
+            chunkSize: 32,
+            updatesPerFrame: 1,
+            inputMode: 'prop',
+            renderers: BOTH,
+            prefix: { kind: 'closed-nested-list', bytes: 20_000 }
         }
     ]
 
     let activeRenderer = $state<Renderer | null>(null)
+    let activeInputMode = $state<InputMode>('prop')
     let content = $state('')
+    let markdownRef = $state<ReturnType<typeof SvelteMarkdown>>()
+    // Length of the source already handed to `writeChunk` in the current run.
+    let appliedLength = 0
+    // Latest token tree handed to `parsed`; a plain variable, not state, so
+    // recording it adds no reactive work to the measured frame.
+    let latestParsedTokens: Token[] | TokensList | undefined
+    const onParsed = (tokens: Token[] | TokensList) => {
+        latestParsedTokens = tokens
+    }
     let outputElement = $state<HTMLElement>()
     let status = $state('ready')
     let lastResult = $state<RunResult | null>(null)
@@ -222,6 +344,37 @@ const section${index} = { active: true, value: ${index} }
         return body + definitions
     }
 
+    /** Many short, closed paragraphs and headings (ends with a blank line). */
+    const makeClosedParagraphs = (targetBytes: number): string => {
+        let source = ''
+        let index = 0
+        while (source.length < targetBytes) {
+            source += `### Note ${index}\n\nClosed paragraph ${index} with **bold**, *emphasis*, \`code\`, and a [link](https://example.com/prefix/${index}).\n\n`
+            index++
+        }
+        return source
+    }
+
+    /** One closed nested bullet list followed by a blank line. */
+    const makeClosedNestedList = (targetBytes: number): string => {
+        let source = ''
+        let index = 0
+        while (source.length < targetBytes) {
+            source += `- Item ${index} with **bold** text\n  - Nested ${index}.a with \`code\`\n  - Nested ${index}.b with a [link](https://example.com/list/${index})\n`
+            index++
+        }
+        return `${source}\n`
+    }
+
+    const makePrefix = (kind: PrefixKind, targetBytes: number): string => {
+        switch (kind) {
+            case 'closed-paragraphs':
+                return makeClosedParagraphs(targetBytes)
+            case 'closed-nested-list':
+                return makeClosedNestedList(targetBytes)
+        }
+    }
+
     const makeCorpus = (kind: CorpusKind, targetBytes: number): string => {
         switch (kind) {
             case 'prose-mixed':
@@ -255,6 +408,88 @@ const section${index} = { active: true, value: ${index} }
         return (hash >>> 0).toString(16).padStart(8, '0')
     }
 
+    const parityOptions = buildParserOptions({}, [])
+
+    /** Short printable form of a value for mismatch reports. */
+    const describe = (value: unknown): string => {
+        if (typeof value === 'function') return 'function'
+        const text = JSON.stringify(value) ?? String(value)
+        return text.length > 80 ? `${text.slice(0, 80)}…` : text
+    }
+
+    /**
+     * Key-by-key structural equality for token trees: primitives by value,
+     * arrays element-wise (null elements allowed, e.g. table `align`), nested
+     * objects recursively over the union of their own enumerable keys; a key
+     * missing on one side equals `undefined` on the other; functions are never
+     * equal.
+     *
+     * @param a - Streamed value
+     * @param b - Freshly parsed value
+     * @param path - Path of `a`/`b` from the root, used in the result
+     * @returns `null` when equal, otherwise the path of the first difference
+     */
+    const tokensSemanticallyEqual = (a: unknown, b: unknown, path = ''): string | null => {
+        const differ = (at: string, left: unknown, right: unknown) =>
+            `${at || '<root>'} (streamed ${describe(left)} · fresh ${describe(right)})`
+        if (typeof a === 'function' || typeof b === 'function') return differ(path, a, b)
+        if (a === b) return null
+        if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') {
+            return Number.isNaN(a) && Number.isNaN(b) ? null : differ(path, a, b)
+        }
+        if (Array.isArray(a) !== Array.isArray(b)) return differ(path, a, b)
+        if (Array.isArray(a) && Array.isArray(b)) {
+            if (a.length !== b.length) return differ(`${path}.length`, a.length, b.length)
+            for (let index = 0; index < a.length; index++) {
+                const mismatch = tokensSemanticallyEqual(a[index], b[index], `${path}[${index}]`)
+                if (mismatch) return mismatch
+            }
+            return null
+        }
+        const left = a as Record<string, unknown>
+        const right = b as Record<string, unknown>
+        const keys = new Set([...Object.keys(left), ...Object.keys(right)])
+        for (const key of keys) {
+            const mismatch = tokensSemanticallyEqual(left[key], right[key], `${path}.${key}`)
+            if (mismatch) return mismatch
+        }
+        return null
+    }
+
+    /** Compares the latest streamed tokens with a fresh parse of `source`. */
+    const checkParity = (source: string): string | null => {
+        const fresh = parseAndCacheTokens(source, parityOptions, false)
+        return tokensSemanticallyEqual(latestParsedTokens, fresh)
+    }
+
+    const normalizeText = (value: string | null | undefined): string =>
+        (value ?? '').replace(/\s+/g, ' ').trim()
+
+    /** Normalized projection of the rendered output, comparable across renderers. */
+    const projectDom = (root: HTMLElement | undefined): DomProjection => {
+        const all = <T extends Element = Element>(selector: string): T[] =>
+            root ? [...root.querySelectorAll<T>(selector)] : []
+        return {
+            headings: all('h1, h2, h3, h4, h5, h6').map((element) => ({
+                tag: element.tagName.toLowerCase(),
+                text: normalizeText(element.textContent)
+            })),
+            links: all<HTMLAnchorElement>('a[href]').map((element) => ({
+                href: element.getAttribute('href') ?? '',
+                text: normalizeText(element.textContent)
+            })),
+            images: all<HTMLImageElement>('img').map((element) => ({
+                src: element.getAttribute('src') ?? '',
+                alt: element.getAttribute('alt') ?? ''
+            })),
+            tables: all<HTMLTableElement>('table').map((table) => ({
+                rows: table.rows.length,
+                cols: table.rows[0]?.cells.length ?? 0
+            })),
+            codeBlocks: all('pre').map((element) => normalizeText(element.textContent))
+        }
+    }
+
     const readHeap = (): number | null =>
         (performance as PerformanceWithMemory).memory?.usedJSHeapSize ?? null
 
@@ -263,7 +498,9 @@ const section${index} = { active: true, value: ${index} }
 
     const clear = async (): Promise<void> => {
         activeRenderer = null
+        activeInputMode = 'prop'
         content = ''
+        latestParsedTokens = undefined
         lastResult = null
         await tick()
         await nextFrame()
@@ -274,48 +511,108 @@ const section${index} = { active: true, value: ${index} }
      * caused. See the module comment for the definition of each component.
      */
     const measureFrame = async (
-        slices: string[]
+        slices: string[],
+        inputMode: InputMode,
+        traceWindows: boolean
     ): Promise<{ syncMs: number; frameWorkMs: number }> => {
         let syncMs = 0
         for (const slice of slices) {
             const startedAt = performance.now()
-            content = slice
+            if (inputMode === 'writeChunk') {
+                // Slices are cumulative; hand the renderer only the delta.
+                const delta = slice.slice(appliedLength)
+                appliedLength = slice.length
+                if (delta) markdownRef?.writeChunk(delta)
+            } else {
+                content = slice
+            }
             await tick()
-            syncMs += performance.now() - startedAt
+            const endedAt = performance.now()
+            syncMs += endedAt - startedAt
+            if (traceWindows) {
+                performance.measure(TRACE_SYNC_MEASURE, { start: startedAt, end: endedAt })
+            }
         }
 
         const frameTimestamp = await nextFrame()
         // Force style + layout so DOM-heavy output is charged to the renderer
         // that produced it, rather than to whichever frame paints next.
         outputElement?.getBoundingClientRect()
-        const frameWorkMs = Math.max(0, performance.now() - frameTimestamp)
+        const frameEnd = performance.now()
+        const frameWorkMs = Math.max(0, frameEnd - frameTimestamp)
+        if (traceWindows && frameEnd > frameTimestamp) {
+            performance.measure(TRACE_FRAME_MEASURE, { start: frameTimestamp, end: frameEnd })
+        }
 
         return { syncMs, frameWorkMs }
     }
 
-    const run = async (renderer: Renderer, scenarioId: string): Promise<RunResult> => {
+    const run = async (
+        renderer: Renderer,
+        scenarioId: string,
+        options: RunOptions = {}
+    ): Promise<RunResult> => {
         const scenario = scenarios.find((candidate) => candidate.id === scenarioId)
         if (!scenario) throw new Error(`Unknown scenario: ${scenarioId}`)
+        if (!scenario.renderers.includes(renderer)) {
+            throw new Error(`Scenario ${scenarioId} does not support ${renderer}`)
+        }
+        const parityEnabled = renderer === 'svelte-markdown' && options.parity !== false
+        const traceWindows = options.traceWindows === true
+
+        const prefix = scenario.prefix
+            ? makePrefix(scenario.prefix.kind, scenario.prefix.bytes)
+            : ''
+        const source = prefix + makeCorpus(scenario.corpus, scenario.targetBytes)
 
         await clear()
         status = `running ${renderer} / ${scenario.id}`
+        // Mount with the closed prefix already present (unmeasured). In
+        // writeChunk mode the prop stays '' and the prefix is written once.
+        activeInputMode = scenario.inputMode
+        content = scenario.inputMode === 'prop' ? prefix : ''
+        appliedLength = 0
         activeRenderer = renderer
         await tick()
+        if (scenario.inputMode === 'writeChunk' && prefix) {
+            markdownRef?.writeChunk(prefix)
+            appliedLength = prefix.length
+        }
+        if (prefix) {
+            await nextFrame()
+            await nextFrame()
+        }
 
         const benchWindow = window as BenchWindow
         benchWindow[STREAM_FLUSH_PROFILE_FLAG] = renderer === 'svelte-markdown'
         performance.clearMeasures(STREAM_FLUSH_MEASURE)
+        performance.clearMeasures(TRACE_SYNC_MEASURE)
+        performance.clearMeasures(TRACE_FRAME_MEASURE)
 
-        const source = makeCorpus(scenario.corpus, scenario.targetBytes)
         const slices: string[] = []
         for (
-            let offset = scenario.chunkSize;
+            let offset = prefix.length + scenario.chunkSize;
             offset < source.length;
             offset += scenario.chunkSize
         ) {
             slices.push(source.slice(0, offset))
         }
         slices.push(source)
+
+        let parityChecks = 0
+        let parityMismatches = 0
+        let firstParityMismatch: string | null = null
+        const parityMismatchSamples: string[] = []
+        const runParity = (cumulative: string, final = false) => {
+            parityChecks++
+            const mismatch = checkParity(cumulative)
+            if (mismatch) {
+                parityMismatches++
+                const sample = `${mismatch} (at ${cumulative.length}${final ? ' bytes, final' : ' bytes'})`
+                firstParityMismatch ??= sample
+                if (parityMismatchSamples.length < 5) parityMismatchSamples.push(sample)
+            }
+        }
 
         const workMs: number[] = []
         const syncMsSamples: number[] = []
@@ -329,13 +626,24 @@ const section${index} = { active: true, value: ${index} }
         const heapBefore = readHeap()
         for (let index = 0; index < slices.length; index += scenario.updatesPerFrame) {
             const frameSlices = slices.slice(index, index + scenario.updatesPerFrame)
-            const { syncMs, frameWorkMs } = await measureFrame(frameSlices)
+            const { syncMs, frameWorkMs } = await measureFrame(
+                frameSlices,
+                scenario.inputMode,
+                traceWindows
+            )
             syncMsSamples.push(syncMs)
             frameWorkMsSamples.push(frameWorkMs)
             workMs.push(syncMs + frameWorkMs)
+
+            if (parityEnabled && workMs.length % PARITY_EVERY === 0) {
+                // Outside the measured window. The extra idle frame keeps the
+                // next frame's rAF timestamp from predating this check.
+                runParity(frameSlices.at(-1) ?? '')
+                await nextFrame()
+            }
         }
         // One idle frame so any deferred commit from the last update is charged.
-        const trailing = await measureFrame([source])
+        const trailing = await measureFrame([source], scenario.inputMode, traceWindows)
         workMs[workMs.length - 1] += trailing.syncMs + trailing.frameWorkMs
         frameWorkMsSamples[frameWorkMsSamples.length - 1] += trailing.frameWorkMs
         syncMsSamples[syncMsSamples.length - 1] += trailing.syncMs
@@ -351,12 +659,17 @@ const section${index} = { active: true, value: ${index} }
         const fifth = Math.max(1, Math.floor(workMs.length / 5))
         const firstFifth = sum(workMs.slice(0, fifth)) / fifth
         const lastFifth = sum(workMs.slice(workMs.length - fifth)) / fifth
-        const outputText = (outputElement?.textContent ?? '').replace(/\s+/g, ' ').trim()
+        const outputText = normalizeText(outputElement?.textContent)
+        // Final-frame parity check, after all measurement is done.
+        if (parityEnabled) runParity(source, true)
+        const domProjection = projectDom(outputElement)
 
         const result: RunResult = {
             renderer,
             scenario: scenario.id,
             corpus: scenario.corpus,
+            inputMode: scenario.inputMode,
+            prefixBytes: prefix.length,
             sourceBytes: source.length,
             chunkSize: scenario.chunkSize,
             updatesPerFrame: scenario.updatesPerFrame,
@@ -383,7 +696,12 @@ const section${index} = { active: true, value: ${index} }
                     ? null
                     : round((heapAfter - heapBefore) / 1024),
             outputHash: hashText(outputText),
-            outputLength: outputText.length
+            outputLength: outputText.length,
+            parityChecks: parityEnabled ? parityChecks : null,
+            parityMismatches: parityEnabled ? parityMismatches : null,
+            firstParityMismatch: parityEnabled ? firstParityMismatch : null,
+            parityMismatchSamples: parityEnabled ? parityMismatchSamples : null,
+            domProjection
         }
         lastResult = result
         status = 'ready'
@@ -409,20 +727,31 @@ const section${index} = { active: true, value: ${index} }
             <button onclick={() => run('svelte-markdown', scenario.id)}>
                 Svelte Markdown · {scenario.id}
             </button>
-            <button onclick={() => run('svelte-streamdown', scenario.id)}>
-                Svelte Streamdown · {scenario.id}
-            </button>
+            {#if scenario.renderers.includes('svelte-streamdown')}
+                <button onclick={() => run('svelte-streamdown', scenario.id)}>
+                    Svelte Streamdown · {scenario.id}
+                </button>
+            {/if}
         {/each}
         <button onclick={clear}>Clear</button>
     </div>
 
     {#if lastResult}
-        <pre data-testid="benchmark-result">{JSON.stringify(lastResult, null, 2)}</pre>
+        <pre data-testid="benchmark-result">{JSON.stringify(
+                { ...lastResult, domProjection: undefined },
+                null,
+                2
+            )}</pre>
     {/if}
 
     <section class="output" data-testid="benchmark-output" bind:this={outputElement}>
         {#if activeRenderer === 'svelte-markdown'}
-            <SvelteMarkdown source={content} streaming />
+            <SvelteMarkdown
+                bind:this={markdownRef}
+                source={activeInputMode === 'prop' ? content : ''}
+                streaming
+                parsed={onParsed}
+            />
         {:else if activeRenderer === 'svelte-streamdown'}
             <Streamdown
                 {content}
