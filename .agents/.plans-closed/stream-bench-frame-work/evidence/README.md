@@ -1,5 +1,8 @@
 # Streamdown 4.2.0 per-frame work comparison evidence
 
+> **Superseded (2026-09-28).** The frame-window metric here double-counts overlapping windows; see `.agents/.plans/stream-vs-streamdown/evidence/006/README.md` for the corrected (clamped) metric and paired protocol.
+> Final numbers for the current build: `.agents/.plans/stream-vs-streamdown/evidence/014/README.md`.
+
 Captured on 2026-09-27 on branch `perf/stream-bench-flush-timing`, based on
 `origin/main` at `9938fd6` (package version 1.9.5). The benchmark page and runner
 were rewritten in this branch; the numbers here are NOT comparable with the
