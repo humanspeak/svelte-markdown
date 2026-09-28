@@ -6,7 +6,7 @@
 > report — do not improvise. The reviewer maintains the batch README.
 >
 > **Drift check (run first)**:
-> `git diff --stat <Planned-at SHA>..HEAD -- src/lib docs/src/lib/compare-data.ts .competitive-intel/config.json README.md`
+> `git diff --stat 35bb92a..HEAD -- src/lib docs/src/lib/compare-data.ts .competitive-intel/config.json README.md`
 > The only expected difference is Plan 012's outcome in `src/lib/renderers/Code.svelte`
 > (kept or reverted). Anything else: STOP.
 
@@ -17,7 +17,7 @@
 - **Risk**: LOW (measurement + docs; one README section)
 - **Depends on**: 006–013 closed (012 decided either way)
 - **Category**: docs / measurement
-- **Planned at**: commit `<filled by guard at dispatch>`, 2026-09-28
+- **Planned at**: commit `35bb92a`, 2026-09-28
 
 ## Why this matters
 
