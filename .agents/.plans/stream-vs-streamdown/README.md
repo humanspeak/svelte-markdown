@@ -34,20 +34,20 @@ complete the initiative.
 
 ## Execution order & status
 
-| Plan | Title                                                                           | Priority | Effort | Depends on           | Status                |
-| ---- | ------------------------------------------------------------------------------- | -------- | ------ | -------------------- | --------------------- |
-| 001  | Keep token reuse when a reference definition arrives (old comparator)           | —        | —      | —                    | SUPERSEDED by 008+009 |
-| 002  | `$state.raw` + phase breakdown                                                  | —        | —      | —                    | SUPERSEDED by 006+007 |
-| 003  | Strip list/table `raw` into child renderers                                     | —        | —      | —                    | SUPERSEDED by 010     |
-| 004  | Code block per-line text nodes (impossible childNodes gate)                     | —        | —      | —                    | SUPERSEDED by 012     |
-| 005  | Prefix/tail two-each split (remounts components; validator crash)               | —        | —      | —                    | SUPERSEDED by 011     |
-| 006  | Paired protocol, semantic parity, prefix-scaling scenarios, browser attribution | P1       | M      | —                    | TODO                  |
-| 007  | One-variable A/B: `streamTokens` in `$state.raw`                                | P1       | S      | 006                  | TODO                  |
-| 008  | Semantic token equality (all render-affecting fields, same-object fast path)    | P1       | M      | —                    | TODO                  |
-| 009  | Reference definitions: semantic whole-tree reuse, then targeted re-lex          | P1       | M+M    | 006, 008 (007 first) | TODO                  |
-| 010  | List/table render work: attribute H1–H4, fix what measures                      | P1       | M      | 006, 007, 009 §1     | TODO                  |
-| 011  | Bounded prefix work: measured costs, single-owner rendering design              | P1       | L      | 006, 008, 007–010    | TODO                  |
-| 012  | Spike: per-line text nodes for code fences (measured, SSR contract)             | P2       | S–M    | 006                  | TODO                  |
+| Plan | Title                                                                           | Priority | Effort | Depends on           | Status                                                                                    |
+| ---- | ------------------------------------------------------------------------------- | -------- | ------ | -------------------- | ----------------------------------------------------------------------------------------- |
+| 001  | Keep token reuse when a reference definition arrives (old comparator)           | —        | —      | —                    | SUPERSEDED by 008+009                                                                     |
+| 002  | `$state.raw` + phase breakdown                                                  | —        | —      | —                    | SUPERSEDED by 006+007                                                                     |
+| 003  | Strip list/table `raw` into child renderers                                     | —        | —      | —                    | SUPERSEDED by 010                                                                         |
+| 004  | Code block per-line text nodes (impossible childNodes gate)                     | —        | —      | —                    | SUPERSEDED by 012                                                                         |
+| 005  | Prefix/tail two-each split (remounts components; validator crash)               | —        | —      | —                    | SUPERSEDED by 011                                                                         |
+| 006  | Paired protocol, semantic parity, prefix-scaling scenarios, browser attribution | P1       | M      | —                    | IN PROGRESS (executor running)                                                            |
+| 007  | One-variable A/B: `streamTokens` in `$state.raw`                                | P1       | S      | 006                  | TODO                                                                                      |
+| 008  | Semantic token equality (all render-affecting fields, same-object fast path)    | P1       | M      | —                    | IN PROGRESS — snapshot `f470a91`; amended 2026-09-28 (Step 2b parser fix); fix-dispatched |
+| 009  | Reference definitions: semantic whole-tree reuse, then targeted re-lex          | P1       | M+M    | 006, 008 (007 first) | TODO                                                                                      |
+| 010  | List/table render work: attribute H1–H4, fix what measures                      | P1       | M      | 006, 007, 009 §1     | TODO                                                                                      |
+| 011  | Bounded prefix work: measured costs, single-owner rendering design              | P1       | L      | 006, 008, 007–010    | TODO                                                                                      |
+| 012  | Spike: per-line text nodes for code fences (measured, SSR contract)             | P2       | S–M    | 006                  | TODO                                                                                      |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale) | SUPERSEDED
 
@@ -72,6 +72,10 @@ citations 0.55 ms/frame avg with 41 no-reuse updates (peak 4–10 ms).
 
 Filled by Plan 006 (bucket shares per scenario: flush / JS outside flush /
 style+layout / paint / GC; top-15 self-time functions).
+
+## Amendments
+
+- 2026-09-28 — 008: scope widened to `incremental-parser.ts` (Step 2b) after execution surfaced a pre-existing stale-href bug when a reference definition's URL streams in chunks. See `008-semantic-token-equality.guard.md`.
 
 ## Dependency notes
 

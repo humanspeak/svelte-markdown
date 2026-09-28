@@ -8,7 +8,7 @@
 > dispatched you and told you they maintain the index.
 >
 > **Drift check (run first)**:
-> `git diff --stat 7dea763..HEAD -- src/lib/utils/streaming-token-reuse.ts src/lib/utils/streaming-token-reuse.test.ts src/lib/utils/incremental-parser.ts`
+> `git diff --stat f470a91..HEAD -- src/lib/utils/streaming-token-reuse.ts src/lib/utils/streaming-token-reuse.test.ts src/lib/utils/incremental-parser.ts`
 > On any change, compare the "Current state" excerpts against the live
 > code before proceeding; on a mismatch, treat it as a STOP condition.
 
@@ -19,7 +19,7 @@
 - **Risk**: MED
 - **Depends on**: none (prerequisite for 009 and 011)
 - **Category**: bug / perf-enabler
-- **Planned at**: commit `7dea763`, 2026-09-28
+- **Planned at**: commit `f470a91`, 2026-09-28 (amended; original `7dea763`)
 
 ## Why this matters
 
@@ -130,9 +130,10 @@ Prefix with `export PATH=~/.local/share/pnpm/bin:$PATH &&`.
 - `src/lib/utils/streaming-token-reuse.ts`
 - `src/lib/utils/streaming-token-reuse.test.ts`
 - `src/lib/utils/incremental-parser.test.ts` (parity characterization tests only)
+- `src/lib/utils/incremental-parser.ts` (Step 2b only — the definition-extension fix; added by the 2026-09-28 revision)
 - `.agents/.plans/stream-vs-streamdown/README.md` (status row)
 
-**Out of scope**: `incremental-parser.ts` logic (Plan 011), `SvelteMarkdown.svelte`,
+**Out of scope**: any `incremental-parser.ts` change beyond Step 2b (Plan 011 owns the rest), `SvelteMarkdown.svelte`,
 `render-metadata.ts`, any widening of WHERE reuse happens (Plan 009).
 
 ## Git workflow
@@ -202,6 +203,58 @@ produce identical output; conservative on unknowns".
 **Verify**: focused tests → all pass, including the nine former failures and
 the existing nine `reuseStableTokenArray` cases.
 
+### Step 2b (added 2026-09-28): Treat an append that extends a definition as reference-sensitive
+
+State at this step: Steps 1–2 are done and committed at `f470a91`; the only
+red test is "keeps semantic parity after every chunk while a reference URL
+completes" in `incremental-parser.test.ts`, failing with
+`root 0 for "See [ref].\n\n[ref]: https": expected false to be true`.
+
+Mechanism: `update()` computes
+`appendAddsDefinition = isAppendOnly && this.appendIntroducesMatch(source, this.hasReferenceDefinition)`.
+`appendIntroducesMatch` (`incremental-parser.ts:276-286`) returns `false` when
+the boundary line ALREADY matched before the append ("already present ⇒ not
+new"). So while a definition line is still being streamed, every chunk after
+the one that completed `]:` is treated as a plain append: the tail window
+re-lexes only the `def` token and the prefix paragraph keeps the `href` from
+the first full re-lex (`"h"`).
+
+Fix (in `update()`, next to `appendAddsDefinition`): also detect
+"append touches a definition line":
+
+```ts
+// A definition whose URL/title is still streaming changes how prefix
+// references resolve on every chunk, not only on the chunk that completed
+// `]:`. Treat any append whose boundary line is a definition as adding one.
+const boundaryLineStart = this.prevSource.lastIndexOf('\n') + 1
+const appendTouchesDefinition =
+    isAppendOnly && this.hasReferenceDefinition(source.slice(boundaryLineStart))
+const appendAddsDefinition =
+    isAppendOnly &&
+    (appendTouchesDefinition || this.appendIntroducesMatch(source, this.hasReferenceDefinition))
+```
+
+`source.slice(boundaryLineStart)` is the boundary line plus the appended
+text; when the appended chunk contains a newline the slice spans into the
+next line, which is acceptable (one extra conservative full re-lex when a
+definition line closes). The existing downstream logic
+(`referenceInvalidatesTail = prevHasPotentialReferenceUse && appendAddsDefinition`)
+then forces the full re-lex and `canReuse: false` only when the prefix has a
+potential use — a stream with no `[x]` uses stays on the tail window.
+
+Also update the JSDoc of `appendIntroducesMatch` to say it detects NEW
+matches only and that callers needing "touches a definition" must check the
+boundary line themselves (as `update` now does).
+
+Existing tests that pin scan counts ("scans the definition boundary at most
+once per append", "does not scan the full previous source…") must still
+pass: the new check is one regex over the boundary line, not the prefix. If
+one of them fails, adjust the implementation (e.g. reuse the single
+`lineStart` computation), NOT the test.
+
+**Verify**: `pnpm vitest run src/lib/utils/incremental-parser.test.ts` → the
+parity test PASSES; all other cases unchanged (90 → 91 passing).
+
 ### Step 3: Guard against false diffs in the streaming path
 
 Add a test in `streaming-token-reuse.test.ts` that lexes a 30-root mixed
@@ -227,6 +280,7 @@ every root before the last is `isSameStableNode` under the new comparator
 ## Done criteria
 
 - [ ] `pnpm check` 0 errors; `pnpm test` exits 0 with the new tests passing
+- [ ] The chunked reference-URL parity test in `incremental-parser.test.ts` passes (red at `f470a91`)
 - [ ] `grep -n "if (a === b) return true\|previousNode === nextNode" src/lib/utils/streaming-token-reuse.ts` matches (fast path present)
 - [ ] `grep -n "typeof .* === 'function'" src/lib/utils/streaming-token-reuse.ts` matches (functions never equal)
 - [ ] No files outside scope modified
