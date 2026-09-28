@@ -1,0 +1,14 @@
+# Guard log — 006 paired-baseline-and-browser-attribution
+
+## Checkpoint 1 — 2026-09-28 05:52 — BLOCKED (STOP condition fired, correctly)
+
+e2f05da · executor (opus, worktree) completed Steps 1–2 and stopped at the plan's STOP condition "Parity check reports mismatches on `main` for any scenario". Steps 3–5 not started (scenario groundwork present but unexercised; no attribution script; no archived baseline). Diff applied to `perf/stream-bench-flush-timing` and snapshot-committed; evidence (step-1 log, two Node repro scripts + logs) copied to `evidence/006/`.
+
+- Worktree base: harness created the worktree from `main` (`307b548`), which lacks the batch tip; executor `git reset --hard d63ccfb` (clean tree) to obtain the plan's base — reasonable, reported, no scope impact.
+- Scope: only `scripts/stream-compare-bench.mjs` and `src/routes/test/stream-compare/+page.svelte` changed plus the evidence folder; `src/lib/` untouched (`git status`). No plan/README/guard edits, no commits.
+- Reproduced by executor in Node against `dist/` (repro scripts in evidence; guard re-ran neither yet — runs pending after the 008 fix lands):
+    1. `citations`: stale link `href` while a definition URL streams — `[62].tokens[7].href streamed "ht" · fresh "https://example.com/source/38"`; same defect as 008's amended Step 2b (`appendIntroducesMatch` ignores appends that extend an already-matching definition line).
+    2. `prose-mixed`: a nested list item becomes its own top-level list when a 32-char chunk boundary falls after `"  - Nested 0.a\n "` — streamed `list,space,list` vs fresh `list`; the split sits in the reused prefix and is never repaired (31/31 checks mismatched). Root cause (guard reading of `incremental-parser.ts` `getNextTailWindowBoundary`/`isStableAtSourceEnd`): when the last token is a `space` token, the boundary treats the preceding block as closed, but a list is not closed by trailing whitespace or even a blank line (a blank line inside a list makes it loose and continues it). Not covered by any plan in the batch.
+- Step 1 paired run: structure verified (alternating order, paired delta line); timings meaningless under load ~13 on 8 threads — executor said so.
+- Classification: ON TRACK for the executor (STOP honored, nothing loosened). The two findings are pre-existing library correctness bugs surfaced by the new detector — exactly what Step 2 exists for.
+- Action: reported to operator with a decision: (a) fix first — 008 Step 2b (dispatched) covers finding 1; finding 2 needs a new plan (proposed 013: tail-window boundary must not close a list/blockquote when the following token is `space` without a real block separator; parity tests at every chunk boundary of the prose corpus) — then resume 006 at Step 3; or (b) resume 006 recording the mismatches as known failures. Guard recommends (a); the plan forbids (b)'s comparator loosening but not recording.
