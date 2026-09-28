@@ -8,7 +8,7 @@
 > dispatched you and told you they maintain the index.
 >
 > **Drift check (run first)**:
-> `git diff --stat 7dea763..HEAD -- src/lib/renderers/Code.svelte src/lib/renderers/Code.test.ts`
+> `git diff --stat f6684cc..HEAD -- src/lib/renderers/Code.svelte src/lib/renderers/Code.test.ts`
 > On any change, compare the "Current state" excerpt against live code; on
 > a mismatch, treat it as a STOP condition.
 
@@ -28,7 +28,7 @@
 - **Risk**: MED (hypothesis about layout behavior; SSR/hydration contract)
 - **Depends on**: 006 (paired protocol + attribution)
 - **Category**: perf (spike)
-- **Planned at**: commit `7dea763`, 2026-09-28
+- **Planned at**: commit `f6684cc`, 2026-09-28 (amended pre-flight; original `7dea763`)
 
 ## Why this matters
 
