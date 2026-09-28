@@ -8,10 +8,21 @@
 > dispatched you and told you they maintain the index.
 >
 > **Drift check (run first)**:
-> `git diff --stat 7dea763..HEAD -- src/lib/SvelteMarkdown.svelte`
+> `git diff --stat 6318f73..HEAD -- src/lib/SvelteMarkdown.svelte scripts/stream-compare-bench.mjs`
 > If the file changed since this plan was written, compare the "Current
 > state" excerpt against the live code before proceeding; on a mismatch,
 > treat it as a STOP condition.
+
+> **Revision 2026-09-28 (guard pre-flight):** Plan 006 landed (`be3b3d7`):
+> the runner already has paired mode, parity, DOM projection and the new
+> scenarios, but NOT two-URL A/B support — Step 1 applies. `main` does not
+> contain the harness, so "A = main" is wrong: A is the batch branch tip
+> WITHOUT this plan's change, served from a separate git worktree
+> (`git worktree add /tmp/svm-ab-a <HEAD SHA>`, `pnpm install --frozen-lockfile`,
+> `pnpm build`, `pnpm preview --host 127.0.0.1 --port 4173 --strictPort`);
+> B is this checkout with the change on port 4183. Compare against the
+> clamped Plan 006 baseline in the batch README, not the pre-clamp numbers
+> quoted below. Baseline re-stamped to `6318f73`.
 
 ## Status
 
@@ -20,7 +31,7 @@
 - **Risk**: LOW
 - **Depends on**: 006 (paired protocol + attribution)
 - **Category**: perf
-- **Planned at**: commit `7dea763`, 2026-09-28
+- **Planned at**: commit `6318f73`, 2026-09-28 (amended; original `7dea763`)
 
 ## Why this matters
 
@@ -101,7 +112,7 @@ Prefix with `export PATH=~/.local/share/pnpm/bin:$PATH &&`.
 
 ## Git workflow
 
-- Branch: `perf/stream-tokens-raw-state-ab` off `main` (after 006 merged).
+- Work on `perf/stream-bench-flush-timing` (batch branch); the reviewer commits.
 - Commit: `perf(streaming): hold stream tokens in $state.raw`.
 - Do NOT push or open a PR unless instructed.
 
@@ -140,7 +151,7 @@ reset/offset/options/HTML-collapse suites listed in Current state.
 
 ### Step 4: Paired A/B measurement
 
-Preview A = `main` on 4173, preview B = branch on 4174. Run the paired A/B
+Preview A = pre-change branch tip (separate worktree) on 4173, preview B = this checkout with the change on 4183. Run the paired A/B
 for `prose-mixed`, `long-list`, `citations`, `prefix-384kb` with 5 iterations,
 1 warmup, twice. Record `totalWorkMsMedian`, `libraryFlushMsMedian`,
 `p95WorkMsMedian`, `parityMismatches`, and the paired delta. Then run the
