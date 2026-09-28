@@ -13,6 +13,21 @@
 > state" excerpts against the live code before proceeding; on a mismatch,
 > treat it as a STOP condition.
 
+> **Revision 1 — 2026-09-28 (guard):** Step 2 landed for lists and indented
+> code (snapshot `9ec976f`); the chunk-size sweep still failed at sizes 1, 32
+> and 64 on a second pre-existing mismatch: a heading (or `hr`) frozen at its
+> trailing newline keeps `raw "# H\n"` + `space "\n"` where a one-shot parse
+> yields `raw "# H"` + `space "\n\n"`. `raw.length` feeds source-offset render
+> keys, so parity must hold on `raw`. Step 2c added.
+>
+> **Revision 2 — 2026-09-28 (guard):** Step 2c landed (snapshot `6e1abe7`);
+> the size-1 sweep still failed on a closed code fence frozen without its
+> trailing newline — same mechanism. Guard probed marked directly: NO block
+> type keeps a trailing newline in its raw once a blank line follows (code,
+> heading, hr, list, table, paragraph, blockquote, html, def alike), so the
+> last token can never be frozen safely. Step 2d added: `isStableAtSourceEnd`
+> returns `false` unconditionally. Baseline re-stamped to `6e1abe7`.
+
 ## Status
 
 - **Priority**: P0 (correctness; blocks 006's parity gate and every later measurement)
