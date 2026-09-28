@@ -38,6 +38,7 @@ interface ParseSourceResult {
 }
 
 const CLOSED_FENCE_RE = /^ {0,3}(`{3,}|~{3,}).*\n[\s\S]*\n {0,3}\1[ \t]*\n*$/
+const FENCE_OPEN_RE = /^ {0,3}(`{3,}|~{3,})/
 const LINK_REFERENCE_RE = /\[[^\]\n]+\]\[[^\]\n]*\]/
 const SHORTCUT_REFERENCE_RE = /\[[^\]\n]+\](?![[(])/ // Excludes inline links/images and full refs
 const REFERENCE_DEFINITION_RE = /^\s{0,3}\[[^\]\n]+\]:/m
@@ -176,6 +177,9 @@ export class IncrementalParser {
         // (Indented code is conservatively unstable too: a further indented
         // line after a blank line continues the same block.)
         if (token.type === 'code') return CLOSED_FENCE_RE.test(token.raw)
+        // A list at the very end of the source is never closed: the next
+        // chunk may add an item (loose list) whatever its raw ends with.
+        if (token.type === 'list') return false
         if (token.raw.endsWith('\n\n')) return true
 
         switch (token.type) {
@@ -496,16 +500,45 @@ export class IncrementalParser {
             return { prefixCount: 0, reparseOffset: 0 }
         }
 
-        const lastToken = tokens[tokens.length - 1]
-        if (this.isStableAtSourceEnd(lastToken)) {
-            return { prefixCount: tokens.length, reparseOffset: sourceLength }
+        let cut = tokens.length
+        let reparseOffset = sourceLength
+        if (!this.isStableAtSourceEnd(tokens[cut - 1])) {
+            cut--
+            reparseOffset -= this.getTokenSourceLength(tokens[cut])
         }
-
-        return {
-            prefixCount: tokens.length - 1,
-            reparseOffset: sourceLength - this.getTokenSourceLength(lastToken)
+        // A trailing `space` does not close a list or indented code block;
+        // pull that block into the tail too (one extra token — still O(1)
+        // per append).
+        if (
+            cut > 0 &&
+            tokens[cut]?.type === 'space' &&
+            this.canContinueAcrossBlankLine(tokens[cut - 1])
+        ) {
+            cut--
+            reparseOffset -= this.getTokenSourceLength(tokens[cut])
         }
+        return { prefixCount: cut, reparseOffset }
     }
+
+    /**
+     * Blocks a blank or whitespace-only line does NOT terminate: the next
+     * chunk may continue them (another list item, a further indented code
+     * line), so they must be re-lexed together with the tail. An OPEN fence
+     * is already kept in the tail by {@link isStableAtSourceEnd}; a closed
+     * fence is done, so only fence-less (indented) code qualifies.
+     *
+     * @param token - The token immediately before a trailing `space` token
+     * @returns `true` for a list or an indented code block
+     * @example
+     * ```typescript
+     * this.canContinueAcrossBlankLine(listToken) // true
+     * ```
+     */
+    private canContinueAcrossBlankLine = (token: Token): boolean =>
+        token.type === 'list' ||
+        (token.type === 'code' &&
+            !CLOSED_FENCE_RE.test(token.raw) &&
+            !FENCE_OPEN_RE.test(token.raw))
 
     /**
      * Commits parser state and refreshes cached bookkeeping facts for the next

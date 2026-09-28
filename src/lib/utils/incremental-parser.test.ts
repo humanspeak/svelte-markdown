@@ -1163,4 +1163,82 @@ describe('IncrementalParser', () => {
             expect(lexSpy.mock.calls.at(-1)?.[0]).toBe(appended)
         })
     })
+
+    describe('Tail-window boundary across blank lines', () => {
+        /** Copy of `section(index)` from `src/routes/test/stream-compare/+page.svelte`. */
+        const proseSection = (index: number): string => `## Section ${index}: Streaming performance
+
+This paragraph contains **bold text**, *emphasis*, \`inline code\`, and a
+[stable link](https://example.com/${index}) so each renderer performs realistic inline work.
+
+- Item ${index}.1 with a short explanation
+- Item ${index}.2 with another **formatted value**
+- Item ${index}.3 with a nested detail
+  - Nested ${index}.a
+  - Nested ${index}.b
+
+> A blockquote for section ${index} keeps the block shapes varied.
+
+\`\`\`ts
+const section${index} = { active: true, value: ${index} }
+\`\`\`
+
+| Metric | Value |
+| --- | ---: |
+| section | ${index} |
+| doubled | ${index * 2} |
+
+`
+        const PROSE_MIXED = `# Long streaming benchmark\n\n${proseSection(0)}${proseSection(1)}`
+
+        /** Streams cumulative sources through one parser, asserting parity after every chunk. */
+        const streamParity = (chunks: string[]): void => {
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            let source = ''
+            for (const chunk of chunks) {
+                source += chunk
+                const result = parser.update(source)
+                expectSemanticParity(
+                    result.tokens,
+                    parseAndCacheModule.lexAndClean(source, options, false),
+                    source
+                )
+            }
+        }
+
+        /** Splits `source` into fixed-size chunks. */
+        const chunkBy = (source: string, size: number): string[] => {
+            const chunks: string[] = []
+            for (let i = 0; i < source.length; i += size) chunks.push(source.slice(i, i + size))
+            return chunks
+        }
+
+        it('keeps a nested list open across a whitespace-only line', () => {
+            streamParity(['- a\n  - b\n ', ' - c\n'])
+        })
+
+        it('continues a loose list after a blank line', () => {
+            streamParity(['- a\n\n', '- b\n'])
+        })
+
+        it('still closes a list when a paragraph follows the blank line', () => {
+            streamParity(['- a\n\n', 'para\n'])
+        })
+
+        it('continues an ordered list with blank lines and a nested bullet', () => {
+            streamParity(['1. a\n\n', '2. b\n', '   - c\n\n', '3. d\n'])
+        })
+
+        it('continues an indented code block after a blank line', () => {
+            streamParity(['    code1\n\n', '    code2\n'])
+        })
+
+        it.each([1, 7, 32, 64])(
+            'matches a fresh parse of the prose-mixed sections at chunk size %i',
+            (size) => {
+                streamParity(chunkBy(PROSE_MIXED, size))
+            }
+        )
+    })
 })
