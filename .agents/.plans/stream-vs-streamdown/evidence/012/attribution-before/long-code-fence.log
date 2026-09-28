@@ -1,0 +1,39 @@
+=== attribution: long-code-fence (svelte-markdown, 1 traced run after 1 warmup) ===
+page: totalWorkMs 2304.4 · frames 753 · avg 3.06 · p95 5.4 · libraryFlushMs 88.6 (752 flushes)
+trace: 1396 window measures, raw sum 2304.407ms, union 2304.407ms (100.0% of totalWorkMs; 0ms of overlapping windows counted twice by the page)
+flush measure 88.6ms over 658 flushes · main thread pid 1401919 tid 1401919
+
+bucket                                                 total ms  ms/frame   share
+stream-flush measure (parse+diff+state write)              88.5     0.118    3.8%
+JS outside flush (derived + DOM commit + metadata)        436.5     0.580   18.9%
+UpdateLayoutTree + Layout                                1422.9     1.890   61.7%
+Paint + composite                                          14.9     0.020    0.6%
+MinorGC / MajorGC                                           0.0     0.000    0.0%
+other traced main-thread work                             109.2     0.145    4.7%
+untraced window time (idle / gaps)                        232.4     0.309   10.1%
+sum of buckets                                           2304.4     3.060
+  of which JS outside flush: 78.542ms in the sync window (prop assignment + tick) · 357.98ms in the frame window
+  "other" by event: RunTask 88.479ms · HitTest 20.733ms
+traced buckets (excl. untraced) = 2072.0ms = 89.9% of page totalWorkMs 2304.4ms · 89.9% of the window union
+paint + composite after the windows (not charged by the bench): 1040.777ms (1.382 ms/frame)
+
+top 15 functions by self time (samples inside the measured windows; 2338.824ms sampled)
+ 1.   1427.5ms    61%  getBoundingClientRect  (native)
+ 2.     27.9ms   1.2%  fences  http://127.0.0.1:4173/_app/immutable/chunks/Blkxhcok.js:6:725
+ 3.     27.9ms   1.2%  measure  (native)
+ 4.     10.7ms   0.5%  Ri  http://127.0.0.1:4173/_app/immutable/chunks/BCivH4Vn.js:1:35060
+ 5.      7.7ms   0.3%  (anonymous)  http://127.0.0.1:4173/_app/immutable/chunks/Blkxhcok.js:71:9430
+ 6.      4.9ms   0.2%  #v  http://127.0.0.1:4173/_app/immutable/chunks/BCivH4Vn.js:1:11736
+ 7.      4.8ms   0.2%  Ln  http://127.0.0.1:4173/_app/immutable/chunks/BCivH4Vn.js:1:16355
+ 8.      4.7ms   0.2%  Vc  http://127.0.0.1:4173/_app/immutable/chunks/Blkxhcok.js:71:7528
+ 9.      4.1ms   0.2%  Ur  http://127.0.0.1:4173/_app/immutable/chunks/BCivH4Vn.js:1:24273
+10.      3.8ms   0.2%  get  http://127.0.0.1:4173/_app/immutable/chunks/BCivH4Vn.js:3:10835
+11.      3.6ms   0.2%  lex  http://127.0.0.1:4173/_app/immutable/chunks/Blkxhcok.js:34:5394
+12.      2.8ms   0.1%  Ce  http://127.0.0.1:4173/_app/immutable/nodes/36.DqkbiTsY.js:300:2709
+13.      2.8ms   0.1%  Ao.n  http://127.0.0.1:4173/_app/immutable/chunks/BCivH4Vn.js:3:11920
+14.      2.7ms   0.1%  #_  http://127.0.0.1:4173/_app/immutable/chunks/BCivH4Vn.js:1:10884
+15.      2.5ms   0.1%  (anonymous)  http://127.0.0.1:4173/_app/immutable/nodes/36.DqkbiTsY.js:300:2612
+
+trace: /tmp/long-code-fence.trace.json
+cpu profile: /tmp/long-code-fence.cpuprofile
+summary: .agents/.plans/stream-vs-streamdown/evidence/012/attribution-before/long-code-fence.attribution.json
