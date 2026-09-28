@@ -181,14 +181,13 @@ export class IncrementalParser {
         // chunk may add an item (loose list) whatever its raw ends with.
         if (token.type === 'list') return false
         if (token.raw.endsWith('\n\n')) return true
-
-        switch (token.type) {
-            case 'heading':
-            case 'hr':
-                return token.raw.endsWith('\n')
-            default:
-                return false
-        }
+        // Everything else at the source end (including a heading or hr whose
+        // raw ends in a single `\n`) is unstable: marked reassigns trailing
+        // newlines once a blank line follows (`# H\n` + `\n` lexes fresh as
+        // heading `# H` + space `\n\n`), so freezing it one chunk early
+        // yields a different raw split than a one-shot parse. Once another
+        // token follows it, it joins the prefix via the normal cut path.
+        return false
     }
 
     /**
