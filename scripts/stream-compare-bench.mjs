@@ -72,6 +72,7 @@ const summarize = (runs) => ({
     growthRatioMedian: medianOf(runs, 'growthRatio'),
     syncTotalMsMedian: medianOf(runs, 'syncTotalMs'),
     frameWorkTotalMsMedian: medianOf(runs, 'frameWorkTotalMs'),
+    overlapClampedMsMedian: medianOf(runs, 'overlapClampedMs'),
     libraryFlushMsMedian: medianOf(runs, 'libraryFlushMs'),
     mutationsMedian: medianOf(runs, 'mutations'),
     heapDeltaKbMedian: medianOf(runs, 'heapDeltaKb'),
@@ -160,7 +161,7 @@ try {
                 ? ''
                 : ` · parity ${run.parityMismatches}/${run.parityChecks} mismatched${run.firstParityMismatch ? ` (first ${run.firstParityMismatch})` : ''}`
         console.log(
-            `${renderer.padEnd(19)} run ${iteration + 1}${order ? ` [${order}]` : ''}: work ${run.totalWorkMs.toFixed(1)}ms total · avg ${run.avgWorkMs.toFixed(2)} · p95 ${run.p95WorkMs.toFixed(2)} · peak ${run.peakWorkMs.toFixed(1)} · over-budget ${run.framesOverBudget}/${run.frames} · growth ${run.growthRatio}${parity}`
+            `${renderer.padEnd(19)} run ${iteration + 1}${order ? ` [${order}]` : ''}: work ${run.totalWorkMs.toFixed(1)}ms total · avg ${run.avgWorkMs.toFixed(2)} · p95 ${run.p95WorkMs.toFixed(2)} · peak ${run.peakWorkMs.toFixed(1)} · over-budget ${run.framesOverBudget}/${run.frames} · growth ${run.growthRatio} · overlap clamped ${run.overlapClampedMs.toFixed(1)}ms${parity}`
         )
     }
 

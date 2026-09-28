@@ -30,6 +30,12 @@
      *                our callback because it registered its rAF first.
      *   workMs       syncMs + frameWorkMs — the per-frame cost a host app pays.
      *
+     * Windows never overlap: when a frame overruns its budget, the next rAF
+     * timestamp can predate the end of the previous measured window, so the
+     * frame window starts at max(rAF timestamp, previous window end). The
+     * clipped time is reported as `overlapClampedMs` (it was previously
+     * charged twice).
+     *
      * Earlier versions of this page measured only `syncMs` in a synchronous
      * burst loop. For a renderer that defers to rAF that is ~0 regardless of
      * document size (all work landed in one "settle" frame), and in frame-paced
@@ -129,6 +135,11 @@
         growthRatio: number
         syncTotalMs: number
         frameWorkTotalMs: number
+        /**
+         * Time clipped from frame windows whose rAF timestamp predated the end
+         * of the previous measured window (would otherwise be counted twice).
+         */
+        overlapClampedMs: number
         libraryFlushMs: number | null
         libraryFlushCount: number | null
         domNodes: number
@@ -506,6 +517,12 @@ const section${index} = { active: true, value: ${index} }
         await nextFrame()
     }
 
+    /** End of the last measured window in a run, plus the time clipped against it. */
+    interface WindowClock {
+        previousWindowEnd: number
+        overlapClampedMs: number
+    }
+
     /**
      * Applies one frame's worth of updates and returns the main-thread work it
      * caused. See the module comment for the definition of each component.
@@ -513,7 +530,8 @@ const section${index} = { active: true, value: ${index} }
     const measureFrame = async (
         slices: string[],
         inputMode: InputMode,
-        traceWindows: boolean
+        traceWindows: boolean,
+        windowClock: WindowClock
     ): Promise<{ syncMs: number; frameWorkMs: number }> => {
         let syncMs = 0
         for (const slice of slices) {
@@ -529,6 +547,7 @@ const section${index} = { active: true, value: ${index} }
             await tick()
             const endedAt = performance.now()
             syncMs += endedAt - startedAt
+            windowClock.previousWindowEnd = endedAt
             if (traceWindows) {
                 performance.measure(TRACE_SYNC_MEASURE, { start: startedAt, end: endedAt })
             }
@@ -539,9 +558,16 @@ const section${index} = { active: true, value: ${index} }
         // that produced it, rather than to whichever frame paints next.
         outputElement?.getBoundingClientRect()
         const frameEnd = performance.now()
-        const frameWorkMs = Math.max(0, frameEnd - frameTimestamp)
-        if (traceWindows && frameEnd > frameTimestamp) {
-            performance.measure(TRACE_FRAME_MEASURE, { start: frameTimestamp, end: frameEnd })
+        // After an overrun the next rAF timestamp can predate the end of the
+        // previous window; start there instead so no time is charged twice.
+        if (frameTimestamp < windowClock.previousWindowEnd) {
+            windowClock.overlapClampedMs += windowClock.previousWindowEnd - frameTimestamp
+        }
+        const frameStart = Math.max(frameTimestamp, windowClock.previousWindowEnd)
+        const frameWorkMs = Math.max(0, frameEnd - frameStart)
+        windowClock.previousWindowEnd = frameEnd
+        if (traceWindows && frameEnd > frameStart) {
+            performance.measure(TRACE_FRAME_MEASURE, { start: frameStart, end: frameEnd })
         }
 
         return { syncMs, frameWorkMs }
@@ -623,13 +649,15 @@ const section${index} = { active: true, value: ${index} }
         })
         if (outputElement) observer.observe(outputElement, { childList: true, subtree: true })
 
+        const windowClock: WindowClock = { previousWindowEnd: 0, overlapClampedMs: 0 }
         const heapBefore = readHeap()
         for (let index = 0; index < slices.length; index += scenario.updatesPerFrame) {
             const frameSlices = slices.slice(index, index + scenario.updatesPerFrame)
             const { syncMs, frameWorkMs } = await measureFrame(
                 frameSlices,
                 scenario.inputMode,
-                traceWindows
+                traceWindows,
+                windowClock
             )
             syncMsSamples.push(syncMs)
             frameWorkMsSamples.push(frameWorkMs)
@@ -643,7 +671,7 @@ const section${index} = { active: true, value: ${index} }
             }
         }
         // One idle frame so any deferred commit from the last update is charged.
-        const trailing = await measureFrame([source], scenario.inputMode, traceWindows)
+        const trailing = await measureFrame([source], scenario.inputMode, traceWindows, windowClock)
         workMs[workMs.length - 1] += trailing.syncMs + trailing.frameWorkMs
         frameWorkMsSamples[frameWorkMsSamples.length - 1] += trailing.frameWorkMs
         syncMsSamples[syncMsSamples.length - 1] += trailing.syncMs
@@ -684,6 +712,7 @@ const section${index} = { active: true, value: ${index} }
             growthRatio: firstFifth > 0 ? round(lastFifth / firstFifth) : 0,
             syncTotalMs: round(sum(syncMsSamples)),
             frameWorkTotalMs: round(sum(frameWorkMsSamples)),
+            overlapClampedMs: round(windowClock.overlapClampedMs),
             libraryFlushMs:
                 renderer === 'svelte-markdown'
                     ? round(sum(flushEntries.map((entry) => entry.duration)))

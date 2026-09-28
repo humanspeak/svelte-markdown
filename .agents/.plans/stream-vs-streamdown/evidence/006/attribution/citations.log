@@ -1,39 +1,39 @@
-load before citations: 1.65 3.32 4.08
+load before citations: 1.00 1.20 1.53
 === attribution: citations (svelte-markdown, 1 traced run after 1 warmup) ===
-page: totalWorkMs 4395.5 · frames 753 · avg 5.837 · p95 48.7 · libraryFlushMs 447.2 (752 flushes)
-trace: 1463 window measures, raw sum 4394.894ms, union 4024.032ms (91.5% of totalWorkMs; 370.862ms of overlapping windows counted twice by the page)
-flush measure 447.198ms over 749 flushes · main thread pid 1222436 tid 1222436
+page: totalWorkMs 4577 · frames 753 · avg 6.078 · p95 39.8 · libraryFlushMs 550.2 (752 flushes)
+trace: 1491 window measures, raw sum 4576.874ms, union 4576.874ms (100.0% of totalWorkMs; 0ms of overlapping windows counted twice by the page)
+flush measure 550.204ms over 752 flushes · main thread pid 1246278 tid 1246278
 
 bucket                                                 total ms  ms/frame   share
-stream-flush measure (parse+diff+state write)             421.4     0.560   10.5%
-JS outside flush (derived + DOM commit + metadata)       2814.0     3.737   69.9%
-UpdateLayoutTree + Layout                                 247.4     0.329    6.1%
-Paint + composite                                          76.2     0.101    1.9%
-MinorGC / MajorGC                                         152.8     0.203    3.8%
-other traced main-thread work                             118.6     0.157    2.9%
-untraced window time (idle / gaps)                        193.7     0.257    4.8%
-sum of buckets                                           4024.0     5.344
-  of which JS outside flush: 312.454ms in the sync window (prop assignment + tick) · 2501.591ms in the frame window
-  "other" by event: RunTask 100.144ms · HitTest 18.272ms · IntersectionObserverController::computeIntersections 0.157ms
-traced buckets (excl. untraced) = 3830.3ms = 87.1% of page totalWorkMs 4395.5ms · 95.2% of the window union
-paint + composite after the windows (not charged by the bench): 572.31ms (0.760 ms/frame)
+stream-flush measure (parse+diff+state write)             550.2     0.731   12.0%
+JS outside flush (derived + DOM commit + metadata)       3084.3     4.096   67.4%
+UpdateLayoutTree + Layout                                 336.9     0.447    7.4%
+Paint + composite                                          69.8     0.093    1.5%
+MinorGC / MajorGC                                         142.3     0.189    3.1%
+other traced main-thread work                             142.4     0.189    3.1%
+untraced window time (idle / gaps)                        251.0     0.333    5.5%
+sum of buckets                                           4576.9     6.078
+  of which JS outside flush: 353.827ms in the sync window (prop assignment + tick) · 2730.427ms in the frame window
+  "other" by event: RunTask 118.637ms · HitTest 23.692ms · IntersectionObserverController::computeIntersections 0.107ms
+traced buckets (excl. untraced) = 4325.9ms = 94.5% of page totalWorkMs 4577ms · 94.5% of the window union
+paint + composite after the windows (not charged by the bench): 836.389ms (1.111 ms/frame)
 
-top 15 functions by self time (samples inside the measured windows; 4056.762ms sampled)
- 1.    324.2ms     8%  get  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:17336
- 2.    204.1ms     5%  getBoundingClientRect  (native)
- 3.    163.8ms     4%  (garbage collector)  (native)
- 4.    162.1ms     4%  Z  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:25787
- 5.    150.4ms   3.7%  (anonymous)  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:2:4085
- 6.    113.5ms   2.8%  isAppendOnlyUpdate  http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js:71:73
- 7.    104.7ms   2.6%  g  http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js:67:7765
- 8.    100.8ms   2.5%  get  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:3:10835
- 9.     97.9ms   2.4%  Ur  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:24273
-10.     85.8ms   2.1%  Wr  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:24842
-11.     81.5ms     2%  Gr  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:25131
-12.     81.1ms     2%  #v  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:11736
-13.     70.1ms   1.7%  ownKeys  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:3:11387
-14.     66.4ms   1.6%  ta  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:2:4797
-15.     64.3ms   1.6%  u  http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js:67:6769
+top 15 functions by self time (samples inside the measured windows; 4619.856ms sampled)
+ 1.    374.7ms   8.1%  get  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:17336
+ 2.    328.1ms   7.1%  getBoundingClientRect  (native)
+ 3.    201.3ms   4.4%  isAppendOnlyUpdate  http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js:71:73
+ 4.    187.0ms     4%  (anonymous)  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:2:4085
+ 5.    165.3ms   3.6%  Z  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:25787
+ 6.    158.2ms   3.4%  (garbage collector)  (native)
+ 7.    143.0ms   3.1%  #v  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:11736
+ 8.    107.7ms   2.3%  get  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:3:10835
+ 9.    103.1ms   2.2%  Ur  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:24273
+10.     98.8ms   2.1%  inlineTokens  http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js:48:675
+11.     95.9ms   2.1%  g  http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js:67:7765
+12.     95.6ms   2.1%  Wr  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:24842
+13.     84.7ms   1.8%  ta  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:2:4797
+14.     71.5ms   1.5%  ownKeys  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:3:11387
+15.     71.2ms   1.5%  Gr  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:25131
 
 trace: /tmp/citations.trace.json
 cpu profile: /tmp/citations.cpuprofile
