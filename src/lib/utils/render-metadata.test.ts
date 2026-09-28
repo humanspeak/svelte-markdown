@@ -168,3 +168,137 @@ describe('heading render metadata', () => {
         expect(enumeratedEntries).toBeLessThanOrEqual(2)
     })
 })
+
+describe('streaming re-walk of a diverged open list (plan 010, H3)', () => {
+    const textToken = (text: string): Token => ({
+        type: 'text',
+        raw: text,
+        text,
+        tokens: [{ type: 'text', raw: text, text }]
+    })
+    const listItem = (text: string, children: Token[] = [textToken(text)]): Token => ({
+        type: 'list_item',
+        raw: `- ${text}\n`,
+        task: false,
+        loose: false,
+        text,
+        tokens: children
+    })
+    const list = (items: Token[]): Token => ({
+        type: 'list',
+        raw: items.map((item) => item.raw).join(''),
+        ordered: false,
+        start: '',
+        loose: false,
+        items
+    })
+    const prepareRoot = (metadata: RenderMetadata, root: Token) =>
+        metadata.prepareTokensForRender([root], defaultOptions, {
+            source: root.raw,
+            startIndex: 0,
+            startOffset: 0
+        })
+    const countSourceKeyWrites = () => {
+        // Saved deliberately, then called with the actual map as `this`.
+        // trunk-ignore(eslint/@typescript-eslint/unbound-method)
+        const set = WeakMap.prototype.set
+        const writes = { count: 0 }
+        vi.spyOn(WeakMap.prototype, 'set').mockImplementation(function (
+            this: WeakMap<WeakKey, unknown>,
+            key: WeakKey,
+            value: unknown
+        ) {
+            if (typeof value === 'string' && value.startsWith('src:')) writes.count++
+            return set.call(this, key, value)
+        })
+        return writes
+    }
+
+    it('re-keys only the grown item when 199 of 200 items are reused', () => {
+        const metadata = createRenderMetadata()
+        const items = Array.from({ length: 200 }, (_, index) => listItem(`Item ${index}`))
+        prepareRoot(metadata, list(items))
+        const keysBefore = items.map((item, index) => metadata.getStableNodeKey(item, index))
+
+        const grown = listItem('Item 199 grows')
+        const next = [...items.slice(0, 199), grown]
+        const writes = countSourceKeyWrites()
+        prepareRoot(metadata, list(next))
+
+        // The new list object, the grown item, its text token and that
+        // token's inline child. Re-keying every reused item would be ~800.
+        expect(writes.count).toBeLessThanOrEqual(4)
+        expect(next.map((item, index) => metadata.getStableNodeKey(item, index))).toEqual(
+            keysBefore
+        )
+        const grownText = (grown as { tokens: Token[] }).tokens[0]
+        const grownOffset = items
+            .slice(0, 199)
+            .reduce((offset, item) => offset + item.raw.length, 0)
+        expect(metadata.getStableNodeKey(grownText, 0)).toBe(`src:${grownOffset}`)
+    })
+
+    it('re-keys reused items whose offset shifted after an earlier sibling grew', () => {
+        const metadata = createRenderMetadata()
+        const items = Array.from({ length: 5 }, (_, index) => listItem(`Item ${index}`))
+        prepareRoot(metadata, list(items))
+
+        const grown = listItem('Item 0 grows')
+        const next = [grown, ...items.slice(1)]
+        prepareRoot(metadata, list(next))
+        const fresh = createRenderMetadata()
+        prepareRoot(fresh, list(next))
+
+        const keys = (meta: RenderMetadata) =>
+            next.flatMap((item, index) => [
+                meta.getStableNodeKey(item, index),
+                meta.getStableNodeKey((item as { tokens: Token[] }).tokens[0], 0)
+            ])
+        expect(keys(metadata)).toEqual(keys(fresh))
+    })
+
+    it('does not descend into reused heading-free items on a streaming pass', () => {
+        const metadata = createRenderMetadata()
+        let tokenReads = 0
+        const counted = (item: Token): Token =>
+            new Proxy(item, {
+                get(target, property, receiver) {
+                    if (property === 'tokens') tokenReads++
+                    return Reflect.get(target, property, receiver) as unknown
+                }
+            })
+        const items = Array.from({ length: 50 }, (_, index) => counted(listItem(`Item ${index}`)))
+        prepareRoot(metadata, list(items))
+
+        tokenReads = 0
+        prepareRoot(metadata, list([...items.slice(0, 49), listItem('Item 49 grows')]))
+        expect(tokenReads).toBe(0)
+    })
+
+    it('still re-prepares heading ids nested in reused items after a rewind', () => {
+        const metadata = createRenderMetadata()
+        const withHeading = (index: number) => listItem(`Item ${index}`, [heading('foo')])
+        const items = Array.from({ length: 4 }, (_, index) => withHeading(index))
+        const idsOf = (listItems: Token[]) =>
+            listItems.map((item) =>
+                metadata.getPreparedHeadingId((item as { tokens: Token[] }).tokens[0])
+            )
+
+        const headingPrefix = heading('foo')
+        const prepareDoc = (root: Token, startIndex: number) =>
+            metadata.prepareTokensForRender([headingPrefix, root], defaultOptions, {
+                source: `${headingPrefix.raw}${root.raw}`,
+                startIndex,
+                startOffset: startIndex === 0 ? 0 : headingPrefix.raw.length
+            })
+        prepareDoc(list(items), 0)
+        expect(idsOf(items)).toEqual(['foo-1', 'foo-2', 'foo-3', 'foo-4'])
+
+        for (let pass = 0; pass < 3; pass++) {
+            const next = [...items.slice(0, 3), listItem(`Item 3 pass ${pass}`, [heading('foo')])]
+            prepareDoc(list(next), 1)
+            expect(metadata.getPreparedHeadingId(headingPrefix)).toBe('foo')
+            expect(idsOf(next)).toEqual(['foo-1', 'foo-2', 'foo-3', 'foo-4'])
+        }
+    })
+})

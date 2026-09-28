@@ -1,0 +1,201 @@
+{
+    "scenario": "long-list",
+    "renderer": "svelte-markdown",
+    "capturedAt": "2026-09-28T14:04:49.698Z",
+    "url": "http://127.0.0.1:4183/test/stream-compare",
+    "warmups": 1,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "page": {
+        "totalWorkMs": 6028.7,
+        "frames": 754,
+        "avgWorkMs": 7.996,
+        "p95WorkMs": 13.1,
+        "libraryFlushMs": 1548.2,
+        "libraryFlushCount": 753
+    },
+    "trace": {
+        "windowCount": 1500,
+        "windowMs": 6028.442,
+        "windowRawMs": 6028.442,
+        "flushMeasureMs": 1548.221,
+        "flushMeasureCount": 753,
+        "paintOutsideWindowsMs": 678.355,
+        "jsOutsideSyncMs": 253.559,
+        "otherTopMs": [
+            {
+                "name": "RunTask",
+                "ms": 77.368
+            },
+            {
+                "name": "HitTest",
+                "ms": 15.072
+            },
+            {
+                "name": "IntersectionObserverController::computeIntersections",
+                "ms": 0.061
+            }
+        ]
+    },
+    "bucketsMs": {
+        "flush": 1541.84,
+        "jsOutside": 3884.076,
+        "styleLayout": 243.098,
+        "paint": 55.616,
+        "gc": 17.685,
+        "other": 92.501,
+        "untraced": 193.626
+    },
+    "bucketsMsPerFrame": {
+        "flush": 2.045,
+        "jsOutside": 5.151,
+        "styleLayout": 0.322,
+        "paint": 0.074,
+        "gc": 0.023,
+        "other": 0.123,
+        "untraced": 0.257
+    },
+    "tracedCoverageOfTotalWork": 0.968,
+    "tracedCoverageOfWindowUnion": 0.968,
+    "profile": {
+        "scope": "samples inside the measured windows",
+        "sampledMs": 6042.412,
+        "top": [
+            {
+                "functionName": "inlineTokens",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/ayH7RpC4.js",
+                "line": 48,
+                "column": 675,
+                "selfUs": 492946,
+                "selfMs": 492.946,
+                "share": 8.2
+            },
+            {
+                "functionName": "get",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js",
+                "line": 3,
+                "column": 10835,
+                "selfUs": 410419,
+                "selfMs": 410.419,
+                "share": 6.8
+            },
+            {
+                "functionName": "(anonymous)",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/ayH7RpC4.js",
+                "line": 67,
+                "column": 10926,
+                "selfUs": 409832,
+                "selfMs": 409.832,
+                "share": 6.8
+            },
+            {
+                "functionName": "Ks",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/ayH7RpC4.js",
+                "line": 67,
+                "column": 82469,
+                "selfUs": 348495,
+                "selfMs": 348.495,
+                "share": 5.8
+            },
+            {
+                "functionName": "ownKeys",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js",
+                "line": 3,
+                "column": 10697,
+                "selfUs": 323594,
+                "selfMs": 323.594,
+                "share": 5.4
+            },
+            {
+                "functionName": "(anonymous)",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/ayH7RpC4.js",
+                "line": 67,
+                "column": 18041,
+                "selfUs": 244943,
+                "selfMs": 244.943,
+                "share": 4.1
+            },
+            {
+                "functionName": "#v",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js",
+                "line": 1,
+                "column": 11736,
+                "selfUs": 237409,
+                "selfMs": 237.409,
+                "share": 3.9
+            },
+            {
+                "functionName": "getBoundingClientRect",
+                "url": "",
+                "line": 0,
+                "column": 0,
+                "selfUs": 184068,
+                "selfMs": 184.068,
+                "share": 3
+            },
+            {
+                "functionName": "#g",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js",
+                "line": 1,
+                "column": 10688,
+                "selfUs": 169400,
+                "selfMs": 169.4,
+                "share": 2.8
+            },
+            {
+                "functionName": "ownKeys",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js",
+                "line": 3,
+                "column": 11387,
+                "selfUs": 150159,
+                "selfMs": 150.159,
+                "share": 2.5
+            },
+            {
+                "functionName": "Z",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js",
+                "line": 1,
+                "column": 25787,
+                "selfUs": 143605,
+                "selfMs": 143.605,
+                "share": 2.4
+            },
+            {
+                "functionName": "list",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/ayH7RpC4.js",
+                "line": 22,
+                "column": 67,
+                "selfUs": 134395,
+                "selfMs": 134.395,
+                "share": 2.2
+            },
+            {
+                "functionName": "getOwnPropertyDescriptor",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js",
+                "line": 3,
+                "column": 10545,
+                "selfUs": 106314,
+                "selfMs": 106.314,
+                "share": 1.8
+            },
+            {
+                "functionName": "h",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/ayH7RpC4.js",
+                "line": 67,
+                "column": 7604,
+                "selfUs": 98488,
+                "selfMs": 98.488,
+                "share": 1.6
+            },
+            {
+                "functionName": "g",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/ayH7RpC4.js",
+                "line": 67,
+                "column": 7761,
+                "selfUs": 95610,
+                "selfMs": 95.61,
+                "share": 1.6
+            }
+        ]
+    },
+    "pageErrors": []
+}

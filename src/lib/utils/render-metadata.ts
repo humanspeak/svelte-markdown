@@ -154,6 +154,20 @@ export const createRenderMetadata = (): RenderMetadata => {
     let headingStateReusable = false
     let preparedHeadingSignature: HeadingSluggerSignature | undefined
     let previousSourceLessRoots: SourceLessRootRecord[] = []
+    /**
+     * Source-backed passes only (streaming re-walk of a diverged open block,
+     * plan 010 H3). `keyedSubtreeOffsets` records the absolute offset at which
+     * a node's whole subtree was last keyed; a node seen again at the same
+     * offset with the same stored key still has correct keys below it, because
+     * parsed tokens are immutable. `headingFreeSubtrees` marks nodes with no
+     * heading anywhere below them, so heading-id passes skip those subtrees
+     * while still visiting every subtree that holds a heading. Both are gated
+     * on source-backed passes: caller-supplied token arrays may be mutated in
+     * place between renders.
+     */
+    const keyedSubtreeOffsets = new WeakMap<object, number>()
+    const headingFreeSubtrees = new WeakSet<object>()
+    let headingSubtreeCacheEnabled = false
 
     const setRenderKey = (node: object, value: unknown) => {
         renderKeys.set(node, value)
@@ -185,15 +199,17 @@ export const createRenderMetadata = (): RenderMetadata => {
             const node = nodes[index]
             const spanLength = getNodeSourceLength(node)
             const nodeOffset = absoluteOffset + cursor
+            const key = spanLength === 0 ? `src:${nodeOffset}:zero:${index}` : `src:${nodeOffset}`
+            cursor += spanLength
 
-            if (spanLength === 0) {
-                setRenderKey(node, `src:${nodeOffset}:zero:${index}`)
-            } else {
-                setRenderKey(node, `src:${nodeOffset}`)
+            // Same object, same offset, same key: its subtree keys are current.
+            if (keyedSubtreeOffsets.get(node) === nodeOffset && renderKeys.get(node) === key) {
+                continue
             }
 
+            setRenderKey(node, key)
             assignSourceKeysToChildren(node, nodeOffset)
-            cursor += spanLength
+            keyedSubtreeOffsets.set(node, nodeOffset)
         }
     }
 
@@ -303,31 +319,58 @@ export const createRenderMetadata = (): RenderMetadata => {
         }
     }
 
+    /**
+     * Prepares heading ids in `nodes` (from `startIndex`) and their subtrees,
+     * in document order.
+     *
+     * @returns `true` when a heading was found in `nodes` or below them
+     */
     const assignHeadingIds = (
         nodes: RenderMetadataNode[] | undefined,
         options: SvelteMarkdownOptions,
         startIndex = 0,
         rootIndex?: number
-    ) => {
-        if (!nodes) return
+    ): boolean => {
+        if (!nodes) return false
 
+        let found = false
         for (let index = startIndex; index < nodes.length; index++) {
             const node = nodes[index]
             const headingRootIndex = rootIndex ?? index
             if (node.type === 'heading') {
                 prepareHeadingId(node, options, headingRootIndex)
+                found = true
             }
+            if (assignHeadingIdsBelow(node, options, headingRootIndex)) found = true
+        }
+        return found
+    }
 
-            assignHeadingIds(asNodeArray(node.tokens), options, 0, headingRootIndex)
-            assignHeadingIds(asNodeArray(node.items), options, 0, headingRootIndex)
-            assignHeadingIds(asNodeArray(node.header), options, 0, headingRootIndex)
-            const rows = asNodeArray(node.rows)
-            if (rows) {
-                for (const row of rows) {
-                    assignHeadingIds(asNodeArray(row), options, 0, headingRootIndex)
-                }
+    /**
+     * Walks `node`'s children for headings, skipping subtrees a previous
+     * source-backed pass proved heading-free.
+     *
+     * @returns `true` when a heading exists below `node`
+     */
+    const assignHeadingIdsBelow = (
+        node: RenderMetadataNode,
+        options: SvelteMarkdownOptions,
+        rootIndex: number
+    ): boolean => {
+        if (headingSubtreeCacheEnabled && headingFreeSubtrees.has(node)) return false
+
+        let found = assignHeadingIds(asNodeArray(node.tokens), options, 0, rootIndex)
+        if (assignHeadingIds(asNodeArray(node.items), options, 0, rootIndex)) found = true
+        if (assignHeadingIds(asNodeArray(node.header), options, 0, rootIndex)) found = true
+        const rows = asNodeArray(node.rows)
+        if (rows) {
+            for (const row of rows) {
+                if (assignHeadingIds(asNodeArray(row), options, 0, rootIndex)) found = true
             }
         }
+
+        if (!found && headingSubtreeCacheEnabled) headingFreeSubtrees.add(node)
+        return found
     }
 
     const prepareHeadingId = (
@@ -377,6 +420,7 @@ export const createRenderMetadata = (): RenderMetadata => {
     ) => {
         const signature = getHeadingSluggerSignature(options)
         const { source, startIndex = 0 } = preparation ?? {}
+        headingSubtreeCacheEnabled = source !== undefined
         const canReuse =
             source !== undefined &&
             startIndex > 0 &&

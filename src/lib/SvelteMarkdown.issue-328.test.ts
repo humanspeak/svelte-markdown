@@ -1080,4 +1080,114 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(hrefs(container)).toEqual(hrefs(fresh))
         expect(hrefs(container)).toHaveLength(2)
     })
+
+    describe('open list/table prop churn (plan 010, default renderers)', () => {
+        type CounterWindow = Window & {
+            __svmParserCount?: number
+            __svmParserUpdateCount?: number
+        }
+        const counters = () => window as CounterWindow
+
+        /** Parser instances a fresh render of `source` mounts, minus root and block. */
+        const parsersUnderOneBlockChild = async (source: string) => {
+            const w = counters()
+            const before = w.__svmParserCount ?? 0
+            const { unmount } = render(SvelteMarkdown, { props: { source } })
+            await flushStreamingBatch()
+            const mounted = (w.__svmParserCount ?? 0) - before
+            unmount()
+            // Root Parser + the list/table Parser own the child; the rest are
+            // the Parser instances rendered under it.
+            return mounted - 2
+        }
+
+        const streamAll = async (
+            component: { writeChunk: (chunk: string) => void },
+            source: string
+        ) => {
+            for (const chunk of chunkSource(source, 64)) {
+                await act(() => component.writeChunk(chunk))
+                await flushStreamingBatch()
+            }
+        }
+
+        test('appending to the last item of an open list updates only that item', async () => {
+            const item = (index: number) =>
+                `- Item ${index} with **bold ${index}**, \`code${index}\` and a [link](https://example.com/${index}) here`
+            const items = Array.from({ length: 30 }, (_, index) => item(index + 1))
+            const source = items.join('\n')
+            const underLastItem = await parsersUnderOneBlockChild(item(30))
+            expect(underLastItem).toBeGreaterThan(0)
+
+            const { component, container } = render(SvelteMarkdown, {
+                props: { source: '', streaming: true }
+            })
+            await streamAll(component, source)
+            const listItems = Array.from(container.querySelectorAll('li'))
+            expect(listItems).toHaveLength(30)
+
+            const w = counters()
+            expect(w.__svmParserUpdateCount ?? 0).toBeGreaterThan(0)
+            w.__svmParserUpdateCount = 0
+
+            await act(() => component.writeChunk(' 8 chars'))
+            await flushStreamingBatch()
+
+            const listItemsAfter = Array.from(container.querySelectorAll('li'))
+            expect(listItemsAfter).toHaveLength(30)
+            expect(listItemsAfter[29].textContent).toMatch(/here 8 chars$/)
+            expect(listItemsAfter[0]).toBe(listItems[0])
+            // Only the last item's Parsers plus the list and root Parsers may
+            // update; churn through every item would be ~30x this.
+            expect(w.__svmParserUpdateCount ?? 0).toBeLessThanOrEqual(underLastItem + 2)
+
+            const { container: fresh } = render(SvelteMarkdown, {
+                props: { source: `${source} 8 chars` }
+            })
+            expect(container.innerHTML).toBe(fresh.innerHTML)
+        })
+
+        test('appending to the last cell of an open table updates only that cell', async () => {
+            const head = '| # | Name | Module | Docs |\n| --- | --- | --- | --- |\n'
+            const row = (index: number) =>
+                `| ${index} | **Item ${index}** | \`mod${index}\` | [docs](https://example.com/t/${index}) tail |`
+            const rows = Array.from({ length: 20 }, (_, index) => row(index + 1))
+            // The last row has no closing pipe, so appended text lands in its
+            // last cell (the table stays open: no trailing blank line).
+            const source = `${head}${rows.join('\n')}`.replace(/ \|$/, '')
+            // Parsers under one last cell: a fresh table whose only row has
+            // empty cells except the last one.
+            const underLastCell = await parsersUnderOneBlockChild(
+                `${head}|  |  |  | [docs](https://example.com/t/20) tail`
+            )
+            expect(underLastCell).toBeGreaterThan(0)
+
+            const { component, container } = render(SvelteMarkdown, {
+                props: { source: '', streaming: true }
+            })
+            await streamAll(component, source)
+            const cells = Array.from(container.querySelectorAll('tbody td'))
+            expect(cells).toHaveLength(80)
+
+            const w = counters()
+            expect(w.__svmParserUpdateCount ?? 0).toBeGreaterThan(0)
+            w.__svmParserUpdateCount = 0
+
+            await act(() => component.writeChunk(' 8 chars'))
+            await flushStreamingBatch()
+
+            const cellsAfter = Array.from(container.querySelectorAll('tbody td'))
+            expect(cellsAfter).toHaveLength(80)
+            expect(cellsAfter[79].textContent).toMatch(/tail 8 chars$/)
+            expect(cellsAfter[0]).toBe(cells[0])
+            // Only the last cell's Parsers plus the table and root Parsers
+            // may update; churn through every cell would be ~80x this.
+            expect(w.__svmParserUpdateCount ?? 0).toBeLessThanOrEqual(underLastCell + 2)
+
+            const { container: fresh } = render(SvelteMarkdown, {
+                props: { source: `${source} 8 chars` }
+            })
+            expect(container.innerHTML).toBe(fresh.innerHTML)
+        })
+    })
 })

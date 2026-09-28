@@ -73,7 +73,7 @@
      */
 
     type Renderer = 'svelte-markdown' | 'svelte-streamdown'
-    type CorpusKind = 'prose-mixed' | 'long-list' | 'long-code-fence' | 'citations'
+    type CorpusKind = 'prose-mixed' | 'long-list' | 'long-table' | 'long-code-fence' | 'citations'
     type PrefixKind = 'closed-paragraphs' | 'closed-nested-list'
     type InputMode = 'prop' | 'writeChunk'
 
@@ -215,6 +215,15 @@
             renderers: BOTH
         },
         {
+            id: 'long-table',
+            corpus: 'long-table',
+            targetBytes: 10_000,
+            chunkSize: 32,
+            updatesPerFrame: 1,
+            inputMode: 'prop',
+            renderers: BOTH
+        },
+        {
             id: 'long-code-fence',
             corpus: 'long-code-fence',
             targetBytes: 24_000,
@@ -324,6 +333,21 @@ const section${index} = { active: true, value: ${index} }
         return `${source}\nThat is every change.\n`
     }
 
+    /**
+     * One GFM table (4 columns of short inline content: bold, code span, link)
+     * that stays a single open block until the trailing blank line.
+     */
+    const makeLongTable = (targetBytes: number): string => {
+        let source =
+            'Every module and its owner:\n\n| # | Name | Module | Docs |\n| --- | --- | --- | --- |\n'
+        let index = 1
+        while (source.length < targetBytes) {
+            source += `| ${index} | **Item ${index}** | \`mod${index}\` | [docs](https://example.com/t/${index}) |\n`
+            index++
+        }
+        return `${source}\nThat is the full table.\n`
+    }
+
     /** One fenced code block that stays open until the closing fence. */
     const makeLongCodeFence = (targetBytes: number): string => {
         let source = 'Here is the full implementation you asked for:\n\n```ts\n'
@@ -392,6 +416,8 @@ const section${index} = { active: true, value: ${index} }
                 return makeProseMixed(targetBytes)
             case 'long-list':
                 return makeLongList(targetBytes)
+            case 'long-table':
+                return makeLongTable(targetBytes)
             case 'long-code-fence':
                 return makeLongCodeFence(targetBytes)
             case 'citations':

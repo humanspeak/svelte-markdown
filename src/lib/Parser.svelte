@@ -8,6 +8,64 @@
      * allocating a fresh `{}` per dispatched token.
      */
     const NO_EXTRA_PROPS = Object.freeze({})
+
+    /**
+     * Parent fields that must not reach the Parsers dispatched for a list
+     * item's or table cell's CHILD tokens. They are either overridden by the
+     * child token's own fields or meaningless to it, and `raw`/`text`/`items`
+     * (list) or `raw`/`header`/`rows` (table) change on every streaming frame
+     * of an open block — forwarding them gave every child Parser of every
+     * item/cell a changed rest-props object per frame (plan 010, H1/H2).
+     */
+    const LIST_CHILD_VOLATILE: ReadonlySet<string> = new Set([
+        'items',
+        'raw',
+        'text',
+        'tokens',
+        'type'
+    ])
+    const TABLE_CHILD_VOLATILE: ReadonlySet<string> = new Set([
+        'align',
+        'raw',
+        'text',
+        'header',
+        'rows',
+        'tokens',
+        'type'
+    ])
+
+    /**
+     * Copies `source` without the `volatile` keys, returning `previous`
+     * unchanged when it holds exactly the same keys and values. Returning the
+     * same object keeps a `$derived` from notifying the child Parsers when an
+     * open list/table only grew. Memoized by value rather than by `source`
+     * identity: for list/table Parsers `source` is the component's stable
+     * rest-props proxy, whose identity never changes while its values do.
+     *
+     * @param source - The Parser's sanitized rest props
+     * @param volatile - Keys to drop
+     * @param previous - The value returned by the previous call, if any
+     * @returns `previous` when shallowly equal to the filtered copy, else the copy
+     */
+    const pickChildRest = (
+        source: Record<string, unknown>,
+        volatile: ReadonlySet<string>,
+        previous: Record<string, unknown> | undefined
+    ): Record<string, unknown> => {
+        const next: Record<string, unknown> = {}
+        let size = 0
+        let same = previous !== undefined
+        for (const key of Object.keys(source)) {
+            if (volatile.has(key)) continue
+            const value = source[key]
+            next[key] = value
+            size++
+            if (same && !(previous && Object.hasOwn(previous, key) && previous[key] === value)) {
+                same = false
+            }
+        }
+        return previous && same && Object.keys(previous).length === size ? previous : next
+    }
 </script>
 
 <script lang="ts">
@@ -194,6 +252,23 @@
     })
 
     /**
+     * Rest props handed to `dispatch` for the child tokens of list items and
+     * table cells (never to the item/cell renderers or snippets themselves).
+     * Read only by the list and table branches, so other Parsers never
+     * compute it. `previousChildRest` is a plain closure variable: the
+     * derived returns the previous object while its values are unchanged.
+     */
+    let previousChildRest: Record<string, unknown> | undefined
+    const childRest = $derived.by(
+        () =>
+            (previousChildRest = pickChildRest(
+                sanitizedRest,
+                type === 'table' ? TABLE_CHILD_VOLATILE : LIST_CHILD_VOLATILE,
+                previousChildRest
+            ))
+    )
+
+    /**
      * Dev-only Parser-update counter, exposed as `window.__svmParserUpdateCount`.
      * The effect runs once when a Parser instance mounts and once more every
      * time any of its render-affecting props changes (it reads `type`,
@@ -353,7 +428,7 @@
                                     {@const { align: _align, ...cellRest } = sanitizedRest}
                                     {#snippet bodyCellContent()}
                                         {#each cells.tokens ?? [] as cellToken, index (renderMetadata.getStableNodeKey(cellToken, index))}
-                                            {@render dispatch(cellToken, cellRest)}
+                                            {@render dispatch(cellToken, childRest)}
                                         {/each}
                                     {/snippet}
                                     {#if cellSnippet}
@@ -411,15 +486,14 @@
 
         {#if ordered}
             {#snippet orderedListContent()}
-                {@const { items: _items, ...parserRest } = sanitizedRest}
-                {@const items = (_items as Props[] | undefined) ?? []}
+                {@const items = (sanitizedRest.items as Props[] | undefined) ?? []}
                 {#each items as item, index (renderMetadata.getStableNodeKey(item, index))}
                     {@const OrderedListComponent = renderers.orderedlistitem || renderers.listitem}
                     {@const orderedItemSnippet =
                         snippetOverrides['orderedlistitem'] || snippetOverrides['listitem']}
                     {#snippet orderedItemContent()}
                         {#each item.tokens ?? [] as itemToken, k (renderMetadata.getStableNodeKey(itemToken, k))}
-                            {@render dispatch(itemToken, parserRest)}
+                            {@render dispatch(itemToken, childRest)}
                         {/each}
                     {/snippet}
                     {#if orderedItemSnippet}
@@ -440,8 +514,7 @@
             {/if}
         {:else}
             {#snippet unorderedListContent()}
-                {@const { items: _items, ...parserRest } = sanitizedRest}
-                {@const items = (_items as Props[] | undefined) ?? []}
+                {@const items = (sanitizedRest.items as Props[] | undefined) ?? []}
                 {#each items as item, index (renderMetadata.getStableNodeKey(item, index))}
                     {@const UnorderedListComponent =
                         renderers.unorderedlistitem || renderers.listitem}
@@ -449,7 +522,7 @@
                         snippetOverrides['unorderedlistitem'] || snippetOverrides['listitem']}
                     {#snippet unorderedItemContent()}
                         {#each item.tokens ?? [] as itemToken, k (renderMetadata.getStableNodeKey(itemToken, k))}
-                            {@render dispatch(itemToken, parserRest)}
+                            {@render dispatch(itemToken, childRest)}
                         {/each}
                     {/snippet}
                     {#if unorderedItemSnippet}
