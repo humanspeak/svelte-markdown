@@ -8,10 +8,36 @@
 > dispatched you and told you they maintain the index.
 >
 > **Drift check (run first)**:
-> `git diff --stat 7dea763..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/streaming-token-reuse.ts src/lib/utils/render-metadata.ts src/lib/SvelteMarkdown.svelte src/lib/Parser.svelte`
+> `git diff --stat 31668b8..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/streaming-token-reuse.ts src/lib/utils/render-metadata.ts src/lib/SvelteMarkdown.svelte src/lib/Parser.svelte`
 > Plans 007–010 are EXPECTED to have changed these. Re-read every excerpt
 > below against live code; proceed only where the differences are those
 > plans' changes.
+
+> **Revision 2026-09-28 (guard pre-flight):** Plans 006–010 and 013 have
+> landed (tip `31668b8`). What changed since the excerpts: (1) `streamTokens`
+> is `$state.raw` (007) — no proxies, so object-identity caches are reliable;
+> (2) `isSameStableNode` has a same-object fast path (008), so the divergence
+> scan's per-root cost on the reused prefix is one comparison, but it is still
+> called once per prefix root — Step 2 stands; (3) the divergence loop moved
+> into `findDivergence` (`incremental-parser.ts:~999-1012`) and `update()`
+> gained a targeted-definition path (009) that also slices the prefix
+> (`:~621`); the tail-window prefix copy is at `:~797`; `isAppendOnlyUpdate`
+> at `:~479` and the component's `startsWith` at `SvelteMarkdown.svelte:~315`;
+> `parsed(tokens)` at `:~606`; Parser root each at `Parser.svelte:~362`;
+> `assignPreparedHeadingIds` at `render-metadata.ts:~416` with 010's
+> `keyedSubtreeOffsets`/`headingFreeSubtrees` caches above it; (4) profiles
+> now show `isAppendOnlyUpdate` at 4.4–8.8% self time on prose/fence/citations
+> — two full-length `startsWith` scans per update ARE measurable; treat Step 4's
+> "measure first" as likely-yes; (5) Plan 010 observed the library flush
+> measure rising ~30% on `long-list` with no flush code change (suspected
+> colder CPU per frame) — include a same-build A/A check of `libraryFlushMs`
+> in Step 1 so this plan's flush numbers are interpretable. Current standing
+> (Plan 007 B vs Streamdown): `prefix-384kb` 2,012–2,130 vs 2,736–2,746 ms,
+> both sides 67/67 over budget; `prose-mixed` 2,310–2,325 vs ~2,850. The
+> batch contract for this plan: `prefix-384kb` avg work within 15% of
+> `prefix-24kb`, and `prose-mixed` below Streamdown with 0 over-budget
+> frames. Use the A/B recipe from `evidence/007/README.md`. Baseline
+> re-stamped to `31668b8`.
 
 ## Status
 
@@ -20,7 +46,7 @@
 - **Risk**: HIGH (parser boundaries, component ownership, heading metadata)
 - **Depends on**: 006 (prefix-scaling scenarios + attribution), 008 (semantic equality), 007/009/010 decided
 - **Category**: perf
-- **Planned at**: commit `7dea763`, 2026-09-28
+- **Planned at**: commit `31668b8`, 2026-09-28 (amended pre-flight; original `7dea763`)
 
 ## Why this matters
 
@@ -131,7 +157,7 @@ consumer supplies one); non-root Parser branches; docs claims.
 
 ## Git workflow
 
-- Branch: `perf/bounded-prefix-work` off `main` after 007–010.
+- Work on `perf/stream-bench-flush-timing` (batch branch); the reviewer commits.
 - Commits per item: `perf(streaming): start divergence scan at the reused prefix boundary`, etc.
 - Do NOT push or open a PR unless instructed.
 
