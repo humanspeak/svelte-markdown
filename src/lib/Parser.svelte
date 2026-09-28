@@ -359,9 +359,24 @@
 {#if !type}
     {#if tokens}
         {@const { text: _text, raw: _raw, tokens: _tokens, ...parserRest } = rest}
-        {#each tokens as token, index (renderMetadata.getStableNodeKey(token, index))}
-            {@render dispatch(token, parserRest)}
-        {/each}
+        <!--
+            Source-backed root arrays render as offset-bucket segments (plan
+            011): a streaming update re-diffs only the segment it touched, not
+            every root. A root's segment is a pure function of its source
+            offset (= its key), so it never moves between inner each owners.
+        -->
+        {@const rootSegments = renderMetadata.getRootSegments(tokens)}
+        {#if rootSegments}
+            {#each rootSegments as segment (segment.id)}
+                {#each segment.tokens as token, index (renderMetadata.getStableNodeKey(token, index))}
+                    {@render dispatch(token, parserRest)}
+                {/each}
+            {/each}
+        {:else}
+            {#each tokens as token, index (renderMetadata.getStableNodeKey(token, index))}
+                {@render dispatch(token, parserRest)}
+            {/each}
+        {/if}
     {/if}
 {:else if type in renderers || type in snippetOverrides}
     {#if type === 'table'}

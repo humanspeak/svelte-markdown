@@ -1,7 +1,12 @@
 import Slugger from 'github-slugger'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defaultOptions, type Token } from './markdown-parser.js'
-import { createRenderMetadata, type RenderMetadata } from './render-metadata.js'
+import {
+    createRenderMetadata,
+    ROOT_SEGMENT_SPAN,
+    type RenderMetadata,
+    type RootSegment
+} from './render-metadata.js'
 
 const heading = (text: string): Token =>
     Object.freeze({ type: 'heading', depth: 1, raw: `# ${text}\n`, text })
@@ -300,5 +305,122 @@ describe('streaming re-walk of a diverged open list (plan 010, H3)', () => {
             expect(metadata.getPreparedHeadingId(headingPrefix)).toBe('foo')
             expect(idsOf(next)).toEqual(['foo-1', 'foo-2', 'foo-3', 'foo-4'])
         }
+    })
+})
+
+describe('root segments (plan 011)', () => {
+    /** A closed paragraph root of exactly `length` source characters. */
+    const paragraph = (label: string, length = 100): Token =>
+        Object.freeze({
+            type: 'paragraph',
+            raw: `${label} `.padEnd(length - 1, 'x') + '\n',
+            text: label
+        })
+
+    const paragraphs = (count: number, prefix = 'p'): Token[] =>
+        Array.from({ length: count }, (_, index) => paragraph(`${prefix}${index}`))
+
+    /** Expected layout: consecutive roots grouped by floor(start offset / span). */
+    const expectedLayout = (tokens: Token[]) => {
+        const layout: Array<{ id: number; tokens: Token[] }> = []
+        let offset = 0
+        for (const token of tokens) {
+            const id = Math.floor(offset / ROOT_SEGMENT_SPAN)
+            if (layout.at(-1)?.id !== id) layout.push({ id, tokens: [] })
+            layout.at(-1)?.tokens.push(token)
+            offset += token.raw.length
+        }
+        return layout
+    }
+
+    const layoutOf = (segments: readonly RootSegment[] | undefined) =>
+        segments?.map((segment) => ({ id: segment.id, tokens: [...segment.tokens] }))
+
+    it('groups source-backed roots into offset buckets', () => {
+        const metadata = createRenderMetadata()
+        const tokens = paragraphs(100)
+        prepare(metadata, tokens)
+
+        const segments = metadata.getRootSegments(tokens)
+        expect(layoutOf(segments)).toEqual(expectedLayout(tokens))
+        expect(segments?.length).toBe(Math.ceil((100 * 100) / ROOT_SEGMENT_SPAN))
+        expect(segments?.flatMap((segment) => segment.tokens)).toEqual(tokens)
+        // Only the array that was prepared has segments.
+        expect(metadata.getRootSegments([...tokens])).toBeUndefined()
+    })
+
+    it('keeps the segments before the divergence point and rebuilds only the rest', () => {
+        const metadata = createRenderMetadata()
+        const prefix = paragraphs(100)
+        const first = [...prefix, paragraph('open', 40)]
+        prepare(metadata, first)
+        const before = metadata.getRootSegments(first) ?? []
+
+        // Streaming append: the open root changed, everything before it is
+        // the same objects.
+        const next = [...prefix, paragraph('open grown', 60), paragraph('new', 30)]
+        prepare(metadata, next, prefix.length)
+        const after = metadata.getRootSegments(next) ?? []
+
+        expect(layoutOf(after)).toEqual(expectedLayout(next))
+        // Every segment but the last is the same object: its inner each is
+        // not re-diffed.
+        for (let index = 0; index < after.length - 1; index++) {
+            expect(after[index]).toBe(before[index])
+        }
+        expect(after.at(-1)).not.toBe(before.at(-1))
+    })
+
+    it('adds a new segment when appended roots cross into a new bucket', () => {
+        const metadata = createRenderMetadata()
+        const prefix = paragraphs(40) // 4,000 chars: one bucket
+        prepare(metadata, prefix)
+        expect(metadata.getRootSegments(prefix)).toHaveLength(1)
+
+        const next = [...prefix, paragraph('a'), paragraph('b')] // starts at 4,000 and 4,100
+        prepare(metadata, next, prefix.length)
+        const segments = metadata.getRootSegments(next)
+        expect(layoutOf(segments)).toEqual(expectedLayout(next))
+        expect(segments?.map((segment) => segment.id)).toEqual([0, 1])
+        expect(segments?.[0].tokens.at(-1)).toBe(next[40])
+    })
+
+    it('matches a one-shot layout after many incremental passes', () => {
+        const streamed = createRenderMetadata()
+        let tokens: Token[] = []
+        for (let count = 1; count <= 150; count++) {
+            const next = [...tokens, paragraph(`p${count}`, 37 + (count % 50))]
+            prepare(streamed, next, tokens.length)
+            tokens = next
+        }
+        const oneShot = createRenderMetadata()
+        const copy = [...tokens]
+        prepare(oneShot, copy)
+        expect(layoutOf(streamed.getRootSegments(tokens))).toEqual(
+            layoutOf(oneShot.getRootSegments(copy))
+        )
+    })
+
+    it('rebuilds everything when the supplied start offset disagrees with the kept layout', () => {
+        const metadata = createRenderMetadata()
+        const tokens = paragraphs(100)
+        prepare(metadata, tokens)
+        const next = [...tokens]
+        metadata.prepareTokensForRender(next, defaultOptions, {
+            source: next.map((token) => token.raw).join(''),
+            startIndex: 100,
+            startOffset: 12_345
+        })
+        expect(layoutOf(metadata.getRootSegments(next))).toEqual(expectedLayout(next))
+    })
+
+    it('has no segments for caller-supplied token arrays', () => {
+        const metadata = createRenderMetadata()
+        const tokens = paragraphs(10)
+        prepare(metadata, tokens)
+        expect(metadata.getRootSegments(tokens)).toBeDefined()
+
+        metadata.prepareTokensForRender(tokens, defaultOptions)
+        expect(metadata.getRootSegments(tokens)).toBeUndefined()
     })
 })

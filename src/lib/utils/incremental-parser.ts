@@ -12,7 +12,11 @@
 import type { SvelteMarkdownOptions } from '$lib/types.js'
 import type { Token, Tokens, TokensList } from '$lib/utils/markdown-parser.js'
 import { lexAndClean } from '$lib/utils/parse-and-cache.js'
-import { isSameStableNode } from '$lib/utils/streaming-token-reuse.js'
+import {
+    countStreamStat,
+    isSameStableNode,
+    STREAM_STATS_ENABLED
+} from '$lib/utils/streaming-token-reuse.js'
 import { isTailWindowSafe } from '$lib/utils/tail-window.js'
 
 /**
@@ -35,6 +39,13 @@ interface ParseSourceResult {
     tokens: Token[]
     tailTokens: Token[]
     usedTailWindow: boolean
+    /**
+     * Leading roots of `tokens` that ARE the previous parse's root objects
+     * (same identity, same index) by construction: the copied prefix on the
+     * plain tail-window path, 0 everywhere else (the targeted definition path
+     * may replace prefix roots). The divergence scan starts here.
+     */
+    reusedPrefixCount: number
 }
 
 const CLOSED_FENCE_RE = /^ {0,3}(`{3,}|~{3,}).*\n[\s\S]*\n {0,3}\1[ \t]*\n*$/
@@ -215,6 +226,13 @@ export interface IncrementalUpdateResult {
     reuseMode: StreamingReuseMode
     /** Whether this update re-lexed only the appended tail (vs the whole source) */
     usedTailWindow: boolean
+    /**
+     * Leading roots of `tokens` that are the SAME objects, at the same
+     * indices, as in the previous update's `tokens` array (the reused prefix
+     * of a tail-window update; 0 otherwise). A consumer that rendered that
+     * previous array unchanged can skip these indices when reusing objects.
+     */
+    reusedPrefixCount: number
 }
 
 /**
@@ -466,8 +484,12 @@ export class IncrementalParser {
      * i.e. this is not the first update and `source` begins with `prevSource`.
      * Computed once per `update` and threaded into `canUseTailWindow` /
      * `parseSource` so the full-length `startsWith` scan runs a single time.
+     * When the caller already verified that `source` starts with `appendsTo`
+     * and `appendsTo` is `prevSource` (normally the same string object, so the
+     * equality check is O(1)), that scan is skipped (plan 011).
      *
      * @param source - The full new source string for this update
+     * @param appendsTo - A string the caller verified `source` starts with
      * @returns `true` if this update only appends to `prevSource`
      * @example
      * ```typescript
@@ -476,8 +498,9 @@ export class IncrementalParser {
      * this.isAppendOnlyUpdate('# A\n\nX') // false (diverges from prevSource)
      * ```
      */
-    private isAppendOnlyUpdate = (source: string): boolean =>
-        this.prevSource !== '' && source.startsWith(this.prevSource)
+    private isAppendOnlyUpdate = (source: string, appendsTo?: string): boolean =>
+        this.prevSource !== '' &&
+        (appendsTo === this.prevSource || source.startsWith(this.prevSource))
 
     /**
      * True when appending to `prevSource` introduces a reference definition
@@ -638,7 +661,13 @@ export class IncrementalParser {
 
         const roots = this.relexCitingRoots(prefixRoots, candidates, changedLabels, links)
         if (!roots) return undefined
-        return { tokens: [...roots, ...tailTokens], tailTokens, usedTailWindow: true }
+        if (STREAM_STATS_ENABLED) countStreamStat('copiedRoots', roots.length + tailTokens.length)
+        return {
+            tokens: [...roots, ...tailTokens],
+            tailTokens,
+            usedTailWindow: true,
+            reusedPrefixCount: 0
+        }
     }
 
     /**
@@ -788,15 +817,22 @@ export class IncrementalParser {
             return {
                 tokens: lexAndClean(source, this.options, false),
                 tailTokens: [],
-                usedTailWindow: false
+                usedTailWindow: false,
+                reusedPrefixCount: 0
             }
         }
 
         const tailTokens = lexAndClean(source.slice(boundary.reparseOffset), this.options, false)
+        if (STREAM_STATS_ENABLED) {
+            countStreamStat('copiedRoots', boundary.prefixCount + tailTokens.length)
+        }
         return {
-            tokens: [...this.prevTokens.slice(0, boundary.prefixCount), ...tailTokens],
+            // `slice` + `concat` is several times faster than spreading the
+            // prefix at thousands of roots (plan 011).
+            tokens: this.prevTokens.slice(0, boundary.prefixCount).concat(tailTokens),
             tailTokens,
-            usedTailWindow: true
+            usedTailWindow: true,
+            reusedPrefixCount: boundary.prefixCount
         }
     }
 
@@ -978,6 +1014,13 @@ export class IncrementalParser {
      * `.tokens` children. Without this check the streaming consumer would
      * never see the partial-to-closed transition. See #291.
      *
+     * The scan starts at `parseResult.reusedPrefixCount`: on the plain
+     * tail-window path the first `boundary.prefixCount` roots are the previous
+     * parse's objects at the same indices (copied by `parseSource`), so
+     * comparing them could only return `true`. Skipping them keeps the scan
+     * proportional to the re-lexed tail instead of the document (plan 011).
+     * Every other path reports 0 and compares from index 0.
+     *
      * `divergeOffset` lets `SvelteMarkdown.svelte` skip render-metadata work
      * for the reused prefix. The tail-window path seeds it with the already
      * -known `boundary.reparseOffset` (the reused prefix is covered) and only
@@ -1001,7 +1044,7 @@ export class IncrementalParser {
         parseResult: ParseSourceResult,
         boundary: TailWindowBoundary
     ): { divergeAt: number; divergeOffset: number | undefined } => {
-        let divergeAt = 0
+        let divergeAt = parseResult.reusedPrefixCount
         let divergeOffset: number | undefined = parseResult.usedTailWindow
             ? boundary.reparseOffset
             : 0
@@ -1009,6 +1052,7 @@ export class IncrementalParser {
         while (divergeAt < minLen) {
             const prev = this.prevTokens[divergeAt]
             const next = newTokens[divergeAt]
+            if (STREAM_STATS_ENABLED) countStreamStat('comparedRoots')
             if (!isSameStableNode(prev, next)) break
             if (parseResult.usedTailWindow) {
                 // Tail-window path (unchanged): tokens up to `prefixCount`
@@ -1038,11 +1082,16 @@ export class IncrementalParser {
      * Parses the full source and diffs against the previous result.
      *
      * @param source - The full accumulated markdown source string
+     * @param appendsTo - Optional string the caller has ALREADY verified that
+     *   `source` starts with (e.g. its previous buffer before appending a
+     *   chunk). When it is the previously parsed source, the parser skips its
+     *   own full-length `startsWith` check. Passing a string `source` does not
+     *   start with breaks parsing; omit it when unsure.
      * @returns The new tokens and the index where they diverge from the previous parse
      */
-    update = (source: string): IncrementalUpdateResult => {
+    update = (source: string, appendsTo?: string): IncrementalUpdateResult => {
         const boundary = this.getTailWindowBoundary()
-        const isAppendOnly = this.isAppendOnlyUpdate(source)
+        const isAppendOnly = this.isAppendOnlyUpdate(source, appendsTo)
         // Whether this append introduces a reference definition. Both the
         // tail-window decision (via `referenceInvalidatesTail`) and the cached
         // -state refresh need it, so compute the boundary scan once here. When
@@ -1093,7 +1142,8 @@ export class IncrementalParser {
             divergeOffset,
             canReuse,
             reuseMode,
-            usedTailWindow: parseResult.usedTailWindow
+            usedTailWindow: parseResult.usedTailWindow,
+            reusedPrefixCount: parseResult.reusedPrefixCount
         }
     }
 }

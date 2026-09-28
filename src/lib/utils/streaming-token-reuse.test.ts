@@ -4,8 +4,10 @@ import { describe, expect, it } from 'vitest'
 import {
     isSameStableNode,
     reuseStableTokenArray,
+    reuseStableTokenArrayInPlace,
     reuseStableTokenTree,
-    type ReusableStreamingNode
+    type ReusableStreamingNode,
+    type StreamStats
 } from './streaming-token-reuse.js'
 
 type StreamingTestNode = Record<string, unknown> & {
@@ -521,5 +523,50 @@ describe('reuseStableTokenTree', () => {
         const next = lex('# New\n')
 
         expect(reuseStableTokenTree(previous, next)).toBe(next)
+    })
+})
+
+describe('reuseStableTokenArrayInPlace (plan 011)', () => {
+    const paragraph = (text: string) => token({ type: 'paragraph', raw: text, text })
+    type StatsGlobal = typeof globalThis & { __svmStreamStats?: StreamStats }
+
+    it('writes the stable prefix into the next array and returns it', () => {
+        const previous = [paragraph('a'), paragraph('b'), paragraph('c'), paragraph('open')]
+        // Index 0-1 identical by construction (a reused tail-window prefix);
+        // index 2 re-lexed but equal; index 3 grew.
+        const next = [previous[0], previous[1], paragraph('c'), paragraph('open more')]
+        const nextCopy = [...next]
+        const stats: StreamStats = { comparedRoots: 0, copiedRoots: 0, keyEvaluations: 0 }
+        ;(globalThis as StatsGlobal).__svmStreamStats = stats
+
+        const result = reuseStableTokenArrayInPlace(previous, next, 3, 2)
+
+        expect(result).toBe(next)
+        expect(result[0]).toBe(previous[0])
+        expect(result[1]).toBe(previous[1])
+        expect(result[2]).toBe(previous[2])
+        expect(result[3]).toBe(nextCopy[3])
+        // Only the non-identical part of the prefix was written.
+        expect(stats.copiedRoots).toBe(1)
+    })
+
+    it('matches reuseStableTokenArray when nothing is known to be identical', () => {
+        const lexer = () => new Lexer({ gfm: true })
+        const previous = lexer().lex('# Title\n\n- one\n- two') as Token[]
+        const nextSource = '# Title\n\n- one\n- two\n- three'
+        const expected = reuseStableTokenArray(previous, lexer().lex(nextSource) as Token[], 2)
+        const next = lexer().lex(nextSource) as Token[]
+
+        const result = reuseStableTokenArrayInPlace(previous, next, 2, 0)
+
+        expect(result).toBe(next)
+        expect(result).toHaveLength(expected.length)
+        expect(result[0]).toBe(previous[0])
+        expect(result[1]).toBe(previous[1])
+        // The diverged list keeps its unchanged items.
+        const items = (result[2] as unknown as { items: unknown[] }).items
+        const previousItems = (previous[2] as unknown as { items: unknown[] }).items
+        expect(items[0]).toBe(previousItems[0])
+        expect(isSameStableNode(node(result[2]), node(expected[2]))).toBe(true)
     })
 })

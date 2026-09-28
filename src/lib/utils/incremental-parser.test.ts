@@ -11,6 +11,13 @@ import { IncrementalParser } from './incremental-parser.js'
 import * as parseAndCacheModule from './parse-and-cache.js'
 import { isSameStableNode, type ReusableStreamingNode } from './streaming-token-reuse.js'
 
+// Pass-through spy on the comparator so tests can count divergence-scan
+// comparisons (plan 011). Behaviour is unchanged: it calls the real function.
+vi.mock('./streaming-token-reuse.js', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('./streaming-token-reuse.js')>()
+    return { ...actual, isSameStableNode: vi.fn(actual.isSameStableNode) }
+})
+
 /** Private surface of `IncrementalParser` exercised by the tail-window tests. */
 interface InternalParser {
     prevTokens: Token[]
@@ -673,6 +680,60 @@ describe('IncrementalParser', () => {
     })
 
     describe('Streaming Bookkeeping Performance', () => {
+        it('starts the divergence scan at the reused prefix boundary on a tail-window append (plan 011)', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = Array.from({ length: 25 }, (_, index) => `Paragraph ${index}`).join(
+                '\n\n'
+            )
+            const first = parser.update(source)
+            expect(first.tokens).toHaveLength(49)
+
+            const { prefixCount } = asInternalParser(parser).getTailWindowBoundary()
+            expect(prefixCount).toBe(48)
+
+            const compare = vi.mocked(isSameStableNode)
+            compare.mockClear()
+            const next = `${source}\n\nTail`
+            const result = parser.update(next)
+
+            expect(result.usedTailWindow).toBe(true)
+            // Only the re-lexed tail roots are compared (+1 for the first
+            // mismatch), not every reused prefix root.
+            expect(compare.mock.calls.length).toBeLessThanOrEqual(
+                result.tokens.length - prefixCount + 1
+            )
+            // The divergence point and its source offset are unchanged.
+            expect(result.divergeAt).toBe(49)
+            const expectedOffset = result.tokens
+                .slice(0, result.divergeAt)
+                .reduce((total, token) => total + token.raw.length, 0)
+            expect(result.divergeOffset).toBe(expectedOffset)
+            expect(next.slice(expectedOffset)).toBe('\n\nTail')
+            expectSemanticParity(
+                result.tokens,
+                parseAndCacheModule.lexAndClean(next, createDefaultOptions(), false),
+                next
+            )
+        })
+
+        it('keeps comparing from index 0 when the tail window is bypassed (plan 011)', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            const source = Array.from({ length: 10 }, (_, index) => `Paragraph ${index}`).join(
+                '\n\n'
+            )
+            parser.update(source)
+
+            const compare = vi.mocked(isSameStableNode)
+            compare.mockClear()
+            // Not an append: full re-lex, full scan from index 0.
+            const edited = source.replace('Paragraph 9', 'Paragraph nine')
+            const result = parser.update(edited)
+
+            expect(result.usedTailWindow).toBe(false)
+            expect(result.divergeAt).toBe(18)
+            expect(compare.mock.calls.length).toBe(19)
+        })
+
         it('does not rescan every stable prefix token to compute the tail-window offset', () => {
             const parser = new IncrementalParser(createDefaultOptions())
             const source = Array.from(

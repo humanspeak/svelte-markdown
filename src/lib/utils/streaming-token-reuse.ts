@@ -8,6 +8,56 @@ export type ReusableStreamingNode = {
 
 type ReusableStreamingNodeArray = Array<ReusableStreamingNode | ReusableStreamingNodeArray>
 
+/**
+ * Dev-only per-update work counters, exposed as `globalThis.__svmStreamStats`
+ * (plan 011). They are the regression tripwire for work that scales with the
+ * document length on every streaming update:
+ *
+ * - `comparedRoots`: root tokens compared by the parser's divergence scan
+ * - `copiedRoots`: root token slots written into a new root array by the
+ *   parser or by {@link reuseStableTokenArray}
+ * - `keyEvaluations`: `getStableNodeKey` calls made by keyed `{#each}` blocks
+ *
+ * Tests and benches reset the object, stream, and read it back.
+ */
+export interface StreamStats {
+    comparedRoots: number
+    copiedRoots: number
+    keyEvaluations: number
+}
+
+type StreamStatsGlobal = typeof globalThis & { __svmStreamStats?: StreamStats }
+
+/**
+ * Whether {@link countStreamStat} call sites are live. Resolved from Vite's
+ * `import.meta.env.DEV`, which is statically `false` in production builds (so
+ * guarded call sites are dropped), and `false` when `import.meta.env` does not
+ * exist at all (e.g. the packaged library imported by plain Node).
+ */
+export const STREAM_STATS_ENABLED: boolean =
+    typeof import.meta.env === 'object' && import.meta.env.DEV === true
+
+/**
+ * Adds `amount` to one dev-only stream counter. Call only behind
+ * `if (STREAM_STATS_ENABLED)` so production bundles drop the call.
+ *
+ * @param stat - Counter to increment
+ * @param amount - Increment (default 1)
+ * @example
+ * ```ts
+ * if (STREAM_STATS_ENABLED) countStreamStat('comparedRoots')
+ * ```
+ */
+export const countStreamStat = (stat: keyof StreamStats, amount = 1): void => {
+    const target = globalThis as StreamStatsGlobal
+    const stats = (target.__svmStreamStats ??= {
+        comparedRoots: 0,
+        copiedRoots: 0,
+        keyEvaluations: 0
+    })
+    stats[stat] += amount
+}
+
 const isReusableStreamingNode = (value: unknown): value is ReusableStreamingNode =>
     typeof value === 'object' && value !== null && !Array.isArray(value)
 
@@ -200,6 +250,7 @@ export const reuseStableTokenArray = (
 
     if (reuseCount > 0) {
         reusedTokens = new Array<Token>(nextTokens.length)
+        if (STREAM_STATS_ENABLED) countStreamStat('copiedRoots', nextTokens.length)
 
         for (let index = 0; index < reuseCount; index++) {
             reusedTokens[index] = previousTokens[index]
@@ -217,12 +268,63 @@ export const reuseStableTokenArray = (
         ) as Token
 
         if (reusedToken !== nextTokens[reuseCount]) {
+            if (STREAM_STATS_ENABLED && !reusedTokens) {
+                countStreamStat('copiedRoots', nextTokens.length)
+            }
             reusedTokens ??= nextTokens.slice()
             reusedTokens[reuseCount] = reusedToken
         }
     }
 
     return reusedTokens ?? nextTokens
+}
+
+/**
+ * In-place form of {@link reuseStableTokenArray} for a freshly built array
+ * the caller owns (the array `IncrementalParser.update` just returned): the
+ * stable prefix is written into `nextTokens` itself instead of into a new
+ * N-length array, and indices below `identicalPrefixCount` are skipped
+ * because they already hold the previous objects (plan 011).
+ *
+ * Only valid when `nextTokens` is not yet rendered or shared, and when
+ * `nextTokens[i] === previousTokens[i]` for every `i < identicalPrefixCount`
+ * (pass 0 when that is not guaranteed). Every write replaces a token with a
+ * semantically equal one ({@link isSameStableNode}), so a parser that keeps
+ * `nextTokens` as its previous parse sees no difference.
+ *
+ * @param previousTokens - Token array currently rendered
+ * @param nextTokens - Freshly parsed array to adopt; mutated and returned
+ * @param divergeAt - Leading roots known to be semantically unchanged
+ * @param identicalPrefixCount - Leading roots already identical by construction
+ * @returns `nextTokens`, with previous objects in its stable prefix
+ * @example
+ * ```ts
+ * const result = parser.update(source)
+ * const identical = streamTokens === lastParserTokens ? result.reusedPrefixCount : 0
+ * streamTokens = reuseStableTokenArrayInPlace(streamTokens, result.tokens, result.divergeAt, identical)
+ * ```
+ */
+export const reuseStableTokenArrayInPlace = (
+    previousTokens: Token[],
+    nextTokens: Token[],
+    divergeAt: number,
+    identicalPrefixCount: number
+): Token[] => {
+    const reuseCount = Math.min(divergeAt, previousTokens.length, nextTokens.length)
+    const firstWrite = Math.min(identicalPrefixCount, reuseCount)
+    if (STREAM_STATS_ENABLED) countStreamStat('copiedRoots', reuseCount - firstWrite)
+    for (let index = firstWrite; index < reuseCount; index++) {
+        nextTokens[index] = previousTokens[index]
+    }
+
+    if (reuseCount < previousTokens.length && reuseCount < nextTokens.length) {
+        nextTokens[reuseCount] = reuseStableNode(
+            previousTokens[reuseCount] as ReusableStreamingNode,
+            nextTokens[reuseCount] as ReusableStreamingNode
+        ) as Token
+    }
+
+    return nextTokens
 }
 
 /**
