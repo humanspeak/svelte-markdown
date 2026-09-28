@@ -12,6 +12,15 @@
 > On any change, compare the "Current state" excerpt against live code; on
 > a mismatch, treat it as a STOP condition.
 
+> **Revision 2026-09-28 (guard pre-flight):** Plans 006–011 and 013 have
+> landed (tip: see `Planned at`). `Code.svelte` is unchanged since the excerpt.
+> Use the same-build A/B recipe from `evidence/007/README.md`
+> (`STREAM_COMPARE_URL_A/_B`, A = git worktree at the pre-change tip on 4173,
+> B on 4183) and the clamped metric. Current standing on `long-code-fence`
+> (Plan 006 clamped baseline): ours 2,840–2,935 ms vs Streamdown 1,563–1,568,
+> 0 over-budget frames, style/layout 59% of frame work — re-measure A first,
+> because 007 and 011 changed the render side since. Baseline re-stamped.
+
 ## Status
 
 - **Priority**: P2
@@ -91,7 +100,7 @@ the parser; adding per-line ELEMENTS (changes CSS/DOM contract for consumers).
 
 ## Git workflow
 
-- Branch: `perf/code-fence-line-nodes-spike` off `main` after 006.
+- Work on `perf/stream-bench-flush-timing` (batch branch); the reviewer commits.
 - Commit: `perf(render): per-line text nodes in Code renderer (spike)`.
 - Do NOT push or open a PR unless instructed.
 
