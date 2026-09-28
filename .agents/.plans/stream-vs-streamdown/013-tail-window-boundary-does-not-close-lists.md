@@ -8,7 +8,7 @@
 > dispatched you and told you they maintain the index.
 >
 > **Drift check (run first)**:
-> `git diff --stat 6892589..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/incremental-parser.test.ts`
+> `git diff --stat 9ec976f..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/incremental-parser.test.ts`
 > If either file changed since this plan was written, compare the "Current
 > state" excerpts against the live code before proceeding; on a mismatch,
 > treat it as a STOP condition.
@@ -20,7 +20,7 @@
 - **Risk**: MED (parser boundary logic; the fix must stay O(1) per append)
 - **Depends on**: 008 (its Step 2b lands in the same file and must be committed first)
 - **Category**: bug
-- **Planned at**: commit `6892589`, 2026-09-28
+- **Planned at**: commit `9ec976f`, 2026-09-28 (amended; original `6892589`)
 
 ## Why this matters
 
@@ -210,6 +210,40 @@ array.
 file passes, including the "Streaming Bookkeeping Performance" block (no new
 prefix scans) and "Code Fences".
 
+### Step 2c (added 2026-09-28): A heading or thematic break at the source end is not stable
+
+State: Step 2 is committed at `9ec976f`; cases 1–5 and the size-7 sweep are
+green; the sweep fails at sizes 1, 32, 64 with, e.g.:
+
+```text
+prev   "# Long streaming benchmark\n"        (heading frozen with raw "# Long streaming benchmark\n")
+source "# Long streaming benchmark\n\n"
+streamed heading{raw:"# Long streaming benchmark\n"}, space{raw:"\n"}
+fresh    heading{raw:"# Long streaming benchmark"},   space{raw:"\n\n"}
+```
+
+Cause: `isStableAtSourceEnd` returns `true` for `heading`/`hr` whose raw
+ends with `\n` (`incremental-parser.ts:186-188`). marked assigns the trailing
+newlines differently once a blank line follows, so freezing the heading one
+chunk early yields a different `raw` split than a one-shot parse.
+
+Fix: in `isStableAtSourceEnd`, remove the `heading`/`hr` special case so
+both fall through to `return false` (the generic `raw.endsWith('\n\n')` test
+stays above it). A heading that is the LAST token is re-lexed with the next
+chunk (a few dozen bytes); once anything follows it, it becomes part of the
+prefix through the normal `prefixCount = cut` path, exactly as the existing
+test "reuses a fully stable trailing heading boundary" expects (that test
+starts from `# Title\n\n`, where the heading is NOT last, so it is
+unaffected). Update the comment above the switch accordingly (or delete the
+switch and leave `return false` with a comment listing heading/hr).
+
+If any existing test pins the old behavior (a trailing heading with raw
+ending in a single `\n` treated as stable), STOP and report the test name —
+do not edit it.
+
+**Verify**: `pnpm vitest run src/lib/utils/incremental-parser.test.ts` → the
+sweep passes at sizes 1, 7, 32 and 64; all other tests unchanged.
+
 ### Step 3: Full gate
 
 `pnpm check`, `trunk fmt && trunk check --fix`, `pnpm test` (coverage ≥ 90%).
@@ -237,7 +271,7 @@ prefix scans) and "Code Fences".
   must not add a scan).
 - Case 3 fails after Step 2 (the list is no longer closed by a blank line +
   paragraph) — the walk-back is too aggressive.
-- The sweep still fails at some chunk size after Step 2: report the chunk
+- The sweep still fails at some chunk size after Step 2c: report the chunk
   size, the source at the first mismatch, and the streamed vs fresh token
   shapes — there may be a second continuable block type (blockquote lazy
   continuation, table) to handle; do not guess it in.

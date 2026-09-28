@@ -48,7 +48,7 @@ complete the initiative.
 | 010  | List/table render work: attribute H1–H4, fix what measures                                 | P1       | M      | 006, 007, 009 §1     | TODO                                                                                                                                                                   |
 | 011  | Bounded prefix work: measured costs, single-owner rendering design                         | P1       | L      | 006, 008, 007–010    | TODO                                                                                                                                                                   |
 | 012  | Spike: per-line text nodes for code fences (measured, SSR contract)                        | P2       | S–M    | 006                  | TODO                                                                                                                                                                   |
-| 013  | Tail-window boundary must not close lists/indented code at a blank or whitespace-only line | P0       | S–M    | 008                  | TODO — blocks 006 Step 3                                                                                                                                               |
+| 013  | Tail-window boundary must not close lists/indented code at a blank or whitespace-only line | P0       | S–M    | 008                  | IN PROGRESS — snapshot `9ec976f`; amended 2026-09-28 (Step 2c heading/hr rule); fix-dispatched                                                                         |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale) | SUPERSEDED
 
