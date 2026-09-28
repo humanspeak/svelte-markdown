@@ -167,29 +167,6 @@ export class IncrementalParser {
         return (token as HtmlToken).sourceLength ?? token.raw.length
     }
 
-    private isStableAtSourceEnd = (token: Token): boolean => {
-        if (token.type === 'space') return false
-        // Code must be checked before the generic blank-line test: an
-        // UNCLOSED fence that pauses on a blank line inside the block also
-        // ends with `\n\n`, and treating it as stable freezes the half-open
-        // fence into the reused prefix — every later append then re-lexes in
-        // isolation and the rest of the block renders as plain markdown.
-        // (Indented code is conservatively unstable too: a further indented
-        // line after a blank line continues the same block.)
-        if (token.type === 'code') return CLOSED_FENCE_RE.test(token.raw)
-        // A list at the very end of the source is never closed: the next
-        // chunk may add an item (loose list) whatever its raw ends with.
-        if (token.type === 'list') return false
-        if (token.raw.endsWith('\n\n')) return true
-        // Everything else at the source end (including a heading or hr whose
-        // raw ends in a single `\n`) is unstable: marked reassigns trailing
-        // newlines once a blank line follows (`# H\n` + `\n` lexes fresh as
-        // heading `# H` + space `\n\n`), so freezing it one chunk early
-        // yields a different raw split than a one-shot parse. Once another
-        // token follows it, it joins the prefix via the normal cut path.
-        return false
-    }
-
     /**
      * True when `source` contains reference-style link syntax that could
      * resolve against a definition — either a full reference (`[text][id]`)
@@ -499,18 +476,28 @@ export class IncrementalParser {
             return { prefixCount: 0, reparseOffset: 0 }
         }
 
-        let cut = tokens.length
-        let reparseOffset = sourceLength
-        if (!this.isStableAtSourceEnd(tokens[cut - 1])) {
-            cut--
-            reparseOffset -= this.getTokenSourceLength(tokens[cut])
-        }
+        // The LAST token is never stable, whatever its type. marked moves a
+        // block's trailing newline out of its raw once the next character is
+        // another newline (marked 15, GFM):
+        //   "```\nx\n```\n" => code "```\nx\n```\n"
+        //   "```\nx\n```\n\n" => code "```\nx\n```" + space "\n\n"
+        //   "# H\n" => heading "# H\n";  "# H\n\n" => heading "# H" + space "\n\n"
+        //   "P\n" => paragraph "P\n";    "P\n\n" => paragraph "P" + space "\n\n"
+        // (lists, blockquotes, tables, html and defs behave the same). So a
+        // token at the source end can still change its `raw` split, and
+        // freezing it one chunk early breaks parity with a one-shot parse
+        // (`raw.length` feeds source-offset render keys). No block raw ever
+        // ends in a blank line either — the blank line is always a separate
+        // `space` token — and an unclosed fence must stay in the tail anyway.
+        // Once another token follows it, it joins the prefix via this cut.
+        let cut = tokens.length - 1
+        let reparseOffset = sourceLength - this.getTokenSourceLength(tokens[cut])
         // A trailing `space` does not close a list or indented code block;
         // pull that block into the tail too (one extra token — still O(1)
         // per append).
         if (
             cut > 0 &&
-            tokens[cut]?.type === 'space' &&
+            tokens[cut].type === 'space' &&
             this.canContinueAcrossBlankLine(tokens[cut - 1])
         ) {
             cut--
@@ -522,9 +509,11 @@ export class IncrementalParser {
     /**
      * Blocks a blank or whitespace-only line does NOT terminate: the next
      * chunk may continue them (another list item, a further indented code
-     * line), so they must be re-lexed together with the tail. An OPEN fence
-     * is already kept in the tail by {@link isStableAtSourceEnd}; a closed
-     * fence is done, so only fence-less (indented) code qualifies.
+     * line), so they must be re-lexed together with the tail. A fenced
+     * block (open or closed) is excluded: once a `space` follows it, a
+     * closed fence is done, and an open fence absorbs blank lines into its
+     * own raw so it is the last token and already in the tail. Only
+     * fence-less (indented) code qualifies.
      *
      * @param token - The token immediately before a trailing `space` token
      * @returns `true` for a list or an indented code block
