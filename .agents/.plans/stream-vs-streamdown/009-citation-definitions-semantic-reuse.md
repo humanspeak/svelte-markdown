@@ -8,10 +8,29 @@
 > dispatched you and told you they maintain the index.
 >
 > **Drift check (run first)**:
-> `git diff --stat 7dea763..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/streaming-token-reuse.ts src/lib/SvelteMarkdown.svelte src/lib/Parser.svelte`
+> `git diff --stat 5770072..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/streaming-token-reuse.ts src/lib/SvelteMarkdown.svelte src/lib/Parser.svelte`
 > Plans 007 and 008 are EXPECTED to have changed `SvelteMarkdown.svelte` and
 > `streaming-token-reuse.ts`. Re-read the live code for every excerpt below;
 > where it differs only by those plans' changes, proceed; otherwise STOP.
+
+> **Revision 2026-09-28 (guard pre-flight):** Plans 006, 007, 008 and 013 have
+> landed on the batch branch (tip `5770072`). Facts that changed since the
+> excerpts below were written: (1) `streamTokens` is now `$state.raw` (007);
+> (2) `isSameStableNode` compares every render-affecting field with a
+> same-object fast path (008) — tree reuse is therefore sound; (3) `update()`
+> also treats an append that EXTENDS a definition on the boundary line as
+> reference-sensitive (`appendTouchesReferenceDefinition`, 008 Step 2b) — your
+> Part B label extraction must handle that path too (a definition whose URL is
+> still streaming re-lexes the citing roots on every chunk; keep that
+> targeted); (4) the tail-window boundary never freezes the last token (013).
+> Test line numbers drifted: the two tests to update are now at
+> `incremental-parser.test.ts:147` and `:375`. Compare against the CLAMPED
+> Plan 006 baseline plus Plan 007's B numbers in the batch README (after 007,
+> `citations` is ours 2,727–2,878 ms vs Streamdown ~1,880 ms with 46
+> over-budget frames and p95 ≈ 20.5 ms; the spikes are what Part A removes).
+> Same-build A/B: use the runner's `STREAM_COMPARE_URL_A/_B` with A = a git
+> worktree at the pre-change tip (see Plan 007's evidence README for the
+> recipe). Baseline re-stamped to `5770072`.
 
 ## Status
 
@@ -20,7 +39,7 @@
 - **Risk**: MED
 - **Depends on**: 006 (protocol), 008 (semantic equality). 007 recommended first.
 - **Category**: perf
-- **Planned at**: commit `7dea763`, 2026-09-28
+- **Planned at**: commit `5770072`, 2026-09-28 (amended pre-flight; original `7dea763`)
 
 ## Why this matters
 
@@ -141,7 +160,7 @@ except the seeded-lexer helper in Part B if placed in `parse-and-cache.ts`
 
 ## Git workflow
 
-- Branch: `perf/citation-definitions-semantic-reuse` off `main` after 008.
+- Work on `perf/stream-bench-flush-timing` (batch branch); the reviewer commits.
 - Commits: `perf(streaming): reuse semantically unchanged tokens after a reference definition`,
   `perf(streaming): re-lex only roots that reference a newly defined label`.
 - Do NOT push or open a PR unless instructed.
