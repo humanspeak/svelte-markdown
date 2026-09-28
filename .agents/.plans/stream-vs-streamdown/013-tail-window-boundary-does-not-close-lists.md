@@ -8,7 +8,7 @@
 > dispatched you and told you they maintain the index.
 >
 > **Drift check (run first)**:
-> `git diff --stat 9ec976f..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/incremental-parser.test.ts`
+> `git diff --stat 6e1abe7..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/incremental-parser.test.ts`
 > If either file changed since this plan was written, compare the "Current
 > state" excerpts against the live code before proceeding; on a mismatch,
 > treat it as a STOP condition.
@@ -20,7 +20,7 @@
 - **Risk**: MED (parser boundary logic; the fix must stay O(1) per append)
 - **Depends on**: 008 (its Step 2b lands in the same file and must be committed first)
 - **Category**: bug
-- **Planned at**: commit `9ec976f`, 2026-09-28 (amended; original `6892589`)
+- **Planned at**: commit `6e1abe7`, 2026-09-28 (amended twice; original `6892589`)
 
 ## Why this matters
 
@@ -244,6 +244,42 @@ do not edit it.
 **Verify**: `pnpm vitest run src/lib/utils/incremental-parser.test.ts` → the
 sweep passes at sizes 1, 7, 32 and 64; all other tests unchanged.
 
+### Step 2d (added 2026-09-28, revision 2): The last token is never stable
+
+Evidence (marked 15, `new Lexer({ gfm: true }).lex(...)`, 2026-09-28):
+
+````text
+"```\nx\n```\n"     => code"```\nx\n```\n"
+"```\nx\n```\n\n"   => code"```\nx\n```" space"\n\n"
+"# H\n"             => heading"# H\n"          "# H\n\n" => heading"# H" space"\n\n"
+"P\n"               => paragraph"P\n"         "P\n\n"   => paragraph"P" space"\n\n"
+"- a\n" / "> q\n" / "| … |\n" / "<div>…</div>\n" / "[a]: /x\n"  — same pattern
+````
+
+Whatever the block type, the trailing newline moves out of its `raw` when
+the next character is another newline. So a token that is LAST in the
+source can always still change `raw`; freezing it is never sound. The
+generic `raw.endsWith('\n\n')` rule is also moot: no marked block raw ends
+in a blank line (the blank line is always a separate `space` token).
+
+Fix: make `isStableAtSourceEnd` return `false` for every token (keep the
+method, replace its body with a comment citing the evidence above, or inline
+the constant into `getNextTailWindowBoundary` — the cut becomes
+`tokens.length - 1` unconditionally, followed by the Step 2 walk-back).
+`CLOSED_FENCE_RE` stays in use by `canContinueAcrossBlankLine`. Update the
+JSDoc/comments that describe the old behavior (the fence comment block above
+the method mentions the `\n\n` test — rewrite it).
+
+Cost: a closed fence that is the last token is re-lexed once more on the
+chunk that follows it; a fence is at most one block. Acceptable.
+
+If any existing test pins "a trailing X is stable" (lexer spy call with a
+tail that excludes the last token), STOP and report the test name.
+
+**Verify**: `pnpm vitest run src/lib/utils/incremental-parser.test.ts src/lib/utils/incremental-parser.streaming-fence.test.ts`
+→ the sweep passes at sizes 1, 7, 32 and 64; all other tests unchanged.
+Then Step 3 (full gate).
+
 ### Step 3: Full gate
 
 `pnpm check`, `trunk fmt && trunk check --fix`, `pnpm test` (coverage ≥ 90%).
@@ -271,7 +307,7 @@ sweep passes at sizes 1, 7, 32 and 64; all other tests unchanged.
   must not add a scan).
 - Case 3 fails after Step 2 (the list is no longer closed by a blank line +
   paragraph) — the walk-back is too aggressive.
-- The sweep still fails at some chunk size after Step 2c: report the chunk
+- The sweep still fails at some chunk size after Step 2d: report the chunk
   size, the source at the first mismatch, and the streamed vs fresh token
   shapes — there may be a second continuable block type (blockquote lazy
   continuation, table) to handle; do not guess it in.

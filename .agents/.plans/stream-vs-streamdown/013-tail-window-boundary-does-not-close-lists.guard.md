@@ -8,3 +8,11 @@
 - Scope: only the two in-scope files changed (`git diff --stat`); deviations from the plan's code shape (`FENCE_OPEN_RE` constant, `tokens[cut]?.type` bounds guard) are sound and reported.
 - Classification: PLAN DEFECT (the plan anticipated "a second continuable block type"; the second cause is instead the heading/hr stability rule). Not drift: STOP honored, no test weakened.
 - Action: plan amended — Step 2c added (heading/hr no longer stable at source end), baseline re-stamped to `9ec976f`. Fix-dispatch (opus, fresh context, in-tree). `pnpm test`/`trunk` not yet run at this snapshot (executor stopped before Step 3); guard will run them at final.
+
+## Checkpoint 2 — 2026-09-28 06:15 — PLAN AMENDED
+
+6e1abe7 · fix executor delivered Step 2c (heading/hr unstable); sizes 32/64 green, size 1 still red on a closed fence frozen without its trailing newline. Snapshot-committed.
+
+- Guard probed marked directly (Node, `new Lexer({gfm:true})`): every block type moves its trailing newline into the following `space` token when a blank line arrives; no block raw ever ends in `\n\n`. The per-type stability rules are therefore unsound as a class, not one by one.
+- Classification: PLAN DEFECT (third variant of one mechanism). Executor honored STOP, changed no tests; `trunk` clean on both snapshots; `pnpm check` 0 errors.
+- Action: Revision 2 — Step 2d: `isStableAtSourceEnd` returns false unconditionally. Fix-dispatch (opus, fresh, in-tree). Guard will re-run everything at final.
