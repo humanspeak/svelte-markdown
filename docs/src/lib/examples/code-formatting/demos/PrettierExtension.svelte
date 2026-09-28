@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import type { MarkedExtension } from 'marked'
     import { onMount } from 'svelte'
     import { LoaderCircle } from '@lucide/svelte'
@@ -83,7 +84,7 @@ const x={a:1,b:2,c:3}
 -->
 <div class="prose prose-sm dark:prose-invert mx-auto max-w-4xl px-6 py-6">
     {#if ready}
-        <SvelteMarkdown source={markdown} {extensions} />
+        <SvelteMarkdown source={markdown} {extensions} renderers={{ code: HighlightedCode }} />
     {:else}
         <div class="cf-loading">
             <LoaderCircle class="size-4 animate-spin" />

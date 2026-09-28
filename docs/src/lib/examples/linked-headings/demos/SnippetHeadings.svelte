@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
 
     const markdown = `## Linked Headings Demo
 
@@ -40,7 +41,7 @@ This is a deeply nested heading to show all levels work correctly.`
   customizations that don't need their own component file.
 -->
 <div class="prose prose-sm dark:prose-invert mx-auto max-w-4xl px-6 py-6">
-    <SvelteMarkdown source={markdown}>
+    <SvelteMarkdown source={markdown} renderers={{ code: HighlightedCode }}>
         {#snippet heading({ depth, text, slug, options, children })}
             {@const id = options.headerIds ? options.headerPrefix + slug(text) : undefined}
             <svelte:element this={`h${depth}`} {id} class="lh-heading">

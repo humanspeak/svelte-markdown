@@ -3,6 +3,7 @@
         defaultSanitizeAttributes,
         defaultSanitizeUrl
     } from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import type {
         SanitizeAttributesFn,
         SanitizeUrlFn,
@@ -242,6 +243,7 @@ That is everything — the renderer kept the safe content and dropped the rest.`
                     streaming={true}
                     {sanitizeUrl}
                     {sanitizeAttributes}
+                    renderers={{ code: HighlightedCode }}
                 />
                 {#if !streamSource && !isActive}
                     <p class="text-muted-foreground italic">

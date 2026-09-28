@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
 
     const markdown = `## Code Block Styling
 
@@ -52,8 +53,8 @@ pnpm add @humanspeak/svelte-markdown
 
 <!--
   Snippet override for the `code` token — wraps each fenced code block
-  in a brut-themed container with a language badge in the corner. No
-  extension required, full markup control per page.
+  in a brut-themed container with a language badge in the corner, and
+  renders the block itself through HighlightedCode for syntax colors.
 -->
 <div class="prose prose-sm dark:prose-invert mx-auto max-w-4xl px-6 py-6">
     <SvelteMarkdown source={markdown}>
@@ -62,7 +63,7 @@ pnpm add @humanspeak/svelte-markdown
                 {#if props.lang}
                     <div class="cf-lang">{props.lang}</div>
                 {/if}
-                <pre><code>{props.text}</code></pre>
+                <HighlightedCode lang={props.lang} text={props.text} />
             </div>
         {/snippet}
     </SvelteMarkdown>
@@ -70,10 +71,9 @@ pnpm add @humanspeak/svelte-markdown
 
 <style>
     /* Container + lang badge use brut tokens so the chrome flips
-       between light and dark themes. The pre is left on the brut bg
-       surface with mono typography — no syntax highlighting (the
-       snippet API doesn't provide tokenised output; the extension
-       variant handles formatting separately). */
+       between light and dark themes. The snippet hands `{ lang, text }`
+       to HighlightedCode, which tokenises with the site-wide TanStack
+       highlighter; the pre takes the theme's background and base color. */
     :global(.cf-block) {
         position: relative;
         margin: 14px 0;
@@ -100,6 +100,10 @@ pnpm add @humanspeak/svelte-markdown
         font-size: 12.5px;
         line-height: 1.65;
         overflow-x: auto;
+    }
+    :global(.cf-block pre.th-code) {
+        background: var(--th-background);
+        color: var(--th-token);
     }
     :global(.cf-block code) {
         background: transparent;

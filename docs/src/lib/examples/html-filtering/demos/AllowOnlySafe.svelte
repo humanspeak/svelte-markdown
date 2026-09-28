@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown, { allowHtmlOnly } from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
 
     // Allow-list a tight set of formatting tags. Anything outside the list
     // (script, iframe, form, etc.) is rendered as escaped text so a reader
@@ -50,7 +51,7 @@ Hidden content inside details/summary tags.
     </div>
     <div class="hf-demo-preview">
         <div class="hf-markdown prose prose-sm dark:prose-invert max-w-none">
-            <SvelteMarkdown source={markdown} renderers={{ html }} />
+            <SvelteMarkdown source={markdown} renderers={{ html, code: HighlightedCode }} />
         </div>
     </div>
 </div>

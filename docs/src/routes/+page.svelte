@@ -3,6 +3,7 @@
     import { docsConfig } from '$lib/docs-config'
     import favicon from '$lib/assets/logo.svg'
     import SvelteMarkdown, { rendererKeys, htmlRendererKeys } from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import { AnimatePresence, MotionButton, MotionSpan } from '@humanspeak/svelte-motion'
     import { competitors } from '$lib/compare-data'
     import { headerNav } from '$lib/docsNav'
@@ -460,7 +461,12 @@ Happy coding! <span style="color: hotpink">♥</span>`
                     </div>
                     <div class="pane out" bind:this={streamPreviewEl}>
                         <div class="label">OUT / RENDERED</div>
-                        <SvelteMarkdown bind:this={streamMarkdown} source="" streaming={true} />
+                        <SvelteMarkdown
+                            bind:this={streamMarkdown}
+                            source=""
+                            streaming={true}
+                            renderers={{ code: HighlightedCode }}
+                        />
                     </div>
                 </div>
                 <div class="footer">
@@ -535,7 +541,10 @@ Happy coding! <span style="color: hotpink">♥</span>`
                             aria-label="Markdown source"></textarea>
                     </div>
                     <div class="col preview">
-                        <SvelteMarkdown source={playgroundSource} />
+                        <SvelteMarkdown
+                            source={playgroundSource}
+                            renderers={{ code: HighlightedCode }}
+                        />
                     </div>
                 </div>
             </div>
@@ -1203,6 +1212,13 @@ Happy coding! <span style="color: hotpink">♥</span>`
         border: 0;
         padding: 0;
     }
+    .brut-stream .panel .pane.out :global(pre.th-code) {
+        background: var(--th-background);
+        color: var(--th-token);
+    }
+    .brut-stream .panel .pane.out :global(pre.th-code code) {
+        color: inherit;
+    }
     .brut-stream .panel .pane.out :global(ol),
     .brut-stream .panel .pane.out :global(ul) {
         font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
@@ -1427,6 +1443,12 @@ Happy coding! <span style="color: hotpink">♥</span>`
         font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
         font-size: 12px;
         color: var(--brut-ink);
+    }
+    .brut-play .panel .body .preview :global(pre.th-code code) {
+        background: transparent;
+        border: 0;
+        padding: 0;
+        color: inherit;
     }
     .brut-play .panel .body .preview :global(table) {
         border-collapse: collapse;
