@@ -39,7 +39,10 @@
             snippet: streamingSection,
             codeSnippet: streamingCode,
             notes: streamingNotes,
-            barCells: [{ k: 'mode', v: 'offset · jumbled' }],
+            barCells: [
+                { k: 'mode', v: 'offset · jumbled' },
+                { k: 'highlight', v: 'tanstack' }
+            ],
             sourceUrl: `${SOURCE_URL}llm-streaming/demos/StreamingConsole.svelte`
         }
     ]
