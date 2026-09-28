@@ -34,21 +34,21 @@ complete the initiative.
 
 ## Execution order & status
 
-| Plan | Title                                                                                      | Priority | Effort | Depends on           | Status                                                                                                                                  |
-| ---- | ------------------------------------------------------------------------------------------ | -------- | ------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| 001  | Keep token reuse when a reference definition arrives (old comparator)                      | —        | —      | —                    | SUPERSEDED by 008+009                                                                                                                   |
-| 002  | `$state.raw` + phase breakdown                                                             | —        | —      | —                    | SUPERSEDED by 006+007                                                                                                                   |
-| 003  | Strip list/table `raw` into child renderers                                                | —        | —      | —                    | SUPERSEDED by 010                                                                                                                       |
-| 004  | Code block per-line text nodes (impossible childNodes gate)                                | —        | —      | —                    | SUPERSEDED by 012                                                                                                                       |
-| 005  | Prefix/tail two-each split (remounts components; validator crash)                          | —        | —      | —                    | SUPERSEDED by 011                                                                                                                       |
-| 006  | Paired protocol, semantic parity, prefix-scaling scenarios, browser attribution            | P1       | M      | —                    | IN PROGRESS — Steps 1–5 at `770f983`, parity 0; amended 2026-09-28 (Step 2b clamp overlapping windows, re-run baseline); fix-dispatched |
-| 007  | One-variable A/B: `streamTokens` in `$state.raw`                                           | P1       | S      | 006                  | TODO                                                                                                                                    |
-| 008  | Semantic token equality (all render-affecting fields, same-object fast path)               | P1       | M      | —                    | DONE — PASS at `6892589` (see guard report)                                                                                             |
-| 009  | Reference definitions: semantic whole-tree reuse, then targeted re-lex                     | P1       | M+M    | 006, 008 (007 first) | TODO                                                                                                                                    |
-| 010  | List/table render work: attribute H1–H4, fix what measures                                 | P1       | M      | 006, 007, 009 §1     | TODO                                                                                                                                    |
-| 011  | Bounded prefix work: measured costs, single-owner rendering design                         | P1       | L      | 006, 008, 007–010    | TODO                                                                                                                                    |
-| 012  | Spike: per-line text nodes for code fences (measured, SSR contract)                        | P2       | S–M    | 006                  | TODO                                                                                                                                    |
-| 013  | Tail-window boundary must not close lists/indented code at a blank or whitespace-only line | P0       | S–M    | 008                  | DONE — PASS at `2fa41e4` (see guard report)                                                                                             |
+| Plan | Title                                                                                      | Priority | Effort | Depends on           | Status                                      |
+| ---- | ------------------------------------------------------------------------------------------ | -------- | ------ | -------------------- | ------------------------------------------- |
+| 001  | Keep token reuse when a reference definition arrives (old comparator)                      | —        | —      | —                    | SUPERSEDED by 008+009                       |
+| 002  | `$state.raw` + phase breakdown                                                             | —        | —      | —                    | SUPERSEDED by 006+007                       |
+| 003  | Strip list/table `raw` into child renderers                                                | —        | —      | —                    | SUPERSEDED by 010                           |
+| 004  | Code block per-line text nodes (impossible childNodes gate)                                | —        | —      | —                    | SUPERSEDED by 012                           |
+| 005  | Prefix/tail two-each split (remounts components; validator crash)                          | —        | —      | —                    | SUPERSEDED by 011                           |
+| 006  | Paired protocol, semantic parity, prefix-scaling scenarios, browser attribution            | P1       | M      | —                    | DONE — PASS at `be3b3d7` (see guard report) |
+| 007  | One-variable A/B: `streamTokens` in `$state.raw`                                           | P1       | S      | 006                  | TODO                                        |
+| 008  | Semantic token equality (all render-affecting fields, same-object fast path)               | P1       | M      | —                    | DONE — PASS at `6892589` (see guard report) |
+| 009  | Reference definitions: semantic whole-tree reuse, then targeted re-lex                     | P1       | M+M    | 006, 008 (007 first) | TODO                                        |
+| 010  | List/table render work: attribute H1–H4, fix what measures                                 | P1       | M      | 006, 007, 009 §1     | TODO                                        |
+| 011  | Bounded prefix work: measured costs, single-owner rendering design                         | P1       | L      | 006, 008, 007–010    | TODO                                        |
+| 012  | Spike: per-line text nodes for code fences (measured, SSR contract)                        | P2       | S–M    | 006                  | TODO                                        |
+| 013  | Tail-window boundary must not close lists/indented code at a blank or whitespace-only line | P0       | S–M    | 008                  | DONE — PASS at `2fa41e4` (see guard report) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale) | SUPERSEDED
 
@@ -69,10 +69,46 @@ Node-only floor for parser + reuse + metadata with identical corpus/chunking
 (2026-09-28, built `dist/`): prose 0.66 ms/frame, long-list 1.95 ms/frame,
 citations 0.55 ms/frame avg with 41 no-reuse updates (peak 4–10 ms).
 
-## Attribution baseline
+## Paired baseline (Plan 006, 2026-09-28, clamped metric; median of 5, suite 1 / suite 2)
 
-Filled by Plan 006 (bucket shares per scenario: flush / JS outside flush /
-style+layout / paint / GC; top-15 self-time functions).
+Absolute totals are comparable only within one capture (machine drift was
+demonstrated with a same-session control); use paired deltas and ratios.
+Delta = theirs − ours; positive means ours does less work. Parity 0 everywhere.
+
+| Scenario                 | Ours total ms   | Theirs total ms | Paired delta ms | Ours over-budget frames | Theirs over-budget | Ours lib flush ms |
+| ------------------------ | --------------- | --------------- | --------------- | ----------------------- | ------------------ | ----------------- |
+| `prose-mixed`            | 3,231 / 3,115   | 2,817 / 2,902   | −414 / −261     | 0 / 0 of 765            | 0 / 0              | 511 / 497         |
+| `prose-mixed-4x`         | 913 / 1,069     | 1,230 / 1,433   | +324 / +343     | 0 / 1 of 192            | 0 / 3              | 107 / 133         |
+| `long-list`              | 12,841 / 13,059 | 9,153 / 9,152   | −3,625 / −3,907 | 365 / 378 of 754        | 201 / 203          | 4,079 / 4,142     |
+| `long-code-fence`        | 2,840 / 2,935   | 1,568 / 1,563   | −1,341 / −1,390 | 0 / 0 of 753            | 0 / 0              | 252 / 237         |
+| `citations`              | 4,545 / 4,555   | 1,893 / 1,874   | −2,663 / −2,634 | 46 / 46 of 753          | 0 / 0              | 635 / 633         |
+| `prose-mixed-writechunk` | 3,145 / 3,234   | skipped         | —               | 0 / 0 of 765            | —                  | 529 / 535         |
+| `prefix-24kb`            | 400 / 387       | 265 / 263       | −117 / −130     | 1 / 1 of 67             | 0 / 0              | 70 / 68           |
+| `prefix-96kb`            | 817 / 796       | 566 / 576       | −262 / −265     | 3 / 3 of 67             | 0 / 0              | 134 / 135         |
+| `prefix-384kb`           | 4,129 / 4,211   | 2,746 / 2,736   | −1,422 / −1,395 | 67 / 67 of 67           | 67 / 67            | 598 / 629         |
+| `large-closed-block`     | 212 / 210       | 261 / 267       | +49 / +52       | 0 / 0 of 67             | 1 / 1              | 35 / 34           |
+
+Prefix scaling (ours avg ms/frame, identical 2 KB tail): 5.98 → 12.20 → 61.63
+at 24 / 96 / 384 KB prefix (Streamdown 3.95 → 8.44 → 40.98). `citations`
+cross-renderer comparison is not like-for-like: Streamdown renders 0
+reference-style links (ours 258).
+
+## Attribution baseline (Plan 006, ours, one traced run each, ms per frame and share)
+
+| Scenario          | Page avg | Flush      | JS outside flush | Style/layout | Paint | GC   | Other | Untraced |
+| ----------------- | -------- | ---------- | ---------------- | ------------ | ----- | ---- | ----- | -------- |
+| `prose-mixed`     | 3.81     | 0.54 (14%) | 2.13 (56%)       | 0.63 (17%)   | 0.01  | 0.02 | 0.14  | 0.34     |
+| `long-list`       | 17.70    | 5.56 (31%) | 10.79 (61%)      | 0.27 (2%)    | 0.61  | 0.14 | 0.21  | 0.11     |
+| `long-code-fence` | 3.20     | 0.29 (9%)  | 0.61 (19%)       | 1.88 (59%)   | 0.01  | 0.00 | 0.15  | 0.26     |
+| `citations`       | 6.08     | 0.73 (12%) | 4.10 (67%)       | 0.45 (7%)    | 0.09  | 0.19 | 0.19  | 0.33     |
+| `prefix-384kb`    | 65.18    | 8.34 (13%) | 37.96 (58%)      | 10.14 (16%)  | 4.03  | 0.97 | 3.69  | 0.04     |
+
+Top self-time functions: `$state` proxy `get` appears in every scenario
+(7.8–15.6%); `{#each}` update/reconcile 6–21%; forced layout
+(`getBoundingClientRect`, the bench's own style/layout charge) 7–57%;
+`areRecordsSemanticallyEqual` 14.9% on `long-list`; `assignHeadingIds` 5.2%
+on `long-list`; `isAppendOnlyUpdate` 4.4–4.6% on prose/fence/citations.
+Full top-15 per scenario: `evidence/006/README.md`.
 
 ## Amendments
 

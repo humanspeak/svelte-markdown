@@ -21,3 +21,12 @@ e2f05da · executor (opus, worktree) completed Steps 1–2 and stopped at the pl
 - Attribution headline (pre-clamp): "JS outside the flush" dominates every scenario except `long-code-fence` (style/layout 58%); top self-time functions include the `$state` proxy `get` in every scenario (8–15%), `{#each}` update/reconcile, and `areRecordsSemanticallyEqual` (14.6% on `long-list`). Direct evidence for Plan 007's hypothesis and for Plan 011's prefix-scaling concern (avg work/frame 3.9 → 12.9 → 74.0 ms at 24/96/384 KB prefix).
 - Metric defect found by the executor and confirmed by guard reading `measureFrame`: overlapping windows are double-counted on over-budget frames (18.7% of `long-list` total). Classification: PLAN DEFECT (measurement method), not drift — the executor kept the metric fixed and reported it. Action: Step 2b added (clamp window start to previous window end, re-run suites + attribution, keep pre-clamp files). Fix-dispatch (opus, fresh, in-tree).
 - Streamdown renders 0 links on `citations` vs our 258: the cross-renderer comparison there is not like-for-like; note for the docs claims at batch close.
+
+## Checkpoint 3 — 2026-09-28 08:10 — ON TRACK (final: PASS)
+
+be3b3d7 · Step 2b executor (opus, in-tree) clamped overlapping frame windows, re-ran both paired suites and attribution, archived pre-clamp capture, rewrote evidence README. Snapshot-committed.
+
+- Guard reproduced: `pnpm test` 160/1176 green; `pnpm check` 0 errors; `trunk check` clean on the three harness files; `git log e2f05da..HEAD -- src/lib` shows only 008/013 commits. Cross-checked `paired-run-1.json` against the report: totals, deltas, parity (0 in all 5 runs of all 10 scenarios), over-budget counts and `overlapClampedMs` match to the decimal.
+- Diff read (`+page.svelte:517-575`): `WindowClock` per run; frame window starts at `max(rAF timestamp, previous window end)`; sync windows update the clock; trace measure aligned. Sound; under-budget scenarios show clamp ≈ 0, `long-list` 2,576/2,714 ms clamped (both renderers affected: theirs 1,421/1,526).
+- Corrected baseline: ours ahead only on `prose-mixed-4x` (1.35×) and `large-closed-block` (1.23×); behind on `prose-mixed` (1.14–1.20×), `long-list` (1.40–1.43×), `long-code-fence` (1.81–1.88×), `citations` (2.40–2.43×), `prefix-*` (1.4–1.5×). Attribution: JS outside the flush 56–67% everywhere except `long-code-fence` (style/layout 59%).
+- Action: README row → DONE; batch README gains the corrected baseline and attribution tables; Plan 007 dispatched next (depends on 006).
