@@ -97,7 +97,7 @@
         },
         {
             title: 'AI Agent Output',
-            body: 'Render streaming HTML and markdown from Claude Code, ChatGPT, and agentic workflows — with XSS defaults, sanitization-aware streaming, and low-latency updates (median ~3ms, well under the 60fps budget).'
+            body: 'Render streaming HTML and markdown from Claude Code, ChatGPT, and agentic workflows — with XSS defaults, sanitization-aware streaming, and low-latency updates (about 2–3 ms of work per frame on mixed prose, p95 under 5 ms, well inside the 60fps budget).'
         }
     ]
 
@@ -354,7 +354,7 @@ Happy coding! <span style="color: hotpink">♥</span>`
                 </div>
                 <div>
                     <span class="k">streaming</span> ·
-                    <span class="v accent">median ~3 ms</span>
+                    <span class="v accent">~2.4 ms / frame</span>
                 </div>
                 <hr />
                 <div class="k">// scroll for full spec</div>
@@ -431,7 +431,8 @@ Happy coding! <span style="color: hotpink">♥</span>`
                 <h2>stream <span>AI responses</span> in real-time.</h2>
                 <p>
                     Render ChatGPT, Claude, and Gemini responses as they stream in. Smart token
-                    diffing keeps each update at a median ~3ms — well under the 60fps budget.
+                    diffing and per-frame coalescing keep each update around 2–3 ms of work (p95
+                    under 5 ms) — well inside the 60fps budget.
                 </p>
             </div>
             <div class="panel">
@@ -1224,9 +1225,19 @@ Happy coding! <span style="color: hotpink">♥</span>`
         font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
         font-size: 13.5px;
         color: var(--brut-ink-2);
+        list-style-position: outside;
         padding-left: 22px;
         margin: 6px 0;
         line-height: 1.55;
+    }
+    .brut-stream .panel .pane.out :global(ol) {
+        list-style-type: decimal;
+    }
+    .brut-stream .panel .pane.out :global(ul) {
+        list-style-type: disc;
+    }
+    .brut-stream .panel .pane.out :global(li::marker) {
+        color: var(--brut-ink-3);
     }
     .brut-stream .panel .pane.out :global(table) {
         border-collapse: collapse;
@@ -1431,10 +1442,20 @@ Happy coding! <span style="color: hotpink">♥</span>`
     }
     .brut-play .panel .body .preview :global(ol),
     .brut-play .panel .body .preview :global(ul) {
+        list-style-position: outside;
         padding-left: 22px;
         font-size: 13.5px;
         margin: 6px 0;
         line-height: 1.55;
+    }
+    .brut-play .panel .body .preview :global(ol) {
+        list-style-type: decimal;
+    }
+    .brut-play .panel .body .preview :global(ul) {
+        list-style-type: disc;
+    }
+    .brut-play .panel .body .preview :global(li::marker) {
+        color: var(--brut-ink-3);
     }
     .brut-play .panel .body .preview :global(code) {
         background: var(--brut-bg-2);
