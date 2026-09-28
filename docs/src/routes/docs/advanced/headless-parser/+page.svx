@@ -70,15 +70,20 @@ const parser = new IncrementalParser(options)
 
 The full set of options matches Marked's [`MarkedOptions`](https://marked.js.org/using_advanced#options), including extension hooks (`walkTokens`, `tokenizer`). When any custom tokenizer or extension is registered, the internal tail-window optimization is disabled (each `update()` becomes a full re-parse), since user-provided tokenizers can mutate tokens in ways the diff can't detect.
 
-### `parser.update(source)`
+### `parser.update(source, appendsTo?)`
 
 Parses the full source string and returns the diff against the previous parse.
 
 ```typescript
 const result = parser.update(currentSource)
+
+// When you already know the new source extends the previous one:
+const next = parser.update(currentSource, previousSource)
 ```
 
 Always pass the **full accumulated source** — not just the delta. Append-only streaming (typical LLM use case) is the optimized path, but the parser correctly handles arbitrary edits (insertions, replacements, full rewrites) too.
+
+The optional `appendsTo` argument is a string you have already verified `source` starts with (typically your buffer before the chunk was appended). When it equals the previously parsed source, the parser skips its own full-length append check. Passing a string that `source` does not start with breaks parsing, so omit it when unsure.
 
 ### `IncrementalUpdateResult`
 
@@ -88,10 +93,28 @@ interface IncrementalUpdateResult {
     tokens: Token[]
     /** Index of the first token that differs from the previous parse */
     divergeAt: number
+    /** Source offset of the first differing token, when known without scanning the prefix */
+    divergeOffset?: number
+    /** Shorthand for `reuseMode === 'prefix'` */
+    canReuse: boolean
+    /** How token objects from the previous parse may be reused: 'prefix' | 'tree' | 'none' */
+    reuseMode: 'prefix' | 'tree' | 'none'
+    /** Leading roots that are the same objects, at the same indices, as in the previous result */
+    reusedPrefixCount: number
+    /** Whether only the appended tail was re-lexed (vs the whole source) */
+    usedTailWindow: boolean
 }
 ```
 
-`divergeAt` is the actionable field: every token at index `< divergeAt` is reference-equal to the corresponding token from the previous `update()` call, so a consumer can skip re-rendering them. On the first call (or after a structural change that invalidates the prefix), `divergeAt` is `0`.
+`divergeAt` is the actionable field for the common case: every token at index `< divergeAt` is reference-equal to the corresponding token from the previous `update()` call, so a consumer can skip re-rendering them. On the first call (or after a structural change that invalidates the prefix), `divergeAt` is `0`.
+
+`reuseMode` tells you which reuse strategy is safe:
+
+- `'prefix'` -- the first `divergeAt` roots are unchanged; reuse them positionally.
+- `'tree'` -- the update was append-only but a reference definition (`[label]: url`) arrived, so inline children may have changed inside roots whose `raw` did not. Compare the previous and new arrays index by index with a semantic comparator (every render-affecting field, not just `raw`) and reuse whatever is equal; the Svelte component does this internally. `divergeAt` is `0` in this mode.
+- `'none'` -- the source was edited rather than appended; replace the token array.
+
+`reusedPrefixCount` is a further shortcut for renderers that keep the previous array: the first `reusedPrefixCount` entries of `tokens` are the very same objects at the same indices, so they need no comparison at all.
 
 ## Streaming Pattern
 
@@ -122,7 +145,7 @@ async function consumeStream(response: Response) {
 }
 ```
 
-Per-update cost stays well under the 60fps budget on typical LLM streams (median ~3 ms on the [caching-performance harness](/examples/caching-performance)), regardless of total document size, because the tail-window optimization re-parses only the suffix beyond the last stable token boundary.
+Per-update parser cost is proportional to the open block at the end of the source, not to the document, because the tail-window optimization re-lexes only the suffix beyond the last closed block. In the repository's paired benchmark (2026-09-28, headless Chromium, ~24 KB corpora streamed at 32 characters per frame) the parser's share of a frame was 0.2--0.3 ms on prose and citation-heavy prose, and about 2.5 ms on a single open ~200-item list, where the whole open list is re-lexed each frame by design. The streamed token tree is checked against a fresh one-shot parse at every sampled frame; the check reported zero mismatches in every run, including while reference-definition URLs stream in character by character.
 
 ## Reconciling With Sanitization
 
