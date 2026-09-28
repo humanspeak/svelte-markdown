@@ -264,6 +264,12 @@ export class IncrementalParser {
      * case. (The one unbounded input is a document streamed as a single
      * newline-free line, where the boundary line grows with the document.)
      *
+     * Detects NEW matches only: a boundary line that already matched before
+     * the append returns `false` even if the append extends it. Callers that
+     * need "the append touches a match" (e.g. a reference definition whose
+     * URL is still streaming) must check the boundary line themselves, as
+     * `appendTouchesReferenceDefinition` does for `update`.
+     *
      * @param source - Full source string for an append-only update
      * @param matches - Predicate identifying the reference syntax of interest
      * @returns `true` if the append introduces a match not already present
@@ -283,6 +289,34 @@ export class IncrementalParser {
         // Already present on the boundary line before the append ⇒ not new.
         if (matches(this.prevSource.slice(lineStart))) return false
         return matches(source.slice(lineStart))
+    }
+
+    /**
+     * True when an append-only update adds a reference definition or extends
+     * one on the boundary line (the last, possibly partial line of
+     * `prevSource`). Unlike `appendIntroducesMatch` alone, a boundary line
+     * that was already a definition before the append still counts, so a
+     * definition whose URL or title is streaming in is detected on every
+     * chunk. An append that begins with a line break leaves the boundary line
+     * unchanged and is not an extension. Only the appended text and the
+     * boundary line are scanned. Assumes `source` starts with `prevSource`.
+     *
+     * @param source - Full source string for an append-only update
+     * @returns `true` if the append adds or extends a reference definition
+     * @example
+     * ```typescript
+     * // prevSource === 'See [ref].\n\n[ref]: https'
+     * this.appendTouchesReferenceDefinition('See [ref].\n\n[ref]: https:') // true
+     * ```
+     */
+    private appendTouchesReferenceDefinition = (source: string): boolean => {
+        if (this.appendIntroducesMatch(source, this.hasReferenceDefinition)) return true
+        const firstAppended = source.charAt(this.prevSource.length)
+        if (firstAppended === '' || firstAppended === '\n' || firstAppended === '\r') {
+            return false
+        }
+        const lineStart = this.prevSource.lastIndexOf('\n') + 1
+        return this.hasReferenceDefinition(source.slice(lineStart))
     }
 
     /**
@@ -557,8 +591,12 @@ export class IncrementalParser {
         // -state refresh need it, so compute the boundary scan once here. When
         // `prevSource` is empty this is the first update, where no cached use
         // exists yet, so `referenceInvalidatesTail` is false either way.
-        const appendAddsDefinition =
-            isAppendOnly && this.appendIntroducesMatch(source, this.hasReferenceDefinition)
+        // A definition whose URL/title is still streaming changes how prefix
+        // references resolve on every chunk, not only on the chunk that
+        // completed `]:`. Treat any append that extends a definition on the
+        // boundary line as adding one. An append starting with a line break
+        // leaves the boundary line untouched, so it is not an extension.
+        const appendAddsDefinition = isAppendOnly && this.appendTouchesReferenceDefinition(source)
         const referenceInvalidatesTail = this.prevHasPotentialReferenceUse && appendAddsDefinition
         const parseResult = this.parseSource(
             source,
