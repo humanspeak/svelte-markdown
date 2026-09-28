@@ -10,7 +10,7 @@
  */
 
 import type { SvelteMarkdownOptions } from '$lib/types.js'
-import type { Token } from '$lib/utils/markdown-parser.js'
+import type { Token, Tokens, TokensList } from '$lib/utils/markdown-parser.js'
 import { lexAndClean } from '$lib/utils/parse-and-cache.js'
 import { isSameStableNode } from '$lib/utils/streaming-token-reuse.js'
 import { isTailWindowSafe } from '$lib/utils/tail-window.js'
@@ -42,6 +42,154 @@ const FENCE_OPEN_RE = /^ {0,3}(`{3,}|~{3,})/
 const LINK_REFERENCE_RE = /\[[^\]\n]+\]\[[^\]\n]*\]/
 const SHORTCUT_REFERENCE_RE = /\[[^\]\n]+\](?![[(])/ // Excludes inline links/images and full refs
 const REFERENCE_DEFINITION_RE = /^\s{0,3}\[[^\]\n]+\]:/m
+const REGEXP_SPECIAL_RE = /[.*+?^${}()|[\]\\]/g
+const WHITESPACE_RUN_RE = /\s+/g
+
+/**
+ * The targeted definition re-lex (see `parseDefinitionUpdate`) only pays off
+ * when it skips most of the document; at or above this share of the source,
+ * a plain full re-lex is simpler and no slower.
+ */
+const MAX_TARGETED_RELEX_SHARE = 0.5
+
+/** marked's reference-definition map (`lexer.tokens.links`). */
+type LinkMap = TokensList['links']
+
+/**
+ * Block tokens whose children are inline-only (or absent). Definitions are
+ * block-level, so these never hold one and the definition walk skips them.
+ */
+const DEFINITION_FREE_TYPES = new Set([
+    'paragraph',
+    'heading',
+    'text',
+    'table',
+    'code',
+    'space',
+    'hr'
+])
+
+/** Root types a reference use can never change the rendering of. */
+const REFERENCE_INERT_ROOT_TYPES = new Set(['space', 'def', 'code', 'hr'])
+
+/** A stable prefix root that may use a changed reference label. */
+interface CitingRoot {
+    /** Index in the prefix */
+    index: number
+    /** The root's exact source span */
+    source: string
+    /** `source` normalized for label-use search */
+    text: string
+}
+
+/**
+ * A `[label]:` anywhere in text — a superset of marked's definition syntax
+ * (which also allows nesting in blockquotes and list items), used to bound
+ * which labels an appended tail can define before it is lexed.
+ */
+const DEFINITION_LABEL_RE = /\[((?:\\[\s\S]|[^[\]\\])+)\]:/g
+
+/** Non-global form of `DEFINITION_LABEL_RE` for a stateless `test`. */
+const DEFINITION_MARKER_RE = new RegExp(DEFINITION_LABEL_RE.source)
+
+const createLinkMap = (): LinkMap => Object.create(null) as LinkMap
+
+/**
+ * Collects the reference definitions under `tokens` into `links` in document
+ * order, keeping the first definition of a label — exactly the map marked
+ * builds during a full lex (marked emits no `def` token for a duplicate
+ * label, and nested definitions in blockquotes, list items and html blocks
+ * keep their `def` token). Inline-only blocks are not descended into.
+ *
+ * @param tokens - Tokens in document order
+ * @param links - Map to fill (mutated and returned)
+ * @returns `links`
+ * @example
+ * ```typescript
+ * collectDefinitions(tokens, createLinkMap()) // { docs: { href: '/docs', title: undefined } }
+ * ```
+ */
+const collectDefinitions = (tokens: readonly Token[], links: LinkMap): LinkMap => {
+    for (const token of tokens) {
+        if (token.type === 'def') {
+            const definition = token as Tokens.Def
+            if (!(definition.tag in links)) {
+                links[definition.tag] = { href: definition.href, title: definition.title }
+            }
+            continue
+        }
+        if (DEFINITION_FREE_TYPES.has(token.type)) continue
+        const container = token as { items?: unknown; tokens?: unknown }
+        if (Array.isArray(container.items)) collectDefinitions(container.items as Token[], links)
+        if (Array.isArray(container.tokens)) collectDefinitions(container.tokens as Token[], links)
+    }
+    return links
+}
+
+/**
+ * Labels whose resolution differs between two definition maps, ignoring
+ * labels `shadowing` defines (an earlier definition wins, so those cannot
+ * change).
+ *
+ * @param before - Definitions from the region being replaced
+ * @param after - Definitions from the freshly lexed region
+ * @param shadowing - Definitions that precede both regions
+ * @returns Normalized labels that were added, removed, or changed
+ * @example
+ * ```typescript
+ * getChangedLabels({ a: { href: '/x' } }, { a: { href: '/xy' } }, {}) // ['a']
+ * ```
+ */
+const getChangedLabels = (before: LinkMap, after: LinkMap, shadowing: LinkMap): string[] => {
+    const changed: string[] = []
+    for (const label of new Set([...Object.keys(before), ...Object.keys(after)])) {
+        if (label in shadowing) continue
+        const previous = before[label]
+        const next = after[label]
+        if (
+            previous?.href !== next?.href ||
+            previous?.title !== next?.title ||
+            !previous !== !next
+        ) {
+            changed.push(label)
+        }
+    }
+    return changed
+}
+
+/**
+ * Normalizes text the way marked normalizes a reference label (case fold via
+ * lower/upper/lower, whitespace runs collapsed to one space), so a label's
+ * uses can be found by substring search.
+ *
+ * @param text - Source text
+ * @returns The normalized text
+ * @example
+ * ```typescript
+ * normalizeReferenceText('See [Foo\n  Bar]') // 'see [foo bar]'
+ * ```
+ */
+const normalizeReferenceText = (text: string): string =>
+    text.toLowerCase().toUpperCase().toLowerCase().replace(WHITESPACE_RUN_RE, ' ')
+
+/**
+ * Matches a use of a normalized label in normalized text: `[label]`, which
+ * covers shortcut `[label]`, collapsed `[label][]` and full `[text][label]`
+ * references. marked trims the label, so one space inside either bracket is
+ * allowed.
+ *
+ * @param label - Normalized label (marked's `tokens.links` key)
+ * @returns A matcher for normalized root text
+ * @example
+ * ```typescript
+ * createLabelUseMatcher('1').test('see [1] and [2]') // true
+ * ```
+ */
+const createLabelUseMatcher = (label: string): RegExp =>
+    new RegExp(`\\[ ?${label.replace(REGEXP_SPECIAL_RE, '\\$&')} ?\\]`)
+
+/** How a streaming consumer may reuse the previous parse's token objects. */
+export type StreamingReuseMode = 'prefix' | 'tree' | 'none'
 
 /**
  * Result of an incremental parse update.
@@ -55,6 +203,16 @@ export interface IncrementalUpdateResult {
     divergeOffset?: number
     /** Whether consumers can safely reuse stable token objects from the previous parse */
     canReuse: boolean
+    /**
+     * How consumers may reuse token objects from the previous parse:
+     * - `'prefix'`: the first `divergeAt` roots are stable (same as `canReuse`).
+     * - `'tree'`: append-only, but a reference definition may have changed
+     *   inline children anywhere; compare index-aligned across the whole array
+     *   with the semantic comparator (`reuseStableTokenTree`). `divergeAt` is 0
+     *   and `divergeOffset` is `undefined` (full render-metadata walk).
+     * - `'none'`: not append-only; replace the token array.
+     */
+    reuseMode: StreamingReuseMode
     /** Whether this update re-lexed only the appended tail (vs the whole source) */
     usedTailWindow: boolean
 }
@@ -108,6 +266,10 @@ export class IncrementalParser {
      * the accumulated stream on every append. */
     private prevHasPotentialReferenceUse = false
     private prevHasReferenceDefinition = false
+
+    /** Normalized source text per stable root, for label-use search. Roots
+     * are reused objects at fixed offsets, so each is normalized once. */
+    private normalizedRootText = new WeakMap<Token, string>()
 
     /**
      * Creates a new incremental parser instance.
@@ -408,12 +570,220 @@ export class IncrementalParser {
         return true
     }
 
+    /**
+     * Parses an append that adds or extends a reference definition while
+     * reference uses exist, re-lexing only what the definition can change:
+     *
+     * 1. The appended tail, with a lexer seeded with the definitions of the
+     *    stable prefix (so tail uses resolve and a duplicate label keeps the
+     *    first definition, as in a full lex).
+     * 2. Each prefix root that uses a label whose definition changed (added,
+     *    removed, or a different href/title vs the tail it replaces), seeded
+     *    with the complete map.
+     *
+     * Every other prefix root is kept as-is. Candidate roots are found BEFORE
+     * any lexing, from a superset of the possibly-changed labels (definition
+     * labels in the previous tail's tokens plus every `[label]:` in the new
+     * tail source), so a fallback never wastes a partial lex. Returns
+     * `undefined` — the caller then does a full re-lex — whenever the
+     * shortcut could diverge from a full parse or would not save work: the
+     * tail plus candidate roots reach `MAX_TARGETED_RELEX_SHARE` of the
+     * source, a candidate root contains a `[label]:` definition marker, a re-lexed root
+     * does not reproduce exactly one root with the same type and raw, the
+     * prefix offsets do not add up, or a changed label escaped the superset.
+     *
+     * @param source - Full source for this append-only update
+     * @param boundary - Stable-prefix boundary (non-empty)
+     * @returns The spliced tokens, or `undefined` to fall back to a full re-lex
+     * @example
+     * ```typescript
+     * // prevSource === 'See [a].\n\nPlain.\n\n'
+     * this.parseDefinitionUpdate('See [a].\n\nPlain.\n\n[a]: /x', boundary)
+     * // re-lexes the tail and 'See [a].' only
+     * ```
+     */
+    private parseDefinitionUpdate = (
+        source: string,
+        boundary: TailWindowBoundary
+    ): ParseSourceResult | undefined => {
+        const tailSource = source.slice(boundary.reparseOffset)
+        const maxRelexedLength = source.length * MAX_TARGETED_RELEX_SHARE
+        if (tailSource.length >= maxRelexedLength) return undefined
+
+        const previousTailLinks = collectDefinitions(
+            this.prevTokens.slice(boundary.prefixCount),
+            createLinkMap()
+        )
+        const possibleLabels = new Set(Object.keys(previousTailLinks))
+        for (const match of tailSource.matchAll(DEFINITION_LABEL_RE)) {
+            possibleLabels.add(normalizeReferenceText(match[1].trim()))
+        }
+        const prefixRoots = this.prevTokens.slice(0, boundary.prefixCount)
+        const candidates = this.findCitingRoots(
+            source,
+            prefixRoots,
+            [...possibleLabels],
+            boundary,
+            maxRelexedLength - tailSource.length
+        )
+        if (!candidates) return undefined
+
+        const prefixLinks = collectDefinitions(prefixRoots, createLinkMap())
+        const tailTokens = lexAndClean(tailSource, this.options, false, prefixLinks)
+        const tailLinks = collectDefinitions(tailTokens, createLinkMap())
+        const changedLabels = getChangedLabels(previousTailLinks, tailLinks, prefixLinks)
+        if (changedLabels.some((label) => !possibleLabels.has(label))) return undefined
+        // Earlier definitions win: prefix entries override tail entries.
+        const links = Object.assign(createLinkMap(), tailLinks, prefixLinks)
+
+        const roots = this.relexCitingRoots(prefixRoots, candidates, changedLabels, links)
+        if (!roots) return undefined
+        return { tokens: [...roots, ...tailTokens], tailTokens, usedTailWindow: true }
+    }
+
+    /**
+     * Finds the stable prefix roots whose source uses any of `labels`,
+     * without lexing. Offsets are summed over the prefix and must land on
+     * `boundary.reparseOffset`.
+     *
+     * @param source - Full source for this update
+     * @param prefixRoots - Stable prefix roots from the previous parse
+     * @param labels - Normalized labels that may have changed
+     * @param boundary - Stable-prefix boundary the roots end at
+     * @param maxLength - Source characters the candidates may span in total
+     * @returns Candidate roots with their source, or `undefined` to fall back
+     * @example
+     * ```typescript
+     * this.findCitingRoots(source, prefixRoots, ['a'], boundary, source.length / 2)
+     * ```
+     */
+    private findCitingRoots = (
+        source: string,
+        prefixRoots: Token[],
+        labels: string[],
+        boundary: TailWindowBoundary,
+        maxLength: number
+    ): CitingRoot[] | undefined => {
+        const matchers = labels.map(createLabelUseMatcher)
+        const candidates: CitingRoot[] = []
+        let candidateLength = 0
+        let offset = 0
+        for (let index = 0; index < prefixRoots.length; index++) {
+            const root = prefixRoots[index]
+            const start = offset
+            offset += this.getTokenSourceLength(root)
+            if (matchers.length === 0 || REFERENCE_INERT_ROOT_TYPES.has(root.type)) continue
+            const text = this.getNormalizedRootText(root, source, start, offset)
+            if (!matchers.some((matcher) => matcher.test(text))) continue
+
+            const rootSource = source.slice(start, offset)
+            candidateLength += rootSource.length
+            if (candidateLength >= maxLength) return undefined
+            // A definition inside the root (possibly nested in a blockquote
+            // or list item) would be dropped by a lexer seeded with it.
+            if (DEFINITION_MARKER_RE.test(rootSource)) return undefined
+            candidates.push({ index, source: rootSource, text })
+        }
+        return offset === boundary.reparseOffset ? candidates : undefined
+    }
+
+    /**
+     * Re-lexes, with the complete link map, each candidate root that uses a
+     * label whose definition actually changed; see `parseDefinitionUpdate`.
+     *
+     * @param prefixRoots - Stable prefix roots from the previous parse
+     * @param candidates - Roots that use a possibly-changed label
+     * @param changedLabels - Normalized labels whose definition changed
+     * @param links - The complete definition map for the current source
+     * @returns Prefix roots with citing roots replaced (the input array when
+     *   none changed), or `undefined` to fall back to a full re-lex
+     * @example
+     * ```typescript
+     * this.relexCitingRoots(prefixRoots, candidates, ['a'], links)
+     * ```
+     */
+    private relexCitingRoots = (
+        prefixRoots: Token[],
+        candidates: CitingRoot[],
+        changedLabels: string[],
+        links: LinkMap
+    ): Token[] | undefined => {
+        const matchers = changedLabels.map(createLabelUseMatcher)
+        let roots: Token[] | undefined
+        for (const candidate of candidates) {
+            if (!matchers.some((matcher) => matcher.test(candidate.text))) continue
+            const root = prefixRoots[candidate.index]
+            const relexed = lexAndClean(candidate.source, this.options, false, links)
+            if (relexed.length !== 1) return undefined
+            if (relexed[0].type !== root.type || relexed[0].raw !== root.raw) return undefined
+            roots ??= prefixRoots.slice()
+            roots[candidate.index] = relexed[0]
+        }
+        return roots ?? prefixRoots
+    }
+
+    /**
+     * Normalized source text of a stable prefix root, cached per root object.
+     *
+     * @param root - A stable prefix root
+     * @param source - Full source the root's offsets refer to
+     * @param start - Root start offset in `source`
+     * @param end - Root end offset in `source`
+     * @returns `normalizeReferenceText` of the root's source span
+     * @example
+     * ```typescript
+     * this.getNormalizedRootText(root, source, 0, root.raw.length)
+     * ```
+     */
+    private getNormalizedRootText = (
+        root: Token,
+        source: string,
+        start: number,
+        end: number
+    ): string => {
+        let text = this.normalizedRootText.get(root)
+        if (text === undefined) {
+            text = normalizeReferenceText(source.slice(start, end))
+            this.normalizedRootText.set(root, text)
+        }
+        return text
+    }
+
+    /**
+     * True when an update that invalidates the tail because of a reference
+     * definition may take the targeted re-lex instead of a full one.
+     *
+     * @param boundary - Stable-prefix boundary for this update
+     * @param isAppendOnly - Whether the update is a pure append
+     * @param referenceInvalidatesTail - Whether a definition invalidates the tail
+     * @returns `true` if `parseDefinitionUpdate` may be attempted
+     * @example
+     * ```typescript
+     * if (this.canTargetDefinitionUpdate(boundary, true, true)) { ... }
+     * ```
+     */
+    private canTargetDefinitionUpdate = (
+        boundary: TailWindowBoundary,
+        isAppendOnly: boolean,
+        referenceInvalidatesTail: boolean
+    ): boolean =>
+        referenceInvalidatesTail &&
+        isAppendOnly &&
+        !this.tailWindowDisabled &&
+        this.prevTokens.length > 0 &&
+        boundary.reparseOffset > 0
+
     private parseSource = (
         source: string,
         boundary: TailWindowBoundary,
         isAppendOnly: boolean,
         referenceInvalidatesTail: boolean
     ): ParseSourceResult => {
+        if (this.canTargetDefinitionUpdate(boundary, isAppendOnly, referenceInvalidatesTail)) {
+            const targeted = this.parseDefinitionUpdate(source, boundary)
+            if (targeted) return targeted
+        }
+
         if (!this.canUseTailWindow(source, boundary, isAppendOnly, referenceInvalidatesTail)) {
             return {
                 tokens: lexAndClean(source, this.options, false),
@@ -599,6 +969,72 @@ export class IncrementalParser {
                   this.hasPotentialReferenceUse(source))
 
     /**
+     * Finds the first root that differs from the previous parse and the
+     * absolute source offset where it begins.
+     *
+     * We compare with the semantic comparator, and for html tokens that
+     * includes the structural shape — an unclosed `<div>` and a closed
+     * `<div>...</div>` both have `raw === '<div>'` but very different
+     * `.tokens` children. Without this check the streaming consumer would
+     * never see the partial-to-closed transition. See #291.
+     *
+     * `divergeOffset` lets `SvelteMarkdown.svelte` skip render-metadata work
+     * for the reused prefix. The tail-window path seeds it with the already
+     * -known `boundary.reparseOffset` (the reused prefix is covered) and only
+     * sums tokens past the prefix. The full-reparse path (which still
+     * re-lexes the whole source, e.g. when a built-in extension is not
+     * tail-safe) starts at 0 and sums every matched token from index 0, so an
+     * append-only update with a stable prefix can still skip the prefix
+     * metadata walk even though the tail-window was bypassed.
+     *
+     * @param newTokens - Tokens from the current parse
+     * @param parseResult - How the current parse was produced
+     * @param boundary - The tail-window boundary used for this parse
+     * @returns The divergence index and offset (`undefined` when unknown)
+     * @example
+     * ```typescript
+     * const { divergeAt, divergeOffset } = this.findDivergence(tokens, parseResult, boundary)
+     * ```
+     */
+    private findDivergence = (
+        newTokens: Token[],
+        parseResult: ParseSourceResult,
+        boundary: TailWindowBoundary
+    ): { divergeAt: number; divergeOffset: number | undefined } => {
+        let divergeAt = 0
+        let divergeOffset: number | undefined = parseResult.usedTailWindow
+            ? boundary.reparseOffset
+            : 0
+        const minLen = Math.min(this.prevTokens.length, newTokens.length)
+        while (divergeAt < minLen) {
+            const prev = this.prevTokens[divergeAt]
+            const next = newTokens[divergeAt]
+            if (!isSameStableNode(prev, next)) break
+            if (parseResult.usedTailWindow) {
+                // Tail-window path (unchanged): tokens up to `prefixCount`
+                // are the reused prefix already covered by `reparseOffset`.
+                if (divergeOffset !== undefined && divergeAt >= boundary.prefixCount) {
+                    divergeOffset += this.getTokenSourceLength(next)
+                }
+            } else if (divergeOffset !== undefined) {
+                // Full-reparse path: accumulate the absolute offset from
+                // index 0. A matched-prefix HTML token with an unknown
+                // source span (unclosed opening) breaks the offset→source
+                // mapping — null the offset so the consumer falls back to a
+                // full metadata walk. A wrong offset silently corrupts
+                // source keys and DOM identity; `undefined` is always safe.
+                if (this.hasHtmlSpanMismatch(next)) {
+                    divergeOffset = undefined
+                } else {
+                    divergeOffset += this.getTokenSourceLength(next)
+                }
+            }
+            divergeAt++
+        }
+        return { divergeAt, divergeOffset }
+    }
+
+    /**
      * Parses the full source and diffs against the previous result.
      *
      * @param source - The full accumulated markdown source string
@@ -641,54 +1077,14 @@ export class IncrementalParser {
             referenceInvalidatesTail
         )
         const canReuse = isAppendOnly && !referenceSensitive
+        const reuseMode: StreamingReuseMode = canReuse ? 'prefix' : isAppendOnly ? 'tree' : 'none'
 
-        // Find first divergence point. We compare `.raw` for fast equality,
-        // and for html tokens we also check the structural shape — an
-        // unclosed `<div>` and a closed `<div>...</div>` both have
-        // `raw === '<div>'` but very different `.tokens` children. Without
-        // this check the streaming consumer would never see the partial-
-        // to-closed transition. See #291.
-        // `divergeOffset` is the absolute source offset of the first diverged
-        // token, letting `SvelteMarkdown.svelte` skip render-metadata work for
-        // the reused prefix. The tail-window path seeds it with the already
-        // -known `boundary.reparseOffset` (the reused prefix is covered) and
-        // only sums tokens past the prefix. The full-reparse path (which still
-        // re-lexes the whole source, e.g. when a built-in extension is not
-        // tail-safe) starts at 0 and sums every matched token from index 0, so
-        // an append-only update with a stable prefix can still skip the prefix
-        // metadata walk even though the tail-window was bypassed.
-        let divergeAt = 0
-        let divergeOffset: number | undefined = parseResult.usedTailWindow
-            ? boundary.reparseOffset
-            : 0
-        if (!referenceSensitive) {
-            const minLen = Math.min(this.prevTokens.length, newTokens.length)
-            while (divergeAt < minLen) {
-                const prev = this.prevTokens[divergeAt]
-                const next = newTokens[divergeAt]
-                if (!isSameStableNode(prev, next)) break
-                if (parseResult.usedTailWindow) {
-                    // Tail-window path (unchanged): tokens up to `prefixCount`
-                    // are the reused prefix already covered by `reparseOffset`.
-                    if (divergeOffset !== undefined && divergeAt >= boundary.prefixCount) {
-                        divergeOffset += this.getTokenSourceLength(next)
-                    }
-                } else if (divergeOffset !== undefined) {
-                    // Full-reparse path: accumulate the absolute offset from
-                    // index 0. A matched-prefix HTML token with an unknown
-                    // source span (unclosed opening) breaks the offset→source
-                    // mapping — null the offset so the consumer falls back to a
-                    // full metadata walk. A wrong offset silently corrupts
-                    // source keys and DOM identity; `undefined` is always safe.
-                    if (this.hasHtmlSpanMismatch(next)) {
-                        divergeOffset = undefined
-                    } else {
-                        divergeOffset += this.getTokenSourceLength(next)
-                    }
-                }
-                divergeAt++
-            }
-        }
+        // Reference-sensitive updates report no stable prefix: inline children
+        // may differ without `raw` changing. In tree mode the offset is
+        // `undefined` so the consumer walks all render metadata.
+        const { divergeAt, divergeOffset } = referenceSensitive
+            ? { divergeAt: 0, divergeOffset: reuseMode === 'tree' ? undefined : 0 }
+            : this.findDivergence(newTokens, parseResult, boundary)
 
         this.updateCachedState(source, parseResult, isAppendOnly, appendAddsDefinition)
         return {
@@ -696,6 +1092,7 @@ export class IncrementalParser {
             divergeAt,
             divergeOffset,
             canReuse,
+            reuseMode,
             usedTailWindow: parseResult.usedTailWindow
         }
     }

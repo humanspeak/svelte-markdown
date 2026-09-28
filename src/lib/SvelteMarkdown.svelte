@@ -85,7 +85,10 @@
         type StreamingInputMode
     } from '$lib/utils/streaming-chunks.js'
     import { profileStreamFlush } from '$lib/utils/stream-flush-profile.js'
-    import { reuseStableTokenArray } from '$lib/utils/streaming-token-reuse.js'
+    import {
+        reuseStableTokenArray,
+        reuseStableTokenTree
+    } from '$lib/utils/streaming-token-reuse.js'
 
     type StreamFlushHandle =
         { kind: 'raf'; id: number } | { kind: 'timeout'; id: ReturnType<typeof setTimeout> } | null
@@ -176,7 +179,7 @@
         const parser = incrementalParser
         if (!parser) return
 
-        const { tokens: newTokens, divergeAt, divergeOffset, canReuse } = parser.update(nextSource)
+        const { tokens: newTokens, divergeAt, divergeOffset, reuseMode } = parser.update(nextSource)
 
         // Replace the array reference rather than mutating per-index +
         // length. Under Svelte 5's reactive proxy, shrinking the array
@@ -187,12 +190,19 @@
         // See #291.
         // Resets below follow the same rule: always replace, never shrink.
         // A freshly (re)created parser has an empty prevSource and always
-        // reports canReuse=false on its first update, so that case needs no
+        // reports reuseMode='none' on its first update, so that case needs no
         // separate guard here.
-        streamTokens = canReuse
-            ? reuseStableTokenArray(streamTokens, newTokens, divergeAt)
-            : newTokens
-        const canSkipRenderMetadataPrefix = canReuse && divergeOffset !== undefined
+        // 'tree' (an appended reference definition) keeps every root and
+        // nested token that is semantically unchanged, so only the roots
+        // whose links resolved differently get new props.
+        if (reuseMode === 'prefix') {
+            streamTokens = reuseStableTokenArray(streamTokens, newTokens, divergeAt)
+        } else if (reuseMode === 'tree') {
+            streamTokens = reuseStableTokenTree(streamTokens, newTokens)
+        } else {
+            streamTokens = newTokens
+        }
+        const canSkipRenderMetadataPrefix = reuseMode === 'prefix' && divergeOffset !== undefined
         streamRenderMetadataStartIndex = canSkipRenderMetadataPrefix ? divergeAt : 0
         streamRenderMetadataStartOffset = canSkipRenderMetadataPrefix ? divergeOffset : 0
     }

@@ -192,6 +192,27 @@
         }
         return rest
     })
+
+    /**
+     * Dev-only Parser-update counter, exposed as `window.__svmParserUpdateCount`.
+     * The effect runs once when a Parser instance mounts and once more every
+     * time any of its render-affecting props changes (it reads `type`,
+     * `tokens`, `header`, `rows` and every key of `sanitizedRest`), so tests
+     * and the bench can measure how many Parser instances a streaming update
+     * touched. Guarded like `__svmParserCount`: Vite drops the block from
+     * production bundles.
+     */
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+        $effect(() => {
+            void type
+            void tokens
+            void header
+            void rows
+            for (const key of Object.keys(sanitizedRest)) void sanitizedRest[key]
+            const w = window as Window & { __svmParserUpdateCount?: number }
+            w.__svmParserUpdateCount = (w.__svmParserUpdateCount ?? 0) + 1
+        })
+    }
 </script>
 
 {#snippet dispatch(token: Token, restProps: Record<string, unknown>)}

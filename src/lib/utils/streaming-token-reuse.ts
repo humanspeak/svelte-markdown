@@ -224,3 +224,31 @@ export const reuseStableTokenArray = (
 
     return reusedTokens ?? nextTokens
 }
+
+/**
+ * Reuses semantically unchanged token objects across the WHOLE array,
+ * index-aligned, for updates where no stable prefix is known — e.g. an
+ * appended reference definition that can change inline children of any root
+ * without changing its `raw`.
+ *
+ * Each root is compared with {@link isSameStableNode}: an equal root keeps the
+ * previous object (so its component receives no new props); an unequal root
+ * becomes a new object whose unchanged nested token arrays and children are
+ * still reused. When the arrays differ in length, only the shared index range
+ * is compared and extra next tokens are kept as-is.
+ *
+ * @param previousTokens - Token array from the previous streaming parse.
+ * @param nextTokens - Freshly parsed token array for the current source.
+ * @returns `nextTokens` itself when nothing could be reused, otherwise a new
+ *   array mixing reused previous objects and fresh tokens.
+ * @example
+ * ```ts
+ * // `[1]: /x` appended: only the paragraph citing `[1]` becomes a new object
+ * streamTokens = reuseStableTokenTree(streamTokens, parser.update(source).tokens)
+ * ```
+ */
+export const reuseStableTokenTree = (previousTokens: Token[], nextTokens: Token[]): Token[] =>
+    reuseStableNodeArray(
+        previousTokens as ReusableStreamingNodeArray,
+        nextTokens as ReusableStreamingNodeArray
+    ) as Token[]

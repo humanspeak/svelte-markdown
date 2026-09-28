@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import {
     isSameStableNode,
     reuseStableTokenArray,
+    reuseStableTokenTree,
     type ReusableStreamingNode
 } from './streaming-token-reuse.js'
 
@@ -462,5 +463,63 @@ describe('isSameStableNode semantics', () => {
                 expect(isSameStableNode(beforeRoot, after[index])).toBe(true)
             })
         })
+    })
+})
+
+describe('reuseStableTokenTree', () => {
+    const lex = (source: string): Token[] => new Lexer({ gfm: true }).lex(source) as Token[]
+
+    it('reuses every semantically identical root across the whole array', () => {
+        const source = '# Title\n\nFirst paragraph.\n\nSecond paragraph.\n'
+        const previous = lex(source)
+        const next = lex(source)
+
+        const result = reuseStableTokenTree(previous, next)
+
+        expect(result).toHaveLength(next.length)
+        result.forEach((root, index) => expect(root).toBe(previous[index]))
+    })
+
+    it('replaces a root whose child href changed while reusing its unchanged siblings', () => {
+        const previous = lex('See [ref] now.\n\nPlain.\n\n[ref]: /old\n')
+        const next = lex('See [ref] now.\n\nPlain.\n\n[ref]: /new\n')
+
+        const result = reuseStableTokenTree(previous, next)
+        const citing = node(result[0])
+        const previousCiting = node(previous[0])
+
+        expect(citing).not.toBe(previousCiting)
+        expect(citing.tokens?.find((child) => child.type === 'link')?.href).toBe('/new')
+        // The unchanged leading text child and the other roots are reused.
+        expect(citing.tokens?.[0]).toBe(previousCiting.tokens?.[0])
+        expect(result[1]).toBe(previous[1])
+        expect(result[2]).toBe(previous[2])
+        // Every reused root is still render-equivalent to the fresh parse.
+        result.forEach((root, index) => {
+            expect(isSameStableNode(node(root), node(next[index]))).toBe(true)
+        })
+    })
+
+    it('keeps the shared index range when the arrays differ in length', () => {
+        const previous = lex('One.\n\nTwo.\n')
+        const next = lex('One.\n\nTwo.\n\nThree.\n')
+
+        const result = reuseStableTokenTree(previous, next)
+
+        expect(result).toHaveLength(next.length)
+        expect(result[0]).toBe(previous[0])
+        expect(result[1]).toBe(previous[1])
+        expect(result[result.length - 1]).toBe(next[next.length - 1])
+
+        const shorter = reuseStableTokenTree(next, previous)
+        expect(shorter).toHaveLength(previous.length)
+        expect(shorter[0]).toBe(next[0])
+    })
+
+    it('returns the next array itself when nothing can be reused', () => {
+        const previous = lex('Old.\n')
+        const next = lex('# New\n')
+
+        expect(reuseStableTokenTree(previous, next)).toBe(next)
     })
 })

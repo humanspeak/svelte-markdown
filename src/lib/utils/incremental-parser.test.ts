@@ -4,6 +4,7 @@ import { markedKatex } from '$lib/extensions/katex/markedKatex.js'
 import { markedMermaid } from '$lib/extensions/mermaid/markedMermaid.js'
 import type { SvelteMarkdownOptions } from '$lib/types.js'
 import type { Token } from '$lib/utils/markdown-parser.js'
+import { Lexer } from 'marked'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { buildParserOptions } from './extension-options.js'
 import { IncrementalParser } from './incremental-parser.js'
@@ -151,7 +152,12 @@ describe('IncrementalParser', () => {
             const result = parser.update('See [the docs][ref]\n\n[ref]: https://example.com')
 
             expect(result.canReuse).toBe(false)
+            // Append-only but reference-sensitive: consumers reuse semantically
+            // unchanged tokens across the whole tree, never a raw-equal prefix.
+            expect(result.reuseMode).toBe('tree')
             expect(result.divergeAt).toBe(0)
+            expect(result.divergeOffset).toBeUndefined()
+            expect(result.usedTailWindow).toBe(false)
         })
 
         it('disables stable token reuse for in-place source edits', () => {
@@ -383,6 +389,9 @@ describe('IncrementalParser', () => {
 
             expect(lexSpy.mock.calls[1]?.[0]).toBe(appended)
             expect(result.divergeAt).toBe(0)
+            expect(result.canReuse).toBe(false)
+            expect(result.reuseMode).toBe('tree')
+            expect(result.usedTailWindow).toBe(false)
         })
 
         it('re-enables tail-window reparsing after a one-time shortcut definition re-lex', () => {
@@ -1240,5 +1249,246 @@ const section${index} = { active: true, value: ${index} }
                 streamParity(chunkBy(PROSE_MIXED, size))
             }
         )
+    })
+
+    describe('Targeted re-lex for a newly defined reference label', () => {
+        const lexCalls = (spy: { mock: { calls: unknown[][] } }): string[] =>
+            spy.mock.calls.map(([fragment]) => fragment as string)
+
+        const plainParagraphs = (count: number, citing: Map<number, string>): string =>
+            Array.from(
+                { length: count },
+                (_, index) =>
+                    `${citing.get(index + 1) ?? `Paragraph ${index + 1} is plain prose that never cites anything at all.`}\n\n`
+            ).join('')
+
+        it('tripwire: a marked Lexer resolves references from a pre-seeded link map', () => {
+            const lexer = new Lexer({ gfm: true })
+            lexer.tokens.links = Object.assign(Object.create(null), {
+                ref: { href: '/x', title: null }
+            })
+
+            const [paragraph] = lexer.lex('See [ref].')
+
+            expect(paragraph).toMatchObject({
+                type: 'paragraph',
+                tokens: expect.arrayContaining([
+                    expect.objectContaining({ type: 'link', href: '/x' })
+                ])
+            })
+        })
+
+        it('lexes fragments, not the whole document, when a definition resolves one citing paragraph', () => {
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            const body = plainParagraphs(10, new Map([[3, 'Paragraph 3 cites [a] here.']]))
+            let source = ''
+            for (const chunk of body.match(/[\s\S]{1,40}/g) ?? []) {
+                source += chunk
+                parser.update(source)
+            }
+
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            source += '[a]: /docs\n'
+            const result = parser.update(source)
+            const fragments = lexCalls(lexSpy)
+            lexSpy.mockRestore()
+
+            expect(fragments.length).toBeGreaterThan(0)
+            for (const fragment of fragments) {
+                expect(fragment.length).toBeLessThan(source.length)
+            }
+            // Exactly the appended tail and the one citing paragraph.
+            expect(fragments).toEqual(['\n\n[a]: /docs\n', 'Paragraph 3 cites [a] here.'])
+            expect(result.reuseMode).toBe('tree')
+            expect(result.usedTailWindow).toBe(true)
+            expectSemanticParity(
+                result.tokens,
+                parseAndCacheModule.lexAndClean(source, options, false),
+                source
+            )
+            expect(JSON.stringify(result.tokens)).toContain('"href":"/docs"')
+        })
+
+        /**
+         * Streams `prefix` in 40-char chunks, then each of `appends`, asserting
+         * semantic parity with a fresh full lex after EVERY update. Returns the
+         * lexer inputs of the final append's update.
+         */
+        const streamThenAppend = (prefix: string, appends: string[]): string[] => {
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            let source = ''
+            const step = (next: string): string[] => {
+                const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+                source = next
+                const result = parser.update(source)
+                const fragments = lexCalls(lexSpy)
+                lexSpy.mockRestore()
+                expectSemanticParity(
+                    result.tokens,
+                    parseAndCacheModule.lexAndClean(source, options, false),
+                    source
+                )
+                return fragments
+            }
+            for (const chunk of prefix.match(/[\s\S]{1,40}/g) ?? []) step(source + chunk)
+            let fragments: string[] = []
+            for (const append of appends) fragments = step(source + append)
+            return fragments
+        }
+
+        it('matches a label with different case and whitespace', () => {
+            // Single-line label: a use whose label spans a line break is not
+            // detected as a reference use at all (pre-existing, see report).
+            const body = plainParagraphs(8, new Map([[2, 'Paragraph 2 cites [Foo \t  Bar] here.']]))
+
+            const fragments = streamThenAppend(body, ['[FOO bar]: /fb\n'])
+
+            expect(fragments).toEqual([
+                '\n\n[FOO bar]: /fb\n',
+                'Paragraph 2 cites [Foo \t  Bar] here.'
+            ])
+        })
+
+        it('re-lexes a citing list and blockquote as whole roots', () => {
+            const body = plainParagraphs(
+                8,
+                new Map([
+                    [2, '- first item\n- item citing [n]\n- last item'],
+                    [5, '> quoted\n> and citing [n] too']
+                ])
+            )
+
+            const fragments = streamThenAppend(body, ['[n]: /nested\n'])
+
+            expect(fragments).toEqual([
+                '\n\n[n]: /nested\n',
+                '- first item\n- item citing [n]\n- last item',
+                '> quoted\n> and citing [n] too'
+            ])
+        })
+
+        it('handles two definitions arriving in one chunk', () => {
+            const body = plainParagraphs(
+                8,
+                new Map([
+                    [2, 'Cites [a] only.'],
+                    [6, 'Cites [b] only.']
+                ])
+            )
+
+            const fragments = streamThenAppend(body, ['[a]: /a\n[b]: /b\n'])
+
+            expect(fragments).toEqual([
+                '\n\n[a]: /a\n[b]: /b\n',
+                'Cites [a] only.',
+                'Cites [b] only.'
+            ])
+        })
+
+        it('re-lexes no prefix root for a definition of an unused label', () => {
+            const body = plainParagraphs(8, new Map([[3, 'Cites [used] here.']]))
+
+            const fragments = streamThenAppend(body, ['[unused]: /nobody\n'])
+
+            expect(fragments).toEqual(['\n\n[unused]: /nobody\n'])
+        })
+
+        it('keeps the first of duplicate definitions, in one chunk and across chunks', () => {
+            const body = plainParagraphs(8, new Map([[3, 'Cites [dup] here.']]))
+
+            expect(streamThenAppend(body, ['[dup]: /first\n[dup]: /second\n'])).toEqual([
+                '\n\n[dup]: /first\n[dup]: /second\n',
+                'Cites [dup] here.'
+            ])
+            // The second definition arrives after the first is in the prefix:
+            // it cannot change the link, so no prefix root is re-lexed.
+            const acrossChunks = streamThenAppend(body, [
+                '[dup]: /first\n\nMore prose after the definition.\n\n',
+                '[dup]: /second\n'
+            ])
+            expect(acrossChunks.every((fragment) => !fragment.includes('Cites [dup]'))).toBe(true)
+        })
+
+        it('keeps parity while a definition URL and title stream character by character', () => {
+            const body = plainParagraphs(
+                10,
+                new Map([
+                    [2, 'First cite [1].'],
+                    [7, 'Second cite [1] and [2].']
+                ])
+            )
+            const definitions =
+                '[1]: https://example.com/one "One title"\n[2]: <https://example.com/two>\n'
+
+            const perChar = Array.from(definitions)
+            const fragments = streamThenAppend(body, perChar)
+
+            // The last update only appends the final newline of `[2]`.
+            expect(fragments.every((fragment) => fragment.length < body.length)).toBe(true)
+        })
+
+        it('falls back to a full re-lex when a citing root contains a nested definition', () => {
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            const body = `${plainParagraphs(8, new Map([[2, '> [x]: /inner\n>\n> cites [a]']]))}`
+            let source = ''
+            for (const chunk of body.match(/[\s\S]{1,40}/g) ?? []) {
+                source += chunk
+                parser.update(source)
+            }
+
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            source += '[a]: /a\n'
+            const result = parser.update(source)
+
+            expect(lexCalls(lexSpy)).toEqual([source])
+            expect(result.reuseMode).toBe('tree')
+            expectSemanticParity(
+                result.tokens,
+                parseAndCacheModule.lexAndClean(source, options, false),
+                source
+            )
+        })
+
+        it('keeps parity at every chunk of the stream-compare citations corpus and never re-lexes it whole during definitions', () => {
+            // Copy of `makeCitations(24_000)` from src/routes/test/stream-compare/+page.svelte.
+            let definitions = '## Sources\n\n'
+            for (let index = 1; index <= 40; index++) {
+                definitions += `[${index}]: https://example.com/source/${index}\n`
+            }
+            let body = '# Findings\n\n'
+            for (let paragraph = 0; body.length + definitions.length < 24_000; paragraph++) {
+                const a = (paragraph % 40) + 1
+                const b = ((paragraph + 7) % 40) + 1
+                body += `Paragraph ${paragraph} summarises the **${a}th** result and its *follow-up* [${a}] before contrasting it with the replication study [${b}], which reported a slightly different \`effect\` size.\n\n`
+            }
+            const corpus = body + definitions
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+            let fullRelexesDuringDefinitions = 0
+
+            for (let end = 32; end < corpus.length + 32; end += 32) {
+                const source = corpus.slice(0, Math.min(end, corpus.length))
+                lexSpy.mockClear()
+                const result = parser.update(source)
+                if (source.length > body.length && lexCalls(lexSpy).includes(source)) {
+                    fullRelexesDuringDefinitions++
+                }
+                // Every chunk once definitions stream; every 8th before that
+                // (the body alone is covered by the tail-window suites).
+                if (source.length > body.length || end % 256 === 0) {
+                    expectSemanticParity(
+                        result.tokens,
+                        parseAndCacheModule.lexAndClean(source, options, false),
+                        source
+                    )
+                }
+            }
+
+            expect(fullRelexesDuringDefinitions).toBe(0)
+        }, 30_000)
     })
 })

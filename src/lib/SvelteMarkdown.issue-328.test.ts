@@ -1021,4 +1021,63 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(ulsAfter[0].getAttribute('data-tie-probe')).toBe('first')
         expect(ulsAfter[1].getAttribute('data-tie-probe')).toBe('second')
     })
+
+    test('re-renders only the citing paragraphs when a reference definition streams in', async () => {
+        type UpdateCountWindow = Window & { __svmParserUpdateCount?: number }
+        const citing = new Set([5, 15])
+        const paragraphs = Array.from({ length: 20 }, (_, index) =>
+            citing.has(index + 1)
+                ? `Paragraph ${index + 1} cites [1] as evidence.`
+                : `Paragraph ${index + 1} is plain prose.`
+        )
+        const definition = '[1]: https://example.com/study\n'
+        const fullSource = `${paragraphs.map((paragraph) => `${paragraph}\n\n`).join('')}${definition}`
+
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+        for (const paragraph of paragraphs) {
+            await act(() => component.writeChunk(`${paragraph}\n\n`))
+            await flushStreamingBatch()
+        }
+
+        const paragraphsBefore = Array.from(container.querySelectorAll('p'))
+        expect(paragraphsBefore).toHaveLength(20)
+        expect(container.querySelectorAll('a')).toHaveLength(0)
+
+        const w = window as UpdateCountWindow
+        // Mount-time runs of the dev-only counter are proven live here.
+        expect(w.__svmParserUpdateCount ?? 0).toBeGreaterThan(0)
+        w.__svmParserUpdateCount = 0
+
+        await act(() => component.writeChunk(definition))
+        await flushStreamingBatch()
+
+        const paragraphsAfter = Array.from(container.querySelectorAll('p'))
+        expect(paragraphsAfter).toHaveLength(20)
+        for (const number of citing) {
+            const link = paragraphsAfter[number - 1].querySelector('a')
+            expect(link).toHaveAttribute('href', 'https://example.com/study')
+        }
+        // Non-citing paragraphs keep their DOM nodes.
+        expect(paragraphsAfter[0]).toBe(paragraphsBefore[0])
+        expect(paragraphsAfter[19]).toBe(paragraphsBefore[19])
+
+        // Bound: each citing paragraph now owns 2 Parser instances (the
+        // paragraph and the new link; text children render inline), so the
+        // citing work is 2 paragraphs x 2 Parsers. Allow 4 effect runs per
+        // such Parser: 4 x (2 x 2) = 16. That also absorbs the root Parser
+        // (new token array) and the newly mounted `def` Parser. Re-rendering
+        // every paragraph would be at least 20.
+        const citingParserInstances = citing.size * 2
+        expect(w.__svmParserUpdateCount ?? 0).toBeLessThanOrEqual(4 * citingParserInstances)
+
+        // Parity with a fresh non-streaming render of the same source.
+        const { container: fresh } = render(SvelteMarkdown, { props: { source: fullSource } })
+        const hrefs = (root: HTMLElement) =>
+            Array.from(root.querySelectorAll('a[href]'), (anchor) => anchor.getAttribute('href'))
+        expect(container.textContent).toBe(fresh.textContent)
+        expect(hrefs(container)).toEqual(hrefs(fresh))
+        expect(hrefs(container)).toHaveLength(2)
+    })
 })
