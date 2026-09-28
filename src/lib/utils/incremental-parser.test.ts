@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { buildParserOptions } from './extension-options.js'
 import { IncrementalParser } from './incremental-parser.js'
 import * as parseAndCacheModule from './parse-and-cache.js'
+import { isSameStableNode, type ReusableStreamingNode } from './streaming-token-reuse.js'
 
 /** Private surface of `IncrementalParser` exercised by the tail-window tests. */
 interface InternalParser {
@@ -28,6 +29,20 @@ interface InternalParser {
 /** Expose the private tail-window internals without repeating the cast per test. */
 const asInternalParser = (parser: IncrementalParser): InternalParser =>
     parser as unknown as InternalParser
+
+/** Asserts streamed root tokens render identically to a fresh one-shot lex. */
+const expectSemanticParity = (streamed: Token[], fresh: Token[], source: string): void => {
+    expect(streamed.length, `root count for ${JSON.stringify(source)}`).toBe(fresh.length)
+    streamed.forEach((streamedRoot, index) => {
+        expect(
+            isSameStableNode(
+                streamedRoot as unknown as ReusableStreamingNode,
+                fresh[index] as unknown as ReusableStreamingNode
+            ),
+            `root ${index} for ${JSON.stringify(source)}`
+        ).toBe(true)
+    })
+}
 
 describe('IncrementalParser', () => {
     const createDefaultOptions = (): SvelteMarkdownOptions => ({ gfm: true })
@@ -235,6 +250,29 @@ describe('IncrementalParser', () => {
             expect(
                 boundaryScans.mock.calls.filter(([, matches]) => matches === definitions)
             ).toHaveLength(1)
+        })
+
+        it('keeps semantic parity after every chunk while a reference URL completes', () => {
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            const finalSource = 'See [ref].\n\n[ref]: https://example.com/a' + 'bc'
+            let sawResolvedLink = false
+
+            for (let end = 4; end < finalSource.length + 4; end += 4) {
+                const source = finalSource.slice(0, Math.min(end, finalSource.length))
+                const result = parser.update(source)
+                const fresh = parseAndCacheModule.lexAndClean(source, options, false)
+
+                expectSemanticParity(result.tokens, fresh, source)
+                sawResolvedLink ||= JSON.stringify(result.tokens).includes('"type":"link"')
+            }
+
+            expect(sawResolvedLink).toBe(true)
+            expect(parser.update(finalSource).tokens[0]).toMatchObject({
+                tokens: expect.arrayContaining([
+                    expect.objectContaining({ type: 'link', href: 'https://example.com/abc' })
+                ])
+            })
         })
     })
 

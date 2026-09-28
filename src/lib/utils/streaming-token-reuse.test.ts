@@ -1,6 +1,11 @@
 import type { Token } from '$lib/utils/markdown-parser.js'
+import { Lexer } from 'marked'
 import { describe, expect, it } from 'vitest'
-import { reuseStableTokenArray } from './streaming-token-reuse.js'
+import {
+    isSameStableNode,
+    reuseStableTokenArray,
+    type ReusableStreamingNode
+} from './streaming-token-reuse.js'
 
 type StreamingTestNode = Record<string, unknown> & {
     type?: string
@@ -242,5 +247,220 @@ describe('reuseStableTokenArray', () => {
         expect(resultExtension).not.toBe(node(nextExtension))
         expect(resultExtension.customChildren?.[0]).toBe(previousStableChild)
         expect(resultExtension.customChildren?.[1]).toBe(nextChangedChild)
+    })
+})
+
+describe('isSameStableNode semantics', () => {
+    const lex = (source: string): ReusableStreamingNode[] =>
+        new Lexer({ gfm: true }).lex(source) as unknown as ReusableStreamingNode[]
+    const firstRoot = (source: string): ReusableStreamingNode => lex(source)[0]
+    const hand = (value: Record<string, unknown>): ReusableStreamingNode =>
+        value as ReusableStreamingNode
+
+    describe('returns false when a render-affecting field differs', () => {
+        it('reference link href changes while the paragraph raw is identical', () => {
+            const before = firstRoot('See [ref].\n\n[ref]: https://example.com/a')
+            const after = firstRoot('See [ref].\n\n[ref]: https://example.com/abc')
+
+            expect(after.raw).toBe(before.raw)
+            expect(isSameStableNode(before, after)).toBe(false)
+        })
+
+        it('reference link title appears while the paragraph raw is identical', () => {
+            const before = firstRoot('See [ref].\n\n[ref]: /a')
+            const after = firstRoot('See [ref].\n\n[ref]: /a "Title"')
+
+            expect(after.raw).toBe(before.raw)
+            expect(isSameStableNode(before, after)).toBe(false)
+        })
+
+        it('reference image src changes while the paragraph raw is identical', () => {
+            const before = firstRoot('![alt][img]\n\n[img]: /one.png')
+            const after = firstRoot('![alt][img]\n\n[img]: /two.png')
+
+            expect(after.raw).toBe(before.raw)
+            expect(isSameStableNode(before, after)).toBe(false)
+        })
+
+        it('heading depth differs with identical raw and text', () => {
+            const tokens = [{ type: 'text', raw: 'Title', text: 'Title' }]
+            const before = hand({ type: 'heading', raw: 'Title', text: 'Title', depth: 1, tokens })
+            const after = hand({ type: 'heading', raw: 'Title', text: 'Title', depth: 2, tokens })
+
+            expect(isSameStableNode(before, after)).toBe(false)
+        })
+
+        it('list ordered/start differ with identical items', () => {
+            const items = [{ type: 'list_item', raw: 'a', text: 'a', task: false, tokens: [] }]
+            const before = hand({
+                type: 'list',
+                raw: 'a',
+                ordered: false,
+                start: '',
+                loose: false,
+                items
+            })
+            const after = hand({
+                type: 'list',
+                raw: 'a',
+                ordered: true,
+                start: 3,
+                loose: false,
+                items
+            })
+
+            expect(isSameStableNode(before, after)).toBe(false)
+        })
+
+        it('task list item checked differs with identical raw', () => {
+            const before = hand({
+                type: 'list_item',
+                raw: '- [ ] a',
+                text: 'a',
+                task: true,
+                checked: false,
+                tokens: []
+            })
+            const after = hand({
+                type: 'list_item',
+                raw: '- [ ] a',
+                text: 'a',
+                task: true,
+                checked: true,
+                tokens: []
+            })
+
+            expect(isSameStableNode(before, after)).toBe(false)
+        })
+
+        it('code lang differs with identical raw and text', () => {
+            const before = hand({ type: 'code', raw: '```\nx\n```', text: 'x', lang: 'js' })
+            const after = hand({ type: 'code', raw: '```\nx\n```', text: 'x', lang: 'ts' })
+
+            expect(isSameStableNode(before, after)).toBe(false)
+        })
+
+        it('html attributes object differs with identical raw', () => {
+            const before = hand({
+                type: 'html',
+                raw: '<div>',
+                tag: 'div',
+                attributes: { class: 'a' }
+            })
+            const after = hand({
+                type: 'html',
+                raw: '<div>',
+                tag: 'div',
+                attributes: { class: 'b' }
+            })
+
+            expect(isSameStableNode(before, after)).toBe(false)
+        })
+
+        it('extension scalar field differs with identical raw and text', () => {
+            const before = hand({ type: 'blockKatex', raw: '$$x$$', text: 'x', displayMode: true })
+            const after = hand({ type: 'blockKatex', raw: '$$x$$', text: 'x', displayMode: false })
+
+            expect(isSameStableNode(before, after)).toBe(false)
+        })
+    })
+
+    describe('is conservative on unknown or mismatched shapes', () => {
+        const base = { type: 'custom', raw: 'x', text: 'x' }
+
+        it.each([
+            { name: 'distinct function fields', a: { render: () => 1 }, b: { render: () => 1 } },
+            { name: 'the same function field', a: { render: String }, b: { render: String } },
+            { name: 'distinct class instances', a: { meta: new Map() }, b: { meta: new Map() } },
+            { name: 'null versus an object', a: { meta: null }, b: { meta: {} } },
+            { name: 'an array versus an object', a: { meta: [] }, b: { meta: {} } },
+            { name: 'a key present on one side only', a: { extra: 1 }, b: {} },
+            {
+                name: 'an align entry changing',
+                a: { align: [null, 'left'] },
+                b: { align: [null, null] }
+            }
+        ])('returns false for $name', ({ a, b }) => {
+            expect(isSameStableNode(hand({ ...base, ...a }), hand({ ...base, ...b }))).toBe(false)
+        })
+
+        it('returns true for equal null-prototype data objects', () => {
+            const attributes = (value: string) =>
+                Object.assign(Object.create(null) as Record<string, unknown>, { class: value })
+
+            expect(
+                isSameStableNode(
+                    hand({ ...base, attributes: attributes('a') }),
+                    hand({ ...base, attributes: attributes('a') })
+                )
+            ).toBe(true)
+        })
+    })
+
+    describe('returns true when nothing render-affecting differs', () => {
+        it.each([
+            { name: 'unaligned', source: '| A | B |\n| --- | --- |\n| 1 | 2 |' },
+            {
+                name: 'mixed alignment',
+                source: '| A | B | C |\n| :-- | --- | --: |\n| 1 | 2 | 3 |'
+            }
+        ])('a $name table compared with its own re-parse', ({ source }) => {
+            const before = firstRoot(source) as ReusableStreamingNode & { align?: unknown }
+            const after = firstRoot(source)
+
+            expect(before.type).toBe('table')
+            expect(before.align).toEqual(
+                source.includes(':--') ? ['left', null, 'right'] : [null, null]
+            )
+            expect(before).not.toBe(after)
+            expect(isSameStableNode(before, after)).toBe(true)
+        })
+
+        it('the same object', () => {
+            const token = firstRoot('Some **bold** text with [a link](/x "T").')
+
+            expect(isSameStableNode(token, token)).toBe(true)
+        })
+
+        it('has no false diffs on the closed prefix of an append-only mixed document', () => {
+            const blocks: string[] = []
+            for (let section = 1; section <= 5; section++) {
+                blocks.push(
+                    `${'#'.repeat((section % 3) + 1)} Section ${section}`,
+                    `Paragraph ${section} with **bold**, _em_, \`code\`, and [a link](https://example.com/${section} "Title ${section}").`,
+                    `- item ${section}.1 with [ref${section}]\n- [x] done ${section}\n- [ ] todo ${section}`,
+                    `| Left | None | Right |\n| :--- | ---- | ----: |\n| ${section} | two | three |`,
+                    `\`\`\`ts\nconst value${section} = ${section}\n\`\`\``,
+                    `[ref${section}]: https://example.com/ref/${section} "Ref ${section}"`
+                )
+            }
+            const source = blocks.join('\n\n')
+            const before = lex(source)
+            const after = lex(`${source}\n\nAn appended paragraph.`)
+
+            expect(before.length).toBeGreaterThanOrEqual(30)
+            expect(new Set(before.map((root) => root.type))).toEqual(
+                new Set(['heading', 'paragraph', 'list', 'table', 'code', 'space', 'def'])
+            )
+            for (let index = 0; index < before.length - 1; index++) {
+                expect(before[index]).not.toBe(after[index])
+                expect(
+                    isSameStableNode(before[index], after[index]),
+                    `root ${index} (${before[index].type})`
+                ).toBe(true)
+            }
+        })
+
+        it('two independent parses of identical prose', () => {
+            const source = 'Some **bold**, *em*, `code`, and [a link](https://example.com "T").'
+            const before = lex(source)
+            const after = lex(source)
+
+            expect(before).toHaveLength(after.length)
+            before.forEach((beforeRoot, index) => {
+                expect(beforeRoot).not.toBe(after[index])
+                expect(isSameStableNode(beforeRoot, after[index])).toBe(true)
+            })
+        })
     })
 })
