@@ -7,7 +7,7 @@
 > commits.
 >
 > **Drift check (run first)**:
-> `git diff --stat <Planned-at SHA>..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/parse-and-cache.ts`
+> `git diff --stat e0257d5..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/parse-and-cache.ts`
 > Plans 001 and 002 are EXPECTED to have changed `incremental-parser.ts`.
 > Re-read the live code for every excerpt; proceed if the differences are
 > only theirs; otherwise STOP.
@@ -28,7 +28,7 @@
 - **Risk**: MED–HIGH (rewrites the reference-detection decision in `update`)
 - **Depends on**: 001, 002
 - **Category**: bug
-- **Planned at**: commit `<filled by reviewer at dispatch>`, 2026-09-29
+- **Planned at**: commit `e0257d5`, 2026-09-29
 
 ## Why this matters
 
