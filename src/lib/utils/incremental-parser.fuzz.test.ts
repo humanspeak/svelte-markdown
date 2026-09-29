@@ -167,6 +167,72 @@ const EDGE_BLOCKS = [
     '- <!-- in list\n\n  still -->\n\n'
 ]
 
+/**
+ * Third-opinion blocks, written by the reviewer after the edge blocks went
+ * green: blocks that follow each other WITHOUT a blank line, empty list
+ * items, unterminated inline syntax, and lines that only look like a block
+ * start.
+ */
+const ADJACENT_BLOCKS = [
+    '~~struck~~ and ~single~ tilde\n\n',
+    'Footnote-like [^1] marker.\n\n[^1]: not enabled, so a definition\n\n',
+    'Link with (parens) [x](https://e.com/a_(b)) end\n\n',
+    '***bold-italic*** and _under_score_\n\n',
+    '| a \\| escaped | b |\n|---|---|\n| `c \\| d` | e |\n\n',
+    '# Heading\n- list right after heading\n- second\n\n',
+    '- item\n\n      indented code in item\n\n- next\n\n',
+    '&amp; &lt; &#35; &copy; entities\n\n',
+    '<a href="https://e.com/?a=1&b=2" title="x > y">link</a> text\n\n',
+    '<a\nhref="/multi"\n>multi-line tag</a>\n\n',
+    'Inline <br/> and <b>**md in html**</b>\n\n',
+    '  <div>indented div</div>\n\n',
+    '    <div>four-space html is code</div>\n\n',
+    '> ```js\n> fenced in quote\n>\n> still\n> ```\n\n',
+    '> > nested quote\n> back one\n\n',
+    '7. seven\n8. eight\n\n',
+    '- first para\n\n  second para in item\n\n- next item\n\n',
+    '- ---\n- ***\n\n',
+    '-\n- after empty item\n\n',
+    '1.\n2. after empty ordered\n\n',
+    'Paragraph then setext?\n---\n\n',
+    'Paragraph\n***\nafter rule\n\n',
+    'Trailing spaces   \n\n',
+    '-\tTab after marker\n-\tanother\n\n',
+    'Ünïcödé — “quotes” 🎉 日本語\n\n',
+    '<details>\n<summary>No blank lines</summary>\nBody\n</details>\n\n',
+    '<div\n  class="a"\n  id="b">\n\ncontent\n\n</div>\n\n',
+    '</div>\n\n',
+    '<unknown-tag>custom</unknown-tag>\n\n',
+    '<Component prop="x" />\n\n',
+    '<b>unclosed bold\n\nnext paragraph\n\n',
+    'text <!-- inline comment --> more\n\n',
+    'text <!-- inline\n\nopen comment\n\n',
+    '```\n<!-- comment inside fence -->\n```\n\n',
+    '`<div>` in code span\n\n',
+    '[link\nacross lines](https://e.com)\n\n',
+    '![alt\ntext](a.png)\n\n',
+    '[unterminated link](https://e.com\n\n',
+    '**unterminated bold\n\n',
+    '`unterminated code\n\n',
+    '$$\nmath-like\n$$\n\n',
+    'http://bare.example.com/path?x=1.\n\n',
+    'www.example.com and user@example.com\n\n',
+    '#NotAHeading\n\n',
+    '####### seven hashes\n\n',
+    '+ plus list\n\n+ loose plus\n\n',
+    '* * *\n\n',
+    '_ _ _\n\n',
+    '1. a\n1. b\n1. c\n\n',
+    '100000000000. too long marker\n\n',
+    'Line\\\n',
+    '\\\n\n',
+    '>\n\n',
+    '> \n> quote after empty\n\n',
+    '|\n\n',
+    '| a |\n\n',
+    '| a | b |\n| - |\n\n'
+]
+
 const CHUNK_LIMITS = [1, 2, 3, 5, 9, 17, 40]
 
 /** Generous: every update is checked against a fresh lex of the whole source. */
@@ -262,6 +328,19 @@ describe('generative streaming parity', () => {
         'documents with HTML and edge blocks keep parity',
         () => {
             const failures = fuzz({ blocks: EDGE_BLOCKS, documents: 100, chunkingsPerDocument: 8 })
+            expect(failures).toEqual([])
+        },
+        FUZZ_TIMEOUT_MS
+    )
+
+    red(
+        'documents with adjacent and look-alike blocks keep parity',
+        () => {
+            const failures = fuzz({
+                blocks: ADJACENT_BLOCKS,
+                documents: 120,
+                chunkingsPerDocument: 8
+            })
             expect(failures).toEqual([])
         },
         FUZZ_TIMEOUT_MS
