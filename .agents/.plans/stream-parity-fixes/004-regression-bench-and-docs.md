@@ -7,7 +7,7 @@
 > commits.
 >
 > **Drift check (run first)**:
-> `git diff --stat <Planned-at SHA>..HEAD -- src/lib docs/src README.md`
+> `git diff --stat f3d8d75..HEAD -- src/lib docs/src README.md`
 > No change is expected; anything else: STOP.
 
 ## Status
@@ -17,7 +17,7 @@
 - **Risk**: LOW
 - **Depends on**: 001, 002, 003, 005, 006, 007, 008, 009, 010
 - **Category**: perf (measurement) / docs
-- **Planned at**: commit `<filled by reviewer at dispatch>`, 2026-09-29
+- **Planned at**: commit `f3d8d75`, 2026-09-29
 
 ## Why this matters
 
