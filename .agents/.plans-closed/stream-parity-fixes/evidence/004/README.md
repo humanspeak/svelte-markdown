@@ -76,7 +76,7 @@ STREAM_COMPARE_ITERATIONS=5 STREAM_COMPARE_WARMUPS=1 STREAM_COMPARE_SCENARIO=$S 
 STREAM_COMPARE_URL=http://127.0.0.1:4183/test/stream-compare \
 STREAM_COMPARE_ITERATIONS=5 STREAM_COMPARE_WARMUPS=1 STREAM_COMPARE_SCENARIO=$S pnpm perf:stream-compare
 # tables
-node .agents/.plans/stream-parity-fixes/evidence/004/summarize.mjs > summary.txt
+node .agents/.plans-closed/stream-parity-fixes/evidence/004/summarize.mjs > summary.txt
 ```
 
 ## Step 1: new scenarios
