@@ -13,6 +13,10 @@ export default defineConfig({
         cwd: fileURLToPath(new URL('..', import.meta.url)),
         url: 'http://127.0.0.1:4174',
         timeout: 180000,
+        // pnpm 12 runs scripts in their own process group, so Playwright's default
+        // SIGKILL of the server's group orphans the server and the run never exits.
+        // SIGTERM is forwarded by pnpm to the script.
+        gracefulShutdown: { signal: 'SIGTERM', timeout: 5000 },
         reuseExistingServer: false,
         stdout: 'pipe',
         stderr: 'pipe'
