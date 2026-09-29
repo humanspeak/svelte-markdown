@@ -7,10 +7,22 @@
 > commits.
 >
 > **Drift check (run first)**:
-> `git diff --stat 8805f29..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/token-cleanup.ts`
+> `git diff --stat 4e1ab97..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/token-cleanup.ts`
 > Plan 001 is EXPECTED to have changed `incremental-parser.ts`. Re-read the
 > live code for every excerpt; proceed if the differences are only plan
 > 001's; otherwise STOP.
+
+> **Revision 2026-09-29 (guard):** Steps 1–6 landed (snapshot `4e1ab97`, all
+> bucket B tests green). Guard then probed block-level VOID tags and found
+> that a document containing a root-level `<br>`, `<hr>` or `<img …>` never
+> uses the tail window again: cleanup rewrites the tag as self-closed
+> (`<br>` → `<br/>`, one character longer than its source) and records no
+> `sourceLength`, so plan 001's integrity guard (correctly) sees a length
+> mismatch on every update. Before plan 001 these documents had reparse
+> offsets that were silently off by one. Step 7 added; scope widened to
+> `formatSelfClosingHtmlToken` and any other place in `token-cleanup.ts`
+> that changes the length of a root token's `raw`. Baseline re-stamped to
+> `4e1ab97`.
 
 ## Status
 
@@ -20,7 +32,7 @@
 - **Depends on**: 001 (its integrity guard is the safety net for the HTML
   span arithmetic in Part 2)
 - **Category**: bug
-- **Planned at**: commit `8805f29`, 2026-09-29
+- **Planned at**: commit `4e1ab97`, 2026-09-29 (amended; original `8805f29`)
 
 ## Why this matters
 
@@ -136,7 +148,7 @@ Prefix every pnpm command with `export PATH=~/.local/share/pnpm/bin:$PATH &&`.
 ## Scope
 
 **In scope**: `src/lib/utils/incremental-parser.ts`;
-`src/lib/utils/token-cleanup.ts` (Part 2 Step 5 only, `sourceLength`);
+`src/lib/utils/token-cleanup.ts` (`sourceLength` only: Step 5 and Step 7);
 the two parity test files (flip bucket B `red(` to `it(`, add guards);
 `src/lib/utils/incremental-parser.test.ts` and
 `src/lib/utils/token-cleanup.test.ts` (new tests only).
@@ -218,6 +230,49 @@ case pinning `sourceLength === source.length` for that block.
 Change the bucket B `red(` calls to `it(` in both parity files. Then
 `pnpm check`, `trunk fmt && trunk check --fix`, `pnpm test`.
 
+### Step 7 (added 2026-09-29): Root tokens that cleanup rewrites must record their true source length
+
+Evidence (guard probe at `4e1ab97`, three paragraphs appended after the head):
+
+```text
+head 'Intro.\n\n<br>\n\n'                      usedTailWindow [false,false,false]   html raw "<br/>"  sourceLength undefined
+head 'Intro.\n\n<hr>\n\n'                      usedTailWindow [false,false,false]   html raw "<hr/>"
+head 'Intro.\n\n<img src="/a.png" alt="a">\n\n' usedTailWindow [false,false,false]   html raw "<img … />"
+head 'Intro.\n\n<br/>\n\n'                     usedTailWindow [true,true,true]
+head 'Intro.\n\nMiddle.\n\n'                   usedTailWindow [true,true,true]
+```
+
+Invariant to establish in `src/lib/utils/token-cleanup.ts`: for the root
+tokens `shrinkHtmlTokens` returns, the sum of
+`token.sourceLength ?? token.raw.length` equals the length of the source
+marked lexed (when the source has no CRLF or dropped definitions). Any
+cleanup step that changes the length of a root token's `raw`
+(`formatSelfClosingHtmlToken` for void tags; check `expandHtmlToken` /
+`expandHtmlBlockNested` for others such as lowercased or re-serialized
+attributes) must set `sourceLength` to the ORIGINAL token's raw length. When
+one original token is expanded into several root tokens, their source
+lengths must add up to the original raw length.
+
+Red tests first:
+
+- `src/lib/utils/incremental-parser.test.ts`: for each head above with a
+  void tag, append three paragraphs one at a time; assert parity on every
+  update AND `usedTailWindow === true` on all three appends. Fails today.
+- `src/lib/utils/token-cleanup.test.ts`: a table-driven test over HTML
+  blocks (`<br>`, `<hr>`, `<img src="/a.png" alt="a">`, `<input disabled>`,
+  `<DIV CLASS="x">text</DIV>`, `<div>\n\n**b**\n\n</div>`, `<br/>`)
+  asserting that the root tokens' source lengths add up to the input length.
+  Report which rows fail before the fix.
+
+Do not change any token's `raw`, `tag`, `attributes` or `tokens` — only
+record `sourceLength`. Existing `token-cleanup.test.ts` cases that compare
+whole tokens with `toEqual` may need the new `sourceLength` field added to
+their expected value; that is an additive expectation change, allowed here.
+List every such test in your report.
+
+**Verify**: both new tests pass; `pnpm vitest run src/lib/utils/token-cleanup.test.ts src/lib/utils/incremental-parser.nested-html.test.ts src/lib/utils/incremental-parser.parity.test.ts`
+→ all pass; then the full gate (`pnpm check`, `trunk fmt && trunk check --fix`, `pnpm test`).
+
 ## Test plan
 
 - Red anchors: the seven bucket B tests named above.
@@ -229,6 +284,7 @@ Change the bucket B `red(` calls to `it(` in both parity files. Then
 
 - [ ] All bucket B tests are `it(` and pass; `PARITY_STRICT=1` shows no bucket B failure
 - [ ] After a closed HTML block with blank lines, later appends use the tail window (test asserts `usedTailWindow`)
+- [ ] Documents with a root-level void HTML tag use the tail window on later appends (Step 7 test)
 - [ ] `pnpm check` 0 errors; `pnpm test` exits 0; `trunk check` clean
 - [ ] No files outside scope modified
 
