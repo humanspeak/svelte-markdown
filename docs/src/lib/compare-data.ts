@@ -37,7 +37,7 @@ export const competitors: Competitor[] = [
         name: 'Svelte Streamdown',
         tagline: 'Two Svelte 5 Streaming Renderers — One Accepts Late and Out-of-Order Chunks',
         description:
-            'Compare svelte-streamdown and @humanspeak/svelte-markdown: two Svelte 5 markdown renderers for streaming AI output. Svelte Markdown natively assembles late, out-of-order, and corrected chunks by offset; Svelte Streamdown renders a complete content string that the application must assemble. They also differ in styling, caching, HTML, MDX, and rich content.',
+            'Both render AI output as it streams. The biggest difference: Svelte Markdown accepts chunks that arrive late or out of order and puts them in the right place for you. Svelte Streamdown needs the full text, in order, on every update. They also differ in speed, styling, and built-in extras.',
         website: 'https://svelte-streamdown.beynar.workers.dev',
         github: 'https://github.com/beynar/svelte-streamdown',
         npm: 'svelte-streamdown',
@@ -46,65 +46,70 @@ export const competitors: Competitor[] = [
         features: [
             {
                 name: 'Late & Out-of-Order Packets',
-                us: 'Native: writeChunk({ value, offset }) assembles chunks in any arrival order',
+                us: 'Yes — chunks can arrive in any order',
                 them: false,
-                note: 'The headline capability difference. Real transports (websockets, multi-region fan-out, retried requests) deliver chunks late, duplicated, or out of order. Svelte Markdown accepts offset-addressed chunks and converges on the correct document as gaps fill: a chunk that arrives before its predecessors is placed at its offset, the gap is padded, and the earlier chunk overwrites the padding when it lands. Output is rendered progressively the whole time. Svelte Streamdown renders a single complete content string and has no offset-addressed input, so the application must buffer, reorder, pad, and reassemble packets itself before each update.'
+                note: 'Networks deliver packets late, twice, or out of order. Svelte Markdown places each chunk where it belongs and keeps rendering while the gaps fill. With Svelte Streamdown, your app has to reorder the chunks first.'
             },
             { name: 'Svelte 5 Compatibility', us: true, them: true },
             { name: 'TypeScript Support', us: true, them: true },
             {
-                name: 'Streaming API',
-                us: 'Reactive source or direct writeChunk() ingestion',
-                them: 'Reactive complete-content prop',
-                note: 'Svelte Markdown can consume transport deltas directly. With Svelte Streamdown, the application maintains and repeatedly supplies the accumulated content string.'
+                name: 'Streaming Input',
+                us: 'Write chunks directly, or bind a growing string',
+                them: 'Bind a growing string',
+                note: 'Svelte Markdown can take chunks straight from your transport. Svelte Streamdown needs the full text so far on every update.'
             },
             {
                 name: 'Mid-Stream Corrections',
-                us: 'Offset writes can replace earlier ranges',
-                them: 'Caller rebuilds the content string',
-                note: 'Offset-addressed writes support retransmission, transcription correction, and edits to previously received output without requiring callers to reconstruct the complete document first.'
+                us: 'Rewrite an earlier part of the stream',
+                them: 'Rebuild the full text',
+                note: 'Useful for retries, transcription fixes, and edits to text that was already shown.'
             },
             {
-                name: 'Stream Lifecycle Isolation',
-                us: 'resetStream() + streamId',
-                them: 'Caller-managed content state',
-                note: 'Svelte Markdown provides synchronous resetStream() and declarative streamId boundaries to prevent content from one response carrying into the next.'
+                name: 'Reset Between Messages',
+                us: 'Built in',
+                them: 'Up to your app',
+                note: 'Keeps one response from leaking into the next when a component is reused.'
             },
             {
                 name: 'Incomplete Markdown',
                 us: true,
                 them: true,
-                note: 'Both projects are designed to keep partial AI output renderable while new content arrives.'
+                note: 'Both keep partial output readable while more arrives.'
             },
             {
-                name: 'Streaming HTML Output',
-                us: 'Partial blocks reconcile when </tag> arrives',
-                them: 'Incomplete blocks handled',
-                note: 'Svelte Markdown explicitly tracks incomplete raw HTML tails; Svelte Streamdown documents graceful handling for incomplete markdown and MDX blocks.'
+                name: 'Streaming HTML',
+                us: 'HTML blocks settle as closing tags arrive',
+                them: 'Incomplete blocks handled'
             },
             {
-                name: 'Repeated Document Cache',
-                us: 'Built-in configurable LRU + TTL',
+                name: 'Cache for Revisited Documents',
+                us: 'Built in',
                 them: false,
-                note: 'Svelte Streamdown caches block splitting and uses Svelte reactivity to reuse unchanged mounted blocks, but does not provide a reusable LRU for completed documents that are revisited or remounted.'
+                note: 'Switching back to a message you already rendered is instant.'
             },
             {
-                name: 'Append-Only Stream Reuse',
-                us: 'Tail-window parser + frame coalescing',
-                them: 'Cached block splitting + reactive block reuse',
-                note: 'Both avoid needlessly parsing stable content. Svelte Markdown additionally coalesces bursts of incoming updates at the animation-frame boundary.'
+                name: 'Streaming Speed',
+                us: 'About 1.2–2.7x less work on prose, lists, tables, and long documents',
+                them: 'Less work on a single open code block and on citation-heavy text',
+                note: 'Measured 2026-09-28 against svelte-streamdown 4.2.0 with both renderers run back to back on the same content. Results vary by machine and content. Method and full numbers: Streaming Benchmarks in the docs.'
             },
             {
-                name: 'Measured Per-Frame Streaming Work',
-                us: 'Less work on mixed prose, long open lists and tables, and large documents (1.2–2.7x); more on an open code fence (1.33x) and citation-heavy prose',
-                them: 'Less work on an open code fence and citation-heavy prose (renders no reference links); more work and frames over budget on long lists, tables, and large documents',
-                note: 'Measured against svelte-streamdown 4.2.0 on 2026-09-28 in headless production Chromium with paired alternating runs: per scenario one warmup, then five iterations running both renderers back to back in alternating order; two suites. Cumulative-prop updates of 32 characters per frame (four per frame where noted); animation, controls and highlighting off. The metric is clamped main-thread work per animation frame (synchronous update plus deferred frame work plus a forced layout, with overlapping frame windows counted once). Svelte Markdown output was checked against a fresh one-shot parse every 25 frames and at the end, with zero mismatches in both suites. Median total work, Svelte Markdown vs Streamdown (ranges span the two suites): ~24 KB mixed prose 1,797–1,932 ms vs 2,266–2,333 ms (Svelte Markdown 1.21–1.26x less; no frames over 16.7 ms for either); the same corpus at four updates per frame 537–559 ms vs 1,103–1,206 ms (2.05–2.16x less); one open 200-item bullet list 3,501–3,625 ms vs 9,111–9,377 ms (2.51–2.68x less; 1 vs 224–236 of 754 frames over budget); one open ~10 KB table 1,569–1,620 ms vs 3,577–3,745 ms (2.28–2.31x less; 1–2 vs 81–95 of 314 frames over budget); a ~2 KB tail streamed after a closed 24 KB, 96 KB or 384 KB prefix 1.35–1.37x, 1.81–1.83x and 2.69–2.70x less (at 384 KB, 14 vs 67 of 67 frames over budget); the same tail after a 20 KB closed nested list 2.18–2.22x less. Streamdown does less work on one open code fence (1,162–1,178 ms vs 1,542–1,570 ms, 1.33x less; no frames over budget for either) and on citation-heavy prose with 40 trailing [n]: url definitions (1,405–1,445 ms vs 1,456–1,703 ms, 1.03–1.18x less). Caveats: the citation comparison is not like-for-like, because Streamdown renders none of the reference-style citations as links (0 vs 258); the code-fence output differs only by the per-line wrapper elements Streamdown emits; the prefix scenarios include a forced whole-document layout every frame that both renderers pay, which dominates at 384 KB; absolute milliseconds are machine-specific, so the ratios are the claim. These observations apply to these workloads, not pure parsing. Reproduce with pnpm perf:stream-compare; raw evidence lives in the repository under .agents/.plans/stream-vs-streamdown/evidence/014.'
+                name: 'Smoothness on Long Lists & Tables',
+                us: 'Nearly every frame on time',
+                them: 'About 30% of frames run long',
+                note: 'A frame that runs long is a frame the browser cannot show at 60 fps.'
             },
             {
-                name: 'Measured DOM Footprint (~24 KB)',
-                us: '1,381 elements on mixed prose; 4 on a code fence; 776 on citation-heavy prose',
-                them: '1,704 elements on mixed prose; 797 on a code fence; 519 on citation-heavy prose',
-                note: 'Descendant element counts at the end of each 2026-09-28 stream against svelte-streamdown 4.2.0 (animation, controls and highlighting off), identical across all measured runs in both suites. Svelte Markdown emits about 19% fewer elements on mixed prose (1,381 vs 1,704) and no per-line wrappers inside code blocks (4 vs 797), the two renderers are equal on a plain bullet list (768 vs 769), and Svelte Markdown emits about 50% more elements on citation-heavy prose (776 vs 519). Counts measure elements, not all DOM nodes or memory; normalized text length matched within 2.5% on every ~24 KB corpus.'
+                name: 'Bursts of Updates',
+                us: 'Combined into one update per frame',
+                them: 'Each update is processed',
+                note: 'When several chunks land in the same frame, Svelte Markdown does about half the work.'
+            },
+            {
+                name: 'Page Weight',
+                us: 'About 19% fewer elements on typical prose',
+                them: 'Fewer elements on citation-heavy text',
+                note: 'Fewer elements means less for the browser to lay out. Full counts: Streaming Benchmarks in the docs.'
             },
             {
                 name: 'Custom Renderers',
@@ -117,10 +122,10 @@ export const competitors: Competitor[] = [
                 them: 'skipHtml + allowed element controls'
             },
             {
-                name: 'URL Safety Defaults',
-                us: 'Protocol allowlist + attribute sanitization',
-                them: 'Configurable prefixes + default protocol allowlist',
-                note: 'The default ["*"] permits HTTP/HTTPS URLs across origins and mailto:/tel: links; it blocks javascript:, data:, and vbscript:. Prefix lists can restrict destinations further.'
+                name: 'Safe Links by Default',
+                us: true,
+                them: true,
+                note: 'Both block javascript:, data:, and vbscript: links out of the box. Svelte Markdown also strips event-handler attributes.'
             },
             {
                 name: 'Streaming Animations',
@@ -136,19 +141,19 @@ export const competitors: Competitor[] = [
             },
             {
                 name: 'Math (KaTeX)',
-                us: 'Opt-in first-class extension',
+                us: 'Opt-in extension',
                 them: 'Opt-in component'
             },
             {
                 name: 'Diagrams (Mermaid)',
-                us: 'Opt-in first-class extension',
+                us: 'Opt-in extension',
                 them: 'Opt-in interactive component'
             },
             {
                 name: 'Code Highlighting',
-                us: 'Opt-in, engine-agnostic: Shiki or TanStack Highlight',
-                them: 'Opt-in @tanstack/highlight component + copy button',
-                note: 'Svelte Markdown ships one HighlightedCode renderer and lets you pick the engine: Shiki (TextMate grammars, inline colors) or TanStack Highlight (hand-written scanners, semantic classes themed with CSS), or any object implementing the CodeHighlighter interface. Both engines are synchronous, so streaming stays enabled, and both are tree-shaken out of the core bundle. Svelte Streamdown supports TanStack Highlight through its optional Code component, which also adds a copy button.'
+                us: 'Opt-in: Shiki or TanStack Highlight',
+                them: 'Opt-in: TanStack Highlight + copy button',
+                note: 'Svelte Markdown lets you pick the engine, or bring your own. Both keep streaming enabled.'
             },
             {
                 name: 'Marked Extensions',
@@ -162,45 +167,47 @@ export const competitors: Competitor[] = [
             }
         ],
         prosUs: [
-            ...shared.prosUs,
-            'Accepts late and out-of-order packets natively: offset-addressed chunks are assembled in any arrival order and rendered progressively, with no reordering buffer in application code',
-            'Direct transport-delta ingestion without maintaining a second reactive accumulator',
-            'Mid-stream replacement writes for corrections and retransmission',
-            'Explicit resetStream() and streamId lifecycle boundaries',
-            'Less main-thread work per frame than svelte-streamdown 4.2.0 on mixed prose (1.21–1.26x), long open lists and tables (2.3–2.7x), and after large closed prefixes (up to 2.7x), with no frames over budget on mixed prose even at four updates per frame (2026-09-28, paired runs)',
-            'About 19% fewer descendant elements than svelte-streamdown 4.2.0 on mixed prose and no per-line wrappers inside code blocks (2026-09-28; animation, controls and highlighting off)',
-            'Configurable LRU cache also accelerates repeated non-streaming documents',
-            'Broad raw HTML support with per-tag renderers and allow/deny helpers',
-            'Default URL and attribute sanitizers with customizable hooks',
-            'Unstyled core integrates without requiring Tailwind'
+            'Handles late and out-of-order packets for you — no reordering code in your app',
+            'Takes chunks straight from your transport',
+            'Can correct or resend an earlier part of a stream',
+            'Built-in reset between messages, so one response never leaks into the next',
+            'Faster on prose, long lists, tables, and long documents',
+            'Stays smooth when chunks arrive in bursts',
+            'Built-in cache makes revisited documents instant',
+            'Broad raw HTML support with per-tag control',
+            'Safe links and attributes by default',
+            'Your choice of syntax highlighter: Shiki or TanStack Highlight',
+            'Unstyled core — no Tailwind required'
         ],
         prosThem: [
-            'Purpose-built streaming animations at word, character, and block level',
-            'MDX-style custom Svelte components inside runtime markdown',
-            'Interactive citations with popover, list, and carousel presentations',
-            'Opinionated typography and granular Tailwind theme system out of the box',
-            'Rich built-ins including interactive Mermaid controls, code copy buttons, and advanced tables'
+            'Streaming animations at word, character, and block level',
+            'MDX-style Svelte components inside markdown',
+            'Interactive citations with popovers, lists, and carousels',
+            'Polished typography and themes out of the box',
+            'Rich built-ins: interactive diagrams, copy buttons, advanced tables',
+            'Faster on a single open code block and on citation-heavy text'
         ],
         consUs: [
-            ...shared.consUs,
-            'No built-in token reveal animations or citation UI',
-            'No MDX-style component syntax inside markdown',
-            'Requires application styling by design',
-            'More main-thread work per frame than svelte-streamdown 4.2.0 on one open code fence (Streamdown 1.33x less) and on citation-heavy prose (1.03–1.18x less, though Streamdown renders none of the reference-style citation links); a few frames still exceed 16.7 ms on long open lists and tables, and 14 of 67 after a 384 KB closed prefix (2026-09-28)'
+            'No built-in reveal animations or citation UI',
+            'No MDX-style components inside markdown',
+            'You bring the styling',
+            'Slower on a single open code block and on citation-heavy text',
+            'A few frames can still run long on very long lists, tables, and documents',
+            'Smaller community (newer project)'
         ],
         consThem: [
-            'Cannot accept late or out-of-order packets: it renders one complete content string, so the application must buffer, reorder, and reassemble chunks itself',
-            'No imperative chunk-ingestion API — callers update the complete content string',
-            'No offset-addressed writes for correcting or retransmitting an earlier range',
-            'Stream resets and response isolation are managed in caller-owned content state',
-            'No reusable LRU cache for switching among previously rendered documents',
-            'Parses on every content assignment, so bursts are not coalesced: 2.05–2.16x more main-thread work than Svelte Markdown at four updates per frame on mixed prose (2026-09-28)',
-            'More main-thread work per frame than Svelte Markdown on long open lists and tables (2.3–2.7x, with about 30% of frames over 16.7 ms) and over budget on every frame after a 384 KB closed prefix (2026-09-28)',
-            'Opinionated styling requires Tailwind setup or theme overrides',
-            'A newer, single-maintainer port that tracks the upstream React project'
+            'No support for late or out-of-order packets — your app must reorder chunks first',
+            'Needs the full text on every update; no direct chunk input',
+            'No way to rewrite an earlier part of the stream',
+            'Resets between messages are up to your app',
+            'No cache for revisited documents',
+            'About twice the work when chunks arrive in bursts',
+            'About 30% of frames run long on long lists and tables',
+            'Requires Tailwind or theme overrides',
+            'Newer, single-maintainer port of a React project'
         ],
         verdict:
-            'Choose Svelte Streamdown when you want a batteries-included AI response UI with animated reveals, citations, MDX-style components, interactive diagrams, and Tailwind styling. Choose @humanspeak/svelte-markdown when your transport can deliver packets late or out of order — it is the only one of the two that assembles offset-addressed chunks natively and keeps rendering while gaps fill — or when you want a lower-level, unstyled renderer with direct chunk ingestion, explicit stream lifecycle controls, frame-coalesced updates, reusable document caching, broad raw-HTML customization, and configurable URL and attribute sanitization. Both are credible Svelte 5 choices for incomplete streaming markdown; the deciding factor is whether you want an opinionated presentation layer or a composable rendering primitive.',
+            'Choose Svelte Streamdown if you want a ready-made AI chat look: animated reveals, citations, MDX-style components, interactive diagrams, and Tailwind themes. Choose Svelte Markdown if your packets can arrive late or out of order, if you need to correct text mid-stream, or if you want a fast, unstyled building block you control. Both are solid Svelte 5 choices. The technical details behind the speed claims are in the Streaming Benchmarks page of the docs.',
         keywords: [
             'svelte-streamdown',
             'svelte streamdown',

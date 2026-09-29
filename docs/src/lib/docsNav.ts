@@ -157,6 +157,11 @@ export const docsSections: NavSection[] = [
             { title: 'AI Agent Output', href: '/docs/advanced/agent-output', icon: Bot },
             { title: 'LLM Streaming', href: '/docs/advanced/llm-streaming', icon: Zap },
             { title: 'Headless Parser', href: '/docs/advanced/headless-parser', icon: Terminal },
+            {
+                title: 'Streaming Benchmarks',
+                href: '/docs/advanced/streaming-benchmarks',
+                icon: Gauge
+            },
             { title: 'Security', href: '/docs/advanced/security', icon: Lock },
             { title: 'Token Caching', href: '/docs/advanced/token-caching', icon: Zap },
             { title: 'Tree Shaking', href: '/docs/advanced/tree-shaking', icon: Gauge },
