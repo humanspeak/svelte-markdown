@@ -7,7 +7,7 @@
 > commits. Do not commit.
 >
 > **Drift check (run first)**:
-> `git diff --stat c6241dd..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/incremental-parser.parity.test.ts`
+> `git diff --stat ecf071f..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/incremental-parser.parity.test.ts`
 > No change is expected; anything else: STOP.
 
 ## Status
@@ -17,7 +17,7 @@
 - **Risk**: LOW
 - **Depends on**: 005, 007
 - **Category**: bug
-- **Planned at**: commit `c6241dd`, 2026-09-29
+- **Planned at**: commit `ecf071f`, 2026-09-29
 
 ## Why this matters
 
