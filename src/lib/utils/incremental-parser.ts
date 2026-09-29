@@ -72,9 +72,16 @@ interface ParseSourceResult {
 const CLOSED_FENCE_RE = /^ {0,3}(`{3,}|~{3,}).*\n[\s\S]*\n {0,3}\1[ \t]*\n*$/
 const FENCE_OPEN_RE = /^ {0,3}(`{3,}|~{3,})/
 /** A paragraph that is only the start of an ordered-list marker (`2`, `10`):
- *  the next chunk may complete it (`2. item`). Bullet markers need no rule —
- *  a lone `-`, `*` or `+` already lexes as a list item. */
+ *  the next chunk may complete it (`2. item`). A lone bullet marker needs no
+ *  rule — `-`, `*` or `+` already lexes as a list item — except when the
+ *  line is also a thematic break (see `OPEN_RULE_ITEM_RE`). */
 const PARTIAL_ORDERED_MARKER_RE = /^ {0,3}\d{1,9}$/
+/** An unfinished thematic break that starts with a `-` or `*` bullet marker
+ *  and whitespace (`- - -`, ` * * *`, `-\t-\t-`): one more non-rule
+ *  character turns the line into a list item (`- - -c` => item `- -c`)
+ *  that may join the list before the blank line. `---`, `_ _ _` and a rule
+ *  whose line already ended cannot. */
+const OPEN_RULE_ITEM_RE = /^ {0,3}[-*][ \t][^\n]*$/
 /** A block that opens like a reference definition's title (`"`, `'`, `(`).
  *  marked accepts a title on the line after the destination, indented by
  *  any whitespace, so a partial one lexes as a paragraph or indented code
@@ -180,6 +187,26 @@ const LINE_CLOSED_TYPES = new Set(['heading', 'hr', 'space'])
 const canAbsorbNextLine = (token: Token): boolean =>
     !LINE_CLOSED_TYPES.has(token.type) &&
     !(token.type === 'code' && CLOSED_FENCE_RE.test(token.raw))
+
+/**
+ * True when the last root is an unfinished line that the next chunk can
+ * still turn into a list item, although marked lexes it as something else
+ * today: a partial ordered marker (`2` => paragraph, `2. b` => item) or a
+ * thematic break that opens with a bullet marker (`- - -` => hr,
+ * `- - -c` => item `- -c`). Decided from `type` and `raw` alone.
+ *
+ * @param token - The last root of the parse
+ * @returns `true` if the line may still become a list item
+ * @example
+ * ```typescript
+ * isOpenItemStart({ type: 'paragraph', raw: '2' } as Token) // true
+ * isOpenItemStart({ type: 'hr', raw: '- - -' } as Token) // true
+ * isOpenItemStart({ type: 'hr', raw: '---' } as Token) // false
+ * ```
+ */
+const isOpenItemStart = (token: Token): boolean =>
+    (token.type === 'paragraph' && PARTIAL_ORDERED_MARKER_RE.test(token.raw)) ||
+    (token.type === 'hr' && OPEN_RULE_ITEM_RE.test(token.raw))
 
 /**
  * True when the root at `index` is a `space` that contains a blank line. A
@@ -1505,9 +1532,14 @@ export class IncrementalParser {
      *    `# H\n    i` => heading `# H\n` + code). Holds any block type.
      * 2. The last token is `space` ending a line after a list or indented
      *    code: a blank line does not close those blocks.
-     * 3. `list|indented code, space, paragraph` where the paragraph is only a
-     *    partial ordered marker (`2` -> `2. second`): the list is not closed
-     *    yet. Any other text after the blank line has closed the list.
+     * 3. `list|indented code, space, X` where X is an unfinished line that
+     *    can still become the list's next item: a paragraph that is only a
+     *    partial ordered marker (`2` -> `2. second`), or a thematic break
+     *    that opens with a bullet marker and whitespace (`- - -` ->
+     *    `- - -c`, one list with item `- -c`). The list is not closed yet.
+     *    Any other text after the blank line has closed the list. The rule
+     *    does not check that the markers match (`* * *` after `- a` starts a
+     *    new list); holding one more root for a single update is harmless.
      *
      * @param tokens - Latest root tokens (non-empty)
      * @returns 0, 1 or 2 tokens to pull into the tail before the last token
@@ -1515,6 +1547,7 @@ export class IncrementalParser {
      * ```typescript
      * this.countBlankLineHolds(lexAndClean('# H\n ', options, false)) // 1
      * this.countBlankLineHolds(lexAndClean('1. a\n\n2', options, false)) // 2
+     * this.countBlankLineHolds(lexAndClean('- a\n\n- - -', options, false)) // 2
      * ```
      */
     private countBlankLineHolds = (tokens: Token[]): number => {
@@ -1526,8 +1559,7 @@ export class IncrementalParser {
             return !last.raw.endsWith('\n') || this.canContinueAcrossBlankLine(previous) ? 1 : 0
         }
         return cut > 1 &&
-            last.type === 'paragraph' &&
-            PARTIAL_ORDERED_MARKER_RE.test(last.raw) &&
+            isOpenItemStart(last) &&
             previous.type === 'space' &&
             this.canContinueAcrossBlankLine(tokens[cut - 2])
             ? 2

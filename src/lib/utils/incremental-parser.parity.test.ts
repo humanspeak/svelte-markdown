@@ -179,12 +179,63 @@ describe('streaming parity', () => {
         // Found by guard after plan 009 (1 of 6200 documents). `- - -` is a
         // thematic break, `- - -c` is a list item: while the break is the
         // open last line, the list before the blank line can still continue.
-        red.each([['- a\n\n- - -c\n'], ['* a\n\n* * *c\n'], ['- [ ]\n \n- - -c\n']])(
+        it.each([['- a\n\n- - -c\n'], ['* a\n\n* * *c\n'], ['- [ ]\n \n- - -c\n']])(
             'a loose list stays one list when its next item first looks like a rule: %j',
             (source) => {
                 for (const size of [1, 2, 3]) expectParity(chunkBy(source, size))
             }
         )
+
+        // Plan 010 guards: every `list|code, blank line, rule-like line`
+        // shape checked against marked. The first group joins the list once
+        // the next character arrives; the second group never does (another
+        // marker, not a bullet marker, or not a list before the blank line).
+        it.each([
+            ['- a\n\n-  -  -c\n'],
+            ['- a\n\n - - -c\n'],
+            ['- a\n\n- - - -c\n'],
+            ['- a\n\n-\t-\t-c\n'],
+            ['- a\n\n- --c\n'],
+            ['- a\n\n- - - c\n'],
+            ['- a\n\n\n- - -c\n'],
+            ['+ a\n\n+ + +c\n'],
+            ['- a\n\n   - - -c\n'],
+            ['- a\n- - -c\n']
+        ])('a rule-like line that joins the list keeps parity (guard): %j', (source) => {
+            for (const size of [1, 2, 3]) expectParity(chunkBy(source, size))
+        })
+
+        it.each([
+            ['- a\n\n* * *c\n'],
+            ['* a\n\n- - -c\n'],
+            ['1. a\n\n- - -c\n'],
+            ['1) a\n\n* * *c\n'],
+            ['- a\n\n_ _ _c\n'],
+            ['- a\n\n---c\n'],
+            ['- a\n\n***c\n'],
+            ['- a\n\n-- -c\n'],
+            ['- a\n\n+ + +c\n'],
+            ['- a\n\n- - -\nc\n'],
+            ['    code\n\n- - -c\n'],
+            ['    code\n\n* * *c\n'],
+            ['    code\n\n   - - -c\n'],
+            ['    code\n\n---c\n']
+        ])('a rule-like line that does not join the list keeps parity (guard): %j', (source) => {
+            for (const size of [1, 2, 3]) expectParity(chunkBy(source, size))
+        })
+
+        it('a rule after a paragraph and a blank line keeps the paragraph in the prefix (guard)', () => {
+            const parser = new IncrementalParser(createOptions())
+            const chunks = ['Para.\n\n', '- - -', 'c', ' more', '\n\nEnd.\n']
+            const used: boolean[] = []
+            let source = ''
+            for (const chunk of chunks) {
+                source += chunk
+                used.push(parser.update(source).usedTailWindow)
+            }
+            expect(used).toEqual([false, true, true, true, true])
+            expectParity(chunks)
+        })
 
         it('a loose bullet list stays one list when a boundary splits the marker (guard)', () => {
             // A lone `-` already lexes as an empty list item, so the list stays open.
