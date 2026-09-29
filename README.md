@@ -48,11 +48,11 @@ Read the **[2.0 upgrade guide](https://markdown.svelte.page/docs/migration/v2)**
 I am upgrading @humanspeak/svelte-markdown from 1.x to 2.0 in a Svelte 5 project.
 Before changing anything, read these sources:
 
-- Upgrade guide: https://markdown.svelte.page/docs/migration/v2
+- Upgrade guide: https://markdown.svelte.page/docs/migration/v2.md
 - Documentation index for LLMs: https://markdown.svelte.page/llms.txt
 - Full documentation text: https://markdown.svelte.page/llms-full.txt
-- Streaming behavior: https://markdown.svelte.page/docs/advanced/llm-streaming
-- Direct parser use: https://markdown.svelte.page/docs/advanced/headless-parser
+- Streaming behavior: https://markdown.svelte.page/docs/advanced/llm-streaming.md
+- Direct parser use: https://markdown.svelte.page/docs/advanced/headless-parser.md
 - Release notes: https://github.com/humanspeak/svelte-markdown/releases
 
 Then search my codebase for:
