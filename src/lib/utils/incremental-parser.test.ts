@@ -799,10 +799,11 @@ describe('IncrementalParser', () => {
                 )
             }
 
-            // The CRLF chunk is lexed in the tail window from a valid offset,
-            // so its tokens are correct; the mismatch it leaves turns the
-            // tail window off for every later update.
-            expect(usedTailWindow).toEqual([false, true, true, false, false])
+            // The CRLF chunk is first lexed in the tail window, whose roots
+            // then do not add up to the source, so that result is discarded
+            // for a full re-lex (plan 005); the mismatch the full parse keeps
+            // turns the tail window off for every later update.
+            expect(usedTailWindow).toEqual([false, true, false, false, false])
             expect(asInternalParser(parser).getTailWindowBoundary()).toEqual({
                 prefixCount: 0,
                 reparseOffset: 0
@@ -1730,18 +1731,28 @@ const section${index} = { active: true, value: ${index} }
 
         it('keeps the first of duplicate definitions, in one chunk and across chunks', () => {
             const body = plainParagraphs(8, new Map([[3, 'Cites [dup] here.']]))
+            const oneChunk = '[dup]: /first\n[dup]: /second\n'
 
-            expect(streamThenAppend(body, ['[dup]: /first\n[dup]: /second\n'])).toEqual([
+            // marked drops the duplicate, so the targeted result's roots do
+            // not add up to the source: it is discarded for a full re-lex
+            // (plan 005), whose output is byte-identical to a one-shot parse.
+            expect(streamThenAppend(body, [oneChunk])).toEqual([
                 '\n\n[dup]: /first\n[dup]: /second\n',
-                'Cites [dup] here.'
+                'Cites [dup] here.',
+                body + oneChunk
             ])
             // The second definition arrives after the first is in the prefix:
-            // it cannot change the link, so no prefix root is re-lexed.
+            // it cannot change the link, so no prefix root is re-lexed on the
+            // targeted path; the dropped duplicate still forces one full re-lex.
             const acrossChunks = streamThenAppend(body, [
                 '[dup]: /first\n\nMore prose after the definition.\n\n',
                 '[dup]: /second\n'
             ])
-            expect(acrossChunks.every((fragment) => !fragment.includes('Cites [dup]'))).toBe(true)
+            expect(acrossChunks).toEqual([
+                '\n\n[dup]: /second\n',
+                `${body}[dup]: /first\n\nMore prose after the definition.\n\n[dup]: /second\n`
+            ])
+            expect(acrossChunks).not.toContain('Cites [dup] here.')
         })
 
         it('keeps parity while a definition URL and title stream character by character', () => {

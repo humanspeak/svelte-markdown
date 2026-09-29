@@ -199,6 +199,57 @@ describe('streaming parity', () => {
         it('an HTML block without blank lines keeps parity (guard)', () => {
             expectParity(chunkBy('<div>\n**b**\n</div>\n\nAfter.\n', 4))
         })
+
+        // Plan 005, mechanism 1: a definition frozen before its title line.
+        it.each([
+            ['double quotes', '"Title"'],
+            ['single quotes', "'Title'"],
+            ['parentheses', '(Title)']
+        ])('a definition keeps its title on the next line (%s)', (_name, title) => {
+            expectParity(['[d]: /d\n', `${title}\n`])
+            expectParity(['Intro.\n\n[d]: /d\n', title.slice(0, 3), `${title.slice(3)}\n`])
+            expectParity(chunkBy(`Intro.\n\n[d]: /d\n${title}\n\nAfter.\n`, 1))
+        })
+
+        it('a definition keeps a long title on the next line, streamed character by character', () => {
+            expectParity(chunkBy('See [d].\n\n[d]: /d\n"Long title here"\n\nAfter.\n', 1))
+        })
+
+        it('a definition keeps an indented title on the next line', () => {
+            // With four or more columns the partial title lexes as indented code.
+            expectParity(chunkBy('Intro.\n\n[d]: /d\n    "Indented title"\n\nAfter.\n', 1))
+            expectParity(chunkBy('Intro.\n\n[d]: /d\n\t(Tab title)\n\nAfter.\n', 2))
+        })
+
+        it('a definition followed by prose joins the prefix once another block follows (guard)', () => {
+            const parser = new IncrementalParser(createOptions())
+            let source = ''
+            for (const chunk of ['Intro.\n\n[d]: /d\n', 'Prose line.\n', '\n', 'More.\n']) {
+                source += chunk
+                parser.update(source)
+            }
+            // tokens: paragraph, space, def, paragraph, space, paragraph —
+            // the definition is in the reused prefix.
+            const boundary = (
+                parser as unknown as { getTailWindowBoundary: () => { prefixCount: number } }
+            ).getTailWindowBoundary()
+            expect(boundary.prefixCount).toBeGreaterThanOrEqual(3)
+            expectParity(chunkBy('Intro.\n\n[d]: /d\nProse line.\n\nMore.\n', 1))
+        })
+
+        // Plan 005, mechanism 2: a block frozen while the stream sits on a
+        // whitespace-only line that may still become indentation.
+        it('a heading followed by a whitespace-only line keeps parity', () => {
+            expectParity(['# Heading one\n ', '   indented\n'])
+        })
+
+        it('a definition followed by a whitespace-only line keeps parity', () => {
+            expectParity(['[a]: /x\n  ', '  code\n'])
+        })
+
+        it('a paragraph followed by a blank then whitespace-only line keeps parity', () => {
+            expectParity(['Para.\n\n   ', ' more\n'])
+        })
     })
 
     describe('C. reference scope (definitions the line-anchored detector misses)', () => {
@@ -229,6 +280,17 @@ describe('streaming parity', () => {
             // and emit a `def` a one-shot parse drops; lengths still add up,
             // so only seeding every tail lex keeps parity here.
             expectParity(['Intro.\n\n[a]: /first\n\nProse.\n\n', '[a]: /second\n', '\nEnd.\n'])
+        })
+
+        it('a dropped duplicate definition keeps blank lines split as in a one-shot parse', () => {
+            // Plan 005, mechanism 3: the tail's roots do not add up once
+            // marked drops the duplicate, so this update must not keep them.
+            expectParity(['Intro.\n\n[two]: /2 "Two"\n\n', '[two]: /2 "Two"\n', '\nAfter.\n'])
+            // Fuzz document 45: the duplicate is a paragraph until its title
+            // closes, then marked drops it and its line break joins the
+            // blank line before it (`space "\n\n\n"`, not `"\n\n" + "\n"`).
+            expectParity(['Intro.\n\n[two]: /2 "Two"\n\n', '[two]: /2 "T', 'wo"\n', '\nAfter.\n'])
+            expectParity(chunkBy('Intro.\n\n[two]: /2 "Two"\n\n[two]: /2 "Two"\n\nAfter.\n', 1))
         })
 
         it('a duplicate definition with no earlier use keeps parity at every chunk size', () => {

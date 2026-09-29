@@ -11,7 +11,9 @@
  * the document seed and chunking seed that reproduce it.
  *
  * `red` marks a known failure that asserts the CORRECT behavior; run with
- * `PARITY_STRICT=1` to see the real failures.
+ * `PARITY_STRICT=1` to see the real failures. None is red today (plan 005
+ * closed the last gaps): when a new block exposes a failure, add it here and
+ * mark the case `red` until the fix lands.
  */
 
 import type { Token } from '$lib/utils/markdown-parser.js'
@@ -85,7 +87,20 @@ const GAP_BLOCKS = [
     // Blocks without a blank line after them, so the next block follows at once.
     '# Tight heading\n',
     '    indented code\n\n    more code\n\n',
-    'Trailing text without newline'
+    'Trailing text without newline',
+    // Plan 005 additions: block pairs not covered above.
+    'Setext heading\n===\n\n',
+    'Tight setext\n---\n',
+    '| t1 | t2 |\n|---|---|\n| x | y |\nText right after the table\n\n',
+    '> quoted\n    indented after the quote\n\n',
+    '9. nine\n10. ten\n\n',
+    '~~~\ntilde fence\n\n~~~\n\n',
+    '<https://example.com/auto>\n\n',
+    "[e]: /e\n  'Single title'\n(not a title)\n\n",
+    '[f]:\n/f\n(Paren title)\n',
+    '[g]: /g\nProse right after a definition\n\n',
+    'Lazy paragraph\n    continuation line\n\n',
+    '  \n   \n'
 ]
 
 const CHUNK_LIMITS = [1, 2, 3, 5, 9, 17, 40]
@@ -170,7 +185,7 @@ describe('generative streaming parity', () => {
         FUZZ_TIMEOUT_MS
     )
 
-    red(
+    it(
         'documents with repeated and boundary-gap blocks keep parity',
         () => {
             const blocks = [...CORE_BLOCKS, ...GAP_BLOCKS]

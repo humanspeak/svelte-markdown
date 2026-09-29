@@ -71,6 +71,11 @@ const FENCE_OPEN_RE = /^ {0,3}(`{3,}|~{3,})/
  *  the next chunk may complete it (`2. item`). Bullet markers need no rule —
  *  a lone `-`, `*` or `+` already lexes as a list item. */
 const PARTIAL_ORDERED_MARKER_RE = /^ {0,3}\d{1,9}$/
+/** A block that opens like a reference definition's title (`"`, `'`, `(`).
+ *  marked accepts a title on the line after the destination, indented by
+ *  any whitespace, so a partial one lexes as a paragraph or indented code
+ *  until it closes and joins the preceding `def`. */
+const DEFINITION_TITLE_START_RE = /^[ \t]*["'(]/
 const LINK_REFERENCE_RE = /\[[^\]\n]+\]\[[^\]\n]*\]/
 const SHORTCUT_REFERENCE_RE = /\[[^\]\n]+\](?![[(])/ // Excludes inline links/images and full refs
 const REFERENCE_DEFINITION_RE = /^\s{0,3}\[[^\]\n]+\]:/m
@@ -705,10 +710,9 @@ export class IncrementalParser {
             usedTailWindow: true,
             reusedPrefixCount: boundary.prefixCount,
             // Offset integrity (O(tail)): the prefix covers `reparseOffset` by
-            // construction, so only the tail needs to add up. The tail was
-            // lexed from a true block boundary, so these tokens are correct
-            // for THIS update even on a mismatch; the flag keeps the NEXT
-            // update off the tail window, whose offsets would be wrong.
+            // construction, so only the tail needs to add up. On a mismatch
+            // `parseSource` discards this result for a full re-lex: the tail's
+            // blank-line split can differ from a one-shot parse.
             hasLengthMismatch:
                 this.sumSourceLength(tailTokens) !== source.length - boundary.reparseOffset,
             links,
@@ -933,14 +937,38 @@ export class IncrementalParser {
         )
     }
 
+    /**
+     * Produces this update's tokens: the tail window when it may be used,
+     * else a full re-lex. A tail-window (or targeted definition) result whose
+     * roots do not add up to the source is discarded for a full re-lex: marked
+     * dropped or rewrote source in the tail (a duplicate definition, CRLF),
+     * and the separately lexed tail can then split blank lines differently
+     * from a one-shot parse (`space "\n\n" + space "\n"` vs `space "\n\n\n"`).
+     * That costs one extra lex on the rare update where it happens; the flag
+     * the full result carries keeps later updates off the tail window.
+     *
+     * @param source - Full source for this update
+     * @param boundary - Stable-prefix boundary from `getTailWindowBoundary`
+     * @param isAppendOnly - Whether `source` appends to the previous source
+     * @returns The parse result for this update
+     * @example
+     * ```typescript
+     * this.parseSource(source, this.getTailWindowBoundary(), true)
+     * ```
+     */
     private parseSource = (
         source: string,
         boundary: TailWindowBoundary,
         isAppendOnly: boolean
-    ): ParseSourceResult =>
-        this.canUseTailWindow(source, boundary, isAppendOnly)
-            ? this.parseTailWindow(source, boundary)
-            : this.parseFullSource(source, isAppendOnly)
+    ): ParseSourceResult => {
+        if (!this.canUseTailWindow(source, boundary, isAppendOnly)) {
+            return this.parseFullSource(source, isAppendOnly)
+        }
+        const result = this.parseTailWindow(source, boundary)
+        return result.usedTailWindow && result.hasLengthMismatch
+            ? this.parseFullSource(source, isAppendOnly)
+            : result
+    }
 
     /**
      * True when any token in `tokens` has an unknown HTML source span. Tail
@@ -1008,39 +1036,59 @@ export class IncrementalParser {
         // Once another token follows it, it joins the prefix via this cut.
         let cut = tokens.length - 1
         let reparseOffset = sourceLength - this.getTokenSourceLength(tokens[cut])
-        // A trailing `space` does not close a list or indented code block;
-        // pull that block into the tail too (one extra token — still O(1)
-        // per append).
-        if (
-            cut > 0 &&
-            tokens[cut].type === 'space' &&
-            this.canContinueAcrossBlankLine(tokens[cut - 1])
-        ) {
+        for (let held = this.countHeldTokens(tokens); held > 0; held--) {
             cut--
             reparseOffset -= this.getTokenSourceLength(tokens[cut])
-        } else if (
-            // Same rule with an open block after the blank line: in
-            // `list space paragraph("2")` the paragraph may still become a
-            // list item once its marker completes (`2` -> `2. second`), so
-            // the list before the blank line is not closed yet. Pull the
-            // `space` and the list into the tail too (at most three tokens
-            // inspected — no scan). Only a paragraph that is nothing but a
-            // partial marker qualifies: any other text after the blank line
-            // (`Tail`) has already closed the list, and holding the list in
-            // the tail for the whole paragraph would re-lex it every chunk.
-            // Once the block after the blank line is followed by another
-            // token it is a real separate block and the list joins the prefix.
-            cut > 1 &&
-            tokens[cut].type === 'paragraph' &&
-            PARTIAL_ORDERED_MARKER_RE.test(tokens[cut].raw) &&
-            tokens[cut - 1].type === 'space' &&
-            this.canContinueAcrossBlankLine(tokens[cut - 2])
-        ) {
-            cut -= 2
-            reparseOffset -=
-                this.getTokenSourceLength(tokens[cut + 1]) + this.getTokenSourceLength(tokens[cut])
         }
         return { prefixCount: cut, reparseOffset }
+    }
+
+    /**
+     * How many tokens BEFORE the last one must stay in the tail because the
+     * stream sits on a boundary the next chunk can still move. Inspects at
+     * most the last three tokens — never scans — and each rule holds a block
+     * only while the stream is on its ambiguous boundary; once another block
+     * follows, the held block joins the prefix.
+     *
+     * 1. The last token is `space` and the stream is inside a whitespace-only
+     *    line (its raw does not end with a line break): that line may still
+     *    become indentation, and marked then assigns the previous block's
+     *    trailing newline differently (`# H\n ` => heading `# H` + space,
+     *    `# H\n    i` => heading `# H\n` + code). Holds any block type.
+     * 2. The last token is `space` ending a line after a list or indented
+     *    code: a blank line does not close those blocks.
+     * 3. `list|indented code, space, paragraph` where the paragraph is only a
+     *    partial ordered marker (`2` -> `2. second`): the list is not closed
+     *    yet. Any other text after the blank line has closed the list.
+     * 4. `def, block` where the block opens like a title (`"`, `'`, `(`): the
+     *    title may still close and join the definition (`[d]: /d\n"Ti` =>
+     *    def + paragraph; `[d]: /d\n"Title"` => one def).
+     *
+     * @param tokens - Latest root tokens (non-empty)
+     * @returns 0, 1 or 2 tokens to pull into the tail before the last token
+     * @example
+     * ```typescript
+     * this.countHeldTokens(lexAndClean('# H\n ', options, false)) // 1
+     * this.countHeldTokens(lexAndClean('[d]: /d\n"Ti', options, false)) // 1
+     * this.countHeldTokens(lexAndClean('1. a\n\n2', options, false)) // 2
+     * ```
+     */
+    private countHeldTokens = (tokens: Token[]): number => {
+        const cut = tokens.length - 1
+        if (cut < 1) return 0
+        const last = tokens[cut]
+        const previous = tokens[cut - 1]
+        if (last.type === 'space') {
+            return !last.raw.endsWith('\n') || this.canContinueAcrossBlankLine(previous) ? 1 : 0
+        }
+        if (previous.type === 'def') return DEFINITION_TITLE_START_RE.test(last.raw) ? 1 : 0
+        return cut > 1 &&
+            last.type === 'paragraph' &&
+            PARTIAL_ORDERED_MARKER_RE.test(last.raw) &&
+            previous.type === 'space' &&
+            this.canContinueAcrossBlankLine(tokens[cut - 2])
+            ? 2
+            : 0
     }
 
     /**
