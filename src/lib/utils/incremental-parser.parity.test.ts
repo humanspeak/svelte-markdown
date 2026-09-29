@@ -143,7 +143,7 @@ describe('streaming parity', () => {
     })
 
     describe('B. block boundaries (a block frozen while it could still grow)', () => {
-        red('a loose ordered list stays one list when a boundary splits the marker', () => {
+        it('a loose ordered list stays one list when a boundary splits the marker', () => {
             // After chunk 1 the tokens are `list space paragraph("2")`: the
             // open paragraph hides that the list before the blank line can
             // still continue.
@@ -155,24 +155,24 @@ describe('streaming parity', () => {
             expectParity(['- first\n\n-', ' second\n\n-', ' third\n'])
         })
 
-        red('a loose ordered list keeps parity at every chunk size', () => {
+        it('a loose ordered list keeps parity at every chunk size', () => {
             const source = '1. first\n\n2. second\n\n3. third\n\nAfter the list.\n'
             for (const size of [1, 2, 3, 4, 7]) expectParity(chunkBy(source, size))
         })
 
-        red('an HTML block with blank lines nests its children', () => {
+        it('an HTML block with blank lines nests its children', () => {
             // One-shot: a single `html` root whose children include `**b**`.
             // Streamed: `<div>` is frozen as a childless root before `</div>`
             // arrives, leaving three flat siblings.
             expectParity(['<div>\n\n', '**b**\n\n', '</div>\n'])
         })
 
-        red('an HTML block with blank lines keeps parity at every chunk size', () => {
+        it('an HTML block with blank lines keeps parity at every chunk size', () => {
             const source = 'Intro.\n\n<div>\n\n**bold** inside\n\n- item\n\n</div>\n\nAfter.\n'
             for (const size of [1, 3, 5, 9]) expectParity(chunkBy(source, size))
         })
 
-        red('nested HTML blocks with blank lines keep parity', () => {
+        it('nested HTML blocks with blank lines keep parity', () => {
             const source =
                 '<details>\n\n<summary>More</summary>\n\nHidden **text**.\n\n</details>\n\nAfter.\n'
             for (const size of [2, 6, 11]) expectParity(chunkBy(source, size))
@@ -185,6 +185,15 @@ describe('streaming parity', () => {
         it('a tight list keeps parity at every chunk size (guard)', () => {
             const source = '- one\n- two\n  - nested\n- three\n\nAfter.\n'
             for (const size of [1, 2, 5]) expectParity(chunkBy(source, size))
+        })
+
+        it('an opening tag with an unquoted slash-ending attribute still encloses (guard)', () => {
+            // `<a href=/x/>` is an opening tag, not a self-closed one.
+            expectParity(['<a href=/x/>\n\n', 'link **body**\n\n', '</a>\n\nAfter.\n'])
+        })
+
+        it('a void element followed by blank lines does not hold the tail open (guard)', () => {
+            expectParity(chunkBy('Intro.\n\n<hr>\n\nMiddle.\n\nEnd.\n', 3))
         })
 
         it('an HTML block without blank lines keeps parity (guard)', () => {

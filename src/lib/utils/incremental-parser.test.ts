@@ -1405,6 +1405,65 @@ const section${index} = { active: true, value: ${index} }
             streamParity(['    code1\n\n', '    code2\n'])
         })
 
+        it('keeps a list open while the block after its blank line is still the last token', () => {
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            // `list space paragraph("2")`: the paragraph may still become an item.
+            parser.update('1. first\n\n2')
+            expect(asInternalParser(parser).getTailWindowBoundary()).toEqual({
+                prefixCount: 0,
+                reparseOffset: 0
+            })
+            // Once another token follows that block, the list joins the prefix.
+            parser.update('- a\n\npara\n\nmore')
+            expect(asInternalParser(parser).getTailWindowBoundary().prefixCount).toBe(4)
+        })
+
+        it('flags an unpaired HTML opening tag and clears once it closes', () => {
+            const internal = asInternalParser(new IncrementalParser(createDefaultOptions()))
+            const options = createDefaultOptions()
+            const [open] = parseAndCacheModule.lexAndClean('<div>\n\n', options, false)
+            const [attributed] = parseAndCacheModule.lexAndClean('<a href=/x/>\n\n', options, false)
+            const [paired] = parseAndCacheModule.lexAndClean(
+                '<div>\n\nb\n\n</div>\n',
+                options,
+                false
+            )
+            const [voidTag] = parseAndCacheModule.lexAndClean('<br>\n\n', options, false)
+            const [selfClosed] = parseAndCacheModule.lexAndClean('<div/>\n\n', options, false)
+            const [closing] = parseAndCacheModule.lexAndClean('</div>\n\n', options, false)
+            expect(internal.hasHtmlSpanMismatch(open)).toBe(true)
+            expect(internal.hasHtmlSpanMismatch(attributed)).toBe(true)
+            expect(internal.hasHtmlSpanMismatch(paired)).toBe(false)
+            expect(internal.hasHtmlSpanMismatch(voidTag)).toBe(false)
+            expect(internal.hasHtmlSpanMismatch(selfClosed)).toBe(false)
+            expect(internal.hasHtmlSpanMismatch(closing)).toBe(false)
+        })
+
+        it('regains the tail window after an HTML block with blank lines closes', () => {
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            const chunks = [
+                ...chunkBy('Intro.\n\n<div>\n\n**b**\n\n</div>\n\n', 5),
+                'First after.\n\n',
+                'Second after.\n\n',
+                'Third after.\n\n'
+            ]
+            const usedTailWindow: boolean[] = []
+            let source = ''
+            for (const chunk of chunks) {
+                source += chunk
+                const result = parser.update(source)
+                usedTailWindow.push(result.usedTailWindow)
+                expectSemanticParity(
+                    result.tokens,
+                    parseAndCacheModule.lexAndClean(source, options, false),
+                    source
+                )
+            }
+            expect(usedTailWindow.slice(-2)).toEqual([true, true])
+        })
+
         it.each([1, 7, 32, 64])(
             'matches a fresh parse of the prose-mixed sections at chunk size %i',
             (size) => {

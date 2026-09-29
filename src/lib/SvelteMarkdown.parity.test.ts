@@ -75,13 +75,13 @@ describe('streaming rendered parity', () => {
     })
 
     describe('B. block boundaries', () => {
-        red('a loose ordered list renders as one list', async () => {
+        it('a loose ordered list renders as one list', async () => {
             const container = await renderStreamed(['1. first\n\n2', '. second\n\n3', '. third\n'])
             expect(container.querySelectorAll('ol')).toHaveLength(1)
             expect(container.querySelectorAll('ol > li')).toHaveLength(3)
         })
 
-        red('an HTML block with blank lines contains its children', async () => {
+        it('an HTML block with blank lines contains its children', async () => {
             const container = await renderStreamed(['<div>\n\n', '**b**\n\n', '</div>\n'])
             // `:scope div` excludes the test container itself, which is a <div>.
             expect(container.querySelector(':scope div strong')?.textContent).toBe('b')

@@ -18,6 +18,8 @@ import {
     STREAM_STATS_ENABLED
 } from '$lib/utils/streaming-token-reuse.js'
 import { isTailWindowSafe } from '$lib/utils/tail-window.js'
+import { isHtmlOpenTag } from '$lib/utils/token-cleanup.js'
+import { isVoidElement } from '$lib/utils/void-elements.js'
 
 /**
  * The shape of an HTML token after the cleanup pipeline. Marked's base
@@ -57,6 +59,10 @@ interface ParseSourceResult {
 
 const CLOSED_FENCE_RE = /^ {0,3}(`{3,}|~{3,}).*\n[\s\S]*\n {0,3}\1[ \t]*\n*$/
 const FENCE_OPEN_RE = /^ {0,3}(`{3,}|~{3,})/
+/** A paragraph that is only the start of an ordered-list marker (`2`, `10`):
+ *  the next chunk may complete it (`2. item`). Bullet markers need no rule —
+ *  a lone `-`, `*` or `+` already lexes as a list item. */
+const PARTIAL_ORDERED_MARKER_RE = /^ {0,3}\d{1,9}$/
 const LINK_REFERENCE_RE = /\[[^\]\n]+\]\[[^\]\n]*\]/
 const SHORTCUT_REFERENCE_RE = /\[[^\]\n]+\](?![[(])/ // Excludes inline links/images and full refs
 const REFERENCE_DEFINITION_RE = /^\s{0,3}\[[^\]\n]+\]:/m
@@ -348,10 +354,22 @@ export class IncrementalParser {
     private hasHtmlSpanMismatch = (token: Token): boolean => {
         if (token.type !== 'html') return false
         const html = token as HtmlToken
-        if (!html.tag) return false
-        if (html.raw.endsWith('/>')) return false
+        if (html.sourceLength != null) return false
         if (html.raw.startsWith('</')) return false
-        return html.sourceLength == null
+        if (html.tag) return !html.raw.endsWith('/>')
+        // An opening tag still waiting for its closing tag. Cleanup leaves it
+        // as a FLAT root with no `.tag`, `.tokens` or `.sourceLength`
+        // (`'<div>\n\n'` => `{ type: 'html', raw: '<div>', block: true }`
+        // + `space`); only `pairFlatHtmlTokens` adds those once `</div>`
+        // arrives and swallows the siblings in between. Freezing it before
+        // then would leave its future children as flat roots, so the
+        // document stays on the full re-lex path until it closes (#291).
+        // Genuinely self-closed tags (`<div/>`, `<br>` -> `<br/>`) get a
+        // `.tag` from cleanup and are handled above, so a tag-less `/>`
+        // source here is an opening with an unquoted attribute value
+        // (`<a href=/foo/>`); void elements never take children.
+        const tagInfo = isHtmlOpenTag(html.raw)
+        return tagInfo !== null && tagInfo.isOpening && !isVoidElement(tagInfo.tag)
     }
 
     /**
@@ -982,6 +1000,27 @@ export class IncrementalParser {
         ) {
             cut--
             reparseOffset -= this.getTokenSourceLength(tokens[cut])
+        } else if (
+            // Same rule with an open block after the blank line: in
+            // `list space paragraph("2")` the paragraph may still become a
+            // list item once its marker completes (`2` -> `2. second`), so
+            // the list before the blank line is not closed yet. Pull the
+            // `space` and the list into the tail too (at most three tokens
+            // inspected — no scan). Only a paragraph that is nothing but a
+            // partial marker qualifies: any other text after the blank line
+            // (`Tail`) has already closed the list, and holding the list in
+            // the tail for the whole paragraph would re-lex it every chunk.
+            // Once the block after the blank line is followed by another
+            // token it is a real separate block and the list joins the prefix.
+            cut > 1 &&
+            tokens[cut].type === 'paragraph' &&
+            PARTIAL_ORDERED_MARKER_RE.test(tokens[cut].raw) &&
+            tokens[cut - 1].type === 'space' &&
+            this.canContinueAcrossBlankLine(tokens[cut - 2])
+        ) {
+            cut -= 2
+            reparseOffset -=
+                this.getTokenSourceLength(tokens[cut + 1]) + this.getTokenSourceLength(tokens[cut])
         }
         return { prefixCount: cut, reparseOffset }
     }
