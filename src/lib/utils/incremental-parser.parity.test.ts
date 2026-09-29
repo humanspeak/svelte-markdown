@@ -507,6 +507,27 @@ describe('streaming parity', () => {
             expectParity(chunks)
         })
 
+        // Found by guard after plan 008 (1 of 8426 documents). marked's
+        // `inLink` state is cleared by a bracket link or an image, but NOT by
+        // an autolink (`<https://…>`) or a bare GFM URL, which never touch
+        // it. After an unclosed `<a>` the state tracker must do the same, or
+        // a later bare URL is linked in the stream and plain in a one-shot
+        // parse (or the reverse).
+        red('inline link state after an unclosed anchor and an autolink matches', () => {
+            const first = '<a href="x">open <https://b.example>\n\n'
+            expectParity([first, 'https://a.example\n'])
+            expectParity([first, 'Text.\n\n', 'https://a.example\n'])
+        })
+
+        it.each([
+            ['a bare URL', '<a href="x">open https://b.example\n\n'],
+            ['an image', '<a href="x">open ![i](/u)\n\n'],
+            ['a bracket link', '<a href="x">open [t](/u)\n\n']
+        ])('inline link state after an unclosed anchor and %s matches (guard)', (_name, first) => {
+            expectParity([first, 'https://a.example\n'])
+            expectParity([first, 'Text.\n\n', 'https://a.example\n'])
+        })
+
         it('a long chain of adjacent open blocks refuses the boundary, then regains it (guard)', () => {
             // `> q` and `- l` interrupt each other, so no blank line closes
             // any of them: past the walk's cap the boundary is refused (a full

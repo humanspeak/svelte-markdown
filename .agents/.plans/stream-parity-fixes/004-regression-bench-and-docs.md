@@ -15,7 +15,7 @@
 - **Priority**: P1
 - **Effort**: S–M
 - **Risk**: LOW
-- **Depends on**: 001, 002, 003, 005, 006, 007, 008
+- **Depends on**: 001, 002, 003, 005, 006, 007, 008, 009
 - **Category**: perf (measurement) / docs
 - **Planned at**: commit `<filled by reviewer at dispatch>`, 2026-09-29
 

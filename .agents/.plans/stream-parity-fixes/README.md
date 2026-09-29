@@ -26,8 +26,9 @@ done when no `red(` call remains and the suite is green.
 | 005  | Close the boundary gaps found by the generative fuzz                | B, D   | P0       | M      | 001–003           | DONE — PASS at `cfbb204`   |
 | 006  | Do not freeze an HTML construct that is still open                  | B, D   | P0       | M      | 001–003, 005      | DONE — PASS at `16558d2`   |
 | 007  | Do not freeze a block that is adjacent to the open last block       | B, D   | P0       | M      | 001–003, 005, 006 | PARTIAL at `d0e84c9` → 008 |
-| 008  | Close the three mechanisms left after plan 007                      | A, B   | P0       | S–M    | 001–003, 005–007  | IN PROGRESS — dispatched   |
-| 004  | Regression bench and docs alignment                                 | —      | P1       | S–M    | 001–003, 005–008  | TODO                       |
+| 008  | Close the three mechanisms left after plan 007                      | A, B   | P0       | S–M    | 001–003, 005–007  | DONE — PASS at `0c79f1d`   |
+| 009  | An autolink does not clear the inline link state                    | B      | P1       | S      | 006, 008          | IN PROGRESS — dispatched   |
+| 004  | Regression bench and docs alignment                                 | —      | P1       | S–M    | 001–003, 005–009  | TODO                       |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -50,6 +51,7 @@ serially in the working tree.
 - 2026-09-29 — 007 added after guard's third independent corpus found blocks frozen although adjacent (no blank line) to the open last block. Runs before 004.
 - 2026-09-29 — 004 extended: correct the `Incomplete Markdown` compare row (Streamdown repairs unfinished formatting, we show it as typed) and document the cut-tag known gap. Both came from a probe with upstream `vercel/streamdown` test inputs; importing that corpus and any repair feature are deferred until after 2.0.
 - 2026-09-29 — 008 added: plan 007 fixed adjacency but stopped at its iteration limit with two older mechanisms left; guard's checks (upstream-derived inputs and a fourth corpus) found one more. Runs before 004.
+- 2026-09-29 — 009 added: guard's rerun of every independent corpus after plan 008 found 1 of 8426 documents diverging (an autolink after an unclosed `<a>` tag). Runs before 004.
 
 ## Dependency notes
 
