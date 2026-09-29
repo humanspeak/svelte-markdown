@@ -15,7 +15,7 @@
 - **Priority**: P1
 - **Effort**: S–M
 - **Risk**: LOW
-- **Depends on**: 001, 002, 003, 005, 006, 007
+- **Depends on**: 001, 002, 003, 005, 006, 007, 008
 - **Category**: perf (measurement) / docs
 - **Planned at**: commit `<filled by reviewer at dispatch>`, 2026-09-29
 
@@ -120,7 +120,10 @@ in both repeats. Archive logs, JSON and a README under `evidence/004/`.
   unfinished bold, code and links on the fly. We render exactly what has
   arrived, so markers show briefly until the closing one lands. Open code
   blocks render as code right away." Change no other row.
-- `docs/.../streaming-benchmarks/+page.svx`, same caveat list: add one known
+- `docs/.../streaming-benchmarks/+page.svx`, same caveat list: for every `red(`
+  anchor still present in `src/lib/utils/incremental-parser.parity.test.ts`
+  after plan 008, add one known-gap line in plain language (none present:
+  add nothing). Example for the cut tag: add one known
   gap: an HTML tag cut before its closing bracket (`<div` with no `>`)
   followed by a blank line can differ from a one-shot parse until the
   bracket arrives.
