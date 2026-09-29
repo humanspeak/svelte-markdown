@@ -25,7 +25,7 @@ interface InternalParser {
     getTailWindowBoundary: () => { prefixCount: number; reparseOffset: number }
     hasHtmlSpanMismatch: (token: Token) => boolean
     hasPotentialReferenceUse: (source: string) => boolean
-    hasReferenceDefinition: (source: string) => boolean
+    collectLinks: (tokens: readonly Token[]) => Record<string, unknown>
     appendIntroducesMatch: (source: string, matches: (_candidate: string) => boolean) => boolean
     canUseTailWindow: (
         source: string,
@@ -248,7 +248,7 @@ describe('IncrementalParser', () => {
             parser.update(previous)
             const internal = asInternalParser(parser)
             const uses = vi.spyOn(internal, 'hasPotentialReferenceUse')
-            const definitions = vi.spyOn(internal, 'hasReferenceDefinition')
+            const definitionWalks = vi.spyOn(internal, 'collectLinks')
             const boundaryScans = vi.spyOn(internal, 'appendIntroducesMatch')
             const source = `${previous}${tail}`
 
@@ -256,13 +256,18 @@ describe('IncrementalParser', () => {
 
             expect(result.canReuse).toBe(canReuse)
             expect(result.tokens).toEqual(parseAndCacheModule.lexAndClean(source, options, false))
-            for (const scan of [uses, definitions]) {
-                expect(scan).not.toHaveBeenCalledWith(previous)
-                expect(scan).not.toHaveBeenCalledWith(source)
+            expect(uses).not.toHaveBeenCalledWith(previous)
+            expect(uses).not.toHaveBeenCalledWith(source)
+            // Definitions are read from the re-lexed tail's tokens (and the
+            // previous tail's), never from a walk over the whole document;
+            // prose without `]:` walks nothing.
+            for (const [walked] of definitionWalks.mock.calls) {
+                expect(walked.length).toBeLessThan(result.tokens.length)
             }
-            expect(
-                boundaryScans.mock.calls.filter(([, matches]) => matches === definitions)
-            ).toHaveLength(1)
+            expect(definitionWalks.mock.calls.length > 0).toBe(tail.includes(']:'))
+            // No boundary scan at all: the reference-use flag is already set
+            // (`See [docs]`), and definitions no longer need a regex scan.
+            expect(boundaryScans).not.toHaveBeenCalled()
         })
 
         it('keeps semantic parity after every chunk while a reference URL completes', () => {
@@ -385,7 +390,7 @@ describe('IncrementalParser', () => {
             expect(lexSpy.mock.calls[1]?.[0]).toBe('\n\nParagraph')
         })
 
-        it('falls back to a full re-lex when reference-style syntax could change the prefix', () => {
+        it('re-lexes the tail and the citing root, not the whole document, when a definition can change the prefix', () => {
             const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
             const parser = new IncrementalParser(createDefaultOptions())
             const source = '[foo]\n\nTail'
@@ -394,11 +399,19 @@ describe('IncrementalParser', () => {
             parser.update(source)
             const result = parser.update(appended)
 
-            expect(lexSpy.mock.calls[1]?.[0]).toBe(appended)
+            // The tail is lexed first (seeded with the prefix's definitions);
+            // its `def` token changed `foo`, so the one citing root is re-lexed.
+            expect(lexSpy.mock.calls.slice(1).map(([fragment]) => fragment)).toEqual([
+                'Tail\n\n[foo]: /docs',
+                '[foo]'
+            ])
+            expect(result.tokens).toEqual(
+                parseAndCacheModule.lexAndClean(appended, createDefaultOptions(), false)
+            )
             expect(result.divergeAt).toBe(0)
             expect(result.canReuse).toBe(false)
             expect(result.reuseMode).toBe('tree')
-            expect(result.usedTailWindow).toBe(false)
+            expect(result.usedTailWindow).toBe(true)
         })
 
         it('re-enables tail-window reparsing after a one-time shortcut definition re-lex', () => {
@@ -413,14 +426,18 @@ describe('IncrementalParser', () => {
             const internalParser = asInternalParser(parser)
             const boundary = internalParser.getTailWindowBoundary()
 
-            expect(lexSpy.mock.calls[1]?.[0]).toBe(withDefinition)
+            // The definition update re-lexes the tail and the citing root only.
+            expect(lexSpy.mock.calls.slice(1, 3).map(([fragment]) => fragment)).toEqual([
+                'Tail\n\n[docs]: /docs',
+                'See [docs]'
+            ])
             expect(boundary.reparseOffset).toBeGreaterThan(0)
             expect(internalParser.canUseTailWindow(appended, boundary)).toBe(true)
 
             const result = parser.update(appended)
 
-            expect(lexSpy.mock.calls[2]?.[0]).toBe(appended.slice(boundary.reparseOffset))
-            const reparsedTail = lexSpy.mock.calls[2]?.[0] ?? ''
+            expect(lexSpy.mock.calls[3]?.[0]).toBe(appended.slice(boundary.reparseOffset))
+            const reparsedTail = lexSpy.mock.calls[3]?.[0] ?? ''
             expect(reparsedTail.length).toBeLessThan(appended.length)
             expect(result.divergeAt).toBeGreaterThan(0)
             expect(result.canReuse).toBe(true)
@@ -443,7 +460,52 @@ describe('IncrementalParser', () => {
             expect(incremental.tokens).toEqual(full)
         })
 
-        it('falls back to a full re-lex when reference syntax is split across chunks', () => {
+        // (stream-parity-fixes plan 003) The tail is lexed seeded with the
+        // prefix's definitions as marked reports them, so a definition nested
+        // in a container resolves tail references without a full re-lex.
+        it('resolves a tail reference against a blockquote-nested prefix definition from a tail-only lex', () => {
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            const base = '> [q]: /quoted\n\nIntro paragraph.\n\n'
+            parser.update(base)
+            const next = `${base}See [q] here.`
+            const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+
+            const result = parser.update(next)
+            const fragments = lexSpy.mock.calls.map(([fragment]) => fragment)
+            lexSpy.mockRestore()
+
+            expect(fragments).toEqual(['\n\nSee [q] here.'])
+            expect(result.usedTailWindow).toBe(true)
+            expect(result.reuseMode).toBe('prefix')
+            expect(result.tokens).toEqual(parseAndCacheModule.lexAndClean(next, options, false))
+            expect(JSON.stringify(result.tokens.at(-1))).toContain('"href":"/quoted"')
+        })
+
+        it('performs no definition collection while prose without `]:` streams after definitions', () => {
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            let source = 'See [a] and [b].\n\n[a]: /a\n\n> [b]: /b\n\n'
+            parser.update(source)
+            const definitionWalks = vi.spyOn(asInternalParser(parser), 'collectLinks')
+
+            for (const chunk of 'Plain prose with [brackets] and a [link](/x), streaming on.\n\nMore.'.match(
+                /[\s\S]{1,7}/g
+            ) ?? []) {
+                source += chunk
+                const result = parser.update(source)
+                expect(result.usedTailWindow, JSON.stringify(source)).toBe(true)
+                expectSemanticParity(
+                    result.tokens,
+                    parseAndCacheModule.lexAndClean(source, options, false),
+                    source
+                )
+            }
+
+            expect(definitionWalks).not.toHaveBeenCalled()
+        })
+
+        it('re-lexes only the tail and the citing root when reference syntax is split across chunks', () => {
             const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
             const options = createDefaultOptions()
 
@@ -452,9 +514,15 @@ describe('IncrementalParser', () => {
             splitUseParser.update('See [docs]\n\nTail')
             const splitUseWithDefinition = 'See [docs]\n\nTail\n\n[docs]: /docs'
 
-            splitUseParser.update(splitUseWithDefinition)
+            const splitUse = splitUseParser.update(splitUseWithDefinition)
 
-            expect(lexSpy.mock.calls[2]?.[0]).toBe(splitUseWithDefinition)
+            expect(lexSpy.mock.calls.slice(2).map(([fragment]) => fragment)).toEqual([
+                'Tail\n\n[docs]: /docs',
+                'See [docs]'
+            ])
+            expect(splitUse.tokens).toEqual(
+                parseAndCacheModule.lexAndClean(splitUseWithDefinition, options, false)
+            )
 
             lexSpy.mockClear()
 
@@ -463,9 +531,15 @@ describe('IncrementalParser', () => {
             splitDefinitionParser.update('See [docs]\n\nTail\n\n[do')
             const splitDefinition = 'See [docs]\n\nTail\n\n[docs]: /docs'
 
-            splitDefinitionParser.update(splitDefinition)
+            const completed = splitDefinitionParser.update(splitDefinition)
 
-            expect(lexSpy.mock.calls[2]?.[0]).toBe(splitDefinition)
+            expect(lexSpy.mock.calls.slice(2).map(([fragment]) => fragment)).toEqual([
+                '[docs]: /docs',
+                'See [docs]'
+            ])
+            expect(completed.tokens).toEqual(
+                parseAndCacheModule.lexAndClean(splitDefinition, options, false)
+            )
         })
 
         it('resolves a reference definition completed across several partial appends', () => {
@@ -524,7 +598,10 @@ describe('IncrementalParser', () => {
             parser.update(source)
             const result = parser.update(appended)
 
-            expect(lexSpy.mock.calls[1]?.[0]).toBe(appended)
+            expect(lexSpy.mock.calls.slice(1).map(([fragment]) => fragment)).toEqual([
+                'Tail\n\n[ref]: /docs',
+                'See [docs][ref]'
+            ])
             expect(result.divergeAt).toBe(0)
         })
 
@@ -931,7 +1008,10 @@ describe('IncrementalParser', () => {
             const result = parser.update(appended)
             const full = parseAndCacheModule.lexAndClean(appended, createDefaultOptions(), false)
 
-            expect(lexSpy.mock.calls[1]?.[0]).toBe(appended)
+            // Only the tail is lexed, seeded with the prefix's definition.
+            expect(lexSpy.mock.calls[1]?.[0]).toBe('\n\nSee [docs] for details.')
+            expect(lexSpy.mock.calls[1]?.[3]).toEqual({ docs: { href: '/docs', title: undefined } })
+            expect(result.usedTailWindow).toBe(true)
             expect(result.tokens).toEqual(full)
         })
 
@@ -965,26 +1045,28 @@ describe('IncrementalParser', () => {
             expect(sourceLengthReads).toBeLessThanOrEqual(1)
         })
 
-        it('scans the definition boundary at most once per append', () => {
+        it('does no definition work and no boundary scan for an append without `]:`', () => {
             const parser = new IncrementalParser(createDefaultOptions())
             // A reference use is present but its definition has not arrived yet:
-            // the state where the tail-window decision and the cached-state
-            // refresh both need to know whether the append added a definition.
+            // the state where an appended definition would matter.
             parser.update('See [docs]\n\n')
 
             const internalParser = asInternalParser(parser)
             const originalAppendIntroducesMatch = internalParser.appendIntroducesMatch
-            const definitionMatcher = internalParser.hasReferenceDefinition
-            let definitionBoundaryScans = 0
+            const definitionWalks = vi.spyOn(internalParser, 'collectLinks')
+            let boundaryScans = 0
 
             internalParser.appendIntroducesMatch = (scannedSource, matches) => {
-                if (matches === definitionMatcher) definitionBoundaryScans++
+                boundaryScans++
                 return originalAppendIntroducesMatch(scannedSource, matches)
             }
 
-            parser.update('See [docs]\n\nmore streamed text')
+            const result = parser.update('See [docs]\n\nmore streamed text')
 
-            expect(definitionBoundaryScans).toBe(1)
+            expect(result.usedTailWindow).toBe(true)
+            expect(definitionWalks).not.toHaveBeenCalled()
+            // The reference-use flag is already set, so nothing is rescanned.
+            expect(boundaryScans).toBe(0)
         })
 
         it('reuses the cached definition flag instead of rescanning prevSource on in-place edits', () => {
@@ -996,18 +1078,21 @@ describe('IncrementalParser', () => {
             parser.update(source)
 
             const internalParser = asInternalParser(parser)
-            const originalHasReferenceDefinition = internalParser.hasReferenceDefinition
+            const originalHasPotentialReferenceUse = internalParser.hasPotentialReferenceUse
             const scannedLengths: number[] = []
 
-            internalParser.hasReferenceDefinition = (scannedSource) => {
+            internalParser.hasPotentialReferenceUse = (scannedSource) => {
                 scannedLengths.push(scannedSource.length)
-                return originalHasReferenceDefinition(scannedSource)
+                return originalHasPotentialReferenceUse(scannedSource)
             }
 
             // Non-append (in-place) edit: the reference-sensitivity check must
-            // read the cached flag for the previous source rather than rescan it.
-            parser.update('Rewritten [ref0] content\n\n[ref0]: /b')
+            // read the cached use flag and the cached definitions for the
+            // previous source rather than rescan it.
+            const result = parser.update('Rewritten [ref0] content\n\n[ref0]: /b')
 
+            expect(result.divergeAt).toBe(0)
+            expect(scannedLengths.length).toBeGreaterThan(0)
             expect(Math.max(...scannedLengths)).toBeLessThan(source.length)
         })
     })
@@ -1677,7 +1762,7 @@ const section${index} = { active: true, value: ${index} }
             expect(fragments.every((fragment) => fragment.length < body.length)).toBe(true)
         })
 
-        it('falls back to a full re-lex when a citing root contains a nested definition', () => {
+        it('re-lexes a citing root that contains a nested definition as a fragment, keeping its definition', () => {
             const options = createDefaultOptions()
             const parser = new IncrementalParser(options)
             const body = `${plainParagraphs(8, new Map([[2, '> [x]: /inner\n>\n> cites [a]']]))}`
@@ -1691,7 +1776,9 @@ const section${index} = { active: true, value: ${index} }
             source += '[a]: /a\n'
             const result = parser.update(source)
 
-            expect(lexCalls(lexSpy)).toEqual([source])
+            // The root is seeded without its own label `x`, so its lexer
+            // re-registers `x` instead of dropping it as a duplicate.
+            expect(lexCalls(lexSpy)).toEqual(['\n\n[a]: /a\n', '> [x]: /inner\n>\n> cites [a]'])
             expect(result.reuseMode).toBe('tree')
             expectSemanticParity(
                 result.tokens,

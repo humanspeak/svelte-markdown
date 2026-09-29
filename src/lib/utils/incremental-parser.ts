@@ -55,6 +55,14 @@ interface ParseSourceResult {
      * construction); full re-lexes sum every root.
      */
     hasLengthMismatch: boolean
+    /** Every reference definition in `tokens` (marked's `def` tokens). */
+    links: LinkMap
+    /**
+     * True when a definition changed in a way that can change how an
+     * already-rendered root resolves a reference, so a raw-equal prefix is
+     * not a safe reuse contract (`reuseMode: 'tree'` / divergeAt 0).
+     */
+    referenceSensitive: boolean
 }
 
 const CLOSED_FENCE_RE = /^ {0,3}(`{3,}|~{3,}).*\n[\s\S]*\n {0,3}\1[ \t]*\n*$/
@@ -70,11 +78,14 @@ const REGEXP_SPECIAL_RE = /[.*+?^${}()|[\]\\]/g
 const WHITESPACE_RUN_RE = /\s+/g
 
 /**
- * The targeted definition re-lex (see `parseDefinitionUpdate`) only pays off
- * when it skips most of the document; at or above this share of the source,
- * a plain full re-lex is simpler and no slower.
+ * Every reference definition contains `]:` (the label's closing bracket and
+ * the colon are adjacent in CommonMark, whatever container the definition
+ * sits in). Source without it cannot add, change or remove a definition, so
+ * this is the one textual pre-filter left: prose skips all definition work.
+ * Whether a definition exists, and what it says, is decided from marked's
+ * own `def` tokens.
  */
-const MAX_TARGETED_RELEX_SHARE = 0.5
+const DEFINITION_SIGIL = ']:'
 
 /** marked's reference-definition map (`lexer.tokens.links`). */
 type LinkMap = TokensList['links']
@@ -106,17 +117,45 @@ interface CitingRoot {
     text: string
 }
 
-/**
- * A `[label]:` anywhere in text — a superset of marked's definition syntax
- * (which also allows nesting in blockquotes and list items), used to bound
- * which labels an appended tail can define before it is lexed.
- */
-const DEFINITION_LABEL_RE = /\[((?:\\[\s\S]|[^[\]\\])+)\]:/g
-
-/** Non-global form of `DEFINITION_LABEL_RE` for a stateless `test`. */
-const DEFINITION_MARKER_RE = new RegExp(DEFINITION_LABEL_RE.source)
-
 const createLinkMap = (): LinkMap => Object.create(null) as LinkMap
+
+/** Shared empty map for read-only "no definitions" arguments. */
+const NO_LINKS: LinkMap = Object.freeze(createLinkMap())
+
+/**
+ * True when `links` defines at least one label. O(1).
+ *
+ * @param links - A definition map
+ * @returns `true` if the map is not empty
+ * @example
+ * ```typescript
+ * hasAnyLabel(createLinkMap()) // false
+ * ```
+ */
+const hasAnyLabel = (links: LinkMap): boolean => {
+    // marked never stores an empty label, so the first key answers it.
+    for (const label in links) if (label) return true
+    return false
+}
+
+/**
+ * Copy of `links` without the labels `removed` defines.
+ *
+ * @param links - Definitions to copy
+ * @param removed - Definitions whose labels are left out
+ * @returns A new map (`links` is not mutated)
+ * @example
+ * ```typescript
+ * withoutLabels({ a: A, b: B }, { b: B }) // { a: A }
+ * ```
+ */
+const withoutLabels = (links: LinkMap, removed: LinkMap): LinkMap => {
+    const kept = createLinkMap()
+    for (const label in links) {
+        if (!(label in removed)) kept[label] = links[label]
+    }
+    return kept
+}
 
 /**
  * Collects the reference definitions under `tokens` into `links` in document
@@ -302,10 +341,18 @@ export class IncrementalParser {
      * parser state is committed so `getTailWindowBoundary` stays O(1). */
     private prevTailWindowBoundary: TailWindowBoundary = { prefixCount: 0, reparseOffset: 0 }
 
-    /** Cached reference-syntax facts for `prevSource`. These avoid scanning
-     * the accumulated stream on every append. */
+    /** Cached reference-use fact for `prevSource` (a cheap regex superset,
+     * refreshed from the appended slice only). Avoids scanning the
+     * accumulated stream on every append. */
     private prevHasPotentialReferenceUse = false
-    private prevHasReferenceDefinition = false
+
+    /** Every reference definition in `prevTokens`, from marked's own `def`
+     * tokens (nested ones included). Replaced after each update: collected
+     * from the roots after a full re-lex, or the prefix's definitions plus
+     * the re-lexed tail's after a tail-window update. Each label has at most
+     * one `def` token in a parse, so the prefix's definitions are this map
+     * minus the previous tail's. */
+    private knownLinks: LinkMap = createLinkMap()
 
     /** Normalized source text per stable root, for label-use search. Roots
      * are reused objects at fixed offsets, so each is normalized once. */
@@ -405,7 +452,7 @@ export class IncrementalParser {
      * True when `source` contains reference-style link syntax that could
      * resolve against a definition — either a full reference (`[text][id]`)
      * or a shortcut (`[text]`). It says nothing about whether a matching
-     * definition exists; pair it with {@link hasReferenceDefinition} for that.
+     * definition exists; definitions are read from the lexed tokens.
      *
      * @param source - Markdown source to scan
      * @returns `true` if a full or shortcut reference use is present
@@ -450,39 +497,17 @@ export class IncrementalParser {
     }
 
     /**
-     * True when `source` contains a link reference definition line
-     * (`[label]: url`). A definition can retroactively change how reference
-     * uses elsewhere in the document render, which is what makes it relevant
-     * to tail-window safety.
-     *
-     * @param source - Markdown source to scan
-     * @returns `true` if a reference definition line is present
-     * @example
-     * ```typescript
-     * this.hasReferenceDefinition('[docs]: /docs')  // true
-     * this.hasReferenceDefinition('see [docs]')     // false
-     * ```
-     */
-    private hasReferenceDefinition = (source: string): boolean => {
-        if (!source.includes('[') || !source.includes(']')) return false
-        return REFERENCE_DEFINITION_RE.test(source)
-    }
-
-    /**
      * True when an append-only update newly introduces text accepted by
-     * `matches`. Reference uses and definitions cannot span newlines, so a
-     * token split across the append boundary can only complete on the line
-     * that straddles it; checking the appended slice plus that single boundary
-     * line catches every case without rescanning the accumulated source.
-     * Assumes `source` starts with `prevSource` — callers guard the non-append
-     * case. (The one unbounded input is a document streamed as a single
-     * newline-free line, where the boundary line grows with the document.)
+     * `matches`. Reference uses cannot span newlines, so a use split across
+     * the append boundary can only complete on the line that straddles it;
+     * checking the appended slice plus that single boundary line catches
+     * every case without rescanning the accumulated source. Assumes `source`
+     * starts with `prevSource` — callers guard the non-append case. (The one
+     * unbounded input is a document streamed as a single newline-free line,
+     * where the boundary line grows with the document.)
      *
      * Detects NEW matches only: a boundary line that already matched before
-     * the append returns `false` even if the append extends it. Callers that
-     * need "the append touches a match" (e.g. a reference definition whose
-     * URL is still streaming) must check the boundary line themselves, as
-     * `appendTouchesReferenceDefinition` does for `update`.
+     * the append returns `false` even if the append extends it.
      *
      * @param source - Full source string for an append-only update
      * @param matches - Predicate identifying the reference syntax of interest
@@ -503,34 +528,6 @@ export class IncrementalParser {
         // Already present on the boundary line before the append ⇒ not new.
         if (matches(this.prevSource.slice(lineStart))) return false
         return matches(source.slice(lineStart))
-    }
-
-    /**
-     * True when an append-only update adds a reference definition or extends
-     * one on the boundary line (the last, possibly partial line of
-     * `prevSource`). Unlike `appendIntroducesMatch` alone, a boundary line
-     * that was already a definition before the append still counts, so a
-     * definition whose URL or title is streaming in is detected on every
-     * chunk. An append that begins with a line break leaves the boundary line
-     * unchanged and is not an extension. Only the appended text and the
-     * boundary line are scanned. Assumes `source` starts with `prevSource`.
-     *
-     * @param source - Full source string for an append-only update
-     * @returns `true` if the append adds or extends a reference definition
-     * @example
-     * ```typescript
-     * // prevSource === 'See [ref].\n\n[ref]: https'
-     * this.appendTouchesReferenceDefinition('See [ref].\n\n[ref]: https:') // true
-     * ```
-     */
-    private appendTouchesReferenceDefinition = (source: string): boolean => {
-        if (this.appendIntroducesMatch(source, this.hasReferenceDefinition)) return true
-        const firstAppended = source.charAt(this.prevSource.length)
-        if (firstAppended === '' || firstAppended === '\n' || firstAppended === '\r') {
-            return false
-        }
-        const lineStart = this.prevSource.lastIndexOf('\n') + 1
-        return this.hasReferenceDefinition(source.slice(lineStart))
     }
 
     /**
@@ -557,61 +554,19 @@ export class IncrementalParser {
         (appendsTo === this.prevSource || source.startsWith(this.prevSource))
 
     /**
-     * True when appending to `prevSource` introduces a reference definition
-     * that was not already present. Definitions can arrive wholly in the
-     * appended slice or be completed across the append boundary, such as
-     * `[do` followed by `cs]: /docs`. Returns false for any update that is not
-     * a pure append of `prevSource`.
-     *
-     * @param source - The full new source, expected to start with `prevSource`
-     * @returns `true` if the appended update adds a reference definition
-     * @example
-     * ```typescript
-     * // prevSource === '[do'
-     * this.hasNewReferenceDefinition('[docs]: /d') // true
-     * ```
-     */
-    private hasNewReferenceDefinition = (source: string): boolean => {
-        if (!source.startsWith(this.prevSource)) return false
-        return this.appendIntroducesMatch(source, this.hasReferenceDefinition)
-    }
-
-    /**
-     * True when a reference definition arriving in the appended tail can
-     * retroactively change how existing reference-style uses in the stable
-     * prefix render — the one case where an append-only stream is not safe
-     * to serve incrementally. This is the standalone form used as
-     * `canUseTailWindow`'s default argument; the hot path in `update` computes
-     * the same value inline (reusing `appendAddsDefinition`) so the boundary
-     * scan runs a single time per update.
-     *
-     * @param source - The full new source string for this update
-     * @returns `true` if a newly appended definition can change how the reused
-     *   prefix renders, meaning the tail window must be bypassed
-     * @example
-     * ```typescript
-     * // prevSource === 'see [docs]\n\n' (a shortcut use already rendered)
-     * this.appendedDefinitionInvalidatesTail('see [docs]\n\n[docs]: /d') // true
-     * ```
-     */
-    private appendedDefinitionInvalidatesTail = (source: string): boolean =>
-        this.prevHasPotentialReferenceUse && this.hasNewReferenceDefinition(source)
-
-    /**
      * Decides whether an update may reuse the stable token prefix and re-lex
      * only the appended tail (`boundary.reparseOffset` onward) instead of the
      * whole document. Returns false whenever that shortcut could diverge from a
-     * full parse: caller parser hooks are active, the update is not append-only,
-     * the boundary is empty, or reference syntax straddles the prefix/tail split
-     * in a way a tail-only re-lex cannot resolve.
+     * full parse: caller parser hooks are active, the update is not
+     * append-only, the boundary is empty, or the previous roots do not add up
+     * to the source. Reference definitions do not bypass the tail window: the
+     * tail is lexed with the prefix's definitions (see `parseTailWindow`), and
+     * a changed definition is handled after that lex, from its tokens.
      *
      * @param source - The full new source string for this update
      * @param boundary - The stable-prefix boundary from `getTailWindowBoundary`
      * @param isAppendOnly - Precomputed append-only fact from `update`; direct
      *   helper callers may omit it to compute the same fact locally
-     * @param referenceInvalidatesTail - Precomputed reference-safety flag;
-     *   defaults to `appendedDefinitionInvalidatesTail(source)` for standalone
-     *   callers that have not computed it already
      * @returns `true` if the appended tail can be re-lexed in isolation
      * @example
      * ```typescript
@@ -624,98 +579,177 @@ export class IncrementalParser {
     private canUseTailWindow = (
         source: string,
         boundary: TailWindowBoundary,
-        isAppendOnly = this.isAppendOnlyUpdate(source),
-        referenceInvalidatesTail = this.appendedDefinitionInvalidatesTail(source)
+        isAppendOnly = this.isAppendOnlyUpdate(source)
     ): boolean => {
         if (this.tailWindowDisabled) return false
         if (this.prevSource === '' || this.prevTokens.length === 0) return false
         if (!isAppendOnly) return false
         // The cached boundary is already empty on a length mismatch; checked
         // here too so a boundary from elsewhere cannot bypass the guard.
-        if (boundary.reparseOffset <= 0 || this.prevHasLengthMismatch) return false
-        if (referenceInvalidatesTail) return false
-
-        // A reference definition living in the reused prefix is invisible to a
-        // tail-only re-lex (marked's link map is per-lex), so any reference use
-        // in the tail slice would render unresolved. The cached definition flag
-        // keeps definition-free streams on the cheap path.
-        if (this.prevHasReferenceDefinition) {
-            const tail = source.slice(boundary.reparseOffset)
-            if (this.hasPotentialReferenceUseOutsideDefinitions(tail)) {
-                return false
-            }
-        }
-
-        return true
+        return boundary.reparseOffset > 0 && !this.prevHasLengthMismatch
     }
 
     /**
-     * Parses an append that adds or extends a reference definition while
-     * reference uses exist, re-lexing only what the definition can change:
+     * All reference definitions under `tokens`, from marked's `def` tokens;
+     * see `collectDefinitions`. The single entry point for definition walks,
+     * so their cost is observable.
      *
-     * 1. The appended tail, with a lexer seeded with the definitions of the
-     *    stable prefix (so tail uses resolve and a duplicate label keeps the
-     *    first definition, as in a full lex).
-     * 2. Each prefix root that uses a label whose definition changed (added,
-     *    removed, or a different href/title vs the tail it replaces), seeded
-     *    with the complete map.
+     * @param tokens - Tokens in document order
+     * @returns A new definition map
+     * @example
+     * ```typescript
+     * this.collectLinks(tailTokens) // { a: { href: '/x', title: undefined } }
+     * ```
+     */
+    private collectLinks = (tokens: readonly Token[]): LinkMap =>
+        collectDefinitions(tokens, createLinkMap())
+
+    /**
+     * Lexes an appended tail seeded with the definitions that precede it, so
+     * tail references resolve against the prefix and a duplicate label keeps
+     * the prefix's definition, exactly as in a one-shot lex. A tail without
+     * `[` can neither use nor define a reference, so it is lexed unseeded
+     * (skipping the map copy).
      *
-     * Every other prefix root is kept as-is. Candidate roots are found BEFORE
-     * any lexing, from a superset of the possibly-changed labels (definition
-     * labels in the previous tail's tokens plus every `[label]:` in the new
-     * tail source), so a fallback never wastes a partial lex. Returns
-     * `undefined` — the caller then does a full re-lex — whenever the
-     * shortcut could diverge from a full parse or would not save work: the
-     * tail plus candidate roots reach `MAX_TARGETED_RELEX_SHARE` of the
-     * source, a candidate root contains a `[label]:` definition marker, a re-lexed root
-     * does not reproduce exactly one root with the same type and raw, the
-     * prefix offsets do not add up, or a changed label escaped the superset.
+     * @param tailSource - Source from the reparse offset to the end
+     * @param links - Definitions of the stable prefix
+     * @returns The tail's root tokens
+     * @example
+     * ```typescript
+     * this.lexTail('See [a].', { a: { href: '/x', title: undefined } }) // paragraph with a link
+     * ```
+     */
+    private lexTail = (tailSource: string, links: LinkMap): Token[] =>
+        lexAndClean(
+            tailSource,
+            this.options,
+            false,
+            hasAnyLabel(links) && tailSource.includes('[') ? links : undefined
+        )
+
+    /**
+     * Parses an append-only update in the tail window: the tail is lexed
+     * seeded with the prefix's definitions, then whether a definition changed
+     * is read from the tail's `def` tokens.
+     *
+     * 1. Tail without `]:` — it cannot add, change or remove a definition
+     *    (the previous tail's source is a prefix of it), so no definition work.
+     * 2. Otherwise the tail's definitions are compared with the ones the
+     *    previous tail contributed. No change, or no reference use anywhere
+     *    in the previous source: a plain tail-window update.
+     * 3. A changed label with possible uses: re-lex the prefix roots that
+     *    cite it (`parseDefinitionUpdate`), else a full re-lex; either way the
+     *    update is reference-sensitive.
      *
      * @param source - Full source for this append-only update
      * @param boundary - Stable-prefix boundary (non-empty)
+     * @returns The parse result for this update
+     * @example
+     * ```typescript
+     * // prevSource === 'See [a].\n\n'
+     * this.parseTailWindow('See [a].\n\n> [a]: /x\n', boundary) // re-lexes the tail and 'See [a].'
+     * ```
+     */
+    private parseTailWindow = (source: string, boundary: TailWindowBoundary): ParseSourceResult => {
+        const tailSource = source.slice(boundary.reparseOffset)
+        if (!tailSource.includes(DEFINITION_SIGIL)) {
+            const tailTokens = this.lexTail(tailSource, this.knownLinks)
+            return this.createTailWindowResult(source, boundary, tailTokens, this.knownLinks)
+        }
+
+        const previousTailLinks = this.collectLinks(this.prevTokens.slice(boundary.prefixCount))
+        const prefixLinks = withoutLabels(this.knownLinks, previousTailLinks)
+        const tailTokens = this.lexTail(tailSource, prefixLinks)
+        const tailLinks = this.collectLinks(tailTokens)
+        const changedLabels = getChangedLabels(previousTailLinks, tailLinks, prefixLinks)
+        // Earlier definitions win: prefix entries override tail entries (the
+        // seeded tail lex emits no `def` for a prefix label anyway).
+        const links = Object.assign(createLinkMap(), tailLinks, prefixLinks)
+        if (changedLabels.length === 0 || !this.prevHasPotentialReferenceUse) {
+            return this.createTailWindowResult(source, boundary, tailTokens, links)
+        }
+        return (
+            this.parseDefinitionUpdate(source, boundary, tailTokens, changedLabels, links) ??
+            this.parseFullSource(source, true)
+        )
+    }
+
+    /**
+     * The plain tail-window result: the previous prefix roots (same objects)
+     * followed by the freshly lexed tail.
+     *
+     * @param source - Full source for this update
+     * @param boundary - Stable-prefix boundary (non-empty)
+     * @param tailTokens - Roots lexed from `source.slice(boundary.reparseOffset)`
+     * @param links - Every definition in the resulting tokens
+     * @returns A tail-window parse result that is not reference-sensitive
+     * @example
+     * ```typescript
+     * this.createTailWindowResult(source, boundary, tailTokens, this.knownLinks)
+     * ```
+     */
+    private createTailWindowResult = (
+        source: string,
+        boundary: TailWindowBoundary,
+        tailTokens: Token[],
+        links: LinkMap
+    ): ParseSourceResult => {
+        if (STREAM_STATS_ENABLED) {
+            countStreamStat('copiedRoots', boundary.prefixCount + tailTokens.length)
+        }
+        return {
+            // `slice` + `concat` is several times faster than spreading the
+            // prefix at thousands of roots (plan 011).
+            tokens: this.prevTokens.slice(0, boundary.prefixCount).concat(tailTokens),
+            tailTokens,
+            usedTailWindow: true,
+            reusedPrefixCount: boundary.prefixCount,
+            // Offset integrity (O(tail)): the prefix covers `reparseOffset` by
+            // construction, so only the tail needs to add up. The tail was
+            // lexed from a true block boundary, so these tokens are correct
+            // for THIS update even on a mismatch; the flag keeps the NEXT
+            // update off the tail window, whose offsets would be wrong.
+            hasLengthMismatch:
+                this.sumSourceLength(tailTokens) !== source.length - boundary.reparseOffset,
+            links,
+            referenceSensitive: false
+        }
+    }
+
+    /**
+     * Completes a tail-window update whose tail changed the definition of a
+     * label the prefix may use: each prefix root that cites a changed label
+     * is re-lexed with the complete definition map; every other prefix root
+     * is kept as-is. The tail is already lexed, so this re-lexes at most the
+     * prefix — never more characters than a full re-lex. Returns `undefined`
+     * (the caller then does a full re-lex) when the prefix offsets do not add
+     * up, or a re-lexed root does not reproduce exactly one root with the
+     * same type, raw and span.
+     *
+     * @param source - Full source for this append-only update
+     * @param boundary - Stable-prefix boundary (non-empty)
+     * @param tailTokens - The tail, lexed seeded with the prefix's definitions
+     * @param changedLabels - Normalized labels whose definition changed
+     * @param links - The complete definition map for `source`
      * @returns The spliced tokens, or `undefined` to fall back to a full re-lex
      * @example
      * ```typescript
      * // prevSource === 'See [a].\n\nPlain.\n\n'
-     * this.parseDefinitionUpdate('See [a].\n\nPlain.\n\n[a]: /x', boundary)
-     * // re-lexes the tail and 'See [a].' only
+     * this.parseDefinitionUpdate(source, boundary, tailTokens, ['a'], links)
+     * // re-lexes 'See [a].' only
      * ```
      */
     private parseDefinitionUpdate = (
         source: string,
-        boundary: TailWindowBoundary
+        boundary: TailWindowBoundary,
+        tailTokens: Token[],
+        changedLabels: string[],
+        links: LinkMap
     ): ParseSourceResult | undefined => {
-        const tailSource = source.slice(boundary.reparseOffset)
-        const maxRelexedLength = source.length * MAX_TARGETED_RELEX_SHARE
-        if (tailSource.length >= maxRelexedLength) return undefined
-
-        const previousTailLinks = collectDefinitions(
-            this.prevTokens.slice(boundary.prefixCount),
-            createLinkMap()
-        )
-        const possibleLabels = new Set(Object.keys(previousTailLinks))
-        for (const match of tailSource.matchAll(DEFINITION_LABEL_RE)) {
-            possibleLabels.add(normalizeReferenceText(match[1].trim()))
-        }
         const prefixRoots = this.prevTokens.slice(0, boundary.prefixCount)
-        const candidates = this.findCitingRoots(
-            source,
-            prefixRoots,
-            [...possibleLabels],
-            boundary,
-            maxRelexedLength - tailSource.length
-        )
+        const candidates = this.findCitingRoots(source, prefixRoots, changedLabels, boundary)
         if (!candidates) return undefined
-
-        const prefixLinks = collectDefinitions(prefixRoots, createLinkMap())
-        const tailTokens = lexAndClean(tailSource, this.options, false, prefixLinks)
-        const tailLinks = collectDefinitions(tailTokens, createLinkMap())
-        const changedLabels = getChangedLabels(previousTailLinks, tailLinks, prefixLinks)
-        if (changedLabels.some((label) => !possibleLabels.has(label))) return undefined
-        // Earlier definitions win: prefix entries override tail entries.
-        const links = Object.assign(createLinkMap(), tailLinks, prefixLinks)
-
-        const roots = this.relexCitingRoots(prefixRoots, candidates, changedLabels, links)
+        const roots = this.relexCitingRoots(prefixRoots, candidates, links)
         if (!roots) return undefined
         if (STREAM_STATS_ENABLED) countStreamStat('copiedRoots', roots.length + tailTokens.length)
         return {
@@ -726,7 +760,10 @@ export class IncrementalParser {
             // Offset integrity (O(tail)): the prefix roots end at
             // `reparseOffset` (checked in `findCitingRoots`) and each re-lexed
             // root keeps its span (checked in `relexCitingRoots`).
-            hasLengthMismatch: this.sumSourceLength(tailTokens) !== tailSource.length
+            hasLengthMismatch:
+                this.sumSourceLength(tailTokens) !== source.length - boundary.reparseOffset,
+            links,
+            referenceSensitive: true
         }
     }
 
@@ -737,72 +774,64 @@ export class IncrementalParser {
      *
      * @param source - Full source for this update
      * @param prefixRoots - Stable prefix roots from the previous parse
-     * @param labels - Normalized labels that may have changed
+     * @param labels - Normalized labels whose definition changed
      * @param boundary - Stable-prefix boundary the roots end at
-     * @param maxLength - Source characters the candidates may span in total
-     * @returns Candidate roots with their source, or `undefined` to fall back
+     * @returns Citing roots with their source, or `undefined` to fall back
      * @example
      * ```typescript
-     * this.findCitingRoots(source, prefixRoots, ['a'], boundary, source.length / 2)
+     * this.findCitingRoots(source, prefixRoots, ['a'], boundary)
      * ```
      */
     private findCitingRoots = (
         source: string,
         prefixRoots: Token[],
         labels: string[],
-        boundary: TailWindowBoundary,
-        maxLength: number
+        boundary: TailWindowBoundary
     ): CitingRoot[] | undefined => {
         const matchers = labels.map(createLabelUseMatcher)
         const candidates: CitingRoot[] = []
-        let candidateLength = 0
         let offset = 0
         for (let index = 0; index < prefixRoots.length; index++) {
             const root = prefixRoots[index]
             const start = offset
             offset += this.getTokenSourceLength(root)
-            if (matchers.length === 0 || REFERENCE_INERT_ROOT_TYPES.has(root.type)) continue
+            if (REFERENCE_INERT_ROOT_TYPES.has(root.type)) continue
             const text = this.getNormalizedRootText(root, source, start, offset)
             if (!matchers.some((matcher) => matcher.test(text))) continue
-
-            const rootSource = source.slice(start, offset)
-            candidateLength += rootSource.length
-            if (candidateLength >= maxLength) return undefined
-            // A definition inside the root (possibly nested in a blockquote
-            // or list item) would be dropped by a lexer seeded with it.
-            if (DEFINITION_MARKER_RE.test(rootSource)) return undefined
-            candidates.push({ index, source: rootSource, text })
+            candidates.push({ index, source: source.slice(start, offset), text })
         }
         return offset === boundary.reparseOffset ? candidates : undefined
     }
 
     /**
-     * Re-lexes, with the complete link map, each candidate root that uses a
-     * label whose definition actually changed; see `parseDefinitionUpdate`.
+     * Re-lexes each citing root with the complete link map; see
+     * `parseDefinitionUpdate`. A root that itself holds a definition (nested
+     * in a blockquote, list item or html block) is seeded WITHOUT its own
+     * labels, so its lexer registers them and emits their `def` tokens again
+     * instead of dropping them as duplicates.
      *
      * @param prefixRoots - Stable prefix roots from the previous parse
-     * @param candidates - Roots that use a possibly-changed label
-     * @param changedLabels - Normalized labels whose definition changed
+     * @param candidates - Roots that use a changed label
      * @param links - The complete definition map for the current source
      * @returns Prefix roots with citing roots replaced (the input array when
-     *   none changed), or `undefined` to fall back to a full re-lex
+     *   there are none), or `undefined` to fall back to a full re-lex
      * @example
      * ```typescript
-     * this.relexCitingRoots(prefixRoots, candidates, ['a'], links)
+     * this.relexCitingRoots(prefixRoots, candidates, links)
      * ```
      */
     private relexCitingRoots = (
         prefixRoots: Token[],
         candidates: CitingRoot[],
-        changedLabels: string[],
         links: LinkMap
     ): Token[] | undefined => {
-        const matchers = changedLabels.map(createLabelUseMatcher)
         let roots: Token[] | undefined
         for (const candidate of candidates) {
-            if (!matchers.some((matcher) => matcher.test(candidate.text))) continue
             const root = prefixRoots[candidate.index]
-            const relexed = lexAndClean(candidate.source, this.options, false, links)
+            const seed = candidate.source.includes(DEFINITION_SIGIL)
+                ? withoutLabels(links, this.collectLinks([root]))
+                : links
+            const relexed = lexAndClean(candidate.source, this.options, false, seed)
             if (relexed.length !== 1) return undefined
             if (relexed[0].type !== root.type || relexed[0].raw !== root.raw) return undefined
             // Offset integrity: the root must still consume its exact span.
@@ -841,88 +870,77 @@ export class IncrementalParser {
     }
 
     /**
-     * True when an update that invalidates the tail because of a reference
-     * definition may take the targeted re-lex instead of a full one.
-     *
-     * @param boundary - Stable-prefix boundary for this update
-     * @param isAppendOnly - Whether the update is a pure append
-     * @param referenceInvalidatesTail - Whether a definition invalidates the tail
-     * @returns `true` if `parseDefinitionUpdate` may be attempted
-     * @example
-     * ```typescript
-     * if (this.canTargetDefinitionUpdate(boundary, true, true)) { ... }
-     * ```
-     */
-    private canTargetDefinitionUpdate = (
-        boundary: TailWindowBoundary,
-        isAppendOnly: boolean,
-        referenceInvalidatesTail: boolean
-    ): boolean =>
-        referenceInvalidatesTail &&
-        isAppendOnly &&
-        !this.tailWindowDisabled &&
-        this.prevTokens.length > 0 &&
-        boundary.reparseOffset > 0 &&
-        !this.prevHasLengthMismatch
-
-    /**
      * Re-lexes the whole source; the fallback for every update the tail
-     * window or the targeted definition path cannot serve.
+     * window or the targeted definition path cannot serve. Definitions are
+     * collected from the roots only when the source contains `]:`, and
+     * compared with the previous parse's to decide reference sensitivity.
      *
      * @param source - Full source for this update
+     * @param isAppendOnly - Whether `source` appends to the previous source
      * @returns A full-parse result (no reused prefix)
      * @example
      * ```typescript
-     * this.parseFullSource('# A\n\nB') // { tokens: [heading, space, paragraph], usedTailWindow: false, ... }
+     * this.parseFullSource('# A\n\nB', true) // { tokens: [heading, space, paragraph], usedTailWindow: false, ... }
      * ```
      */
-    private parseFullSource = (source: string): ParseSourceResult => {
+    private parseFullSource = (source: string, isAppendOnly: boolean): ParseSourceResult => {
         const tokens = lexAndClean(source, this.options, false)
+        // The lex was already O(document), so neither the scan for `]:`, the
+        // definition walk nor the full length sum adds an order.
+        const links = source.includes(DEFINITION_SIGIL) ? this.collectLinks(tokens) : NO_LINKS
         return {
             tokens,
             tailTokens: [],
             usedTailWindow: false,
             reusedPrefixCount: 0,
-            // The lex was already O(document), so the full sum adds no order.
-            hasLengthMismatch: this.sumSourceLength(tokens) !== source.length
+            hasLengthMismatch: this.sumSourceLength(tokens) !== source.length,
+            links,
+            referenceSensitive: this.definitionsAffectUses(source, links, isAppendOnly)
         }
+    }
+
+    /**
+     * Whether the definitions of a fully re-lexed source can change how a
+     * root that kept its `raw` renders. For an append, that needs a label
+     * whose definition changed and a possible reference use in the previous
+     * source. For any other edit (no prefix is reused anyway) it stays as
+     * conservative as before: definitions on either side plus a possible use.
+     *
+     * @param source - Full source for this update
+     * @param links - Every definition in the new tokens
+     * @param isAppendOnly - Whether `source` appends to the previous source
+     * @returns `true` if the update must be treated as reference-sensitive
+     * @example
+     * ```typescript
+     * // prevSource === 'See [a].\n\n' (a use, no definition yet)
+     * this.definitionsAffectUses('See [a].\n\n[a]: /x', { a: A }, true) // true
+     * ```
+     */
+    private definitionsAffectUses = (
+        source: string,
+        links: LinkMap,
+        isAppendOnly: boolean
+    ): boolean => {
+        if (isAppendOnly) {
+            return (
+                this.prevHasPotentialReferenceUse &&
+                getChangedLabels(this.knownLinks, links, NO_LINKS).length > 0
+            )
+        }
+        return (
+            (hasAnyLabel(this.knownLinks) || hasAnyLabel(links)) &&
+            (this.prevHasPotentialReferenceUse || this.hasPotentialReferenceUse(source))
+        )
     }
 
     private parseSource = (
         source: string,
         boundary: TailWindowBoundary,
-        isAppendOnly: boolean,
-        referenceInvalidatesTail: boolean
-    ): ParseSourceResult => {
-        if (this.canTargetDefinitionUpdate(boundary, isAppendOnly, referenceInvalidatesTail)) {
-            const targeted = this.parseDefinitionUpdate(source, boundary)
-            if (targeted) return targeted
-        }
-
-        if (!this.canUseTailWindow(source, boundary, isAppendOnly, referenceInvalidatesTail)) {
-            return this.parseFullSource(source)
-        }
-
-        const tailTokens = lexAndClean(source.slice(boundary.reparseOffset), this.options, false)
-        if (STREAM_STATS_ENABLED) {
-            countStreamStat('copiedRoots', boundary.prefixCount + tailTokens.length)
-        }
-        return {
-            // `slice` + `concat` is several times faster than spreading the
-            // prefix at thousands of roots (plan 011).
-            tokens: this.prevTokens.slice(0, boundary.prefixCount).concat(tailTokens),
-            tailTokens,
-            usedTailWindow: true,
-            reusedPrefixCount: boundary.prefixCount,
-            // Offset integrity (O(tail)): the prefix covers `reparseOffset` by
-            // construction, so only the tail needs to add up. The tail was
-            // lexed from a true block boundary, so these tokens are correct
-            // for THIS update even on a mismatch; the flag keeps the NEXT
-            // update off the tail window, whose offsets would be wrong.
-            hasLengthMismatch:
-                this.sumSourceLength(tailTokens) !== source.length - boundary.reparseOffset
-        }
-    }
+        isAppendOnly: boolean
+    ): ParseSourceResult =>
+        this.canUseTailWindow(source, boundary, isAppendOnly)
+            ? this.parseTailWindow(source, boundary)
+            : this.parseFullSource(source, isAppendOnly)
 
     /**
      * True when any token in `tokens` has an unknown HTML source span. Tail
@@ -1057,25 +1075,22 @@ export class IncrementalParser {
      * @param parseResult - Parsed tokens plus metadata describing whether the
      *   tail-window shortcut was used
      * @param isAppendOnly - Whether `source` appended to the previous source
-     * @param appendAddsDefinition - Whether the append introduced a reference
-     *   definition, already computed by `update` so the boundary scan is not
-     *   repeated here
      * @returns Nothing; updates `prevSource`, `prevTokens`, and cached flags
      * @example
      * ```typescript
-     * this.updateCachedState(source, parseResult, isAppendOnly, appendAddsDefinition)
+     * this.updateCachedState(source, parseResult, isAppendOnly)
      * ```
      */
     private updateCachedState = (
         source: string,
         parseResult: ParseSourceResult,
-        isAppendOnly: boolean,
-        appendAddsDefinition: boolean
+        isAppendOnly: boolean
     ): void => {
         // HTML-span-mismatch keys on `usedTailWindow` (a fact about the tokens,
         // recomputed whenever the tail window is bypassed), while the reference
-        // facts key on `isAppendOnly` (facts about the source, which accumulate
-        // monotonically under a pure append regardless of parse strategy).
+        // use fact keys on `isAppendOnly` (a fact about the source, which
+        // accumulates monotonically under a pure append regardless of parse
+        // strategy). Definitions come from the parse result's tokens.
         const hasHtmlSpanMismatch = parseResult.usedTailWindow
             ? this.prevHasHtmlSpanMismatch || this.hasAnyHtmlSpanMismatch(parseResult.tailTokens)
             : this.hasAnyHtmlSpanMismatch(parseResult.tokens)
@@ -1089,9 +1104,7 @@ export class IncrementalParser {
             ? this.prevHasPotentialReferenceUse ||
               this.appendIntroducesMatch(source, this.hasPotentialReferenceUseOutsideDefinitions)
             : this.hasPotentialReferenceUseOutsideDefinitions(source)
-        this.prevHasReferenceDefinition = isAppendOnly
-            ? this.prevHasReferenceDefinition || appendAddsDefinition
-            : this.hasReferenceDefinition(source)
+        this.knownLinks = parseResult.links
 
         this.prevSource = source
         this.prevTokens = parseResult.tokens
@@ -1103,23 +1116,6 @@ export class IncrementalParser {
             hasHtmlSpanMismatch || hasLengthMismatch
         )
     }
-
-    /**
-     * Reference definitions can change inline children without changing raw,
-     * so definitions alongside reference-style uses require a full rerender.
-     * Append-only updates reuse the invalidation flag computed during parsing
-     * to avoid rescanning the accumulated source. Other edits check both sources.
-     */
-    private isReferenceSensitiveUpdate = (
-        source: string,
-        isAppendOnly: boolean,
-        referenceInvalidatesTail: boolean
-    ): boolean =>
-        isAppendOnly
-            ? referenceInvalidatesTail
-            : (this.prevHasReferenceDefinition || this.hasReferenceDefinition(source)) &&
-              (this.hasPotentialReferenceUse(this.prevSource) ||
-                  this.hasPotentialReferenceUse(source))
 
     /**
      * Finds the first root that differs from the previous parse and the
@@ -1209,24 +1205,12 @@ export class IncrementalParser {
     update = (source: string, appendsTo?: string): IncrementalUpdateResult => {
         const boundary = this.getTailWindowBoundary()
         const isAppendOnly = this.isAppendOnlyUpdate(source, appendsTo)
-        // Whether this append introduces a reference definition. Both the
-        // tail-window decision (via `referenceInvalidatesTail`) and the cached
-        // -state refresh need it, so compute the boundary scan once here. When
-        // `prevSource` is empty this is the first update, where no cached use
-        // exists yet, so `referenceInvalidatesTail` is false either way.
-        // A definition whose URL/title is still streaming changes how prefix
-        // references resolve on every chunk, not only on the chunk that
-        // completed `]:`. Treat any append that extends a definition on the
-        // boundary line as adding one. An append starting with a line break
-        // leaves the boundary line untouched, so it is not an extension.
-        const appendAddsDefinition = isAppendOnly && this.appendTouchesReferenceDefinition(source)
-        const referenceInvalidatesTail = this.prevHasPotentialReferenceUse && appendAddsDefinition
-        const parseResult = this.parseSource(
-            source,
-            boundary,
-            isAppendOnly,
-            referenceInvalidatesTail
-        )
+        // Whether a reference definition changed is decided AFTER lexing, from
+        // marked's `def` tokens (see `parseTailWindow` / `parseFullSource`):
+        // a definition whose URL or title is still streaming, or one nested
+        // in a blockquote or list item, changes how earlier references
+        // resolve, and only the tokens say so reliably.
+        const parseResult = this.parseSource(source, boundary, isAppendOnly)
         const newTokens = parseResult.tokens
 
         // Apply walkTokens if configured
@@ -1237,11 +1221,7 @@ export class IncrementalParser {
             }
         }
 
-        const referenceSensitive = this.isReferenceSensitiveUpdate(
-            source,
-            isAppendOnly,
-            referenceInvalidatesTail
-        )
+        const { referenceSensitive } = parseResult
         const canReuse = isAppendOnly && !referenceSensitive
         const reuseMode: StreamingReuseMode = canReuse ? 'prefix' : isAppendOnly ? 'tree' : 'none'
 
@@ -1252,7 +1232,7 @@ export class IncrementalParser {
             ? { divergeAt: 0, divergeOffset: reuseMode === 'tree' ? undefined : 0 }
             : this.findDivergence(newTokens, parseResult, boundary)
 
-        this.updateCachedState(source, parseResult, isAppendOnly, appendAddsDefinition)
+        this.updateCachedState(source, parseResult, isAppendOnly)
         return {
             tokens: newTokens,
             divergeAt,

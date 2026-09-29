@@ -202,26 +202,38 @@ describe('streaming parity', () => {
     })
 
     describe('C. reference scope (definitions the line-anchored detector misses)', () => {
-        red('a definition whose URL is on the next line resolves earlier uses', () => {
+        it('a definition whose URL is on the next line resolves earlier uses', () => {
             expectParity(['See [a].\n\n', '[a]:\n', '/x\n'])
         })
 
-        red('a definition nested in a blockquote resolves earlier uses', () => {
+        it('a definition nested in a blockquote resolves earlier uses', () => {
             expectParity(['See [one].\n\n', '> [one]: /in-quote\n'])
         })
 
-        red('a definition nested in a list item resolves earlier uses', () => {
+        it('a definition nested in a list item resolves earlier uses', () => {
             expectParity(['See [two].\n\n', '- [two]: /in-list\n'])
         })
 
-        red('a definition indented by four or more columns inside a container resolves', () => {
+        it('a definition indented by four or more columns inside a container resolves', () => {
             expectParity(['See [deep].\n\n', '> - item\n>\n>   [deep]: /nested\n'])
         })
 
-        red('a definition title arriving on the following line updates earlier uses', () => {
+        it('a definition title arriving on the following line updates earlier uses', () => {
             // An append that starts with a line break is treated as not touching
             // the definition, so the title never reaches the citing link.
             expectParity(['See [r].\n\n[r]: /a', '\n"Title"\n', '\nAfter.\n'])
+        })
+
+        it('a duplicate definition with no earlier use emits no def token', () => {
+            // Without seeded links the tail lexer would register `[a]` again
+            // and emit a `def` a one-shot parse drops; lengths still add up,
+            // so only seeding every tail lex keeps parity here.
+            expectParity(['Intro.\n\n[a]: /first\n\nProse.\n\n', '[a]: /second\n', '\nEnd.\n'])
+        })
+
+        it('a duplicate definition with no earlier use keeps parity at every chunk size', () => {
+            const source = 'Intro.\n\n[a]: /first\n\nProse.\n\n[a]: /second\n\nEnd.\n'
+            for (const size of [1, 3, 7]) expectParity(chunkBy(source, size))
         })
 
         it('a plain definition after a use resolves (guard)', () => {
@@ -296,7 +308,7 @@ describe('streaming parity', () => {
             expect(fuzz(CLEAN_CORPUS)).toEqual([])
         })
 
-        red('tricky documents keep parity under random chunking', () => {
+        it('tricky documents keep parity under random chunking', () => {
             expect(fuzz(TRICKY_CORPUS)).toEqual([])
         })
     })

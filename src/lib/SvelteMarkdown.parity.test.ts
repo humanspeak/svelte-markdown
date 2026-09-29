@@ -94,7 +94,7 @@ describe('streaming rendered parity', () => {
     })
 
     describe('C. reference scope', () => {
-        red('a definition inside a blockquote links an earlier reference', async () => {
+        it('a definition inside a blockquote links an earlier reference', async () => {
             const container = await renderStreamed(['See [one].\n\n', '> [one]: /in-quote\n'])
             expect(container.querySelector('a')?.getAttribute('href')).toBe('/in-quote')
         })
