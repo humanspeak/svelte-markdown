@@ -828,6 +828,35 @@ describe('IncrementalParser', () => {
             expect(usedTailWindow.every(Boolean)).toBe(true)
         })
 
+        // Plan 008: a carriage return can make one root shorter than its span
+        // while another is longer, so the length sum cannot be trusted.
+        it('refuses the tail window for an append that brings a carriage return', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            const internal = asInternalParser(parser)
+            parser.update('# Title\n\nFirst.\n\n')
+            const boundary = internal.getTailWindowBoundary()
+            expect(boundary.reparseOffset).toBeGreaterThan(0)
+            expect(internal.canUseTailWindow('# Title\n\nFirst.\n\nNext.\n', boundary)).toBe(true)
+            expect(internal.canUseTailWindow('# Title\n\nFirst.\n\nNext.\r\n', boundary)).toBe(
+                false
+            )
+        })
+
+        it('regains the tail window after an edit removes every carriage return', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            parser.update('# Title\r\n\r\nFirst.\r\n')
+            expect(parser.update('# Title\r\n\r\nFirst.\r\n\r\nNext.\n').usedTailWindow).toBe(false)
+            // Not an append: a full re-lex recomputes the flag from the source.
+            let source = '# Title\n\nFirst.\n\n'
+            expect(parser.update(source).usedTailWindow).toBe(false)
+            const usedTailWindow: boolean[] = []
+            for (const chunk of ['Next.\n\n', 'More.\n\n', 'End.\n']) {
+                source += chunk
+                usedTailWindow.push(parser.update(source).usedTailWindow)
+            }
+            expect(usedTailWindow).toEqual([true, true, true])
+        })
+
         it('keeps parity through three more paragraphs after a duplicate definition', () => {
             const options = createDefaultOptions()
             const parser = new IncrementalParser(options)

@@ -147,9 +147,24 @@ describe('streaming parity', () => {
         // root one character shorter than its span, and marked's blockquote
         // raw gains a line break the source does not have (source
         // `> - q\n` + backtick => raw ends in backtick + `\n`). The sum check passes; the offset is wrong.
-        red('two cancelling length errors do not pass the integrity check', () => {
+        it('two cancelling length errors do not pass the integrity check', () => {
             expectParity(['a\r\n\n> - q\n`', '``'])
             expectParity(['a\r\n\n> - q\n`', '\n'])
+            // Plan 008: the reviewer's corpus reproduction, character by character.
+            expectParity(chunkBy('\r\n\n\n\n> - list in quote\n> - second\nlazy\n', 1))
+        })
+
+        it('a carriage return keeps the tail window off for the rest of the stream (guard)', () => {
+            const parser = new IncrementalParser(createOptions())
+            const chunks = ['a\r\n\n', 'One.\n\n', 'Two.\n\n', 'Three.\n\n']
+            const used: boolean[] = []
+            let source = ''
+            for (const chunk of chunks) {
+                source += chunk
+                used.push(parser.update(source).usedTailWindow)
+            }
+            expect(used).toEqual([false, false, false, false])
+            expectParity(chunks)
         })
     })
 
@@ -419,9 +434,32 @@ describe('streaming parity', () => {
         // once its block contains a tag, cleanup expands it into roots that no
         // longer carry the unterminated opener (`<?pi\n<li>x</li>\n\n` =>
         // text `x` + space), so the boundary moves past the blank line.
-        red('an unclosed HTML construct containing a tag stays open across a blank line', () => {
+        it('an unclosed HTML construct containing a tag stays open across a blank line', () => {
             expectParity(['<?pi\n<li>x</li>\n', '\n', '['])
             expectParity(['<!--\n<hr>\n', '\n', '!'])
+        })
+
+        it('an HTML construct containing a tag regains the tail window once it closes (guard)', () => {
+            const parser = new IncrementalParser(createOptions())
+            const chunks = [
+                '<!--\n<hr>\n',
+                '\n',
+                '!',
+                ' -->\n\n',
+                'One.\n\n',
+                'Two.\n\n',
+                'Three.\n\n'
+            ]
+            const used: boolean[] = []
+            let source = ''
+            for (const chunk of chunks) {
+                source += chunk
+                used.push(parser.update(source).usedTailWindow)
+            }
+            expect(used.slice(0, 3)).toEqual([false, false, false])
+            expect(used.slice(-2)).toEqual([true, true])
+            expectParity(chunks)
+            expectParity(chunkBy('<?pi\n<li>x</li>\n\nstill inside ?>\n\nAfter.\n', 1))
         })
 
         // Found by guard after plan 007 with inputs from upstream
@@ -430,9 +468,43 @@ describe('streaming parity', () => {
         // opener, so the blank line after it does not end the block
         // (`<div\n\ns` => one html root; `<div>\n\ns` => html, space,
         // paragraph). The stream froze `<div` when the blank line arrived.
-        red('a tag cut before its closing bracket stays open across a blank line', () => {
+        it('a tag cut before its closing bracket stays open across a blank line', () => {
             expectParity(['<div\n', '\n', 's'])
             expectParity(chunkBy('Intro.\n\n</div\n\nHeading text\n', 1))
+        })
+
+        it('a complete tag followed by a blank line keeps the tail window (guard)', () => {
+            const parser = new IncrementalParser(createOptions())
+            const chunks = ['<div>x</div>\n\n', 'Prose.\n\n', 'More.\n\n', 'End.\n\n']
+            const used: boolean[] = []
+            let source = ''
+            for (const chunk of chunks) {
+                source += chunk
+                used.push(parser.update(source).usedTailWindow)
+            }
+            expect(used.slice(1)).toEqual([true, true, true])
+            expectParity(chunks)
+        })
+
+        it('a tag whose closing bracket arrives later regains the tail window (guard)', () => {
+            const parser = new IncrementalParser(createOptions())
+            const chunks = [
+                '<div\n',
+                '\n',
+                'class="a">\n\n',
+                'Inside.\n\n',
+                '</div>\n\n',
+                'One.\n\n',
+                'Two.\n\n'
+            ]
+            const used: boolean[] = []
+            let source = ''
+            for (const chunk of chunks) {
+                source += chunk
+                used.push(parser.update(source).usedTailWindow)
+            }
+            expect(used.slice(-2)).toEqual([true, true])
+            expectParity(chunks)
         })
 
         it('a long chain of adjacent open blocks refuses the boundary, then regains it (guard)', () => {

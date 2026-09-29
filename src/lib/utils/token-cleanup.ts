@@ -397,20 +397,97 @@ const getSourceSpan = (token: Token): number =>
     unresolvedSourceSpans.get(token) ??
     token.raw.length
 
+/** Start of a CommonMark type-1 HTML block (`<pre`, `<script`, `<style`,
+ *  `<textarea`), which only its matching closing tag ends. */
+const RAW_TEXT_BLOCK_START_RE = /^ {0,3}<(pre|script|style|textarea)(?=[\s>]|$)/i
+/** Start of a CommonMark type-4 HTML block (a declaration, `<!DOCTYPE`). */
+const DECLARATION_START_RE = /^ {0,3}<![a-zA-Z]/
+
+/**
+ * True for the raw of an html root that opens a CommonMark HTML block of
+ * types 1–5 without containing its terminator. Those blocks are not ended by
+ * a blank line — they run to their terminator, or to the end of the input
+ * while unclosed — so the next chunk can still extend them across any number
+ * of blank lines. Shapes cleanup leaves for them (marked 15):
+ *
+ *   '<!-- a comment\n\n'   => html{ raw: '<!-- a comment', block: true } + space
+ *   '<!-- a comment\n\nsp' => html{ raw: '<!-- a comment\n\nsp', block: true }
+ *   '<?php x;\n\n'         => html{ raw: '<?php x;', block: true } + space
+ *   '<![CDATA[ a\n\n'      => html{ raw: '<![CDATA[ a', block: true } + space
+ *   '<pre>\nkeep\n\n  th'  => html{ raw: '<pre>\nkeep\n\n  th', block: true }
+ *
+ * No `tag` and no `sourceLength`: the tag-based detector cannot see the first
+ * four. A type-1 opening that cleanup expanded carries `tag` and is caught
+ * there too; checked here so `<pre` before its `>` is covered as well.
+ * Inspects the start in O(1); only a matching opener searches its own raw.
+ * Used by `IncrementalParser` and by `expandHtmlToken` below.
+ *
+ * @param raw - Raw source of an html root token without a known span
+ * @returns `true` if the block is still waiting for its terminator
+ * @example
+ * ```typescript
+ * isUnterminatedHtmlBlock('<!-- a comment') // true
+ * isUnterminatedHtmlBlock('<!-- a comment\n\nspanning -->') // false
+ * isUnterminatedHtmlBlock('<div>') // false (tag-based detector's job)
+ * ```
+ */
+export const isUnterminatedHtmlBlock = (raw: string): boolean => {
+    const start = raw.indexOf('<')
+    if (start < 0 || start > 3) return false
+    if (raw.startsWith('<!--', start)) return !raw.includes('-->', start + 2)
+    if (raw.startsWith('<?', start)) return !raw.includes('?>', start + 1)
+    if (raw.startsWith('<![CDATA[', start)) return !raw.includes(']]>', start + 9)
+    if (DECLARATION_START_RE.test(raw)) return !raw.includes('>', start + 2)
+    const rawText = RAW_TEXT_BLOCK_START_RE.exec(raw)
+    return rawText !== null && !raw.toLowerCase().includes(`</${rawText[1].toLowerCase()}>`)
+}
+
+/**
+ * Roots cleanup produced from an html block that is still waiting for its
+ * terminator (`isUnterminatedHtmlBlock` on the marked token's raw). Once
+ * such a block contains a tag, cleanup expands it and no produced root
+ * carries the opener any more (`<?pi\n<li>x</li>\n\n` => text `x` + space;
+ * `<!--\n<hr>\n\n` => html `<!--\n<hr/>` with a `sourceLength`), so the
+ * incremental parser reads this set instead. Kept off the token so rendered
+ * output and semantic equality do not change.
+ */
+const unterminatedHtmlRoots = new WeakSet<Token>()
+
+/**
+ * True for a token cleanup produced from an html block that is still
+ * waiting for its terminator; see `unterminatedHtmlRoots`.
+ *
+ * @param token - A token returned by `shrinkHtmlTokens`
+ * @returns `true` if the token came from an unterminated html block
+ * @example
+ * ```typescript
+ * const [root] = shrinkHtmlTokens(new Lexer().lex('<?pi\n<li>x</li>\n'))
+ * isFromUnterminatedHtmlBlock(root) // true
+ * ```
+ */
+export const isFromUnterminatedHtmlBlock = (token: Token): boolean =>
+    unterminatedHtmlRoots.has(token)
+
 /**
  * Expands a single html token. Single-tag inputs (the dominant inline
  * shape — opening tag alone, closing tag alone, self-closing) skip
  * htmlparser2 entirely and go through the cheap `formatSelfClosingHtmlToken`
  * path. Anything with two or more tags routes through
- * `expandHtmlBlockNested` for inline nesting.
+ * `expandHtmlBlockNested` for inline nesting. The roots of a block html
+ * token that is still waiting for its terminator are recorded in
+ * `unterminatedHtmlRoots`.
  *
  * @internal
  */
 const expandHtmlToken = (token: Token): Token[] => {
-    if (!hasMultipleTags(token.raw)) {
-        return [formatSelfClosingHtmlToken(token)]
+    const expansion = hasMultipleTags(token.raw)
+        ? expandHtmlBlockNested(token.raw)
+        : [formatSelfClosingHtmlToken(token)]
+    // Record provenance only; what is rendered does not change.
+    if ((token as Tokens.HTML).block && isUnterminatedHtmlBlock(token.raw)) {
+        for (const root of expansion) unterminatedHtmlRoots.add(root)
     }
-    return expandHtmlBlockNested(token.raw)
+    return expansion
 }
 
 /**

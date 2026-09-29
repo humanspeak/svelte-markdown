@@ -18,7 +18,11 @@ import {
     STREAM_STATS_ENABLED
 } from '$lib/utils/streaming-token-reuse.js'
 import { isTailWindowSafe } from '$lib/utils/tail-window.js'
-import { isHtmlOpenTag } from '$lib/utils/token-cleanup.js'
+import {
+    isFromUnterminatedHtmlBlock,
+    isHtmlOpenTag,
+    isUnterminatedHtmlBlock
+} from '$lib/utils/token-cleanup.js'
 import { isVoidElement } from '$lib/utils/void-elements.js'
 
 /**
@@ -76,11 +80,6 @@ const PARTIAL_ORDERED_MARKER_RE = /^ {0,3}\d{1,9}$/
  *  any whitespace, so a partial one lexes as a paragraph or indented code
  *  until it closes and joins the preceding `def`. */
 const DEFINITION_TITLE_START_RE = /^[ \t]*["'(]/
-/** Start of a CommonMark type-1 HTML block (`<pre`, `<script`, `<style`,
- *  `<textarea`), which only its matching closing tag ends. */
-const RAW_TEXT_BLOCK_START_RE = /^ {0,3}<(pre|script|style|textarea)(?=[\s>]|$)/i
-/** Start of a CommonMark type-4 HTML block (a declaration, `<!DOCTYPE`). */
-const DECLARATION_START_RE = /^ {0,3}<![a-zA-Z]/
 const LINK_REFERENCE_RE = /\[[^\]\n]+\]\[[^\]\n]*\]/
 const SHORTCUT_REFERENCE_RE = /\[[^\]\n]+\](?![[(])/ // Excludes inline links/images and full refs
 const REGEXP_SPECIAL_RE = /[.*+?^${}()|[\]\\]/g
@@ -132,44 +131,6 @@ interface CitingRoot {
     source: string
     /** `source` normalized for label-use search */
     text: string
-}
-
-/**
- * True for the raw of an html root that opens a CommonMark HTML block of
- * types 1–5 without containing its terminator. Those blocks are not ended by
- * a blank line — they run to their terminator, or to the end of the input
- * while unclosed — so the next chunk can still extend them across any number
- * of blank lines. Shapes cleanup leaves for them (marked 15):
- *
- *   '<!-- a comment\n\n'   => html{ raw: '<!-- a comment', block: true } + space
- *   '<!-- a comment\n\nsp' => html{ raw: '<!-- a comment\n\nsp', block: true }
- *   '<?php x;\n\n'         => html{ raw: '<?php x;', block: true } + space
- *   '<![CDATA[ a\n\n'      => html{ raw: '<![CDATA[ a', block: true } + space
- *   '<pre>\nkeep\n\n  th'  => html{ raw: '<pre>\nkeep\n\n  th', block: true }
- *
- * No `tag` and no `sourceLength`: the tag-based detector cannot see the first
- * four. A type-1 opening that cleanup expanded carries `tag` and is caught
- * there too; checked here so `<pre` before its `>` is covered as well.
- * Inspects the start in O(1); only a matching opener searches its own raw.
- *
- * @param raw - Raw source of an html root token without a known span
- * @returns `true` if the block is still waiting for its terminator
- * @example
- * ```typescript
- * isUnterminatedHtmlBlock('<!-- a comment') // true
- * isUnterminatedHtmlBlock('<!-- a comment\n\nspanning -->') // false
- * isUnterminatedHtmlBlock('<div>') // false (tag-based detector's job)
- * ```
- */
-const isUnterminatedHtmlBlock = (raw: string): boolean => {
-    const start = raw.indexOf('<')
-    if (start < 0 || start > 3) return false
-    if (raw.startsWith('<!--', start)) return !raw.includes('-->', start + 2)
-    if (raw.startsWith('<?', start)) return !raw.includes('?>', start + 1)
-    if (raw.startsWith('<![CDATA[', start)) return !raw.includes(']]>', start + 9)
-    if (DECLARATION_START_RE.test(raw)) return !raw.includes('>', start + 2)
-    const rawText = RAW_TEXT_BLOCK_START_RE.exec(raw)
-    return rawText !== null && !raw.toLowerCase().includes(`</${rawText[1].toLowerCase()}>`)
 }
 
 /**
@@ -603,6 +564,16 @@ export class IncrementalParser {
      *  away regains the tail window. */
     private prevHasLengthMismatch = false
 
+    /** True iff `prevSource` contains a carriage return (plan 008). marked
+     *  normalizes `\r\n` to `\n`, so a root is shorter than its span, and
+     *  another root can be longer than its span (a blockquote raw that gains
+     *  a line break): the errors can cancel, and the length check above then
+     *  passes with wrong offsets. So a source with `\r` never uses the tail
+     *  window. Sticky under appends — only the appended slice is searched —
+     *  and recomputed from the whole source on any other update (which is a
+     *  full re-lex anyway). */
+    private prevHasCarriageReturn = false
+
     /** Cached boundary for the next append-only update. Computed when
      * parser state is committed so `getTailWindowBoundary` stays O(1). */
     private prevTailWindowBoundary: TailWindowBoundary = { prefixCount: 0, reparseOffset: 0 }
@@ -665,15 +636,21 @@ export class IncrementalParser {
 
     /**
      * True for an HTML construct that is still open: an opening tag whose
-     * actual source span is unknown, or a comment / processing instruction /
-     * declaration / CDATA section / raw-text element before its terminator
-     * (`isUnterminatedHtmlBlock`). After token cleanup, closed HTML tokens
+     * actual source span is unknown, a tag with no closing bracket yet, or a
+     * comment / processing instruction / declaration / CDATA section /
+     * raw-text element before its terminator (`isUnterminatedHtmlBlock`),
+     * including any root cleanup expanded out of one
+     * (`isFromUnterminatedHtmlBlock`). After token cleanup, closed HTML tokens
      * keep children on `.tokens` and record their full source span as
      * `sourceLength`. Unclosed HTML openings have neither a full span nor a
      * closing tag yet, so serving them as a stable tail-window prefix would
      * corrupt the offset math or split the construct at a blank line.
      */
     private hasHtmlSpanMismatch = (token: Token): boolean => {
+        // A root cleanup expanded out of an unterminated comment, processing
+        // instruction, ... that contains a tag (plan 008): no root carries
+        // the opener any more, and a piece can be `text`.
+        if (isFromUnterminatedHtmlBlock(token)) return true
         if (token.type !== 'html') return false
         const html = token as HtmlToken
         if (html.sourceLength != null) return false
@@ -681,6 +658,12 @@ export class IncrementalParser {
         // raw-text element (`<pre>`, `<script>`, ...) still before its
         // terminator: a blank line does not end it (plan 006).
         if (isUnterminatedHtmlBlock(html.raw)) return true
+        // A tag cut before its closing bracket (plan 008): marked consumes
+        // the line break after a block-level tag name as part of the opener,
+        // so a blank line does not end it yet (`<div\n\n` => html `<div` +
+        // space, `<div\n\ns` => one html root). Which names are block-level
+        // is marked's decision: a root it lexed as html is enough.
+        if (!html.raw.includes('>')) return true
         if (html.raw.startsWith('</')) return false
         if (html.tag) return !html.raw.endsWith('/>')
         // An opening tag still waiting for its closing tag. Cleanup leaves it
@@ -885,10 +868,28 @@ export class IncrementalParser {
         if (this.tailWindowDisabled) return false
         if (this.prevSource === '' || this.prevTokens.length === 0) return false
         if (!isAppendOnly) return false
+        // A carriage return in the source, before or in this append: offsets
+        // computed from root lengths may be wrong although they add up.
+        if (this.prevHasCarriageReturn || this.appendHasCarriageReturn(source)) return false
         // The cached boundary is already empty on a length mismatch; checked
         // here too so a boundary from elsewhere cannot bypass the guard.
         return boundary.reparseOffset > 0 && !this.prevHasLengthMismatch
     }
+
+    /**
+     * True when the part of `source` after `prevSource` contains a carriage
+     * return. O(appended); assumes `source` starts with `prevSource`.
+     *
+     * @param source - Full source for an append-only update
+     * @returns `true` if the appended slice contains `\r`
+     * @example
+     * ```typescript
+     * // prevSource === 'a\n'
+     * this.appendHasCarriageReturn('a\nb\r\n') // true
+     * ```
+     */
+    private appendHasCarriageReturn = (source: string): boolean =>
+        source.indexOf('\r', this.prevSource.length) >= 0
 
     /**
      * All reference definitions under `tokens`, from marked's `def` tokens;
@@ -1298,8 +1299,8 @@ export class IncrementalParser {
      * @param tokens - Latest token array after parsing the current source
      * @param sourceLength - Character length of the current source
      * @param offsetsUnsafe - Whether token lengths cannot be mapped to source
-     *   offsets: an HTML token has an unknown source span, or the roots do not
-     *   add up to `sourceLength`
+     *   offsets: an HTML token has an unknown source span, the roots do not
+     *   add up to `sourceLength`, or the source contains a carriage return
      * @returns The prefix token count and source offset to reuse on the next
      *   append-only update
      * @example
@@ -1564,6 +1565,11 @@ export class IncrementalParser {
         // Computed by `parseSource`: O(tail) on the tail-window paths, a full
         // sum only after a full re-lex (which was already O(document)).
         const { hasLengthMismatch } = parseResult
+        // Sticky under appends (O(appended)); any other update was a full
+        // re-lex, so one scan of the source adds no order.
+        const hasCarriageReturn = isAppendOnly
+            ? this.prevHasCarriageReturn || this.appendHasCarriageReturn(source)
+            : source.includes('\r')
 
         // `isAppendOnly` already guarantees `source.startsWith(prevSource)`, so
         // call `appendIntroducesMatch` directly rather than re-checking it.
@@ -1577,13 +1583,14 @@ export class IncrementalParser {
         this.prevTokens = parseResult.tokens
         this.prevHasHtmlSpanMismatch = hasHtmlSpanMismatch
         this.prevHasLengthMismatch = hasLengthMismatch
+        this.prevHasCarriageReturn = hasCarriageReturn
         // Reused prefix roots keep their recorded state; only the re-lexed
         // roots are walked (every root after a full re-lex).
         this.recordInlineStates(parseResult.tokens, parseResult.reusedPrefixCount)
         this.prevTailWindowBoundary = this.getNextTailWindowBoundary(
             parseResult.tokens,
             source.length,
-            hasHtmlSpanMismatch || hasLengthMismatch
+            hasHtmlSpanMismatch || hasLengthMismatch || hasCarriageReturn
         )
     }
 

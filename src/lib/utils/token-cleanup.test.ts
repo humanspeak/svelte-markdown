@@ -1,6 +1,12 @@
 import { Lexer, type Token } from 'marked'
 import { describe, expect, it } from 'vitest'
-import { isHtmlOpenTag, shrinkHtmlTokens } from './token-cleanup.js'
+import { lexAndClean } from './parse-and-cache.js'
+import {
+    isFromUnterminatedHtmlBlock,
+    isHtmlOpenTag,
+    isUnterminatedHtmlBlock,
+    shrinkHtmlTokens
+} from './token-cleanup.js'
 
 type TestListItem = Token & { tokens: Token[]; listItemIndex: number }
 type TestTableCell = Token & { tokens: Token[] }
@@ -695,6 +701,110 @@ describe('Token Cleanup Utilities', () => {
             })[]
             expect(br).toMatchObject({ raw: '<br/>', tag: 'br', attributes: {}, tokens: [] })
             expect(br.sourceLength).toBe(4)
+        })
+    })
+    // Plan 008: cleanup records which roots came from an html block that is
+    // still waiting for its terminator, without changing what it produces.
+    describe('unterminated html blocks', () => {
+        it('recognizes an html block still waiting for its terminator', () => {
+            expect(isUnterminatedHtmlBlock('<!-- a comment')).toBe(true)
+            expect(isUnterminatedHtmlBlock('<?pi\n<li>x</li>')).toBe(true)
+            expect(isUnterminatedHtmlBlock('<!-- a comment -->')).toBe(false)
+            expect(isUnterminatedHtmlBlock('<div>')).toBe(false)
+        })
+
+        it('marks every root expanded from an unterminated block', () => {
+            const pi = shrinkHtmlTokens(new Lexer().lex('<?pi\n<li>x</li>\n\n'))
+            expect(pi.map((token) => token.type)).toEqual(['text', 'space'])
+            expect(isFromUnterminatedHtmlBlock(pi[0])).toBe(true)
+            expect(isFromUnterminatedHtmlBlock(pi[1])).toBe(false)
+
+            const comment = shrinkHtmlTokens(new Lexer().lex('<!--\n<hr>\n\n'))
+            expect(comment[0]).toMatchObject({ type: 'html', raw: '<!--\n<hr/>', sourceLength: 9 })
+            expect(isFromUnterminatedHtmlBlock(comment[0])).toBe(true)
+        })
+
+        it('does not mark roots of a terminated block or plain html', () => {
+            for (const source of ['<!--\n<hr>\n-->\n\n', '<div><b>x</b></div>\n\n', '<br>\n\n']) {
+                for (const token of shrinkHtmlTokens(new Lexer().lex(source))) {
+                    expect(isFromUnterminatedHtmlBlock(token), source).toBe(false)
+                }
+            }
+        })
+
+        it('leaves the one-shot parse of both reproductions unchanged', () => {
+            const options = { gfm: true }
+            // Captured before the marker was added (plan 008 Step 3).
+            const expected: [string, unknown[]][] = [
+                [
+                    '<?pi\n<li>x</li>\n',
+                    [{ type: 'text', raw: 'x\n', text: 'x\n', sourceLength: 16 }]
+                ],
+                [
+                    '<?pi\n<li>x</li>\n\n',
+                    [
+                        { type: 'text', raw: 'x', text: 'x', sourceLength: 15 },
+                        { type: 'space', raw: '\n\n' }
+                    ]
+                ],
+                [
+                    '<?pi\n<li>x</li>\n\n[',
+                    [{ type: 'text', raw: 'x\n\n[', text: 'x\n\n[', sourceLength: 18 }]
+                ],
+                [
+                    '<!--\n<hr>\n',
+                    [
+                        {
+                            type: 'html',
+                            block: true,
+                            raw: '<!--\n<hr>\n',
+                            pre: false,
+                            text: '<!--\n<hr>\n',
+                            tag: 'hr',
+                            attributes: {},
+                            tokens: []
+                        }
+                    ]
+                ],
+                [
+                    '<!--\n<hr>\n\n',
+                    [
+                        {
+                            type: 'html',
+                            block: true,
+                            raw: '<!--\n<hr/>',
+                            pre: false,
+                            text: '<!--\n<hr>',
+                            sourceLength: 9,
+                            tag: 'hr',
+                            attributes: {},
+                            tokens: []
+                        },
+                        { type: 'space', raw: '\n\n' }
+                    ]
+                ],
+                [
+                    '<!--\n<hr>\n\n!',
+                    [
+                        {
+                            type: 'html',
+                            block: true,
+                            raw: '<!--\n<hr>\n\n!',
+                            pre: false,
+                            text: '<!--\n<hr>\n\n!',
+                            tag: 'hr',
+                            attributes: {},
+                            tokens: []
+                        }
+                    ]
+                ]
+            ]
+            for (const [source, tokens] of expected) {
+                expect(
+                    JSON.parse(JSON.stringify(lexAndClean(source, options, false))),
+                    source
+                ).toEqual(tokens)
+            }
         })
     })
 })
