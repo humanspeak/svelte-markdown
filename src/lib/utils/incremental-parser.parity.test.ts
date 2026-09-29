@@ -250,6 +250,122 @@ describe('streaming parity', () => {
         it('a paragraph followed by a blank then whitespace-only line keeps parity', () => {
             expectParity(['Para.\n\n   ', ' more\n'])
         })
+
+        // Plan 006: HTML blocks of CommonMark types 1–5 are not ended by a
+        // blank line; they run to their own terminator (or to the end of the
+        // input while unclosed), so they must not be frozen before it.
+        it('an HTML comment with a blank line stays one block until it closes', () => {
+            expectParity(['<!-- a comment\n\n', 'sp', 'anning -->\n\n', 'After.\n'])
+            const source = 'Intro.\n\n<!-- a comment\n\nspanning -->\n\nAfter.\n'
+            for (const size of [1, 3, 7]) expectParity(chunkBy(source, size))
+            // Indented up to three spaces, and after a closed comment.
+            expectParity(chunkBy('Intro.\n\n  <!-- ind\n\nx -->\n\nAfter.\n', 1))
+            expectParity(chunkBy('Intro.\n\n<!-- x -->\n<!-- y\n\nz -->\n\nAfter.\n', 1))
+        })
+
+        it.each([
+            ['pre', '<pre>\nkeep\n\n  this\n</pre>'],
+            ['script', '<script>\nlet a = 1\n\nlet b = 2\n</script>'],
+            ['style', '<style>\np { color: red }\n\n</style>'],
+            ['textarea', '<textarea>\nline one\n\nline two\n</textarea>'],
+            // Anchor: a type-1 opener before its `>` has no tag for the
+            // tag-based detector.
+            ['pre (bracket on a later line)', '<pre\n\nkeep\n</pre>']
+        ])('a <%s> block with a blank line keeps parity', (_name, block) => {
+            const source = `Intro.\n\n${block}\n\nAfter.\n`
+            for (const size of [1, 3, 7]) expectParity(chunkBy(source, size))
+        })
+
+        it.each([
+            ['a processing instruction', '<?php echo 1;\n\n ?>'],
+            // Without the leading space the whitespace-only-line rule (plan
+            // 005) does not happen to hold the block, so this one is the anchor.
+            ['a processing instruction closed at column 0', '<?php echo 1;\n\n?>'],
+            ['a declaration', '<!DOCTYPE html>'],
+            ['a declaration with a blank line', '<!DOCTYPE\n\nhtml>'],
+            ['a CDATA section', '<![CDATA[ a\n\nb ]]>']
+        ])('%s keeps parity', (_name, block) => {
+            const source = `Intro.\n\n${block}\n\nAfter.\n`
+            for (const size of [1, 3, 7]) expectParity(chunkBy(source, size))
+        })
+
+        it('an HTML block split into several roots is not frozen before its end', () => {
+            // One marked html block (`<li>x</li>\n<`) becomes two roots after
+            // cleanup (`<li>` + text `\n<`); the next chunk still extends that
+            // block, and `</u` is absorbed into the `<li>` root's span.
+            expectParity(['<li>x</li>\n<', '/u'])
+            expectParity(chunkBy('Para <ul>\n<li>html item</li>\n</ul>\n\nAfter.\n', 1))
+            expectParity(chunkBy('Intro.\n\n<img src=a>\n<img src=b>\n<i>c</i>\n\nAfter.\n', 1))
+        })
+
+        it('a cut inside a split HTML block is never used, whatever held the tail', () => {
+            // The whitespace-only-line rule holds only the last piece
+            // (`<img b>`) of the block `<img a>\n<img b>`; the tail then lexes
+            // it as a block of its own (different fields).
+            expectParity(['<img src=a>\n<img src=b>\n\n', '\t', 'Ta'])
+        })
+
+        // Plan 006: marked's inline lexer state (`inRawBlock` after an inline
+        // `<pre>`/`<code>`/`<kbd>`/`<script>`, `inLink` after `<a `) carries
+        // across blocks until the closing tag, so a tail lexed from a fresh
+        // state differs while such an inline tag is still open.
+        it('an inline raw tag left open in a paragraph keeps later text escaped', () => {
+            expectParity(['a <code>\n\n', 'b'])
+            expectParity(['Final line<pre>\nkeep\n\n', '  th'])
+            // Inside a table cell, a list item and a blockquote.
+            expectParity(['| a <code> | b |\n|---|---|\n| c | d |\n\n', 'after'])
+            expectParity(['- item <kbd>\n- two\n\n', 'after'])
+            expectParity(['> quoted <pre>\n\n', 'after'])
+            expectParity(chunkBy('Use <kbd>Ctrl\n\nthen more\n\nand </kbd> done\n\nAfter.\n', 1))
+        })
+
+        it('an inline link tag left open in a paragraph keeps later URLs unlinked', () => {
+            expectParity(['a <a href="x">link\n\n', 'see https://example.com/x'])
+        })
+
+        it('an inline raw tag open around a citing root keeps parity when the definition arrives', () => {
+            expectParity(['Open <code>\n\nSee [a].\n\nClose </code>\n\n', '[a]: /x\n'])
+        })
+
+        it('an inline raw tag closed in a later paragraph regains the tail window (guard)', () => {
+            const parser = new IncrementalParser(createOptions())
+            const chunks = ['a <code>\n\n', 'b </code>\n\n', 'One.\n\n', 'Two.\n\n', 'Three.\n\n']
+            const used: boolean[] = []
+            let source = ''
+            for (const chunk of chunks) {
+                source += chunk
+                used.push(parser.update(source).usedTailWindow)
+            }
+            expect(used.slice(-2)).toEqual([true, true])
+            expectParity(chunks)
+        })
+
+        it('a closed HTML comment regains the tail window (guard)', () => {
+            const parser = new IncrementalParser(createOptions())
+            const used: boolean[] = []
+            let source = ''
+            for (const chunk of [
+                '<!-- a comment\n\nspanning -->\n\n',
+                'One.\n\n',
+                'Two.\n\n',
+                'Three.\n\n'
+            ]) {
+                source += chunk
+                used.push(parser.update(source).usedTailWindow)
+            }
+            expect(used.slice(-2)).toEqual([true, true])
+            expectParity([
+                '<!-- a comment\n\nspanning -->\n\n',
+                'One.\n\n',
+                'Two.\n\n',
+                'Three.\n\n'
+            ])
+        })
+
+        it('an HTML comment that never closes keeps parity to the end (guard)', () => {
+            const source = 'Intro.\n\n<!-- never closed\n\nstill hidden\n\n# not a heading\n\nEnd'
+            for (const size of [1, 4, 9]) expectParity(chunkBy(source, size))
+        })
     })
 
     describe('C. reference scope (definitions the line-anchored detector misses)', () => {

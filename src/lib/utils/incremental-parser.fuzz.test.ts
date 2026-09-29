@@ -11,9 +11,9 @@
  * the document seed and chunking seed that reproduce it.
  *
  * `red` marks a known failure that asserts the CORRECT behavior; run with
- * `PARITY_STRICT=1` to see the real failures. None is red today (plan 005
- * closed the last gaps): when a new block exposes a failure, add it here and
- * mark the case `red` until the fix lands.
+ * `PARITY_STRICT=1` to see the real failures. None is red today (plan 006
+ * closed the HTML-construct gaps): when a new block exposes a failure, add it
+ * here and mark the case `red` until the fix lands.
  */
 
 import type { Token } from '$lib/utils/markdown-parser.js'
@@ -145,7 +145,26 @@ const EDGE_BLOCKS = [
     '\tTabbed code\n\n',
     'Text\n    not code, lazy\n\n',
     '\n\n\n',
-    'Final line'
+    'Final line',
+    // Plan 006 additions: HTML constructs and HTML next to markdown blocks.
+    '<details open class="x">\n\n<summary>S</summary>\n\nBody\n\n</details>\n\n',
+    '<!-- note -->\n- list after a comment\n- two\n\n',
+    '<svg width="10">\n<g>\n\n<circle r="1"/>\n\n</g>\n</svg>\n\n',
+    '<video controls>\n<source src="a.mp4" type="video/mp4">\n<source src="a.webm">\n</video>\n\n',
+    'Para <span>opened\n\nclosed</span> next\n\n',
+    '- item one\n<br>\n- item two\n\n',
+    '<?php echo 1;\n\n?>\n\n',
+    '<![CDATA[ x\n\ny ]]>\n\n',
+    '<!DOCTYPE html>\n\n',
+    '<textarea>\nline\n\nline\n</textarea>\n\n',
+    '<li>html item</li>\n<li>second</li>\n\n',
+    '<img src="a.png">\n<img src="b.png">\n\n',
+    // Inline tags that marked's inline lexer state carries across blocks.
+    'Use <code>open\n\n',
+    'close </code> here\n\n',
+    'a <a href="x">link\n\n',
+    'end </a> ok https://x.example\n\n',
+    '- <!-- in list\n\n  still -->\n\n'
 ]
 
 const CHUNK_LIMITS = [1, 2, 3, 5, 9, 17, 40]
@@ -239,7 +258,7 @@ describe('generative streaming parity', () => {
         FUZZ_TIMEOUT_MS
     )
 
-    red(
+    it(
         'documents with HTML and edge blocks keep parity',
         () => {
             const failures = fuzz({ blocks: EDGE_BLOCKS, documents: 100, chunkingsPerDocument: 8 })

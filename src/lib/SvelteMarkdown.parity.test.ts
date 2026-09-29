@@ -88,6 +88,16 @@ describe('streaming rendered parity', () => {
             await expectRenderedParity(['<div>\n\n', '**b**\n\n', '</div>\n'])
         })
 
+        it('an HTML comment with a blank line renders no visible text', async () => {
+            const chunks = ['<!-- a comment\n\n', 'sp', 'anning -->\n\n', 'After.\n']
+            const streamed = await renderStreamed(chunks)
+            expect(streamed.textContent).not.toContain('comment')
+            expect(streamed.textContent).not.toContain('spanning')
+            const oneShot = await renderOneShot(chunks.join(''))
+            expect(oneShot.textContent).not.toContain('spanning')
+            await expectRenderedParity(chunks)
+        })
+
         it('a tight list renders identically streamed and one-shot (guard)', async () => {
             await expectRenderedParity(['- one\n- t', 'wo\n  - nested\n', '- three\n\nAfter.\n'])
         })

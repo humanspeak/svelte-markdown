@@ -76,6 +76,11 @@ const PARTIAL_ORDERED_MARKER_RE = /^ {0,3}\d{1,9}$/
  *  any whitespace, so a partial one lexes as a paragraph or indented code
  *  until it closes and joins the preceding `def`. */
 const DEFINITION_TITLE_START_RE = /^[ \t]*["'(]/
+/** Start of a CommonMark type-1 HTML block (`<pre`, `<script`, `<style`,
+ *  `<textarea`), which only its matching closing tag ends. */
+const RAW_TEXT_BLOCK_START_RE = /^ {0,3}<(pre|script|style|textarea)(?=[\s>]|$)/i
+/** Start of a CommonMark type-4 HTML block (a declaration, `<!DOCTYPE`). */
+const DECLARATION_START_RE = /^ {0,3}<![a-zA-Z]/
 const LINK_REFERENCE_RE = /\[[^\]\n]+\]\[[^\]\n]*\]/
 const SHORTCUT_REFERENCE_RE = /\[[^\]\n]+\](?![[(])/ // Excludes inline links/images and full refs
 const REFERENCE_DEFINITION_RE = /^\s{0,3}\[[^\]\n]+\]:/m
@@ -120,6 +125,158 @@ interface CitingRoot {
     source: string
     /** `source` normalized for label-use search */
     text: string
+}
+
+/**
+ * True for the raw of an html root that opens a CommonMark HTML block of
+ * types 1–5 without containing its terminator. Those blocks are not ended by
+ * a blank line — they run to their terminator, or to the end of the input
+ * while unclosed — so the next chunk can still extend them across any number
+ * of blank lines. Shapes cleanup leaves for them (marked 15):
+ *
+ *   '<!-- a comment\n\n'   => html{ raw: '<!-- a comment', block: true } + space
+ *   '<!-- a comment\n\nsp' => html{ raw: '<!-- a comment\n\nsp', block: true }
+ *   '<?php x;\n\n'         => html{ raw: '<?php x;', block: true } + space
+ *   '<![CDATA[ a\n\n'      => html{ raw: '<![CDATA[ a', block: true } + space
+ *   '<pre>\nkeep\n\n  th'  => html{ raw: '<pre>\nkeep\n\n  th', block: true }
+ *
+ * No `tag` and no `sourceLength`: the tag-based detector cannot see the first
+ * four. A type-1 opening that cleanup expanded carries `tag` and is caught
+ * there too; checked here so `<pre` before its `>` is covered as well.
+ * Inspects the start in O(1); only a matching opener searches its own raw.
+ *
+ * @param raw - Raw source of an html root token without a known span
+ * @returns `true` if the block is still waiting for its terminator
+ * @example
+ * ```typescript
+ * isUnterminatedHtmlBlock('<!-- a comment') // true
+ * isUnterminatedHtmlBlock('<!-- a comment\n\nspanning -->') // false
+ * isUnterminatedHtmlBlock('<div>') // false (tag-based detector's job)
+ * ```
+ */
+const isUnterminatedHtmlBlock = (raw: string): boolean => {
+    const start = raw.indexOf('<')
+    if (start < 0 || start > 3) return false
+    if (raw.startsWith('<!--', start)) return !raw.includes('-->', start + 2)
+    if (raw.startsWith('<?', start)) return !raw.includes('?>', start + 1)
+    if (raw.startsWith('<![CDATA[', start)) return !raw.includes(']]>', start + 9)
+    if (DECLARATION_START_RE.test(raw)) return !raw.includes('>', start + 2)
+    const rawText = RAW_TEXT_BLOCK_START_RE.exec(raw)
+    return rawText !== null && !raw.toLowerCase().includes(`</${rawText[1].toLowerCase()}>`)
+}
+
+/**
+ * True for a root that can be a piece of an expanded html block: an `html`
+ * root, or a root-level `text` (marked never emits `text` at the root; only
+ * cleanup's html expansion does).
+ *
+ * @param token - A root token
+ * @returns `true` for `html` and root-level `text`
+ * @example
+ * ```typescript
+ * isHtmlPiece({ type: 'text', raw: '\n<' } as Token) // true
+ * ```
+ */
+const isHtmlPiece = (token: Token): boolean => token.type === 'html' || token.type === 'text'
+
+/*
+ * marked's inline lexer state (`lexer.state.inLink` / `inRawBlock`) is shared
+ * by every block of one lex: an inline `<code>` left open in one paragraph
+ * makes the text of the following paragraphs `escaped`, and an inline `<a `
+ * left open stops later bare URLs from autolinking, until the closing tag.
+ * The state is kept as two bits.
+ */
+const DEFAULT_INLINE_STATE = 0
+const IN_LINK = 1
+const IN_RAW_BLOCK = 2
+/** marked's `startATag` / `startPreScriptTag`; the matching closing tags
+ *  (`</a>`, `</pre>`...) clear the state. */
+const START_A_TAG_RE = /^<a /i
+const START_RAW_TAG_RE = /^<(pre|code|kbd|script)(\s|>)/i
+const RAW_TAGS = new Set(['pre', 'code', 'kbd', 'script'])
+/** Inline containers: their `tokens` were lexed by marked's inline lexer. */
+const INLINE_CONTAINER_TYPES = new Set(['paragraph', 'heading', 'text'])
+
+type InlineStateToken = Token & {
+    inLink?: boolean
+    inRawBlock?: boolean
+    tag?: string
+    tokens?: Token[]
+    items?: { tokens?: Token[] }[]
+    header?: { tokens?: Token[] }[]
+    rows?: { tokens?: Token[] }[][]
+}
+
+/**
+ * marked's inline state after one INLINE token, given the state before it.
+ * An html token marked emitted carries the state after it (`inLink`,
+ * `inRawBlock`); cleanup keeps those fields unless it paired the tag with its
+ * closing tag, and a pair can only close the state (its closing tag clears
+ * it, as marked's `endATag` / `endPreScriptTag` do). A link clears `inLink`
+ * once its text is lexed. The walk descends into nested inline tokens.
+ *
+ * @param token - An inline token
+ * @param state - The state bits before it
+ * @returns The state bits after it
+ * @example
+ * ```typescript
+ * stepInlineState({ type: 'html', raw: '<code>', inLink: false, inRawBlock: true } as Token, 0) // IN_RAW_BLOCK
+ * ```
+ */
+const stepInlineState = (token: Token, state: number): number => {
+    const inline = token as InlineStateToken
+    if (inline.type === 'html' && typeof inline.inRawBlock === 'boolean') {
+        return (inline.inLink ? IN_LINK : 0) | (inline.inRawBlock ? IN_RAW_BLOCK : 0)
+    }
+    if (!Array.isArray(inline.tokens)) return state
+    if (inline.type === 'link') return stepInlineTokens(inline.tokens, state | IN_LINK) & ~IN_LINK
+    if (inline.type !== 'html' || !inline.tag) return stepInlineTokens(inline.tokens, state)
+    // A paired inline tag: the opening tag, the children, the closing tag.
+    let inner = state
+    if (!(inner & IN_LINK) && START_A_TAG_RE.test(inline.raw)) inner |= IN_LINK
+    if (!(inner & IN_RAW_BLOCK) && START_RAW_TAG_RE.test(inline.raw)) inner |= IN_RAW_BLOCK
+    inner = stepInlineTokens(inline.tokens, inner)
+    if (inline.tag === 'a') inner &= ~IN_LINK
+    if (RAW_TAGS.has(inline.tag)) inner &= ~IN_RAW_BLOCK
+    return inner
+}
+
+/** Folds `stepInlineState` over inline tokens. */
+const stepInlineTokens = (tokens: readonly Token[], state: number): number => {
+    for (const token of tokens) state = stepInlineState(token, state)
+    return state
+}
+
+/**
+ * marked's inline state after BLOCK tokens, given the state before them:
+ * inline containers (paragraph, heading, list `text`, table cells) fold
+ * their inline tokens; block containers (blockquote, list items, paired
+ * html blocks) are descended into; block html itself never touches it.
+ *
+ * @param tokens - Block tokens in document order
+ * @param state - The state bits before them
+ * @returns The state bits after them
+ * @example
+ * ```typescript
+ * stepBlockState(lexAndClean('a <code>\n\n', options, false), 0) // IN_RAW_BLOCK
+ * ```
+ */
+const stepBlockState = (tokens: readonly Token[], state: number): number => {
+    for (const token of tokens) {
+        const block = token as InlineStateToken
+        if (INLINE_CONTAINER_TYPES.has(block.type)) {
+            if (block.tokens) state = stepInlineTokens(block.tokens, state)
+        } else if (block.type === 'list') {
+            for (const item of block.items ?? []) state = stepBlockState(item.tokens ?? [], state)
+        } else if (block.type === 'table') {
+            for (const cell of [...(block.header ?? []), ...(block.rows ?? []).flat()]) {
+                state = stepInlineTokens(cell.tokens ?? [], state)
+            }
+        } else if (Array.isArray(block.tokens)) {
+            state = stepBlockState(block.tokens, state)
+        }
+    }
+    return state
 }
 
 const createLinkMap = (): LinkMap => Object.create(null) as LinkMap
@@ -363,6 +520,12 @@ export class IncrementalParser {
      * are reused objects at fixed offsets, so each is normalized once. */
     private normalizedRootText = new WeakMap<Token, string>()
 
+    /** marked's inline lexer state after each root whose state is not the
+     * default (see `stepBlockState`); absent means the default. Recorded
+     * for the re-lexed roots of each update (`recordInlineStates`), so the
+     * boundary check reads one entry instead of walking the prefix. */
+    private inlineStateAfter = new WeakMap<Token, number>()
+
     /**
      * Creates a new incremental parser instance.
      *
@@ -397,16 +560,23 @@ export class IncrementalParser {
     }
 
     /**
-     * True for an HTML opening tag whose actual source span is unknown.
-     * After token cleanup, closed HTML tokens keep children on `.tokens`
-     * and record their full source span as `sourceLength`. Unclosed HTML
-     * openings have neither a full span nor a closing tag yet, so serving
-     * them as a stable tail-window prefix would corrupt the offset math.
+     * True for an HTML construct that is still open: an opening tag whose
+     * actual source span is unknown, or a comment / processing instruction /
+     * declaration / CDATA section / raw-text element before its terminator
+     * (`isUnterminatedHtmlBlock`). After token cleanup, closed HTML tokens
+     * keep children on `.tokens` and record their full source span as
+     * `sourceLength`. Unclosed HTML openings have neither a full span nor a
+     * closing tag yet, so serving them as a stable tail-window prefix would
+     * corrupt the offset math or split the construct at a blank line.
      */
     private hasHtmlSpanMismatch = (token: Token): boolean => {
         if (token.type !== 'html') return false
         const html = token as HtmlToken
         if (html.sourceLength != null) return false
+        // A comment, processing instruction, declaration, CDATA section or
+        // raw-text element (`<pre>`, `<script>`, ...) still before its
+        // terminator: a blank line does not end it (plan 006).
+        if (isUnterminatedHtmlBlock(html.raw)) return true
         if (html.raw.startsWith('</')) return false
         if (html.tag) return !html.raw.endsWith('/>')
         // An opening tag still waiting for its closing tag. Cleanup leaves it
@@ -831,6 +1001,14 @@ export class IncrementalParser {
     ): Token[] | undefined => {
         let roots: Token[] | undefined
         for (const candidate of candidates) {
+            // Re-lexed alone, the root starts from marked's default inline
+            // state; inside an open inline `<code>` / `<a ` it would not.
+            if (
+                candidate.index > 0 &&
+                this.getInlineStateAfter(prefixRoots[candidate.index - 1]) !== DEFAULT_INLINE_STATE
+            ) {
+                return undefined
+            }
             const root = prefixRoots[candidate.index]
             const seed = candidate.source.includes(DEFINITION_SIGIL)
                 ? withoutLabels(links, this.collectLinks([root]))
@@ -1040,7 +1218,82 @@ export class IncrementalParser {
             cut--
             reparseOffset -= this.getTokenSourceLength(tokens[cut])
         }
+        if (this.isUnsafeCut(tokens, cut)) return { prefixCount: 0, reparseOffset: 0 }
         return { prefixCount: cut, reparseOffset }
+    }
+
+    /**
+     * True when the tail must not start at `cut`, because the tail would be
+     * lexed in a context a one-shot parse does not have. O(1): inspects the
+     * two roots around the cut and one cached fact; the next update then
+     * re-lexes in full, and the tail window is used again as soon as the cut
+     * moves past the condition.
+     *
+     * 1. The cut splits ONE marked html block that cleanup expanded into
+     *    several roots. marked lexes `<li>x</li>\n<` as one html token and
+     *    cleanup turns it into `html <li>` + text `\n<`; the next chunk still
+     *    extends that block, so a tail lexed from the second piece becomes a
+     *    separate document (`\n</u` => space + paragraph) where a one-shot
+     *    parse keeps one html block (`<li>` spanning `</u`). Root-level `text`
+     *    only comes from such an expansion; two adjacent html-ish roots with
+     *    no `space` between them are treated the same (a false positive only
+     *    costs a full re-lex).
+     * 2. marked's inline lexer state is not the default at the cut: an inline
+     *    `<pre>`/`<code>`/`<kbd>`/`<script>` or `<a ` opened before it is not
+     *    closed yet (see `stepInlineState`), and the tail would be lexed with
+     *    a fresh state (`a <code>\n\nb` => `b` is escaped text one-shot).
+     *
+     * @param tokens - Latest root tokens
+     * @param cut - Index of the first tail root
+     * @returns `true` if the next update must re-lex the whole source
+     * @example
+     * ```typescript
+     * this.isUnsafeCut(lexAndClean('<li>x</li>\n<', options, false), 1) // true
+     * this.isUnsafeCut(lexAndClean('<li>x</li>\n\n', options, false), 1) // false
+     * ```
+     */
+    private isUnsafeCut = (tokens: Token[], cut: number): boolean =>
+        cut > 0 &&
+        ((isHtmlPiece(tokens[cut]) && isHtmlPiece(tokens[cut - 1])) ||
+            this.getInlineStateAfter(tokens[cut - 1]) !== DEFAULT_INLINE_STATE)
+
+    /**
+     * marked's inline lexer state after `root`, as recorded by
+     * `recordInlineStates` (the default when nothing was recorded).
+     *
+     * @param root - A root token of the current parse
+     * @returns The inline state bits after the root
+     * @example
+     * ```typescript
+     * this.getInlineStateAfter(tokens[cut - 1]) // DEFAULT_INLINE_STATE
+     * ```
+     */
+    private getInlineStateAfter = (root: Token): number =>
+        this.inlineStateAfter.get(root) ?? DEFAULT_INLINE_STATE
+
+    /**
+     * Records marked's inline lexer state after each root from `from` on,
+     * folding from the state after the root before it. Roots before `from`
+     * are the previous parse's objects and keep their recorded state. Only
+     * roots whose raw contains `<` can change the state, so prose costs one
+     * `includes` per root. Runs on the re-lexed tail on the tail-window
+     * path and on every root only after a full re-lex.
+     *
+     * @param tokens - Root tokens of the committed parse
+     * @param from - First root that is not a reused prefix root
+     * @example
+     * ```typescript
+     * this.recordInlineStates(parseResult.tokens, parseResult.reusedPrefixCount)
+     * ```
+     */
+    private recordInlineStates = (tokens: Token[], from: number): void => {
+        let state = from > 0 ? this.getInlineStateAfter(tokens[from - 1]) : DEFAULT_INLINE_STATE
+        for (let index = from; index < tokens.length; index++) {
+            const root = tokens[index]
+            if (root.raw.includes('<')) state = stepBlockState([root], state)
+            if (state === DEFAULT_INLINE_STATE) this.inlineStateAfter.delete(root)
+            else this.inlineStateAfter.set(root, state)
+        }
     }
 
     /**
@@ -1158,6 +1411,9 @@ export class IncrementalParser {
         this.prevTokens = parseResult.tokens
         this.prevHasHtmlSpanMismatch = hasHtmlSpanMismatch
         this.prevHasLengthMismatch = hasLengthMismatch
+        // Reused prefix roots keep their recorded state; only the re-lexed
+        // roots are walked (every root after a full re-lex).
+        this.recordInlineStates(parseResult.tokens, parseResult.reusedPrefixCount)
         this.prevTailWindowBoundary = this.getNextTailWindowBoundary(
             parseResult.tokens,
             source.length,
