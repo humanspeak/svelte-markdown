@@ -7,7 +7,7 @@
 > commits. Do not commit.
 >
 > **Drift check (run first)**:
-> `git diff --stat <Planned-at SHA>..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/incremental-parser.parity.test.ts`
+> `git diff --stat 988b8e8..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/incremental-parser.parity.test.ts`
 > No change is expected; anything else: STOP.
 
 ## Status
@@ -17,7 +17,7 @@
 - **Risk**: LOW
 - **Depends on**: 006, 008
 - **Category**: bug
-- **Planned at**: commit `<filled by reviewer at dispatch>`, 2026-09-29
+- **Planned at**: commit `988b8e8`, 2026-09-29
 
 ## Why this matters
 
