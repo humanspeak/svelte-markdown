@@ -103,6 +103,51 @@ const GAP_BLOCKS = [
     '  \n   \n'
 ]
 
+/**
+ * Second-opinion blocks, written by the reviewer after the gap blocks went
+ * green: HTML constructs a blank line does not end, container nesting, and
+ * inline syntax that spans lines.
+ */
+const EDGE_BLOCKS = [
+    '<!-- a comment\n\nspanning a blank line -->\n\n',
+    '<pre>\nkeep\n\n  this\n</pre>\n\n',
+    '<script>\nlet a = 1\n\nlet b = 2\n</script>\n\n',
+    '<style>\np { color: red }\n\n</style>\n\n',
+    '<table>\n<tr><td>\n\n**cell**\n\n</td></tr>\n</table>\n\n',
+    '<p align="center">\n  <b>centered</b>\n</p>\n\n',
+    '<div><div>\n\nnested **two** deep\n\n</div></div>\n\n',
+    '<ul>\n<li>html item</li>\n</ul>\n\n',
+    '- [ ] task one\n- [x] task two\n\n',
+    '- a\n\n  ```js\n  fenced in item\n  ```\n\n- b\n\n',
+    '> - quoted list\n> - second\n>\n> after\n\n',
+    '> quote\n\n> separate quote\n\n',
+    '> lazy\ncontinuation\n\n',
+    '1. one\n   - inner\n   - inner two\n2. two\n\n',
+    '* star\n+ plus\n- dash\n\n',
+    '1) paren one\n2) paren two\n\n',
+    '| Left | Center | Right |\n|:-----|:------:|------:|\n| a | b | c |\n| d | e | f |\n\n',
+    '| no | trailing |\n|---|---|\n| row | one |\nparagraph right after table\n\n',
+    '### Heading with trailing hashes ###\n\n',
+    'Setext H1\n=========\n\nSetext H2\n---------\n\n',
+    '***\n\n___\n\n',
+    'Hard break at end  \nnext line\\\nthird line\n\n',
+    'Escaped \\* star and \\[bracket\\]\n\n',
+    '![image](https://example.com/i.png "Img title")\n\n',
+    '<https://auto.example.com> and https://bare.example.com\n\n',
+    'Inline <br> break and <kbd>Ctrl</kbd> keys\n\n',
+    '**bold across\ntwo lines** and *em*\n\n',
+    '`code with `` inside`\n\n',
+    '[full][ref] and [collapsed][] and [shortcut]\n\n',
+    "[ref]: <https://example.com/angle> 'Single'\n[collapsed]: /c\n[shortcut]: /s (Paren)\n\n",
+    '[Case]: /case\n\nUses [CASE] and [case].\n\n',
+    '~~~\ntilde fence\n~~~\n\n',
+    '```\nunclosed fence at end\n\nstill inside',
+    '\tTabbed code\n\n',
+    'Text\n    not code, lazy\n\n',
+    '\n\n\n',
+    'Final line'
+]
+
 const CHUNK_LIMITS = [1, 2, 3, 5, 9, 17, 40]
 
 /** Generous: every update is checked against a fresh lex of the whole source. */
@@ -190,6 +235,15 @@ describe('generative streaming parity', () => {
         () => {
             const blocks = [...CORE_BLOCKS, ...GAP_BLOCKS]
             expect(fuzz({ blocks, documents: 80, chunkingsPerDocument: 8 })).toEqual([])
+        },
+        FUZZ_TIMEOUT_MS
+    )
+
+    red(
+        'documents with HTML and edge blocks keep parity',
+        () => {
+            const failures = fuzz({ blocks: EDGE_BLOCKS, documents: 100, chunkingsPerDocument: 8 })
+            expect(failures).toEqual([])
         },
         FUZZ_TIMEOUT_MS
     )
