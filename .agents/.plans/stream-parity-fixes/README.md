@@ -1,5 +1,18 @@
 # Implementation Plans — stream-parity-fixes
 
+> **CLOSED 2026-09-29.** Plans 001–003 and 005–010 DONE (007 PARTIAL, completed
+> by 008), 004 DONE, all with guard reports. Delivered on
+> `perf/stream-bench-flush-timing` (PR #396): a streamed parse now equals a
+> one-shot parse after every chunk for every shape found by five committed
+> fuzz cases and by guard's independent corpora (final check: 0 of 8000
+> documents diverge; no `red(` test remains). Regression bench against the
+> pre-fix commit `119cc58` (`evidence/004`): parity 0 everywhere, no scenario
+> slower by more than 3% in both repeats. Accepted costs: documents with
+> Windows line endings, or that end inside an unfinished HTML tag, comment or
+> element, are parsed in full on every update. Deferred to after 2.0:
+> importing upstream `vercel/streamdown` test inputs as a committed corpus; an
+> incremental path for open HTML elements.
+
 Written 2026-09-29 against commit `119cc58`, after a code review of PR #396
 found five streaming shapes where the streamed output differs from a
 one-shot parse. All five reproduce on `main`; none was introduced by the PR.
@@ -19,18 +32,18 @@ known gap (see the stopping rule in the amendments).
 
 ## Execution order & status
 
-| Plan | Title                                                               | Bucket | Priority | Effort | Depends on        | Status                     |
-| ---- | ------------------------------------------------------------------- | ------ | -------- | ------ | ----------------- | -------------------------- |
-| 001  | Guard tail-window offsets with a source-length integrity check      | A      | P0       | S–M    | —                 | DONE — PASS at `8805f29`   |
-| 002  | Do not freeze a block the next chunk can still continue or enclose  | B      | P0       | M      | 001               | DONE — PASS at `8805f29`   |
-| 003  | Detect reference definitions from marked's tokens, not line regexes | C, D   | P1       | M–L    | 001, 002          | DONE — PASS at `0bfa7ab`   |
-| 005  | Close the boundary gaps found by the generative fuzz                | B, D   | P0       | M      | 001–003           | DONE — PASS at `cfbb204`   |
-| 006  | Do not freeze an HTML construct that is still open                  | B, D   | P0       | M      | 001–003, 005      | DONE — PASS at `16558d2`   |
-| 007  | Do not freeze a block that is adjacent to the open last block       | B, D   | P0       | M      | 001–003, 005, 006 | PARTIAL at `d0e84c9` → 008 |
-| 008  | Close the three mechanisms left after plan 007                      | A, B   | P0       | S–M    | 001–003, 005–007  | DONE — PASS at `0c79f1d`   |
-| 009  | An autolink does not clear the inline link state                    | B      | P1       | S      | 006, 008          | DONE — PASS at `c6241dd`   |
-| 010  | A rule made of bullet markers can still become a list item          | B      | P1       | S      | 005, 007          | DONE — PASS at `13d4fc2`   |
-| 004  | Regression bench and docs alignment                                 | —      | P1       | S–M    | 001–003, 005–010  | IN PROGRESS — dispatched   |
+| Plan | Title                                                               | Bucket | Priority | Effort | Depends on        | Status                         |
+| ---- | ------------------------------------------------------------------- | ------ | -------- | ------ | ----------------- | ------------------------------ |
+| 001  | Guard tail-window offsets with a source-length integrity check      | A      | P0       | S–M    | —                 | DONE — PASS at `8805f29`       |
+| 002  | Do not freeze a block the next chunk can still continue or enclose  | B      | P0       | M      | 001               | DONE — PASS at `8805f29`       |
+| 003  | Detect reference definitions from marked's tokens, not line regexes | C, D   | P1       | M–L    | 001, 002          | DONE — PASS at `0bfa7ab`       |
+| 005  | Close the boundary gaps found by the generative fuzz                | B, D   | P0       | M      | 001–003           | DONE — PASS at `cfbb204`       |
+| 006  | Do not freeze an HTML construct that is still open                  | B, D   | P0       | M      | 001–003, 005      | DONE — PASS at `16558d2`       |
+| 007  | Do not freeze a block that is adjacent to the open last block       | B, D   | P0       | M      | 001–003, 005, 006 | PARTIAL at `d0e84c9` → 008     |
+| 008  | Close the three mechanisms left after plan 007                      | A, B   | P0       | S–M    | 001–003, 005–007  | DONE — PASS at `0c79f1d`       |
+| 009  | An autolink does not clear the inline link state                    | B      | P1       | S      | 006, 008          | DONE — PASS at `c6241dd`       |
+| 010  | A rule made of bullet markers can still become a list item          | B      | P1       | S      | 005, 007          | DONE — PASS at `13d4fc2`       |
+| 004  | Regression bench and docs alignment                                 | —      | P1       | S–M    | 001–003, 005–010  | DONE — PASS (see guard report) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
