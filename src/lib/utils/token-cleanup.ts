@@ -102,6 +102,9 @@ const formatSelfClosingHtmlToken = (token: Token): Token => {
     return {
         ...token,
         raw: formattedRaw,
+        // `<br>` -> `<br/>` is one character longer than its source; record the
+        // true span so root offsets still add up to the lexed source.
+        ...(formattedRaw.length !== token.raw.length && { sourceLength: token.raw.length }),
         tag: tagName,
         attributes: extractAttributes(token.raw),
         // A self-closing element is fully resolved and childless. The empty
@@ -231,6 +234,9 @@ const hasMultipleTags = (html: string): boolean => {
 const expandHtmlBlockNested = (html: string): Token[] => {
     const root: Token[] = []
     const stack: Token[][] = [root]
+    /** Source offset where each emitted token starts, for root source spans. */
+    const starts = new Map<Token, number>()
+    let textStart = 0
     /**
      * Open elements awaiting their close event.
      *
@@ -256,11 +262,9 @@ const expandHtmlBlockNested = (html: string): Token[] => {
     const flushText = () => {
         if (currentText.length === 0) return
         if (currentText.trim()) {
-            stack[stack.length - 1].push({
-                type: 'text',
-                raw: currentText,
-                text: currentText
-            } as Token)
+            const textToken = { type: 'text', raw: currentText, text: currentText } as Token
+            starts.set(textToken, textStart)
+            stack[stack.length - 1].push(textToken)
         }
         currentText = ''
     }
@@ -279,13 +283,15 @@ const expandHtmlBlockNested = (html: string): Token[] => {
                     isVoidElement(name) ||
                     isSelfClosedTagSource(html.slice(parser.startIndex, parser.endIndex + 1))
                 if (isSelfClosed) {
-                    stack[stack.length - 1].push({
+                    const selfClosed = {
                         type: 'html',
                         raw: `<${name}${serializeAttributes(attributes)}/>`,
                         tag: name,
                         attributes,
                         tokens: []
-                    } as Token)
+                    } as Token
+                    starts.set(selfClosed, parser.startIndex)
+                    stack[stack.length - 1].push(selfClosed)
                     opens.push({ tag: name, selfClosed: true })
                     return
                 }
@@ -296,11 +302,13 @@ const expandHtmlBlockNested = (html: string): Token[] => {
                     tag: name,
                     attributes
                 } as Token
+                starts.set(opening, parser.startIndex)
                 stack[stack.length - 1].push(opening)
                 stack.push(childTokens)
                 opens.push({ tag: name, opening, childTokens, startIndex: parser.startIndex })
             },
             ontext: (text) => {
+                if (currentText.length === 0) textStart = parser.startIndex
                 currentText += text
             },
             onclosetag: (name, implied) => {
@@ -344,8 +352,50 @@ const expandHtmlBlockNested = (html: string): Token[] => {
     parser.end()
     flushText()
 
+    assignRootSourceSpans(root, starts, html.length)
     return root
 }
+
+/**
+ * Source span of a root html opening that is still waiting for its closing
+ * tag. Kept off the token: `sourceLength` on an html token means "resolved"
+ * to the incremental parser's unclosed-HTML detector (#291). Read back by
+ * `pairFlatHtmlTokens` when a later `</tag>` closes it.
+ */
+const unresolvedSourceSpans = new WeakMap<Token, number>()
+
+/**
+ * Makes the root tokens of one expanded html token add up to that token's
+ * source length. Each root spans from where it starts in the source to where
+ * the next root starts (the first from 0, the last to the end), so dropped
+ * whitespace and trailing newlines are counted, and re-serialized tags
+ * (`<br>` -> `<br/>`, lowercased names and attributes) and decoded entities
+ * no longer shift the offsets the incremental parser computes from them.
+ *
+ * @internal
+ */
+const assignRootSourceSpans = (
+    root: Token[],
+    starts: Map<Token, number>,
+    sourceLength: number
+): void => {
+    for (let i = 0; i < root.length; i++) {
+        const token = root[i] as Token & { sourceLength?: number; tokens?: Token[] }
+        const start = i === 0 ? 0 : (starts.get(token) ?? 0)
+        const end = i === root.length - 1 ? sourceLength : (starts.get(root[i + 1]) ?? sourceLength)
+        if (token.type === 'html' && token.tokens === undefined) {
+            unresolvedSourceSpans.set(token, end - start)
+        } else {
+            token.sourceLength = end - start
+        }
+    }
+}
+
+/** Source characters a token consumed; see {@link assignRootSourceSpans}. */
+const getSourceSpan = (token: Token): number =>
+    (token as Token & { sourceLength?: number }).sourceLength ??
+    unresolvedSourceSpans.get(token) ??
+    token.raw.length
 
 /**
  * Expands a single html token. Single-tag inputs (the dominant inline
@@ -423,13 +473,9 @@ const pairFlatHtmlTokens = (tokens: Token[]): Token[] => {
             const innerTokens = result.splice(startIndex + 1, result.length - startIndex - 1)
             const openingToken = result.pop()!
             const sourceLength =
-                openingToken.raw.length +
-                innerTokens.reduce((sum, innerToken) => {
-                    const sourceLength = (innerToken as Token & { sourceLength?: number })
-                        .sourceLength
-                    return sum + (sourceLength ?? innerToken.raw.length)
-                }, 0) +
-                token.raw.length
+                getSourceSpan(openingToken) +
+                innerTokens.reduce((sum, innerToken) => sum + getSourceSpan(innerToken), 0) +
+                getSourceSpan(token)
             result.push({
                 type: 'html',
                 raw: openingToken.raw,

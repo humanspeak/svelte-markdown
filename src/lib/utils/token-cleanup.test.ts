@@ -1,4 +1,4 @@
-import type { Token } from 'marked'
+import { Lexer, type Token } from 'marked'
 import { describe, expect, it } from 'vitest'
 import { isHtmlOpenTag, shrinkHtmlTokens } from './token-cleanup.js'
 
@@ -652,6 +652,49 @@ describe('Token Cleanup Utilities', () => {
             const br = footer.tokens[1] as Token & { tag: string; raw: string }
             expect(br.tag).toBe('br')
             expect(br.raw).toBe('<br/>')
+        })
+    })
+
+    describe('root source lengths', () => {
+        // The incremental parser maps root tokens back to source offsets by
+        // summing `sourceLength ?? raw.length`. Cleanup rewrites some tokens'
+        // `raw` (`<br>` -> `<br/>`, lowercased and re-serialized tags), so
+        // every root it returns must still add up to the lexed source.
+        const rootSourceLength = (tokens: Token[]): number =>
+            tokens.reduce(
+                (sum, token) =>
+                    sum +
+                    ((token as Token & { sourceLength?: number }).sourceLength ?? token.raw.length),
+                0
+            )
+
+        it.each([
+            '<br>',
+            '<hr>',
+            '<img src="/a.png" alt="a">',
+            '<input disabled>',
+            '<DIV CLASS="x">text</DIV>',
+            '<div>\n\n**b**\n\n</div>',
+            '<br/>',
+            'Intro.\n\n<br>\n\n',
+            '<p>a<br>b</p>\n',
+            '<br>\n<hr>\n\n',
+            '<span>a &amp; b</span> tail\n',
+            '<DIV CLASS="x"><b>x</b>\n\ntext\n\n</DIV>\n'
+        ])('root tokens of %j add up to the source length', (source) => {
+            const tokens = shrinkHtmlTokens(new Lexer().lex(source))
+            expect(rootSourceLength(tokens)).toBe(source.length)
+        })
+
+        it('does not change raw, tag, attributes or tokens of a void tag', () => {
+            const [br] = shrinkHtmlTokens(new Lexer().lex('<br>')) as (Token & {
+                tag: string
+                attributes: Record<string, string>
+                tokens: Token[]
+                sourceLength: number
+            })[]
+            expect(br).toMatchObject({ raw: '<br/>', tag: 'br', attributes: {}, tokens: [] })
+            expect(br.sourceLength).toBe(4)
         })
     })
 })

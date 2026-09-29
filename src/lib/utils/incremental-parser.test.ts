@@ -1464,6 +1464,33 @@ const section${index} = { active: true, value: ${index} }
             expect(usedTailWindow.slice(-2)).toEqual([true, true])
         })
 
+        it.each([
+            'Intro.\n\n<br>\n\n',
+            'Intro.\n\n<hr>\n\n',
+            'Intro.\n\n<img src="/a.png" alt="a">\n\n',
+            'Intro.\n\n<br/>\n\n'
+        ])('keeps using the tail window after a root-level void tag in %j', (head) => {
+            // Cleanup rewrites `<br>` as `<br/>`; unless the token records its
+            // true source length, the integrity guard sees a mismatch on
+            // every later update and the document is re-lexed forever.
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            const usedTailWindow: boolean[] = []
+            let source = head
+            parser.update(source)
+            for (const chunk of ['First after.\n\n', 'Second after.\n\n', 'Third after.\n\n']) {
+                source += chunk
+                const result = parser.update(source)
+                usedTailWindow.push(result.usedTailWindow)
+                expectSemanticParity(
+                    result.tokens,
+                    parseAndCacheModule.lexAndClean(source, options, false),
+                    source
+                )
+            }
+            expect(usedTailWindow).toEqual([true, true, true])
+        })
+
         it.each([1, 7, 32, 64])(
             'matches a fresh parse of the prose-mixed sections at chunk size %i',
             (size) => {
