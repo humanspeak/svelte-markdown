@@ -84,7 +84,11 @@
         STREAM_MAX_OFFSET_GAP,
         type StreamingInputMode
     } from '$lib/utils/streaming-chunks.js'
-    import { reuseStableTokenArray } from '$lib/utils/streaming-token-reuse.js'
+    import { profileStreamFlush } from '$lib/utils/stream-flush-profile.js'
+    import {
+        reuseStableTokenArrayInPlace,
+        reuseStableTokenTree
+    } from '$lib/utils/streaming-token-reuse.js'
 
     type StreamFlushHandle =
         { kind: 'raf'; id: number } | { kind: 'timeout'; id: ReturnType<typeof setTimeout> } | null
@@ -96,7 +100,7 @@
         renderers = {},
         options = {},
         isInline = false,
-        parsed = () => {},
+        parsed = undefined,
         extensions = [],
         sanitizeUrl = defaultSanitizeUrl,
         sanitizeAttributes = defaultSanitizeAttributes,
@@ -129,14 +133,29 @@
     let streamSourceBuffer = ''
     let pendingStreamAppendBuffer = ''
     let pendingStreamFullSource: string | null = null
+    // The buffer `pendingStreamFullSource` was verified to extend (it
+    // `startsWith` it), handed to the parser so it need not rescan.
+    let pendingStreamAppendBase: string | undefined
     let streamFlushHandle: StreamFlushHandle = null
     let streamInputMode: StreamingInputMode = null
     // Invariant (#291): only ever reassign this array wholesale — never
     // push/splice/index-write/shrink it in place. See the rationale comment
     // in applyStreamingSource before touching any write site.
-    let streamTokens = $state<Token[]>([])
+    // `$state.raw` enforces this — in-place mutation is not reactive, so
+    // every write site MUST reassign.
+    let streamTokens = $state.raw<Token[]>([])
+    // The array the streaming parser returned last; while `streamTokens` is
+    // that same array, the parser's reused prefix already holds the rendered
+    // objects (see applyStreamingSource).
+    let lastParserTokens: Token[] | undefined
     let streamRenderMetadataStartIndex = 0
     let streamRenderMetadataStartOffset = 0
+    // Whether the `tokens` derived has prepared metadata since the last
+    // streaming update. Until it has, a further update may only LOWER the
+    // start index: roots between the two divergence points changed in the
+    // first update and were never prepared (plan 011; root segments rely on
+    // every root before the start index being prepared already).
+    let streamRenderMetadataConsumed = true
 
     const warnStreaming = (message: string) => {
         console.warn(`[svelte-markdown] ${message}`)
@@ -163,7 +182,19 @@
     const hasStreamingParserConfigChanged = () =>
         !incrementalParser || lastOptionsSrc !== options || lastExtensionsSrc !== extensions
 
-    const applyStreamingSource = (nextSource: string, forceNewParser = false) => {
+    /**
+     * Parses `nextSource` and adopts the result as `streamTokens`.
+     *
+     * @param nextSource - Full accumulated source
+     * @param forceNewParser - Start a fresh parser (reset paths)
+     * @param appendsTo - A string `nextSource` is KNOWN to start with, so the
+     *   parser can skip its own full-length append check (plan 011)
+     */
+    const applyStreamingSource = (
+        nextSource: string,
+        forceNewParser = false,
+        appendsTo?: string
+    ) => {
         if (forceNewParser || hasStreamingParserConfigChanged()) {
             incrementalParser = new IncrementalParser(combinedOptions)
             lastOptionsSrc = options
@@ -173,7 +204,13 @@
         const parser = incrementalParser
         if (!parser) return
 
-        const { tokens: newTokens, divergeAt, divergeOffset, canReuse } = parser.update(nextSource)
+        const {
+            tokens: newTokens,
+            divergeAt,
+            divergeOffset,
+            reuseMode,
+            reusedPrefixCount
+        } = parser.update(nextSource, appendsTo)
 
         // Replace the array reference rather than mutating per-index +
         // length. Under Svelte 5's reactive proxy, shrinking the array
@@ -184,14 +221,37 @@
         // See #291.
         // Resets below follow the same rule: always replace, never shrink.
         // A freshly (re)created parser has an empty prevSource and always
-        // reports canReuse=false on its first update, so that case needs no
+        // reports reuseMode='none' on its first update, so that case needs no
         // separate guard here.
-        streamTokens = canReuse
-            ? reuseStableTokenArray(streamTokens, newTokens, divergeAt)
-            : newTokens
-        const canSkipRenderMetadataPrefix = canReuse && divergeOffset !== undefined
-        streamRenderMetadataStartIndex = canSkipRenderMetadataPrefix ? divergeAt : 0
-        streamRenderMetadataStartOffset = canSkipRenderMetadataPrefix ? divergeOffset : 0
+        // 'tree' (an appended reference definition) keeps every root and
+        // nested token that is semantically unchanged, so only the roots
+        // whose links resolved differently get new props.
+        // 'prefix' adopts the parser's fresh array (not yet rendered) and
+        // writes the stable prefix into it in place, so the parser's prefix
+        // copy is the only O(n) copy per update. When the rendered array is
+        // the one the parser returned last, its reused prefix is already the
+        // rendered objects and is skipped (plan 011).
+        if (reuseMode === 'prefix') {
+            const identicalPrefix = streamTokens === lastParserTokens ? reusedPrefixCount : 0
+            streamTokens = reuseStableTokenArrayInPlace(
+                streamTokens,
+                newTokens,
+                divergeAt,
+                identicalPrefix
+            )
+        } else if (reuseMode === 'tree') {
+            streamTokens = reuseStableTokenTree(streamTokens, newTokens)
+        } else {
+            streamTokens = newTokens
+        }
+        lastParserTokens = newTokens
+        const canSkipRenderMetadataPrefix = reuseMode === 'prefix' && divergeOffset !== undefined
+        const startIndex = canSkipRenderMetadataPrefix ? divergeAt : 0
+        if (streamRenderMetadataConsumed || startIndex < streamRenderMetadataStartIndex) {
+            streamRenderMetadataStartIndex = startIndex
+            streamRenderMetadataStartOffset = canSkipRenderMetadataPrefix ? divergeOffset : 0
+        }
+        streamRenderMetadataConsumed = false
     }
 
     const commitPendingAppendBuffer = () => {
@@ -204,21 +264,35 @@
         return true
     }
 
-    const flushPendingStreamChanges = (forceNewParser = false) => {
-        cancelScheduledStreamFlush()
-
+    const runPendingStreamFlush = (forceNewParser: boolean) => {
         if (pendingStreamFullSource !== null) {
             const nextSource = pendingStreamFullSource
+            const appendsTo = pendingStreamAppendBase
             pendingStreamFullSource = null
+            pendingStreamAppendBase = undefined
             pendingStreamAppendBuffer = ''
             streamSourceBuffer = nextSource
-            applyStreamingSource(nextSource, forceNewParser)
+            applyStreamingSource(nextSource, forceNewParser, appendsTo)
             return
         }
 
+        // Committing appends the pending chunk to the buffer, so the new
+        // buffer starts with the previous one by construction.
+        const previousBuffer = streamSourceBuffer
         if (!commitPendingAppendBuffer()) return
 
-        applyStreamingSource(streamSourceBuffer, forceNewParser)
+        applyStreamingSource(streamSourceBuffer, forceNewParser, previousBuffer)
+    }
+
+    // Opt-in User Timing measure (`svelte-markdown:stream-flush`) around the
+    // parse + diff + state write. Off unless `globalThis.__svelteMarkdownProfile`
+    // is set; see stream-flush-profile.ts for what the measure does and does
+    // not cover.
+    const flushPendingStreamChanges = (forceNewParser = false) => {
+        cancelScheduledStreamFlush()
+        profileStreamFlush(() => runPendingStreamFlush(forceNewParser), {
+            sourceLength: streamSourceBuffer.length
+        })
     }
 
     const scheduleStreamFlush = () => {
@@ -249,10 +323,12 @@
         cancelScheduledStreamFlush()
         pendingStreamAppendBuffer = ''
         pendingStreamFullSource = null
+        pendingStreamAppendBase = undefined
         streamInputMode = null
         streamSourceBuffer = ''
         streamRenderMetadataStartIndex = 0
         streamRenderMetadataStartOffset = 0
+        streamRenderMetadataConsumed = true
     }
 
     const resetStreamingState = (nextSource = '') => {
@@ -295,6 +371,7 @@
         if (isAppendOnly) {
             pendingStreamAppendBuffer = ''
             pendingStreamFullSource = nextStr
+            pendingStreamAppendBase = streamSourceBuffer
             scheduleStreamFlush()
             return
         }
@@ -563,10 +640,12 @@
                   }
                 : {}
 
-        return renderMetadata.prepareTokensForRender(rawTokens, combinedOptions, {
+        const prepared = renderMetadata.prepareTokensForRender(rawTokens, combinedOptions, {
             source: sourceForMetadata,
             ...streamingStart
         })
+        streamRenderMetadataConsumed = true
+        return prepared
     })
 
     const footnoteMetadata = $derived.by(() => {
@@ -579,8 +658,11 @@
         return prepareFootnoteRenderMetadata(tokens)
     })
 
+    // Reads `parsed` first: with no callback the effect never subscribes to
+    // `tokens`, so it does not re-run on every streaming update (plan 011).
+    // A supplied callback still receives the full token array every pass.
     $effect(() => {
-        if (!tokens) return
+        if (!parsed || !tokens) return
         parsed(tokens)
     })
 

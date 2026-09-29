@@ -1,0 +1,87 @@
+# Implementation Plans — stream-parity-fixes
+
+> **CLOSED 2026-09-29.** Plans 001–003 and 005–010 DONE (007 PARTIAL, completed
+> by 008), 004 DONE, all with guard reports. Delivered on
+> `perf/stream-bench-flush-timing` (PR #396): a streamed parse now equals a
+> one-shot parse after every chunk for every shape found by five committed
+> fuzz cases and by guard's independent corpora (final check: 0 of 8000
+> documents diverge; no `red(` test remains). Regression bench against the
+> pre-fix commit `119cc58` (`evidence/004`): parity 0 everywhere, no scenario
+> slower by more than 3% in both repeats. Accepted costs: documents with
+> Windows line endings, or that end inside an unfinished HTML tag, comment or
+> element, are parsed in full on every update. Deferred to after 2.0:
+> importing upstream `vercel/streamdown` test inputs as a committed corpus; an
+> incremental path for open HTML elements.
+
+Written 2026-09-29 against commit `119cc58`, after a code review of PR #396
+found five streaming shapes where the streamed output differs from a
+one-shot parse. All five reproduce on `main`; none was introduced by the PR.
+They are fixed on the PR branch (`perf/stream-bench-flush-timing`) because
+the 2.0 release claims streaming parity.
+
+Goal: a streamed parse equals a one-shot parse of the same cumulative source
+after every chunk, for any chunk boundaries, with no loss of the per-frame
+performance measured in `.agents/.plans-closed/stream-vs-streamdown/evidence/014/`.
+
+The red tests were written first and are committed (`119cc58`):
+`src/lib/utils/incremental-parser.parity.test.ts` and
+`src/lib/SvelteMarkdown.parity.test.ts`, bucketed by mechanism. They use
+`it.fails`; run with `PARITY_STRICT=1` to see the real failures. The batch is
+done when the suite is green and every remaining `red(` call is a documented
+known gap (see the stopping rule in the amendments).
+
+## Execution order & status
+
+| Plan | Title                                                               | Bucket | Priority | Effort | Depends on        | Status                         |
+| ---- | ------------------------------------------------------------------- | ------ | -------- | ------ | ----------------- | ------------------------------ |
+| 001  | Guard tail-window offsets with a source-length integrity check      | A      | P0       | S–M    | —                 | DONE — PASS at `8805f29`       |
+| 002  | Do not freeze a block the next chunk can still continue or enclose  | B      | P0       | M      | 001               | DONE — PASS at `8805f29`       |
+| 003  | Detect reference definitions from marked's tokens, not line regexes | C, D   | P1       | M–L    | 001, 002          | DONE — PASS at `0bfa7ab`       |
+| 005  | Close the boundary gaps found by the generative fuzz                | B, D   | P0       | M      | 001–003           | DONE — PASS at `cfbb204`       |
+| 006  | Do not freeze an HTML construct that is still open                  | B, D   | P0       | M      | 001–003, 005      | DONE — PASS at `16558d2`       |
+| 007  | Do not freeze a block that is adjacent to the open last block       | B, D   | P0       | M      | 001–003, 005, 006 | PARTIAL at `d0e84c9` → 008     |
+| 008  | Close the three mechanisms left after plan 007                      | A, B   | P0       | S–M    | 001–003, 005–007  | DONE — PASS at `0c79f1d`       |
+| 009  | An autolink does not clear the inline link state                    | B      | P1       | S      | 006, 008          | DONE — PASS at `c6241dd`       |
+| 010  | A rule made of bullet markers can still become a list item          | B      | P1       | S      | 005, 007          | DONE — PASS at `13d4fc2`       |
+| 004  | Regression bench and docs alignment                                 | —      | P1       | S–M    | 001–003, 005–010  | DONE — PASS (see guard report) |
+
+Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
+
+All four plans touch `incremental-parser.ts` or depend on it, so they run
+serially in the working tree.
+
+## Red tests by bucket (20 red, 10 guards at `119cc58`)
+
+| Bucket              | Mechanism                                                                                                          | Red | Guards |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------ | --- | ------ |
+| A. Offset integrity | marked consumed source without emitting a token of the same length (CRLF, duplicate definitions)                   | 6   | 2      |
+| B. Block boundaries | a block frozen while the next chunk could still continue or enclose it (loose ordered list, HTML with blank lines) | 7   | 5      |
+| C. Reference scope  | a definition the line-anchored detector cannot see (next-line URL or title, nested in a container)                 | 6   | 2      |
+| D. Fuzz             | seeded random chunk boundaries over tricky documents                                                               | 1   | 1      |
+
+## Amendments
+
+- 2026-09-29 — 005 added after guard's independent generative fuzz found 27 of 120 random documents still diverging at the plan 003 snapshot. Runs before 004 so the benchmark measures the final parser.
+- 2026-09-29 — 006 added after guard's second independent corpus found HTML constructs that a blank line does not end (unclosed comments and raw-text elements) frozen before their terminator. Runs before 004.
+- 2026-09-29 — 007 added after guard's third independent corpus found blocks frozen although adjacent (no blank line) to the open last block. Runs before 004.
+- 2026-09-29 — 004 extended: correct the `Incomplete Markdown` compare row (Streamdown repairs unfinished formatting, we show it as typed) and document the cut-tag known gap. Both came from a probe with upstream `vercel/streamdown` test inputs; importing that corpus and any repair feature are deferred until after 2.0.
+- 2026-09-29 — 008 added: plan 007 fixed adjacency but stopped at its iteration limit with two older mechanisms left; guard's checks (upstream-derived inputs and a fourth corpus) found one more. Runs before 004.
+- 2026-09-29 — 009 added: guard's rerun of every independent corpus after plan 008 found 1 of 8426 documents diverging (an autolink after an unclosed `<a>` tag). Runs before 004.
+- 2026-09-29 — 010 added: guard's rerun after plan 009 found 1 of 6200 documents diverging (`- - -` after a loose list). Stopping rule: 010 is the last fix plan; later findings are anchored red and documented as known gaps by 004.
+
+## Dependency notes
+
+- 002 depends on 001: closing an HTML block relies on the integrity guard to
+  decide whether the tail window may be used afterwards.
+- 003 depends on 001 and 002: it restructures the decision in `update()`,
+  and the tricky-corpus fuzz it must turn green covers all three buckets.
+- 004 measures the final result against the pre-fix tip.
+
+## Findings considered and rejected
+
+- Normalizing CRLF in the component's buffer: rejected for this batch —
+  offset-mode chunks address the caller's original text. The integrity guard
+  keeps CRLF documents correct at the cost of a full re-lex per update.
+- Patching each cause separately (a CRLF special case, a duplicate-definition
+  special case): rejected — the previous batch's plan 013 showed these are
+  variants of one mechanism; the guard covers the class.

@@ -50,6 +50,7 @@ const sectionBreadcrumbOverrides: Record<string, string> = {
 /** Per-pathname breadcrumb-title overrides for the deepest crumb. */
 const itemBreadcrumbOverrides: Record<string, string> = {
     '/docs/migration': 'Migration',
+    '/docs/migration/v2': 'Upgrading to 2.0',
     '/docs/examples': 'Examples',
     '/docs/renderers/markdown-renderers': 'Markdown',
     '/docs/renderers/html-renderers': 'HTML',
@@ -119,7 +120,8 @@ export const docsSections: NavSection[] = [
         icon: Rocket,
         items: [
             { title: 'Getting Started', href: '/docs/getting-started', icon: Rocket },
-            { title: 'Migration Guide', href: '/docs/migration', icon: ArrowRightLeft }
+            { title: 'Migration Guide', href: '/docs/migration', icon: ArrowRightLeft },
+            { title: 'Upgrading to 2.0', href: '/docs/migration/v2', icon: ArrowRightLeft }
         ]
     },
     {
@@ -155,6 +157,11 @@ export const docsSections: NavSection[] = [
             { title: 'AI Agent Output', href: '/docs/advanced/agent-output', icon: Bot },
             { title: 'LLM Streaming', href: '/docs/advanced/llm-streaming', icon: Zap },
             { title: 'Headless Parser', href: '/docs/advanced/headless-parser', icon: Terminal },
+            {
+                title: 'Streaming Benchmarks',
+                href: '/docs/advanced/streaming-benchmarks',
+                icon: Gauge
+            },
             { title: 'Security', href: '/docs/advanced/security', icon: Lock },
             { title: 'Token Caching', href: '/docs/advanced/token-caching', icon: Zap },
             { title: 'Tree Shaking', href: '/docs/advanced/tree-shaking', icon: Gauge },

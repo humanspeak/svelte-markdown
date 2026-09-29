@@ -31,10 +31,10 @@ LLM APIs stream responses token-by-token. Each token is a small chunk of text --
 
 1. The LLM API sends tokens via Server-Sent Events (SSE) or a streaming HTTP response.
 2. Your application accumulates tokens into a growing markdown string, either manually or through `writeChunk()`.
-3. `SvelteMarkdown` re-parses and re-renders the full source on each update.
-4. Svelte's fine-grained reactivity ensures only the changed DOM nodes are updated.
+3. `SvelteMarkdown` re-lexes only the open block at the end of the source and diffs the result against the previous tokens.
+4. Svelte's fine-grained reactivity updates only the DOM nodes whose tokens changed.
 
-The component works reactively by default. For best streaming performance, pass `streaming={true}` to enable smart token diffing -- the component re-parses the full source for correctness but only updates DOM nodes for tokens that actually changed, keeping per-update cost under 2ms regardless of document size.
+The component works reactively by default. For best streaming performance, pass `streaming={true}`: updates are coalesced once per animation frame, only the open block at the end of the source is re-lexed (the tail window), every unchanged token object is reused so its component receives no new props, and root tokens render in offset-bucketed segments so the keyed diff touches only the segment that changed. Per-update cost is proportional to the open block, not to the document. Streamed output is verified against a one-shot parse in the benchmark suite at every sampled frame, and by a seeded fuzz suite that splits random documents at random chunk boundaries.
 
 **Note:** `streaming` is automatically disabled when async extensions (e.g., Mermaid) are used, since async `walkTokens` callbacks are incompatible with the synchronous diffing path. A console warning is logged in this case.
 
@@ -372,26 +372,24 @@ Choose between **chunked** mode (imperative `writeChunk()` API) and **concat** m
 
 ## Performance Characteristics
 
-We measured render performance across different streaming speeds and chunking strategies using the [interactive streaming demo](/examples/llm-streaming):
+Measured on 2026-09-28 with the repository's paired benchmark (`pnpm perf:stream-compare`): headless production Chromium, cumulative-source updates of 32 characters per animation frame (about 480 tokens per second, faster than real model output), ~24 KB corpora, and a metric of main-thread work per frame (synchronous update plus deferred frame work plus a forced layout). Median of five iterations, two suites; parity against a fresh parse was zero mismatches in every run.
 
-| Streaming Speed | Chunk Mode | Avg Render | Peak Render | Dropped Frames |
-|-----------------|------------|:----------:|:-----------:|:--------------:|
-| 30 words/sec | Word | ~3ms | ~11ms | 0 |
-| 100 chars/sec | Character | ~4ms | ~21ms | 0 |
-| 50 words/sec | Word | ~3ms | ~12ms | 0 |
+| Scenario (~24 KB streamed at 32 chars/frame) | Avg work per frame | p95 per frame | Frames over 16.7 ms |
+|-----------------------------------------------|:-----------------:|:-------------:|:-------------------:|
+| Mixed prose (headings, lists, code, tables) | ~2.4 ms | 4.3–4.5 ms | 0 of 765 |
+| Same corpus, four updates per frame | ~2.9 ms | 5.4–5.5 ms | 0 of 192 |
+| One open bullet list (~200 items) | ~4.7 ms | 7.3–7.9 ms | 1 of 754 |
+| One open table (~150 rows) | ~5.1 ms | 8.2–11.2 ms | 1–2 of 314 |
+| One open code fence | ~2.1 ms | 3.3–3.4 ms | 0 of 753 |
+| Citation-heavy prose with 40 trailing `[n]: url` definitions | ~2.1 ms | 3.9–4.3 ms | 0 of 753 |
 
-All render times stay well under the 16.7ms frame budget (60fps), meaning the browser has time to paint every frame without jank. Even at 100 characters per second in character mode (a worst-case scenario far beyond real LLM speeds), average render time remains under 5ms.
+Absolute milliseconds are machine-specific (Intel i7-6700K in this capture); the shape is what matters. Every scenario stays inside the 60 fps budget on nearly every frame, and the long open list and table -- the shapes that used to hurt most -- now cost a few milliseconds per frame.
 
 ### How Render Time Scales
 
-Render time grows linearly with document length because the full markdown source is re-parsed on each update. For a typical LLM response (~2,000 characters), the overhead is negligible:
+The renderer's own work does not grow with document length. Streaming the same 2 KB tail after a closed prefix of 24 KB, 96 KB and 384 KB, the parser plus render work per frame was 1.4 ms at 24 KB and 1.9 ms at 384 KB. What does grow is the browser's style and layout pass over the whole document, which the benchmark forces on every frame (total average work 1.8 ms, 3.5 ms and 13.6 ms at those sizes). A real page pays layout only for the region that changed, and long conversations should split completed messages into their own components anyway (see below).
 
-- **0-500 chars:** &lt;1ms per render
-- **500-1,000 chars:** ~2-3ms per render
-- **1,000-2,000 chars:** ~5-7ms per render
-- **2,000+ chars:** ~7-10ms per render
-
-For very long documents (10,000+ characters), consider the optimization strategies below.
+For a comparison with another streaming renderer under the same method, see [Svelte Streamdown vs Svelte Markdown](/compare/vs-svelte-streamdown).
 
 ## Best Practices
 
@@ -431,7 +429,7 @@ When displaying a conversation with multiple messages, previously completed mess
 
 ### 3. Debounce for Extremely Fast Streams
 
-If your LLM stream is unusually fast (100+ tokens/second) and you notice frame drops, you can batch updates using `requestAnimationFrame`:
+With `streaming={true}` this is already done for you: incoming updates are coalesced and applied once per animation frame, which is why four updates per frame cost about the same as one in the table above. If you render without `streaming` and your LLM stream is unusually fast (100+ tokens/second), you can batch updates yourself using `requestAnimationFrame`:
 
 ```javascript
 let pending = ''

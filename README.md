@@ -29,8 +29,44 @@ A powerful, customizable markdown renderer for Svelte with TypeScript support. B
 - 🧩 First-class marked extensions support via `extensions` prop (e.g., KaTeX math, alerts)
 - 🎨 Opt-in syntax highlighting with one `HighlightedCode` renderer and your choice of engine (Shiki or TanStack Highlight) — streaming-compatible, tree-shaken out of the core bundle
 - ⚡ Intelligent token caching (50-200x faster re-renders)
-- 📡 LLM streaming mode with incremental rendering (~1.6ms avg per update)
+- 📡 LLM streaming mode with incremental rendering: work per frame is proportional to the open block, not the document (about 2–3 ms on mixed prose)
+- 📬 Late and out-of-order packets: `writeChunk({ value, offset })` assembles chunks in any arrival order and keeps rendering while gaps fill
 - 🖼️ Smart image lazy loading with fade-in animation
+
+## Upgrading to 2.0
+
+Version 2.0 rebuilds the streaming engine. Component props and the `writeChunk()` / `resetStream()` API are unchanged, and most apps only need the version bump. Two behaviors changed:
+
+- Renderers for tokens **inside** list items and table cells receive only their own token fields; they no longer inherit the parent list's or table's `raw`, `text`, `items`, `header`, or `rows`.
+- The default `code` renderer emits one text node per line, so `code.firstChild` is the first line only. `textContent` and `innerHTML` are unchanged.
+
+Read the **[2.0 upgrade guide](https://markdown.svelte.page/docs/migration/v2)** for the full list, including streaming output fixes and the new `IncrementalParser` fields.
+
+**Upgrading with an AI assistant?** Paste this so it reads the right sources first:
+
+```text
+I am upgrading @humanspeak/svelte-markdown from 1.x to 2.0 in a Svelte 5 project.
+Before changing anything, read these sources:
+
+- Upgrade guide: https://markdown.svelte.page/docs/migration/v2.md
+- Documentation index for LLMs: https://markdown.svelte.page/llms.txt
+- Full documentation text: https://markdown.svelte.page/llms-full.txt
+- Streaming behavior: https://markdown.svelte.page/docs/advanced/llm-streaming.md
+- Direct parser use: https://markdown.svelte.page/docs/advanced/headless-parser.md
+- Release notes: https://github.com/humanspeak/svelte-markdown/releases
+
+Then search my codebase for:
+
+1. Custom renderers or snippets used inside lists and tables that read raw,
+   text, items, header, or rows from props.
+2. Code that reads firstChild or childNodes of rendered <code> elements or of
+   the markdown container.
+3. Direct IncrementalParser usage.
+4. Tests that snapshot streamed output mid-stream.
+
+List each place that needs a change, explain why using the guide, and propose
+the smallest fix.
+```
 
 ## Installation
 
@@ -984,21 +1020,52 @@ Appending directly to `source` is still supported:
 <SvelteMarkdown {source} streaming={true} />
 ```
 
-**Performance** (measured at 100 characters/sec, character mode):
+**Performance** (2026-09-28, headless Chromium, ~24 KB corpora streamed at 32 characters per animation frame, median of five paired runs; main-thread work per frame including a forced layout):
 
-| Metric         | Standard Mode | Streaming Mode |
-| -------------- | :-----------: | :------------: |
-| Average render |    ~3.6ms     |     ~1.6ms     |
-| Peak render    |     ~21ms     |     ~10ms      |
-| Dropped frames |       0       |       0        |
+| Scenario                         | Avg work per frame | p95 per frame | Frames over 16.7 ms |
+| -------------------------------- | :----------------: | :-----------: | :-----------------: |
+| Mixed prose                      |      ~2.4 ms       |  4.3–4.5 ms   |      0 of 765       |
+| Mixed prose, 4 updates per frame |      ~2.9 ms       |  5.4–5.5 ms   |      0 of 192       |
+| One open ~200-item list          |      ~4.7 ms       |  7.3–7.9 ms   |      1 of 754       |
+| One open code fence              |      ~2.1 ms       |  3.3–3.4 ms   |      0 of 753       |
 
-When `streaming` is `false` (default), existing behavior is unchanged. The `streaming` prop skips cache lookups (always a miss during streaming) and uses in-place token array mutation so Svelte only re-renders components for tokens that actually changed.
+Milliseconds are machine-specific; reproduce with `pnpm perf:stream-compare`. Streamed output is checked against a one-shot parse at every sampled frame, and by a seeded fuzz suite that splits random documents at random chunk boundaries.
+
+When `streaming` is `false` (default), existing behavior is unchanged. With `streaming` enabled the component skips cache lookups (always a miss during streaming), coalesces updates once per animation frame, re-lexes only the open block at the end of the source, and reuses every unchanged token object so Svelte only updates components whose tokens actually changed.
 
 Default heading ids are precomputed per render pass during streaming, so duplicate-heading suffixes and `headerPrefix` stay stable across reparses. Custom heading renderers should use the provided `id` prop for this behavior; calling the `slug` prop directly advances renderer-local slug state.
 
 **Note:** `streaming` is automatically disabled when async extensions (e.g., `markedMermaid`) are used. A console warning is logged in this case.
 
 See the [full streaming documentation](https://markdown.svelte.page/docs/advanced/llm-streaming) and [interactive demo](https://markdown.svelte.page/examples/llm-streaming).
+
+#### Advanced: `IncrementalParser`
+
+`SvelteMarkdown` drives its streaming mode with the exported `IncrementalParser`. Advanced consumers can use it directly to parse a growing document and learn which tokens changed:
+
+```typescript
+import { IncrementalParser } from '@humanspeak/svelte-markdown'
+
+const parser = new IncrementalParser({ gfm: true })
+let buffer = '# Title\n\n'
+parser.update(buffer)
+
+const previous = buffer
+buffer += 'Streamed paragraph'
+const result = parser.update(buffer, previous) // `buffer` is known to start with `previous`
+```
+
+`update(source, appendsTo?)` parses the full accumulated `source` and diffs it against the previous update. The optional `appendsTo` is a string you have already verified `source` starts with (typically your buffer before appending a chunk); when it is the previously parsed source, the parser skips its own full-length append check. Passing a string that `source` does not start with breaks parsing, so omit it when unsure.
+
+The returned `IncrementalUpdateResult` contains:
+
+- `tokens` — the full new token array.
+- `divergeAt` — index of the first root token that differs from the previous update.
+- `divergeOffset` — source offset where that token begins, when known without scanning the stable prefix (otherwise `undefined`).
+- `canReuse` — whether the first `divergeAt` token objects can be reused as-is.
+- `reuseMode` — `'prefix'` (the first `divergeAt` roots are stable), `'tree'` (append-only, but a reference definition may have changed inline children anywhere, so compare the whole tree), or `'none'` (not append-only; replace the array).
+- `reusedPrefixCount` — leading roots of `tokens` that are the same objects, at the same indices, as in the previous result (0 unless only the appended tail was re-lexed); a consumer that rendered the previous array unchanged can skip these indices.
+- `usedTailWindow` — whether this update re-lexed only the appended tail rather than the whole source.
 
 ## Available Renderers
 
@@ -1023,6 +1090,8 @@ See the [full streaming documentation](https://markdown.svelte.page/docs/advance
 - `code` - Block of code (`<pre><code>`)
 - `html` - HTML node
 - `rawtext` - All other text that is going to be included in an object above
+
+Child tokens rendered inside list items and table cells receive only their own token fields; they do not inherit the parent list's or table's `raw`, `text`, or other fields through props.
 
 ### Optional List Renderers
 
@@ -1080,6 +1149,8 @@ The component emits a `parsed` event when tokens are calculated:
 
 <SvelteMarkdown {source} parsed={handleParsed} />
 ```
+
+`parsed` is optional; when it is omitted, no token snapshot is taken per update.
 
 ## Props
 

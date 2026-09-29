@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
     import { KatexRenderer, markedKatex } from '@humanspeak/svelte-markdown/extensions'
     import { DemoSplitV2 } from '@humanspeak/docs-kit'
@@ -43,7 +44,8 @@ Markdown works alongside math: **bold**, *italic*, and inline \\(\\sum_{i=1}^{n}
     }
     const renderers: Partial<KatexRenderers> = {
         inlineKatex: KatexRenderer,
-        blockKatex: KatexRenderer
+        blockKatex: KatexRenderer,
+        code: HighlightedCode
     }
 
     // Debounced live editor — 500ms keeps the KaTeX render from thrashing

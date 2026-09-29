@@ -1,0 +1,19 @@
+ 06:39:55 up 4 days, 20:00,  1 user,  load average: 1.03, 3.13, 4.68
+2026-09-29T10:39:55Z
+$ node scripts/stream-compare-bench.mjs
+
+=== long-list (long-list, 24000+ bytes, 32 chars × 1/frame, input prop, mode paired) ===
+svelte-markdown@A   run 1 [svelte-markdown@A > svelte-markdown@B]: work 4626.6ms total · avg 6.14 · p95 11.50 · peak 26.3 · over-budget 5/754 · growth 1.858 · overlap clamped 20.3ms · parity 0/31 mismatched
+svelte-markdown@B   run 1 [svelte-markdown@A > svelte-markdown@B]: work 4483.8ms total · avg 5.95 · p95 9.70 · peak 18.0 · over-budget 4/754 · growth 1.81 · overlap clamped 2.5ms · parity 0/31 mismatched
+svelte-markdown@B   run 2 [svelte-markdown@B > svelte-markdown@A]: work 4646.0ms total · avg 6.16 · p95 11.10 · peak 17.8 · over-budget 2/754 · growth 1.683 · overlap clamped 0.6ms · parity 0/31 mismatched
+svelte-markdown@A   run 2 [svelte-markdown@B > svelte-markdown@A]: work 4475.2ms total · avg 5.93 · p95 9.30 · peak 16.8 · over-budget 1/754 · growth 1.827 · overlap clamped 0.0ms · parity 0/31 mismatched
+parity svelte-markdown@A (vs fresh parse): OK — max 0 mismatched of 62 checks
+parity svelte-markdown@B (vs fresh parse): OK — max 0 mismatched of 62 checks
+median total work: A 4550.9ms · B 4564.9ms · lib flush A 2252.2ms · B 2332.35ms
+median p95 frame work: A 10.4ms · B 10.4ms · frames over 16.7ms: A 3 · B 3
+paired delta (A − B total work, median of 2 pairs): -14ms (-0.308% of A) — A does less work
+output hash: MATCH · dom projection: MATCH
+
+=== JSON ===
+exit 0
+ 06:41:16 up 4 days, 20:01,  1 user,  load average: 1.08, 2.66, 4.39

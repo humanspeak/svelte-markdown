@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
 
     const markdown = `## HTML Filtering Demo
 
@@ -39,7 +40,7 @@ Hidden content inside details/summary tags.
     </div>
     <div class="hf-demo-preview">
         <div class="hf-markdown prose prose-sm dark:prose-invert max-w-none">
-            <SvelteMarkdown source={markdown} />
+            <SvelteMarkdown source={markdown} renderers={{ code: HighlightedCode }} />
         </div>
     </div>
 </div>

@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import { markedAlert } from '@humanspeak/svelte-markdown/extensions'
     import { AlertCircle, AlertTriangle, Info, Lightbulb, ShieldAlert } from '@lucide/svelte'
 
@@ -39,7 +40,11 @@ Regular markdown works alongside alerts: **bold**, *italic*, and \`inline code\`
   inline, no separate component file needed.
 -->
 <div class="prose prose-sm dark:prose-invert mx-auto max-w-4xl px-6 py-6">
-    <SvelteMarkdown source={markdown} extensions={[markedAlert()]}>
+    <SvelteMarkdown
+        source={markdown}
+        extensions={[markedAlert()]}
+        renderers={{ code: HighlightedCode }}
+    >
         {#snippet alert(props: AlertSnippetProps)}
             <aside class="ga-alert ga-alert-{props.alertType}" role="note">
                 <span class="ga-alert-icon">

@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown, { TokenCache } from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import { Play, Trash2 } from '@lucide/svelte'
 
     const defaultMarkdown = `## Token Caching Performance
@@ -185,7 +186,7 @@ This demo renders the above markdown and tracks timing to show the caching effec
             {:else}
                 <div class="cp-preview prose prose-sm dark:prose-invert max-w-none">
                     {#key renderKey}
-                        <SvelteMarkdown source={input} />
+                        <SvelteMarkdown source={input} renderers={{ code: HighlightedCode }} />
                     {/key}
                 </div>
             {/if}

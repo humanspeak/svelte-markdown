@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
 
     const markdown = `## Custom Renderers Demo
 
@@ -51,5 +52,5 @@ Here is a table for reference:
   horizontal rules, and lists all paint into the DOM normally.
 -->
 <div class="prose prose-sm dark:prose-invert mx-auto max-w-4xl px-6 py-6">
-    <SvelteMarkdown source={markdown} />
+    <SvelteMarkdown source={markdown} renderers={{ code: HighlightedCode }} />
 </div>

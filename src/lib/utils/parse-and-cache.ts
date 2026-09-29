@@ -19,6 +19,10 @@ import { Lexer, Marked } from 'marked'
  * @param source - Raw markdown string to lex
  * @param options - Parser options forwarded to the Marked lexer
  * @param isInline - When true, uses inline tokenization (no block elements)
+ * @param links - Optional reference-definition map (marked's `tokens.links`,
+ *   keyed by normalized label) to seed the lexer with before lexing, so a
+ *   fragment of a larger document resolves reference-style links against
+ *   definitions that live elsewhere. The map is copied, never mutated.
  * @returns Cleaned token array with HTML tokens properly nested
  *
  * @example
@@ -26,6 +30,9 @@ import { Lexer, Marked } from 'marked'
  * import { lexAndClean } from './parse-and-cache.js'
  *
  * const tokens = lexAndClean('# Hello **world**', { gfm: true }, false)
+ * const cited = lexAndClean('See [ref].', { gfm: true }, false, {
+ *     ref: { href: '/x', title: null }
+ * })
  * ```
  *
  * @internal
@@ -33,7 +40,8 @@ import { Lexer, Marked } from 'marked'
 export const lexAndClean = (
     source: string,
     options: SvelteMarkdownOptions,
-    isInline: boolean
+    isInline: boolean,
+    links?: TokensList['links']
 ): Token[] => {
     // Shallow-copy: marked's Lexer writes its default tokenizer back onto the
     // options object it receives. Passing the caller's object directly would
@@ -42,6 +50,11 @@ export const lexAndClean = (
     // polluted object silently disables it on every parser rebuild
     // (resetStream, streamId change).
     const lexer = new Lexer({ ...options })
+    if (links) {
+        // Null-prototype copy, like marked's own map: labels such as
+        // `constructor` must not resolve through Object.prototype.
+        lexer.tokens.links = Object.assign(Object.create(null), links)
+    }
     const parsedTokens = isInline ? lexer.inlineTokens(source) : lexer.lex(source)
     return shrinkHtmlTokens(parsedTokens)
 }

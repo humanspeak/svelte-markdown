@@ -1,0 +1,16 @@
+
+=== prose-mixed (prose-mixed, 24000+ bytes, 32 chars × 1/frame, input prop, mode paired) ===
+svelte-markdown     run 1 [svelte-markdown > svelte-streamdown]: work 3043.5ms total · avg 3.98 · p95 7.30 · peak 14.2 · over-budget 0/765 · growth 1.295 · parity 0/31 mismatched
+svelte-streamdown   run 1 [svelte-markdown > svelte-streamdown]: work 2867.3ms total · avg 3.75 · p95 6.30 · peak 15.7 · over-budget 0/765 · growth 1.606
+svelte-streamdown   run 2 [svelte-streamdown > svelte-markdown]: work 2861.9ms total · avg 3.74 · p95 6.70 · peak 14.6 · over-budget 0/765 · growth 1.768
+svelte-markdown     run 2 [svelte-streamdown > svelte-markdown]: work 3154.1ms total · avg 4.12 · p95 8.00 · peak 16.1 · over-budget 0/765 · growth 1.461 · parity 0/31 mismatched
+svelte-markdown     run 3 [svelte-markdown > svelte-streamdown]: work 3168.6ms total · avg 4.14 · p95 7.60 · peak 12.6 · over-budget 0/765 · growth 1.337 · parity 0/31 mismatched
+svelte-streamdown   run 3 [svelte-markdown > svelte-streamdown]: work 2908.3ms total · avg 3.80 · p95 7.00 · peak 13.9 · over-budget 0/765 · growth 1.724
+parity (ours vs fresh parse): OK — max 0 mismatched of 93 checks
+median total work: ours 3154.1ms · theirs 2867.3ms → svelte-streamdown does 1.1x less main-thread work
+median p95 frame work: ours 7.6ms · theirs 6.7ms · frames over 16.7ms: ours 0 · theirs 0
+paired delta (theirs − ours total work, median of 3 pairs): -260.3ms — theirs does less work
+output check: comparable normalized text lengths (ratio 1.019; hashes intentionally differ across renderer markup)
+dom projection: MATCH
+
+=== JSON ===

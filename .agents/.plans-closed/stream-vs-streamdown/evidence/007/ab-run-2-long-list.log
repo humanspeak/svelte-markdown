@@ -1,0 +1,21 @@
+load before long-list: 1.81 2.07 2.24 at 2026-09-28T12:34:50Z
+
+=== long-list (long-list, 24000+ bytes, 32 chars × 1/frame, input prop, mode paired) ===
+svelte-markdown@A   run 1 [svelte-markdown@A > svelte-markdown@B]: work 12995.3ms total · avg 17.23 · p95 31.30 · peak 42.3 · over-budget 384/754 · growth 5.181 · overlap clamped 2510.9ms · parity 0/31 mismatched
+svelte-markdown@B   run 1 [svelte-markdown@A > svelte-markdown@B]: work 5997.0ms total · avg 7.95 · p95 13.30 · peak 27.4 · over-budget 19/754 · growth 2.544 · overlap clamped 130.7ms · parity 0/31 mismatched
+svelte-markdown@B   run 2 [svelte-markdown@B > svelte-markdown@A]: work 5958.6ms total · avg 7.90 · p95 12.80 · peak 25.6 · over-budget 15/754 · growth 2.429 · overlap clamped 89.8ms · parity 0/31 mismatched
+svelte-markdown@A   run 2 [svelte-markdown@B > svelte-markdown@A]: work 13972.2ms total · avg 18.53 · p95 34.00 · peak 76.4 · over-budget 419/754 · growth 4.682 · overlap clamped 3154.0ms · parity 0/31 mismatched
+svelte-markdown@A   run 3 [svelte-markdown@A > svelte-markdown@B]: work 13939.6ms total · avg 18.49 · p95 35.50 · peak 47.5 · over-budget 404/754 · growth 4.809 · overlap clamped 3003.9ms · parity 0/31 mismatched
+svelte-markdown@B   run 3 [svelte-markdown@A > svelte-markdown@B]: work 6045.8ms total · avg 8.02 · p95 14.50 · peak 37.4 · over-budget 18/754 · growth 5.604 · overlap clamped 92.1ms · parity 0/31 mismatched
+svelte-markdown@B   run 4 [svelte-markdown@B > svelte-markdown@A]: work 9382.6ms total · avg 12.44 · p95 24.20 · peak 48.2 · over-budget 263/754 · growth 8.769 · overlap clamped 2026.6ms · parity 0/31 mismatched
+svelte-markdown@A   run 4 [svelte-markdown@B > svelte-markdown@A]: work 13349.2ms total · avg 17.70 · p95 31.70 · peak 52.8 · over-budget 398/754 · growth 6.143 · overlap clamped 2983.6ms · parity 0/31 mismatched
+svelte-markdown@A   run 5 [svelte-markdown@A > svelte-markdown@B]: work 13781.0ms total · avg 18.28 · p95 32.10 · peak 50.7 · over-budget 389/754 · growth 4.614 · overlap clamped 2613.7ms · parity 0/31 mismatched
+svelte-markdown@B   run 5 [svelte-markdown@A > svelte-markdown@B]: work 6053.0ms total · avg 8.03 · p95 14.50 · peak 23.9 · over-budget 26/754 · growth 2.557 · overlap clamped 95.6ms · parity 0/31 mismatched
+parity svelte-markdown@A (vs fresh parse): OK — max 0 mismatched of 155 checks
+parity svelte-markdown@B (vs fresh parse): OK — max 0 mismatched of 155 checks
+median total work: A 13781ms · B 6045.8ms · lib flush A 4363.1ms · B 1619.6ms
+median p95 frame work: A 32.1ms · B 14.5ms · frames over 16.7ms: A 398 · B 19
+paired delta (A − B total work, median of 5 pairs): 7728ms (56.077% of A) — B does less work
+output hash: MATCH · dom projection: MATCH
+
+load after long-list: 2.81 2.42 2.33

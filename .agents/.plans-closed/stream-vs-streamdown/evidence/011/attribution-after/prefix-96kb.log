@@ -1,0 +1,40 @@
+load: 2.10 1.79 1.88 2/3428 1390607
+=== attribution: prefix-96kb (svelte-markdown, 1 traced run after 1 warmup) ===
+page: totalWorkMs 296.6 · frames 67 · avg 4.427 · p95 7.4 · libraryFlushMs 8 (67 flushes)
+trace: 136 window measures, raw sum 296.6ms, union 296.6ms (100.0% of totalWorkMs; 0ms of overlapping windows counted twice by the page)
+flush measure 8ms over 55 flushes · main thread pid 1390658 tid 1390658
+
+bucket                                                 total ms  ms/frame   share
+stream-flush measure (parse+diff+state write)               5.6     0.084    1.9%
+JS outside flush (derived + DOM commit + metadata)         75.7     1.129   25.5%
+UpdateLayoutTree + Layout                                 188.7     2.816   63.6%
+Paint + composite                                           0.5     0.008    0.2%
+MinorGC / MajorGC                                           0.0     0.000    0.0%
+other traced main-thread work                               6.8     0.101    2.3%
+untraced window time (idle / gaps)                         19.4     0.289    6.5%
+sum of buckets                                            296.6     4.427
+  of which JS outside flush: 17.42ms in the sync window (prop assignment + tick) · 58.256ms in the frame window
+  "other" by event: RunTask 5.37ms · HitTest 1.384ms
+traced buckets (excl. untraced) = 277.2ms = 93.5% of page totalWorkMs 296.6ms · 93.5% of the window union
+paint + composite after the windows (not charged by the bench): 102.388ms (1.528 ms/frame)
+
+top 15 functions by self time (samples inside the measured windows; 300.529ms sampled)
+ 1.    188.8ms  62.8%  getBoundingClientRect  (native)
+ 2.      5.6ms   1.9%  before  (native)
+ 3.      3.3ms   1.1%  (anonymous)  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:2:4085
+ 4.      3.2ms   1.1%  measure  (native)
+ 5.      1.9ms   0.6%  get  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:3:10835
+ 6.      1.8ms   0.6%  Ur  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:24273
+ 7.      1.5ms   0.5%  prepareTokensForRender  http://127.0.0.1:4183/_app/immutable/chunks/Blkxhcok.js:67:11036
+ 8.      1.5ms   0.5%  ko  http://127.0.0.1:4183/_app/immutable/chunks/Blkxhcok.js:67:11560
+ 9.      1.4ms   0.5%  inlineTokens  http://127.0.0.1:4183/_app/immutable/chunks/Blkxhcok.js:48:675
+10.      1.3ms   0.4%  k  http://127.0.0.1:4183/_app/immutable/chunks/Blkxhcok.js:67:10441
+11.      1.2ms   0.4%  h  http://127.0.0.1:4183/_app/immutable/chunks/Blkxhcok.js:67:8090
+12.      1.2ms   0.4%  #v  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:11736
+13.      1.2ms   0.4%  Vr  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:23922
+14.      1.2ms   0.4%  E  http://127.0.0.1:4183/_app/immutable/chunks/Blkxhcok.js:67:9565
+15.      1.1ms   0.4%  m  http://127.0.0.1:4183/_app/immutable/chunks/Blkxhcok.js:67:8068
+
+trace: /tmp/prefix-96kb.trace.json
+cpu profile: /tmp/prefix-96kb.cpuprofile
+summary: .agents/.plans/stream-vs-streamdown/evidence/011/attribution-after/prefix-96kb.attribution.json

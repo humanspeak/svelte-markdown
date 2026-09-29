@@ -1,0 +1,157 @@
+
+=== prefix-24kb (prose-mixed, 2000+ bytes after a 24000+ byte closed-paragraphs prefix, 32 chars × 1/frame, input prop, mode paired) ===
+svelte-markdown     run 1 [svelte-markdown > svelte-streamdown]: work 268.7ms total · avg 4.01 · p95 6.70 · peak 18.4 · over-budget 1/67 · growth 0.617 · parity 0/3 mismatched
+svelte-streamdown   run 1 [svelte-markdown > svelte-streamdown]: work 188.2ms total · avg 2.81 · p95 3.60 · peak 4.6 · over-budget 0/67 · growth 1.044
+parity (ours vs fresh parse): OK — max 0 mismatched of 3 checks
+median total work: ours 268.7ms · theirs 188.2ms → svelte-streamdown does 1.429x less main-thread work
+median p95 frame work: ours 6.7ms · theirs 3.6ms · frames over 16.7ms: ours 1 · theirs 0
+paired delta (theirs − ours total work, median of 1 pairs): -80.5ms — theirs does less work
+output check: comparable normalized text lengths (ratio 1.002; hashes intentionally differ across renderer markup)
+dom projection: MATCH
+
+=== JSON ===
+{
+  "metadata": {
+    "capturedAt": "2026-09-28T10:26:51.706Z",
+    "url": "http://127.0.0.1:4183/test/stream-compare",
+    "iterations": 1,
+    "warmups": 0,
+    "mode": "paired",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "pageErrors": []
+  },
+  "results": {
+    "prefix-24kb": {
+      "svelte-markdown": {
+        "runs": [
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "prefix-24kb",
+            "corpus": "prose-mixed",
+            "inputMode": "prop",
+            "prefixBytes": 24006,
+            "sourceBytes": 26122,
+            "chunkSize": 32,
+            "updatesPerFrame": 1,
+            "frames": 67,
+            "totalWorkMs": 268.7,
+            "avgWorkMs": 4.01,
+            "p50WorkMs": 3.4,
+            "p95WorkMs": 6.7,
+            "p99WorkMs": 18.4,
+            "peakWorkMs": 18.4,
+            "framesOverBudget": 1,
+            "growthRatio": 0.617,
+            "syncTotalMs": 21.1,
+            "frameWorkTotalMs": 247.6,
+            "libraryFlushMs": 37.6,
+            "libraryFlushCount": 67,
+            "domNodes": 1369,
+            "mutations": 934,
+            "heapDeltaKb": 8935.215,
+            "outputHash": "bc481122",
+            "outputLength": 15352,
+            "parityChecks": 3,
+            "parityMismatches": 0,
+            "firstParityMismatch": null,
+            "parityMismatchSamples": [],
+            "order": "svelte-markdown > svelte-streamdown"
+          }
+        ],
+        "summary": {
+          "iterations": 1,
+          "frames": 67,
+          "totalWorkMsMedian": 268.7,
+          "avgWorkMsMedian": 4.01,
+          "p50WorkMsMedian": 3.4,
+          "p95WorkMsMedian": 6.7,
+          "p99WorkMsMedian": 18.4,
+          "peakWorkMsMedian": 18.4,
+          "framesOverBudgetMedian": 1,
+          "growthRatioMedian": 0.617,
+          "syncTotalMsMedian": 21.1,
+          "frameWorkTotalMsMedian": 247.6,
+          "libraryFlushMsMedian": 37.6,
+          "mutationsMedian": 934,
+          "heapDeltaKbMedian": 8935.215,
+          "domNodes": 1369,
+          "outputHash": "bc481122",
+          "outputLength": 15352,
+          "parityChecksTotal": 3,
+          "parityMismatchesMax": 0,
+          "firstParityMismatch": null
+        }
+      },
+      "svelte-streamdown": {
+        "runs": [
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "prefix-24kb",
+            "corpus": "prose-mixed",
+            "inputMode": "prop",
+            "prefixBytes": 24006,
+            "sourceBytes": 26122,
+            "chunkSize": 32,
+            "updatesPerFrame": 1,
+            "frames": 67,
+            "totalWorkMs": 188.2,
+            "avgWorkMs": 2.809,
+            "p50WorkMs": 2.7,
+            "p95WorkMs": 3.6,
+            "p99WorkMs": 4.6,
+            "peakWorkMs": 4.6,
+            "framesOverBudget": 0,
+            "growthRatio": 1.044,
+            "syncTotalMs": 163.8,
+            "frameWorkTotalMs": 24.4,
+            "libraryFlushMs": null,
+            "libraryFlushCount": null,
+            "domNodes": 1398,
+            "mutations": 879,
+            "heapDeltaKb": 11487.455,
+            "outputHash": "8983b9a6",
+            "outputLength": 15384,
+            "parityChecks": null,
+            "parityMismatches": null,
+            "firstParityMismatch": null,
+            "parityMismatchSamples": null,
+            "order": "svelte-markdown > svelte-streamdown"
+          }
+        ],
+        "summary": {
+          "iterations": 1,
+          "frames": 67,
+          "totalWorkMsMedian": 188.2,
+          "avgWorkMsMedian": 2.809,
+          "p50WorkMsMedian": 2.7,
+          "p95WorkMsMedian": 3.6,
+          "p99WorkMsMedian": 4.6,
+          "peakWorkMsMedian": 4.6,
+          "framesOverBudgetMedian": 0,
+          "growthRatioMedian": 1.044,
+          "syncTotalMsMedian": 163.8,
+          "frameWorkTotalMsMedian": 24.4,
+          "libraryFlushMsMedian": null,
+          "mutationsMedian": 879,
+          "heapDeltaKbMedian": 11487.455,
+          "domNodes": 1398,
+          "outputHash": "8983b9a6",
+          "outputLength": 15384,
+          "parityChecksTotal": null,
+          "parityMismatchesMax": null,
+          "firstParityMismatch": null
+        }
+      },
+      "pairedDeltaMsMedian": -80.5,
+      "pairedDeltasMs": [
+        -80.5
+      ],
+      "domProjectionMatches": true,
+      "domProjectionDifferenceCount": 0,
+      "domProjectionDifferences": [],
+      "outputLengthRatio": 1.002,
+      "outputComparable": true,
+      "workRatioTheirsOverOurs": 0.7
+    }
+  }
+}

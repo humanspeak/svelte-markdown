@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
     import { AlertRenderer, markedAlert } from '@humanspeak/svelte-markdown/extensions'
 
@@ -33,7 +34,8 @@ Regular markdown works alongside alerts: **bold**, *italic*, and \`inline code\`
         alert: RendererComponent
     }
     const renderers: Partial<AlertRenderers> = {
-        alert: AlertRenderer
+        alert: AlertRenderer,
+        code: HighlightedCode
     }
 </script>
 

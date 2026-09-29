@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown, { buildUnsupportedHTML } from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
 
     // Strip every HTML tag — markdown formatting only. Raw HTML is rendered
     // as escaped text in the output so blocked content is auditable.
@@ -38,7 +39,7 @@ Hidden content inside details/summary tags.
     </div>
     <div class="hf-demo-preview">
         <div class="hf-markdown prose prose-sm dark:prose-invert max-w-none">
-            <SvelteMarkdown source={markdown} renderers={{ html }} />
+            <SvelteMarkdown source={markdown} renderers={{ html, code: HighlightedCode }} />
         </div>
     </div>
 </div>

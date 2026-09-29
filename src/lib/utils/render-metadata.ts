@@ -1,5 +1,6 @@
 import type { SvelteMarkdownOptions } from '$lib/types.js'
 import type { Token, TokensList } from '$lib/utils/markdown-parser.js'
+import { countStreamStat, STREAM_STATS_ENABLED } from '$lib/utils/streaming-token-reuse.js'
 import Slugger, { slug as slugBase } from 'github-slugger'
 
 /**
@@ -53,6 +54,38 @@ interface SourceLessRootRecord {
     type?: string
 }
 
+/**
+ * Source characters covered by one root segment (plan 011). A root belongs to
+ * segment `Math.floor(rootStartOffset / ROOT_SEGMENT_SPAN)`.
+ */
+export const ROOT_SEGMENT_SPAN = 4096
+
+/**
+ * A run of consecutive root tokens whose source start offsets fall into the
+ * same {@link ROOT_SEGMENT_SPAN}-character bucket. The root Parser renders
+ * `{#each segments (segment.id)}{#each segment.tokens (key)}` so a streaming
+ * update only re-diffs the segment it touched instead of every root.
+ *
+ * Ownership rule: a root's render key is its source offset, and its segment
+ * is a pure function of that offset, so a root can never move between
+ * segments (inner `{#each}` owners) while its key is alive — it is mounted
+ * and destroyed by one owner for its whole life. Segment layout is a pure
+ * function of the final token array, so a streamed render and a one-shot
+ * render of the same source produce the same segments.
+ */
+export interface RootSegment {
+    /** Bucket index; unique within one render and stable across renders */
+    readonly id: number
+    /** The segment's roots, in document order */
+    readonly tokens: readonly Token[]
+}
+
+/** Where a built segment starts in the prepared root array. */
+interface RootSegmentStart {
+    index: number
+    offset: number
+}
+
 export interface RenderPreparation {
     source?: string
     startIndex?: number
@@ -68,6 +101,11 @@ export interface RenderMetadata {
     getPreparedHeadingId: (_node: unknown) => string | undefined
     getStableNodeKey: (_node: unknown, _index: number) => unknown
     getStableRowKey: (_row: unknown[] | undefined, _index: number) => unknown
+    /**
+     * Root segments prepared for exactly this root array (source-backed
+     * passes only), or `undefined` — callers then render the array flat.
+     */
+    getRootSegments: (_tokens: unknown) => readonly RootSegment[] | undefined
 }
 
 export const RENDER_METADATA_CONTEXT = Symbol('svelte-markdown.renderMetadata')
@@ -154,6 +192,30 @@ export const createRenderMetadata = (): RenderMetadata => {
     let headingStateReusable = false
     let preparedHeadingSignature: HeadingSluggerSignature | undefined
     let previousSourceLessRoots: SourceLessRootRecord[] = []
+    /**
+     * Source-backed passes only (streaming re-walk of a diverged open block,
+     * plan 010 H3). `keyedSubtreeOffsets` records the absolute offset at which
+     * a node's whole subtree was last keyed; a node seen again at the same
+     * offset with the same stored key still has correct keys below it, because
+     * parsed tokens are immutable. `headingFreeSubtrees` marks nodes with no
+     * heading anywhere below them, so heading-id passes skip those subtrees
+     * while still visiting every subtree that holds a heading. Both are gated
+     * on source-backed passes: caller-supplied token arrays may be mutated in
+     * place between renders.
+     */
+    const keyedSubtreeOffsets = new WeakMap<object, number>()
+    const headingFreeSubtrees = new WeakSet<object>()
+    let headingSubtreeCacheEnabled = false
+    /**
+     * Root segments of the last source-backed pass (plan 011): built for
+     * `segmentedTokens`, with each segment's start index/offset and the end
+     * of the root array so a partial pass rebuilds only from the segment
+     * holding `startIndex`.
+     */
+    let segmentedTokens: unknown
+    let rootSegments: RootSegment[] = []
+    let rootSegmentStarts: RootSegmentStart[] = []
+    let rootSegmentsEnd: RootSegmentStart = { index: 0, offset: 0 }
 
     const setRenderKey = (node: object, value: unknown) => {
         renderKeys.set(node, value)
@@ -163,6 +225,7 @@ export const createRenderMetadata = (): RenderMetadata => {
         typeof node === 'object' && node !== null ? renderKeys.get(node) : undefined
 
     const getStableNodeKey = (node: unknown, index: number): unknown => {
+        if (STREAM_STATS_ENABLED) countStreamStat('keyEvaluations')
         const renderKey = getRenderKey(node)
         if (renderKey !== undefined) return renderKey
 
@@ -185,15 +248,17 @@ export const createRenderMetadata = (): RenderMetadata => {
             const node = nodes[index]
             const spanLength = getNodeSourceLength(node)
             const nodeOffset = absoluteOffset + cursor
+            const key = spanLength === 0 ? `src:${nodeOffset}:zero:${index}` : `src:${nodeOffset}`
+            cursor += spanLength
 
-            if (spanLength === 0) {
-                setRenderKey(node, `src:${nodeOffset}:zero:${index}`)
-            } else {
-                setRenderKey(node, `src:${nodeOffset}`)
+            // Same object, same offset, same key: its subtree keys are current.
+            if (keyedSubtreeOffsets.get(node) === nodeOffset && renderKeys.get(node) === key) {
+                continue
             }
 
+            setRenderKey(node, key)
             assignSourceKeysToChildren(node, nodeOffset)
-            cursor += spanLength
+            keyedSubtreeOffsets.set(node, nodeOffset)
         }
     }
 
@@ -303,31 +368,151 @@ export const createRenderMetadata = (): RenderMetadata => {
         }
     }
 
+    const clearRootSegments = () => {
+        segmentedTokens = undefined
+        rootSegments = []
+        rootSegmentStarts = []
+        rootSegmentsEnd = { index: 0, offset: 0 }
+    }
+
+    /**
+     * Number of previous segments that lie wholly before `startIndex` (so
+     * their roots are the same objects at the same offsets) and can be kept.
+     * 0 when the previous segments cannot be trusted for this pass.
+     */
+    const countKeptSegments = (nodes: RenderMetadataNode[], startIndex: number): number => {
+        if (segmentedTokens === undefined || startIndex <= 0) return 0
+        if (startIndex > rootSegmentsEnd.index || startIndex > nodes.length) return 0
+
+        let keep = 0
+        while (keep < rootSegments.length) {
+            const end =
+                keep + 1 < rootSegmentStarts.length
+                    ? rootSegmentStarts[keep + 1].index
+                    : rootSegmentsEnd.index
+            if (end > startIndex) break
+            keep++
+        }
+        return keep
+    }
+
+    /** True when `segment` holds exactly the objects in `tokens`. */
+    const segmentHoldsTokens = (segment: RootSegment, tokens: readonly Token[]): boolean => {
+        if (segment.tokens.length !== tokens.length) return false
+        for (let index = 0; index < tokens.length; index++) {
+            if (segment.tokens[index] !== tokens[index]) return false
+        }
+        return true
+    }
+
+    /**
+     * Groups root tokens into offset buckets (see {@link RootSegment}). On a
+     * partial pass (`startIndex > 0`, roots before it unchanged) the segments
+     * wholly before `startIndex` are kept as-is and only the rest is rebuilt,
+     * so the work is proportional to one segment plus the changed tail. A
+     * rebuilt segment whose roots are all the previous objects keeps its
+     * previous segment object, so its inner `{#each}` is not re-diffed.
+     */
+    const prepareRootSegments = (
+        nodes: RenderMetadataNode[],
+        startIndex: number,
+        startOffset: number
+    ) => {
+        let keep = countKeptSegments(nodes, startIndex)
+        let from: RootSegmentStart =
+            keep < rootSegmentStarts.length ? rootSegmentStarts[keep] : rootSegmentsEnd
+        // An appended root may still fall into the last kept bucket.
+        if (keep > 0 && Math.floor(from.offset / ROOT_SEGMENT_SPAN) === rootSegments[keep - 1].id) {
+            keep--
+            from = rootSegmentStarts[keep]
+        }
+        if (keep === 0) from = { index: 0, offset: 0 }
+        // `startOffset` pins the offset of `startIndex`; it must agree.
+        if (from.index === startIndex && from.offset !== startOffset) {
+            keep = 0
+            from = { index: 0, offset: 0 }
+        }
+
+        const segments = rootSegments.slice(0, keep)
+        const starts = rootSegmentStarts.slice(0, keep)
+        // Previous segments after the kept ones, walked in id order (ids
+        // increase with offset) to reuse unchanged segment objects.
+        let previous = keep
+        let index = from.index
+        let offset = from.offset
+        while (index < nodes.length) {
+            const id = Math.floor(offset / ROOT_SEGMENT_SPAN)
+            const start: RootSegmentStart = { index, offset }
+            while (index < nodes.length && Math.floor(offset / ROOT_SEGMENT_SPAN) === id) {
+                offset += getNodeSourceLength(nodes[index])
+                index++
+            }
+            const tokens = (nodes as unknown as Token[]).slice(start.index, index)
+            while (previous < rootSegments.length && rootSegments[previous].id < id) previous++
+            const candidate = rootSegments[previous]
+            const reusable = candidate?.id === id && segmentHoldsTokens(candidate, tokens)
+            segments.push(reusable ? candidate : { id, tokens })
+            starts.push(start)
+        }
+
+        segmentedTokens = nodes
+        rootSegments = segments
+        rootSegmentStarts = starts
+        rootSegmentsEnd = { index, offset }
+    }
+
+    /**
+     * Prepares heading ids in `nodes` (from `startIndex`) and their subtrees,
+     * in document order.
+     *
+     * @returns `true` when a heading was found in `nodes` or below them
+     */
     const assignHeadingIds = (
         nodes: RenderMetadataNode[] | undefined,
         options: SvelteMarkdownOptions,
         startIndex = 0,
         rootIndex?: number
-    ) => {
-        if (!nodes) return
+    ): boolean => {
+        if (!nodes) return false
 
+        let found = false
         for (let index = startIndex; index < nodes.length; index++) {
             const node = nodes[index]
             const headingRootIndex = rootIndex ?? index
             if (node.type === 'heading') {
                 prepareHeadingId(node, options, headingRootIndex)
+                found = true
             }
+            if (assignHeadingIdsBelow(node, options, headingRootIndex)) found = true
+        }
+        return found
+    }
 
-            assignHeadingIds(asNodeArray(node.tokens), options, 0, headingRootIndex)
-            assignHeadingIds(asNodeArray(node.items), options, 0, headingRootIndex)
-            assignHeadingIds(asNodeArray(node.header), options, 0, headingRootIndex)
-            const rows = asNodeArray(node.rows)
-            if (rows) {
-                for (const row of rows) {
-                    assignHeadingIds(asNodeArray(row), options, 0, headingRootIndex)
-                }
+    /**
+     * Walks `node`'s children for headings, skipping subtrees a previous
+     * source-backed pass proved heading-free.
+     *
+     * @returns `true` when a heading exists below `node`
+     */
+    const assignHeadingIdsBelow = (
+        node: RenderMetadataNode,
+        options: SvelteMarkdownOptions,
+        rootIndex: number
+    ): boolean => {
+        if (headingSubtreeCacheEnabled && headingFreeSubtrees.has(node)) return false
+
+        let found = assignHeadingIds(asNodeArray(node.tokens), options, 0, rootIndex)
+        if (assignHeadingIds(asNodeArray(node.items), options, 0, rootIndex)) found = true
+        if (assignHeadingIds(asNodeArray(node.header), options, 0, rootIndex)) found = true
+        const rows = asNodeArray(node.rows)
+        if (rows) {
+            for (const row of rows) {
+                if (assignHeadingIds(asNodeArray(row), options, 0, rootIndex)) found = true
             }
         }
+
+        if (!found && headingSubtreeCacheEnabled) headingFreeSubtrees.add(node)
+        return found
     }
 
     const prepareHeadingId = (
@@ -377,6 +562,7 @@ export const createRenderMetadata = (): RenderMetadata => {
     ) => {
         const signature = getHeadingSluggerSignature(options)
         const { source, startIndex = 0 } = preparation ?? {}
+        headingSubtreeCacheEnabled = source !== undefined
         const canReuse =
             source !== undefined &&
             startIndex > 0 &&
@@ -418,7 +604,13 @@ export const createRenderMetadata = (): RenderMetadata => {
                     preparation.startIndex ?? 0,
                     preparation.startOffset ?? 0
                 )
+                prepareRootSegments(
+                    renderNodes,
+                    preparation.startIndex ?? 0,
+                    preparation.startOffset ?? 0
+                )
             } else {
+                clearRootSegments()
                 assignSourceLessRootKeys(renderNodes)
             }
 
@@ -437,6 +629,8 @@ export const createRenderMetadata = (): RenderMetadata => {
             if (row) return row
 
             return index
-        }
+        },
+        getRootSegments: (tokens: unknown): readonly RootSegment[] | undefined =>
+            tokens !== undefined && tokens === segmentedTokens ? rootSegments : undefined
     }
 }

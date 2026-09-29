@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
     import {
         FootnoteRef,
@@ -33,7 +34,8 @@ When documenting APIs, footnotes[^api] help explain edge cases without breaking 
     }
     const renderers: Partial<FootnoteRenderers> = {
         footnoteRef: FootnoteRef,
-        footnoteSection: FootnoteSection
+        footnoteSection: FootnoteSection,
+        code: HighlightedCode
     }
 </script>
 
