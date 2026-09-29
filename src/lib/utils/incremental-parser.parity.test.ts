@@ -513,7 +513,7 @@ describe('streaming parity', () => {
         // it. After an unclosed `<a>` the state tracker must do the same, or
         // a later bare URL is linked in the stream and plain in a one-shot
         // parse (or the reverse).
-        red('inline link state after an unclosed anchor and an autolink matches', () => {
+        it('inline link state after an unclosed anchor and an autolink matches', () => {
             const first = '<a href="x">open <https://b.example>\n\n'
             expectParity([first, 'https://a.example\n'])
             expectParity([first, 'Text.\n\n', 'https://a.example\n'])
@@ -526,6 +526,38 @@ describe('streaming parity', () => {
         ])('inline link state after an unclosed anchor and %s matches (guard)', (_name, first) => {
             expectParity([first, 'https://a.example\n'])
             expectParity([first, 'Text.\n\n', 'https://a.example\n'])
+        })
+
+        // Plan 009, Step 2 (marked 18): a reference link or image resets
+        // `inLink` like a bracket link; an email autolink, a bare `www.`
+        // address and a bare email address leave it set like a URL autolink.
+        it.each([
+            ['a reference link', '[r]: /ref\n\n<a href="x">open [t][r]\n\n'],
+            ['a shortcut reference link', '[r]: /ref\n\n<a href="x">open [r]\n\n'],
+            ['a reference image', '[r]: /ref\n\n<a href="x">open ![i][r]\n\n'],
+            ['an email autolink', '<a href="x">open <me@b.example>\n\n'],
+            ['a bare www address', '<a href="x">open www.b.example\n\n'],
+            ['a bare email address', '<a href="x">open me@b.example\n\n']
+        ])('inline link state after an unclosed anchor and %s matches (guard)', (_name, first) => {
+            expectParity([first, 'https://a.example\n'])
+            expectParity([first, 'Text.\n\n', 'https://a.example\n'])
+        })
+
+        // No link construct resets `inRawBlock`: after an unclosed `<code>`,
+        // later paragraphs stay `escaped` text whatever link came first.
+        it.each([
+            ['a bracket link', '<code>open [t](/u)\n\n'],
+            ['a reference link', '[r]: /ref\n\n<code>open [t][r]\n\n'],
+            ['an image', '<code>open ![i](/u)\n\n'],
+            ['a reference image', '[r]: /ref\n\n<code>open ![i][r]\n\n'],
+            ['a URL autolink', '<code>open <https://b.example>\n\n'],
+            ['an email autolink', '<code>open <me@b.example>\n\n'],
+            ['a bare URL', '<code>open https://b.example\n\n'],
+            ['a bare www address', '<code>open www.b.example\n\n'],
+            ['a bare email address', '<code>open me@b.example\n\n']
+        ])('inline raw state after an unclosed code tag and %s matches (guard)', (_name, first) => {
+            expectParity([first, 'x & **y**\n'])
+            expectParity([first, 'Text.\n\n', 'x & **y**\n'])
         })
 
         it('a long chain of adjacent open blocks refuses the boundary, then regains it (guard)', () => {

@@ -277,8 +277,11 @@ type InlineStateToken = Token & {
  * An html token marked emitted carries the state after it (`inLink`,
  * `inRawBlock`); cleanup keeps those fields unless it paired the tag with its
  * closing tag, and a pair can only close the state (its closing tag clears
- * it, as marked's `endATag` / `endPreScriptTag` do). A link clears `inLink`
- * once its text is lexed. The walk descends into nested inline tokens.
+ * it, as marked's `endATag` / `endPreScriptTag` do). A bracket link or image
+ * (`[t](/u)`, `[t][r]`, `![i](/u)`: raw starts with `[` or `!`) lexes its text
+ * with `inLink` set and clears it afterwards, as marked's `outputLink` does;
+ * an autolink (`<https://…>`) or a bare GFM URL never touches it. No link
+ * touches `inRawBlock`. The walk descends into nested inline tokens.
  *
  * @param token - An inline token
  * @param state - The state bits before it
@@ -286,6 +289,8 @@ type InlineStateToken = Token & {
  * @example
  * ```typescript
  * stepInlineState({ type: 'html', raw: '<code>', inLink: false, inRawBlock: true } as Token, 0) // IN_RAW_BLOCK
+ * stepInlineState({ type: 'link', raw: '[t](/u)', tokens: [] } as Token, IN_LINK) // 0
+ * stepInlineState({ type: 'link', raw: '<https://b.example>', tokens: [] } as Token, IN_LINK) // IN_LINK
  * ```
  */
 const stepInlineState = (token: Token, state: number): number => {
@@ -294,7 +299,7 @@ const stepInlineState = (token: Token, state: number): number => {
         return (inline.inLink ? IN_LINK : 0) | (inline.inRawBlock ? IN_RAW_BLOCK : 0)
     }
     if (!Array.isArray(inline.tokens)) return state
-    if (inline.type === 'link') return stepInlineTokens(inline.tokens, state | IN_LINK) & ~IN_LINK
+    if (isBracketLink(inline)) return stepInlineTokens(inline.tokens, state | IN_LINK) & ~IN_LINK
     if (inline.type !== 'html' || !inline.tag) return stepInlineTokens(inline.tokens, state)
     // A paired inline tag: the opening tag, the children, the closing tag.
     let inner = state
@@ -305,6 +310,24 @@ const stepInlineState = (token: Token, state: number): number => {
     if (RAW_TAGS.has(inline.tag)) inner &= ~IN_RAW_BLOCK
     return inner
 }
+
+/**
+ * Whether a token came from marked's `link` / `reflink` tokenizers (bracket
+ * links and images, which run `outputLink` and so reset `inLink`), as opposed
+ * to its `autolink` / `url` tokenizers (`<https://…>`, bare URLs), which emit
+ * `link` tokens too but leave the state alone.
+ *
+ * @param token - An inline token
+ * @returns `true` for a bracket link or image
+ * @example
+ * ```typescript
+ * isBracketLink({ type: 'image', raw: '![i](/u)' } as Token) // true
+ * isBracketLink({ type: 'link', raw: '<me@b.example>' } as Token) // false
+ * ```
+ */
+const isBracketLink = (token: Token): boolean =>
+    (token.type === 'link' || token.type === 'image') &&
+    (token.raw.startsWith('[') || token.raw.startsWith('!'))
 
 /** Folds `stepInlineState` over inline tokens. */
 const stepInlineTokens = (tokens: readonly Token[], state: number): number => {

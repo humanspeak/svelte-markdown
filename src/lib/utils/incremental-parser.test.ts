@@ -1606,6 +1606,37 @@ const section${index} = { active: true, value: ${index} }
             expect(usedTailWindow).toEqual([true, true, true])
         })
 
+        it.each([
+            ['a bracket link', true, '<a href="x">open [t](/u)\n\n'],
+            ['an image', true, '<a href="x">open ![i](/u)\n\n'],
+            ['a reference link', true, '[r]: /ref\n\n<a href="x">open [t][r]\n\n'],
+            ['a URL autolink', false, '<a href="x">open <https://b.example>\n\n'],
+            ['an email autolink', false, '<a href="x">open <me@b.example>\n\n']
+        ])(
+            'after an unclosed anchor and %s, the tail window is used: %s',
+            (_name, regained, head) => {
+                // marked's `outputLink` (bracket links and images) resets
+                // `inLink`; its autolink tokenizer does not, so the state is
+                // still open and every later cut must be refused.
+                const options = createDefaultOptions()
+                const parser = new IncrementalParser(options)
+                const usedTailWindow: boolean[] = []
+                let source = head
+                parser.update(source)
+                for (const chunk of ['https://a.example\n\n', 'Second after.\n\n']) {
+                    source += chunk
+                    const result = parser.update(source)
+                    usedTailWindow.push(result.usedTailWindow)
+                    expectSemanticParity(
+                        result.tokens,
+                        parseAndCacheModule.lexAndClean(source, options, false),
+                        source
+                    )
+                }
+                expect(usedTailWindow).toEqual([regained, regained])
+            }
+        )
+
         it.each([1, 7, 32, 64])(
             'matches a fresh parse of the prose-mixed sections at chunk size %i',
             (size) => {
