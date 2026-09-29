@@ -140,6 +140,17 @@ describe('streaming parity', () => {
         it('tabs inside list items keep parity (guard)', () => {
             expectParity(chunkBy('- a\n\t- nested\n- b\n\nAfter.\n', 4))
         })
+
+        // Plan 007, found by the executor's corpus after the three-iteration
+        // limit; present at the plan's base commit too. The roots add up to
+        // the source length although two errors are present: CRLF makes a
+        // root one character shorter than its span, and marked's blockquote
+        // raw gains a line break the source does not have (source
+        // `> - q\n` + backtick => raw ends in backtick + `\n`). The sum check passes; the offset is wrong.
+        red('two cancelling length errors do not pass the integrity check', () => {
+            expectParity(['a\r\n\n> - q\n`', '``'])
+            expectParity(['a\r\n\n> - q\n`', '\n'])
+        })
     })
 
     describe('B. block boundaries (a block frozen while it could still grow)', () => {
@@ -366,6 +377,100 @@ describe('streaming parity', () => {
             const source = 'Intro.\n\n<!-- never closed\n\nstill hidden\n\n# not a heading\n\nEnd'
             for (const size of [1, 4, 9]) expectParity(chunkBy(source, size))
         })
+
+        // Plan 007: a block ADJACENT to the open last block (no blank line
+        // between them) can still absorb the next line — a lazy continuation,
+        // a setext underline, another list item or table row — so it must not
+        // be frozen before a blank line closes it.
+        it.each([
+            ['an empty ordered item then the next marker', '1.\n2. after empty ordered\n\n'],
+            ['an empty bullet item then the next marker', '-\n- after empty item\n\n'],
+            ['a hard-break line then a look-alike heading', 'Line\\\n#NotAHeading\n\n'],
+            ['a paragraph then a look-alike heading', 'Para\n#NotAHeading\n\n'],
+            ['a list item then a look-alike heading', '- item\n#NotAHeading\n\n'],
+            ['a blockquote then a look-alike heading', '> quote\n#NotAHeading\n\n'],
+            ['a paragraph then a setext underline', 'Paragraph then setext?\n---\n\n'],
+            ['a paragraph then a setext H1 underline', 'Title\n===\n\n'],
+            [
+                'a table then a row without pipes',
+                '| a | b |\n|---|---|\n| c | d |\nrow without pipes\n\n'
+            ],
+            ['a paragraph then two backticks', 'Para\n``\n\n']
+        ])('%s keeps parity', (_name, block) => {
+            for (const size of [1, 2, 3]) {
+                expectParity(chunkBy(block, size))
+                expectParity(chunkBy(`Intro.\n\n${block}After.\n`, size))
+            }
+        })
+
+        it.each([
+            ['a heading directly followed by a list', '# Heading\n- one\n- two\n\nAfter.\n'],
+            [
+                'a closed fence directly followed by a paragraph',
+                '```\ncode\n```\nPara right after\n\nAfter.\n'
+            ]
+        ])('%s keeps parity (guard)', (_name, source) => {
+            for (const size of [1, 2, 3]) expectParity(chunkBy(source, size))
+        })
+
+        // Plan 007, found by the executor's corpus after the three-iteration
+        // limit; present at the plan's base commit too. An unclosed
+        // processing instruction or comment runs to the end of the input, but
+        // once its block contains a tag, cleanup expands it into roots that no
+        // longer carry the unterminated opener (`<?pi\n<li>x</li>\n\n` =>
+        // text `x` + space), so the boundary moves past the blank line.
+        red('an unclosed HTML construct containing a tag stays open across a blank line', () => {
+            expectParity(['<?pi\n<li>x</li>\n', '\n', '['])
+            expectParity(['<!--\n<hr>\n', '\n', '!'])
+        })
+
+        it('a long chain of adjacent open blocks refuses the boundary, then regains it (guard)', () => {
+            // `> q` and `- l` interrupt each other, so no blank line closes
+            // any of them: past the walk's cap the boundary is refused (a full
+            // re-lex) instead of scanning further back.
+            const chain = '> quote\n- item\n'.repeat(6)
+            const parser = new IncrementalParser(createOptions())
+            const chunks = [
+                'Intro.\n\n',
+                chain,
+                '> more',
+                '\n\n',
+                'After.\n\n',
+                'Again.\n\n',
+                'End.\n'
+            ]
+            const used: boolean[] = []
+            let source = ''
+            for (const chunk of chunks) {
+                source += chunk
+                used.push(parser.update(source).usedTailWindow)
+            }
+            // The update after the chain lexes everything; the intro would
+            // otherwise be a reusable prefix.
+            expect(used[2]).toBe(false)
+            expect(used.slice(-2)).toEqual([true, true])
+            expectParity(chunks)
+            expectParity(chunkBy(`Intro.\n\n${chain}\nAfter.\n`, 3))
+        })
+
+        it('a paragraph before a blank line joins the prefix once a heading is followed (guard)', () => {
+            const parser = new IncrementalParser(createOptions())
+            const chunks = ['Para.\n\n', '# Heading\n', 'After heading.\n', 'More.\n']
+            const used: boolean[] = []
+            let source = ''
+            for (const chunk of chunks) {
+                source += chunk
+                used.push(parser.update(source).usedTailWindow)
+            }
+            // paragraph, space, heading, paragraph: the paragraph and the
+            // heading are closed and in the reused prefix.
+            expect(used.slice(-2)).toEqual([true, true])
+            const boundary = (
+                parser as unknown as { getTailWindowBoundary: () => { prefixCount: number } }
+            ).getTailWindowBoundary()
+            expect(boundary.prefixCount).toBe(3)
+            expectParity(chunks)
+        })
     })
 
     describe('C. reference scope (definitions the line-anchored detector misses)', () => {
@@ -412,6 +517,28 @@ describe('streaming parity', () => {
         it('a duplicate definition with no earlier use keeps parity at every chunk size', () => {
             const source = 'Intro.\n\n[a]: /first\n\nProse.\n\n[a]: /second\n\nEnd.\n'
             for (const size of [1, 3, 7]) expectParity(chunkBy(source, size))
+        })
+
+        // Plan 007, found by the executor's corpus: a definition-shaped line
+        // that continues a paragraph is paragraph text (a definition cannot
+        // interrupt a paragraph), so its `[k]` is a reference use that a
+        // later definition must resolve.
+        it('a definition-shaped line inside a paragraph is a use a later definition resolves', () => {
+            expectParity(['Intro\n[k]: /k\n\n', '[k]: /k\n'])
+            expectParity(['Intro\n', '[k]: /k\n\n', 'x\n\n', '[k]: /k\n'])
+            expectParity(chunkBy('Intro\n[k]: /k\n\n[k]: /k\n', 1))
+            expectParity(chunkBy('- item\n[k]: /k\n\n> q\n[j]: /j\n\n[k]: /k\n[j]: /j\n', 2))
+        })
+
+        it('a definition-shaped line marked rejects is a use a later definition resolves', () => {
+            // `[k2]:` takes `7.` as its destination, then ` seven` is not a
+            // title, so the lines are one paragraph citing `[k2]`.
+            expectParity(['Intro.\n\n[k2]:\n7. seven\n\n', '[k2]:\n- '])
+            expectParity(['Intro.\n\n[k]: /k junk\n\n', '[k]: /k\n'])
+        })
+
+        it('definitions that follow definitions stay definitions (guard)', () => {
+            expectParity(chunkBy('See [a].\n\n[a]: /a\n[b]: /b\n\nUses [b].\n\n[b]: /dup\n', 1))
         })
 
         it('a plain definition after a use resolves (guard)', () => {

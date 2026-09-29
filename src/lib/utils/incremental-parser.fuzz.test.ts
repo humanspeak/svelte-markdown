@@ -11,8 +11,8 @@
  * the document seed and chunking seed that reproduce it.
  *
  * `red` marks a known failure that asserts the CORRECT behavior; run with
- * `PARITY_STRICT=1` to see the real failures. None is red today (plan 006
- * closed the HTML-construct gaps): when a new block exposes a failure, add it
+ * `PARITY_STRICT=1` to see the real failures. None is red today (plan 007
+ * closed the adjacent-block gaps): when a new block exposes a failure, add it
  * here and mark the case `red` until the fix lands.
  */
 
@@ -233,6 +233,168 @@ const ADJACENT_BLOCKS = [
     '| a | b |\n| - |\n\n'
 ]
 
+/**
+ * Fourth-opinion blocks, written by the plan 007 executor to break the
+ * adjacency rule: almost none ends in a blank line, so blocks follow each
+ * other directly. Partial markers of every kind, every block type directly
+ * followed by every other, nested containers three deep, definition-shaped
+ * lines that are really paragraph text, and unclosed HTML constructs. The
+ * case combines them with the three corpora above.
+ */
+const EXECUTOR_BLOCKS = [
+    // Partial markers: a lone hash, dash, double dash, equals sign,
+    // greater-than, pipe, backtick, tilde, digit, digit plus dot, less-than,
+    // opening bracket and exclamation mark, and a few longer ones.
+    '#\n',
+    '-\n',
+    '--\n',
+    '=\n',
+    '>\n',
+    '|\n',
+    '`\n',
+    '~\n',
+    '7\n',
+    '7.\n',
+    '<\n',
+    '[\n',
+    '!\n',
+    '``\n',
+    '~~\n',
+    '[x\n',
+    '![\n',
+    '<d\n',
+    '1)\n',
+    '*\n',
+    '+\n',
+    '0.\n',
+    '10.\n',
+    '- \n',
+    '+ \n',
+    '1.  \n',
+    '#\t tab heading\n',
+    // Plain and look-alike lines.
+    'plain line\n',
+    'another plain line\n',
+    'hard break  \n',
+    'trailing spaces  \n',
+    'backslash break\\\n',
+    '\\# escaped hash\n',
+    '#heading-lookalike\n',
+    '1.no-space\n',
+    '-no-space\n',
+    '1234567890. long\n',
+    '   indented three\n',
+    '    - not a list\n',
+    '`inline` start\n',
+    '*emph open\n',
+    'emph close*\n',
+    '***bold\n',
+    '__under\n',
+    'end__\n',
+    '[link open\n',
+    '](/close)\n',
+    '<http://auto\n',
+    '$ tail\n',
+    'no newline at end',
+    'x\n\n',
+    '\n',
+    // Every block type, without a blank line after it.
+    '# atx\n',
+    '## closed ##\n',
+    'setext\n===\n',
+    '---  \n',
+    ' ===\n',
+    '***\n',
+    '- - -\n',
+    '___\n',
+    '- bullet\n',
+    '1. ordered\n',
+    '2) paren ordered\n',
+    '-    five spaces\n',
+    '1. a\n   continued\n',
+    '- a\n    - nested b\n',
+    '- a\n  lazy\n',
+    '  - two-space item\n',
+    '- [ ]\n',
+    '- [x] done\n',
+    '* [ ] star task\n',
+    '1. [ ] ordered task\n',
+    'P\n+ \n-\n',
+    '> quoted\n',
+    '> > twice quoted\n',
+    '>    four in quote\n',
+    '> \n',
+    '>\n>\n',
+    '> [!NOTE]\n',
+    // Nested containers three deep.
+    '> - > three deep\n',
+    '- > 1. three deep\n',
+    '1. - > three deep\n',
+    // Tables and table-like lines.
+    '| p | q |\n|---|---|\n| r | s |\n',
+    '| lone header |\n',
+    '|---|\n',
+    ':---|---:\n',
+    'a | b\n',
+    '-|-\n',
+    '| --- |\n',
+    'x | y | z\n--- | --- | ---\n',
+    // Fences and indented code, closed and open.
+    '```\nfenced\n```\n',
+    '~~~js\nopen tilde\n',
+    '```\n',
+    '```js title="x"\n',
+    '````\n',
+    '~~~~~~\n',
+    '> ```\n',
+    '> ~~~\n> in quote fence\n',
+    '    indented code\n',
+    '\tTab code\n',
+    '    \n',
+    '    \t\n',
+    '  \n',
+    '\\\n',
+    // HTML next to everything, including unclosed constructs.
+    '<div>\n',
+    '</div>\n',
+    '<!-- c -->\n',
+    '<!-- one -->\n<!-- two -->\n<!-- three -->\n',
+    '<!--\n',
+    '-->\n',
+    '<pre>\n',
+    '</pre>\n',
+    '<br>\n',
+    '<span>inline html</span>\n',
+    '<custom-el>\n',
+    '</custom-el>\n',
+    '<a href="/x">\n',
+    '<table>\n',
+    '<!DOCTYPE x>\n',
+    '<?pi\n',
+    '?>\n',
+    '<img\n',
+    'src="a.png">\n',
+    // Definitions, definition-shaped paragraph lines, titles and uses.
+    '[k]: /k\n',
+    '[k2]:\n',
+    '/k2-url\n',
+    '"a title"\n',
+    '(paren title\n',
+    'uses [k] and [k2]\n',
+    '[ref]: </a b> "t"\n',
+    '[ref]\n',
+    '[^n]: note\n',
+    'Intro line\n[k]: /k\n',
+    '[k3]:\n7. not a destination\n',
+    '[k]: /k junk after\n',
+    '> q\n[k]: /k in quote lazily\n',
+    '[r1]: /1\n[r2]: /2\n[r3]: /3\n[r4]: /4\n[r5]: /5\n[r6]: /6\n[r7]: /7\n[r8]: /8\n[r9]: /9\n[r10]: /10\n',
+    'cites [r1] [r5] [r10]\n',
+    // CRLF next to LF blocks.
+    'crlf line\r\n',
+    '-\r\n'
+]
+
 const CHUNK_LIMITS = [1, 2, 3, 5, 9, 17, 40]
 
 /** Generous: every update is checked against a fresh lex of the whole source. */
@@ -333,7 +495,7 @@ describe('generative streaming parity', () => {
         FUZZ_TIMEOUT_MS
     )
 
-    red(
+    it(
         'documents with adjacent and look-alike blocks keep parity',
         () => {
             const failures = fuzz({
@@ -342,6 +504,24 @@ describe('generative streaming parity', () => {
                 chunkingsPerDocument: 8
             })
             expect(failures).toEqual([])
+        },
+        FUZZ_TIMEOUT_MS
+    )
+
+    it(
+        'documents with executor-written adversarial blocks keep parity',
+        () => {
+            // The executor's blocks twice, so they dominate, combined with
+            // every block of the three corpora above.
+            const blocks = [
+                ...EXECUTOR_BLOCKS,
+                ...EXECUTOR_BLOCKS,
+                ...CORE_BLOCKS,
+                ...GAP_BLOCKS,
+                ...EDGE_BLOCKS,
+                ...ADJACENT_BLOCKS
+            ]
+            expect(fuzz({ blocks, documents: 200, chunkingsPerDocument: 8 })).toEqual([])
         },
         FUZZ_TIMEOUT_MS
     )

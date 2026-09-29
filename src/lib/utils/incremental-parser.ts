@@ -83,9 +83,16 @@ const RAW_TEXT_BLOCK_START_RE = /^ {0,3}<(pre|script|style|textarea)(?=[\s>]|$)/
 const DECLARATION_START_RE = /^ {0,3}<![a-zA-Z]/
 const LINK_REFERENCE_RE = /\[[^\]\n]+\]\[[^\]\n]*\]/
 const SHORTCUT_REFERENCE_RE = /\[[^\]\n]+\](?![[(])/ // Excludes inline links/images and full refs
-const REFERENCE_DEFINITION_RE = /^\s{0,3}\[[^\]\n]+\]:/m
 const REGEXP_SPECIAL_RE = /[.*+?^${}()|[\]\\]/g
 const WHITESPACE_RUN_RE = /\s+/g
+const BLANK_LINE_RE = /^\s*$/
+/** A whole reference definition on one line: label, destination, optional
+ *  closed title, nothing after. Anything else that starts like a definition
+ *  (`[k]:` with the destination on the next line, `[k]: /k junk`, a title
+ *  that continues on the next line) may turn out to be paragraph text, so it
+ *  is treated as a reference use. */
+const COMPLETE_DEFINITION_LINE_RE =
+    /^ {0,3}\[[^\]\n]+\]:[ \t]*(?:<[^<>\n]*>|[^<\s]\S*)(?:[ \t]+(?:"[^"\n]*"|'[^'\n]*'|\([^()\n]*\)))?[ \t]*\r?$/
 
 /**
  * Every reference definition contains `]:` (the label's closing bracket and
@@ -178,6 +185,103 @@ const isUnterminatedHtmlBlock = (raw: string): boolean => {
  * ```
  */
 const isHtmlPiece = (token: Token): boolean => token.type === 'html' || token.type === 'text'
+
+/** Root types that no following line can extend or change (ATX and setext
+ *  headings, thematic breaks, blank lines). */
+const LINE_CLOSED_TYPES = new Set(['heading', 'hr', 'space'])
+
+/**
+ * True for a root that the NEXT line can still extend or change when no
+ * blank line separates them. In CommonMark a line that turns out to be
+ * paragraph text continues the previous paragraph, list item or blockquote
+ * (lazy continuation), a line can turn a paragraph into a setext heading, a
+ * line after a table is another row, and a line after a definition may be
+ * its title. So a block directly followed by the open tail must stay in the
+ * tail until a blank line closes it:
+ *
+ *   'Para\n#N'  => paragraph 'Para\n' + paragraph '#N'
+ *   'Para\n#NotAHeading' => one paragraph (`#N` is a lazy continuation)
+ *   '1.\n2'     => list '1.\n' + paragraph '2';  '1.\n2.' => one list
+ *
+ * Only headings, thematic breaks, blank lines and CLOSED fenced code can
+ * never absorb a following line; every other type — including ones this
+ * parser does not know (extensions) — is held. An open fence is always the
+ * last token, so it never reaches this check.
+ *
+ * @param token - The root directly before the first tail root
+ * @returns `true` if the root must stay in the tail
+ * @example
+ * ```typescript
+ * canAbsorbNextLine({ type: 'paragraph', raw: 'Para\n' } as Token) // true
+ * canAbsorbNextLine({ type: 'heading', raw: '# H\n' } as Token) // false
+ * ```
+ */
+const canAbsorbNextLine = (token: Token): boolean =>
+    !LINE_CLOSED_TYPES.has(token.type) &&
+    !(token.type === 'code' && CLOSED_FENCE_RE.test(token.raw))
+
+/**
+ * True when the root at `index` is a `space` that contains a blank line. A
+ * `space` root is not always one: marked also emits the trailing
+ * whitespace of a line as `space` (`- x\nhard break  \n` => list
+ * `- x\nhard break` + space `  \n`), and such a root separates nothing.
+ * A blank line needs two line breaks, counting the one that ends the root
+ * before it.
+ *
+ * @param tokens - Root tokens
+ * @param index - Index of the root to test
+ * @returns `true` for a `space` root that holds a blank line
+ * @example
+ * ```typescript
+ * isBlankLineAt(lexAndClean('P\n\n', options, false), 1) // true
+ * isBlankLineAt(lexAndClean('- x\nb  \n', options, false), 1) // false
+ * ```
+ */
+const isBlankLineAt = (tokens: readonly Token[], index: number): boolean => {
+    const token = tokens[index]
+    if (token.type !== 'space') return false
+    const firstBreak = token.raw.indexOf('\n')
+    if (firstBreak < 0) return false
+    const endsLine = index > 0 && tokens[index - 1].raw.endsWith('\n')
+    return endsLine || token.raw.indexOf('\n', firstBreak + 1) >= 0
+}
+
+/**
+ * True when the root at `index` must stay in the tail because it directly
+ * precedes the tail (no blank line between them) and can still absorb or be
+ * changed by a following line. A `space` root that is not a blank line is
+ * trailing whitespace of a line and is held so the walk can see past it.
+ *
+ * A definition absorbs only its title: marked accepts a title on the line
+ * after the destination, indented by any whitespace, so the root after it
+ * is held only while it opens like one (`[d]: /d\n"Ti` => def + paragraph;
+ * `[d]: /d\n"Title"` => one def). Any other line after a definition starts
+ * a new block, so a run of definitions (a references section) is not one
+ * long chain of held roots.
+ *
+ * @param tokens - Root tokens
+ * @param index - Index of the root directly before the current tail start
+ * @returns `true` if the root must join the tail
+ * @example
+ * ```typescript
+ * isAdjacentOpenBlock(lexAndClean('Para\n#N', options, false), 0) // true
+ * ```
+ */
+const isAdjacentOpenBlock = (tokens: readonly Token[], index: number): boolean => {
+    const token = tokens[index]
+    if (token.type === 'space') return !isBlankLineAt(tokens, index)
+    if (token.type === 'def') return DEFINITION_TITLE_START_RE.test(tokens[index + 1].raw)
+    return canAbsorbNextLine(token)
+}
+
+/**
+ * How many adjacent open blocks the boundary walk holds before it gives up
+ * and refuses the boundary (a full re-lex for that update). Adjacent chains
+ * are short in practice — a list or blockquote absorbs following paragraph
+ * lines lazily, and headings, rules and closed fences end the walk — so the
+ * cap only bounds pathological alternations.
+ */
+const MAX_ADJACENT_HOLDS = 8
 
 /*
  * marked's inline lexer state (`lexer.state.inLink` / `inRawBlock`) is shared
@@ -651,21 +755,38 @@ export class IncrementalParser {
      * renderable uses and should not keep a stream reference-sensitive after
      * the definition has already been handled.
      *
-     * @param source - Markdown source or source slice to scan
+     * A definition cannot interrupt a paragraph, so a definition-shaped line
+     * directly after a non-blank line is paragraph text (or a lazy
+     * continuation of a list item or blockquote), and its label IS a use
+     * (`Intro\n[k]: /k` is one paragraph citing `[k]`). A definition-shaped
+     * line is therefore skipped only at the start of `source`, after a blank
+     * line, or after another skipped definition line — and only when it is a
+     * whole definition on one line (`COMPLETE_DEFINITION_LINE_RE`): marked
+     * rejects `[k]:\n7. seven` or `[k]: /k junk` as definitions, and they
+     * are paragraph text citing `[k]`. Everything else counts as a use
+     * (a definition after a heading, a destination on the next line):
+     * conservative, it only costs a citing-root search when a definition
+     * changes.
+     *
+     * @param source - Markdown source or source slice to scan; its first
+     *   line is treated as following a blank line
      * @returns `true` if a full or shortcut reference use appears on a
      *   non-definition line
      * @example
      * ```typescript
      * this.hasPotentialReferenceUseOutsideDefinitions('[docs]: /docs') // false
      * this.hasPotentialReferenceUseOutsideDefinitions('see [docs]')     // true
+     * this.hasPotentialReferenceUseOutsideDefinitions('Intro\n[k]: /k') // true
      * ```
      */
     private hasPotentialReferenceUseOutsideDefinitions = (source: string): boolean => {
         if (!source.includes('[') || !source.includes(']')) return false
 
+        let definitionMayStart = true
         for (const line of source.split('\n')) {
-            if (REFERENCE_DEFINITION_RE.test(line)) continue
+            if (definitionMayStart && COMPLETE_DEFINITION_LINE_RE.test(line)) continue
             if (this.hasPotentialReferenceUse(line)) return true
+            definitionMayStart = BLANK_LINE_RE.test(line)
         }
 
         return false
@@ -675,9 +796,12 @@ export class IncrementalParser {
      * True when an append-only update newly introduces text accepted by
      * `matches`. Reference uses cannot span newlines, so a use split across
      * the append boundary can only complete on the line that straddles it;
-     * checking the appended slice plus that single boundary line catches
-     * every case without rescanning the accumulated source. Assumes `source`
-     * starts with `prevSource` — callers guard the non-append case. (The one
+     * checking the appended slice plus that boundary line — and the one line
+     * before it, which decides whether a definition-shaped line is a
+     * definition or paragraph text (see
+     * `hasPotentialReferenceUseOutsideDefinitions`) — catches every case
+     * without rescanning the accumulated source. Assumes `source` starts
+     * with `prevSource` — callers guard the non-append case. (The one
      * unbounded input is a document streamed as a single newline-free line,
      * where the boundary line grows with the document.)
      *
@@ -702,7 +826,9 @@ export class IncrementalParser {
         const lineStart = this.prevSource.lastIndexOf('\n') + 1
         // Already present on the boundary line before the append ⇒ not new.
         if (matches(this.prevSource.slice(lineStart))) return false
-        return matches(source.slice(lineStart))
+        const contextStart =
+            lineStart > 1 ? this.prevSource.lastIndexOf('\n', lineStart - 2) + 1 : 0
+        return matches(source.slice(contextStart))
     }
 
     /**
@@ -1214,7 +1340,9 @@ export class IncrementalParser {
         // Once another token follows it, it joins the prefix via this cut.
         let cut = tokens.length - 1
         let reparseOffset = sourceLength - this.getTokenSourceLength(tokens[cut])
-        for (let held = this.countHeldTokens(tokens); held > 0; held--) {
+        const heldCount = this.countHeldTokens(tokens)
+        if (heldCount === undefined) return { prefixCount: 0, reparseOffset: 0 }
+        for (let held = heldCount; held > 0; held--) {
             cut--
             reparseOffset -= this.getTokenSourceLength(tokens[cut])
         }
@@ -1298,10 +1426,53 @@ export class IncrementalParser {
 
     /**
      * How many tokens BEFORE the last one must stay in the tail because the
-     * stream sits on a boundary the next chunk can still move. Inspects at
-     * most the last three tokens — never scans — and each rule holds a block
-     * only while the stream is on its ambiguous boundary; once another block
+     * stream sits on a boundary the next chunk can still move, or `undefined`
+     * when the boundary must be refused (full re-lex on the next update).
+     * Never scans: it inspects at most `MAX_ADJACENT_HOLDS` + 3 roots at the
+     * end, and each rule holds a block only while the stream is on its
+     * ambiguous boundary; once a blank line (or a block no line can change)
      * follows, the held block joins the prefix.
+     *
+     * Principle: the reused prefix ends at the last blank line that closes a
+     * block. Two parts:
+     *
+     * 1. `countBlankLineHolds` — the blocks a blank line does not close (a
+     *    list or indented code), and a whitespace-only last line that may
+     *    still become indentation.
+     * 2. Adjacency — walking back from the first tail root, every root with
+     *    no blank line between it and the tail is held while it can still
+     *    absorb or be changed by a following line (`isAdjacentOpenBlock`).
+     *    The walk stops at a blank line, at the document start, or at a
+     *    heading, thematic break or closed fence. A chain longer than
+     *    `MAX_ADJACENT_HOLDS` refuses the boundary rather than scanning on.
+     *
+     * @param tokens - Latest root tokens (non-empty)
+     * @returns Tokens to pull into the tail before the last token, or
+     *   `undefined` to refuse the boundary
+     * @example
+     * ```typescript
+     * this.countHeldTokens(lexAndClean('# H\n ', options, false)) // 1
+     * this.countHeldTokens(lexAndClean('[d]: /d\n"Ti', options, false)) // 1
+     * this.countHeldTokens(lexAndClean('1. a\n\n2', options, false)) // 2
+     * this.countHeldTokens(lexAndClean('Para\n#N', options, false)) // 1
+     * this.countHeldTokens(lexAndClean('P\n+ \n-', options, false)) // 3
+     * ```
+     */
+    private countHeldTokens = (tokens: Token[]): number | undefined => {
+        let held = this.countBlankLineHolds(tokens)
+        let first = tokens.length - 1 - held
+        if (isBlankLineAt(tokens, first)) return held
+        for (let step = 0; step < MAX_ADJACENT_HOLDS; step++) {
+            if (first === 0 || !isAdjacentOpenBlock(tokens, first - 1)) return held
+            held++
+            first--
+        }
+        return first === 0 || !isAdjacentOpenBlock(tokens, first - 1) ? held : undefined
+    }
+
+    /**
+     * The blank-line holds: rules that keep a block in the tail although a
+     * blank or whitespace-only line follows it.
      *
      * 1. The last token is `space` and the stream is inside a whitespace-only
      *    line (its raw does not end with a line break): that line may still
@@ -1313,20 +1484,16 @@ export class IncrementalParser {
      * 3. `list|indented code, space, paragraph` where the paragraph is only a
      *    partial ordered marker (`2` -> `2. second`): the list is not closed
      *    yet. Any other text after the blank line has closed the list.
-     * 4. `def, block` where the block opens like a title (`"`, `'`, `(`): the
-     *    title may still close and join the definition (`[d]: /d\n"Ti` =>
-     *    def + paragraph; `[d]: /d\n"Title"` => one def).
      *
      * @param tokens - Latest root tokens (non-empty)
      * @returns 0, 1 or 2 tokens to pull into the tail before the last token
      * @example
      * ```typescript
-     * this.countHeldTokens(lexAndClean('# H\n ', options, false)) // 1
-     * this.countHeldTokens(lexAndClean('[d]: /d\n"Ti', options, false)) // 1
-     * this.countHeldTokens(lexAndClean('1. a\n\n2', options, false)) // 2
+     * this.countBlankLineHolds(lexAndClean('# H\n ', options, false)) // 1
+     * this.countBlankLineHolds(lexAndClean('1. a\n\n2', options, false)) // 2
      * ```
      */
-    private countHeldTokens = (tokens: Token[]): number => {
+    private countBlankLineHolds = (tokens: Token[]): number => {
         const cut = tokens.length - 1
         if (cut < 1) return 0
         const last = tokens[cut]
@@ -1334,7 +1501,6 @@ export class IncrementalParser {
         if (last.type === 'space') {
             return !last.raw.endsWith('\n') || this.canContinueAcrossBlankLine(previous) ? 1 : 0
         }
-        if (previous.type === 'def') return DEFINITION_TITLE_START_RE.test(last.raw) ? 1 : 0
         return cut > 1 &&
             last.type === 'paragraph' &&
             PARTIAL_ORDERED_MARKER_RE.test(last.raw) &&
