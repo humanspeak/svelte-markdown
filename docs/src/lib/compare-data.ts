@@ -23,7 +23,7 @@ const shared = {
         'LLM streaming with imperative writeChunk() / resetStream() API',
         '24 markdown renderers + 83 HTML tag renderers — every override is a Svelte snippet',
         'First-class extensions: KaTeX math, Mermaid diagrams, GitHub alerts, footnotes',
-        'Opt-in Shiki syntax highlighting (streaming-compatible, tree-shaken from core)',
+        'Opt-in syntax highlighting with one renderer and your choice of engine — Shiki or TanStack Highlight (streaming-compatible, tree-shaken from core)',
         'Built-in XSS protection — protocol allowlist, event-handler stripping, attribute sanitization',
         'Allow/deny utilities (allowHtmlOnly, excludeRenderersOnly, etc.) for fine-grained control',
         'Drop-in component — works anywhere in your Svelte app'
@@ -146,8 +146,9 @@ export const competitors: Competitor[] = [
             },
             {
                 name: 'Code Highlighting',
-                us: 'Opt-in Shiki extension',
-                them: 'Opt-in @tanstack/highlight component + copy button'
+                us: 'Opt-in, engine-agnostic: Shiki or TanStack Highlight',
+                them: 'Opt-in @tanstack/highlight component + copy button',
+                note: 'Svelte Markdown ships one HighlightedCode renderer and lets you pick the engine: Shiki (TextMate grammars, inline colors) or TanStack Highlight (hand-written scanners, semantic classes themed with CSS), or any object implementing the CodeHighlighter interface. Both engines are synchronous, so streaming stays enabled, and both are tree-shaken out of the core bundle. Svelte Streamdown supports TanStack Highlight through its optional Code component, which also adds a copy button.'
             },
             {
                 name: 'Marked Extensions',
@@ -282,7 +283,7 @@ export const competitors: Competitor[] = [
             },
             {
                 name: 'Code Highlighting',
-                us: 'Built-in via opt-in Shiki extension',
+                us: 'Opt-in, engine-agnostic: Shiki or TanStack Highlight',
                 them: 'Built-in (Shiki/Prism)'
             },
             { name: 'Remark/Rehype Plugins', us: false, them: true }
@@ -806,7 +807,7 @@ export const competitors: Competitor[] = [
             },
             {
                 name: 'Syntax Highlighting',
-                us: 'Opt-in Shiki extension',
+                us: 'Opt-in, engine-agnostic: Shiki or TanStack Highlight',
                 them: 'Built-in plugin'
             },
             {
