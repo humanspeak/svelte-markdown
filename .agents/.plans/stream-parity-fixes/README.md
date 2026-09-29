@@ -18,13 +18,14 @@ done when no `red(` call remains and the suite is green.
 
 ## Execution order & status
 
-| Plan | Title                                                               | Bucket | Priority | Effort | Depends on   | Status                   |
-| ---- | ------------------------------------------------------------------- | ------ | -------- | ------ | ------------ | ------------------------ |
-| 001  | Guard tail-window offsets with a source-length integrity check      | A      | P0       | S–M    | —            | DONE — PASS at `8805f29` |
-| 002  | Do not freeze a block the next chunk can still continue or enclose  | B      | P0       | M      | 001          | DONE — PASS at `8805f29` |
-| 003  | Detect reference definitions from marked's tokens, not line regexes | C, D   | P1       | M–L    | 001, 002     | DONE — PASS at `0bfa7ab` |
-| 005  | Close the boundary gaps found by the generative fuzz                | B, D   | P0       | M      | 001–003      | IN PROGRESS — dispatched |
-| 004  | Regression bench and docs alignment                                 | —      | P1       | S–M    | 001–003, 005 | TODO                     |
+| Plan | Title                                                               | Bucket | Priority | Effort | Depends on        | Status                   |
+| ---- | ------------------------------------------------------------------- | ------ | -------- | ------ | ----------------- | ------------------------ |
+| 001  | Guard tail-window offsets with a source-length integrity check      | A      | P0       | S–M    | —                 | DONE — PASS at `8805f29` |
+| 002  | Do not freeze a block the next chunk can still continue or enclose  | B      | P0       | M      | 001               | DONE — PASS at `8805f29` |
+| 003  | Detect reference definitions from marked's tokens, not line regexes | C, D   | P1       | M–L    | 001, 002          | DONE — PASS at `0bfa7ab` |
+| 005  | Close the boundary gaps found by the generative fuzz                | B, D   | P0       | M      | 001–003           | DONE — PASS at `cfbb204` |
+| 006  | Do not freeze an HTML construct that is still open                  | B, D   | P0       | M      | 001–003, 005      | IN PROGRESS — dispatched |
+| 004  | Regression bench and docs alignment                                 | —      | P1       | S–M    | 001–003, 005, 006 | TODO                     |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -43,6 +44,7 @@ serially in the working tree.
 ## Amendments
 
 - 2026-09-29 — 005 added after guard's independent generative fuzz found 27 of 120 random documents still diverging at the plan 003 snapshot. Runs before 004 so the benchmark measures the final parser.
+- 2026-09-29 — 006 added after guard's second independent corpus found HTML constructs that a blank line does not end (unclosed comments and raw-text elements) frozen before their terminator. Runs before 004.
 
 ## Dependency notes
 
