@@ -46,6 +46,13 @@ interface ParseSourceResult {
      * may replace prefix roots). The divergence scan starts here.
      */
     reusedPrefixCount: number
+    /**
+     * True when the roots do not add up to the source length (see
+     * `IncrementalParser.prevHasLengthMismatch`). Tail-window results sum
+     * only the re-lexed tail (the prefix covers `reparseOffset` by
+     * construction); full re-lexes sum every root.
+     */
+    hasLengthMismatch: boolean
 }
 
 const CLOSED_FENCE_RE = /^ {0,3}(`{3,}|~{3,}).*\n[\s\S]*\n {0,3}\1[ \t]*\n*$/
@@ -276,6 +283,15 @@ export class IncrementalParser {
      *  on the hot path. */
     private prevHasHtmlSpanMismatch = false
 
+    /** True iff the root tokens of `prevTokens` do not add up to
+     *  `prevSource.length` — marked consumed source without emitting a token
+     *  of the same length (it normalizes `\r\n` to `\n`, and a duplicate
+     *  reference definition emits no token). Tail-window offsets are computed
+     *  from token lengths, so while this holds the tail window is not used.
+     *  Recomputed on every full re-lex, so a document whose mismatch goes
+     *  away regains the tail window. */
+    private prevHasLengthMismatch = false
+
     /** Cached boundary for the next append-only update. Computed when
      * parser state is committed so `getTailWindowBoundary` stays O(1). */
     private prevTailWindowBoundary: TailWindowBoundary = { prefixCount: 0, reparseOffset: 0 }
@@ -345,6 +361,26 @@ export class IncrementalParser {
      */
     private getTokenSourceLength = (token: Token): number => {
         return (token as HtmlToken).sourceLength ?? token.raw.length
+    }
+
+    /**
+     * Total source characters `tokens` consumed, per `getTokenSourceLength`.
+     * The tail-window offset arithmetic is only valid when this equals the
+     * length of the source the tokens were lexed from; see
+     * `prevHasLengthMismatch`.
+     *
+     * @param tokens - Root tokens from one lex, in document order
+     * @returns The summed source span of `tokens`
+     * @example
+     * ```typescript
+     * this.sumSourceLength(lexAndClean('# A\n\nB', options, false)) // 6 (= source length)
+     * this.sumSourceLength(lexAndClean('a\r\n\r\nb', options, false)) // 4, not 6
+     * ```
+     */
+    private sumSourceLength = (tokens: readonly Token[]): number => {
+        let total = 0
+        for (const token of tokens) total += this.getTokenSourceLength(token)
+        return total
     }
 
     /**
@@ -576,7 +612,9 @@ export class IncrementalParser {
         if (this.tailWindowDisabled) return false
         if (this.prevSource === '' || this.prevTokens.length === 0) return false
         if (!isAppendOnly) return false
-        if (boundary.reparseOffset <= 0) return false
+        // The cached boundary is already empty on a length mismatch; checked
+        // here too so a boundary from elsewhere cannot bypass the guard.
+        if (boundary.reparseOffset <= 0 || this.prevHasLengthMismatch) return false
         if (referenceInvalidatesTail) return false
 
         // A reference definition living in the reused prefix is invisible to a
@@ -666,7 +704,11 @@ export class IncrementalParser {
             tokens: [...roots, ...tailTokens],
             tailTokens,
             usedTailWindow: true,
-            reusedPrefixCount: 0
+            reusedPrefixCount: 0,
+            // Offset integrity (O(tail)): the prefix roots end at
+            // `reparseOffset` (checked in `findCitingRoots`) and each re-lexed
+            // root keeps its span (checked in `relexCitingRoots`).
+            hasLengthMismatch: this.sumSourceLength(tailTokens) !== tailSource.length
         }
     }
 
@@ -745,6 +787,8 @@ export class IncrementalParser {
             const relexed = lexAndClean(candidate.source, this.options, false, links)
             if (relexed.length !== 1) return undefined
             if (relexed[0].type !== root.type || relexed[0].raw !== root.raw) return undefined
+            // Offset integrity: the root must still consume its exact span.
+            if (this.getTokenSourceLength(relexed[0]) !== candidate.source.length) return undefined
             roots ??= prefixRoots.slice()
             roots[candidate.index] = relexed[0]
         }
@@ -800,7 +844,31 @@ export class IncrementalParser {
         isAppendOnly &&
         !this.tailWindowDisabled &&
         this.prevTokens.length > 0 &&
-        boundary.reparseOffset > 0
+        boundary.reparseOffset > 0 &&
+        !this.prevHasLengthMismatch
+
+    /**
+     * Re-lexes the whole source; the fallback for every update the tail
+     * window or the targeted definition path cannot serve.
+     *
+     * @param source - Full source for this update
+     * @returns A full-parse result (no reused prefix)
+     * @example
+     * ```typescript
+     * this.parseFullSource('# A\n\nB') // { tokens: [heading, space, paragraph], usedTailWindow: false, ... }
+     * ```
+     */
+    private parseFullSource = (source: string): ParseSourceResult => {
+        const tokens = lexAndClean(source, this.options, false)
+        return {
+            tokens,
+            tailTokens: [],
+            usedTailWindow: false,
+            reusedPrefixCount: 0,
+            // The lex was already O(document), so the full sum adds no order.
+            hasLengthMismatch: this.sumSourceLength(tokens) !== source.length
+        }
+    }
 
     private parseSource = (
         source: string,
@@ -814,12 +882,7 @@ export class IncrementalParser {
         }
 
         if (!this.canUseTailWindow(source, boundary, isAppendOnly, referenceInvalidatesTail)) {
-            return {
-                tokens: lexAndClean(source, this.options, false),
-                tailTokens: [],
-                usedTailWindow: false,
-                reusedPrefixCount: 0
-            }
+            return this.parseFullSource(source)
         }
 
         const tailTokens = lexAndClean(source.slice(boundary.reparseOffset), this.options, false)
@@ -832,7 +895,14 @@ export class IncrementalParser {
             tokens: this.prevTokens.slice(0, boundary.prefixCount).concat(tailTokens),
             tailTokens,
             usedTailWindow: true,
-            reusedPrefixCount: boundary.prefixCount
+            reusedPrefixCount: boundary.prefixCount,
+            // Offset integrity (O(tail)): the prefix covers `reparseOffset` by
+            // construction, so only the tail needs to add up. The tail was
+            // lexed from a true block boundary, so these tokens are correct
+            // for THIS update even on a mismatch; the flag keeps the NEXT
+            // update off the tail window, whose offsets would be wrong.
+            hasLengthMismatch:
+                this.sumSourceLength(tailTokens) !== source.length - boundary.reparseOffset
         }
     }
 
@@ -859,8 +929,9 @@ export class IncrementalParser {
      *
      * @param tokens - Latest token array after parsing the current source
      * @param sourceLength - Character length of the current source
-     * @param hasHtmlSpanMismatch - Whether any current token has an unknown
-     *   source span
+     * @param offsetsUnsafe - Whether token lengths cannot be mapped to source
+     *   offsets: an HTML token has an unknown source span, or the roots do not
+     *   add up to `sourceLength`
      * @returns The prefix token count and source offset to reuse on the next
      *   append-only update
      * @example
@@ -871,14 +942,17 @@ export class IncrementalParser {
     private getNextTailWindowBoundary = (
         tokens: Token[],
         sourceLength: number,
-        hasHtmlSpanMismatch: boolean
+        offsetsUnsafe: boolean
     ): TailWindowBoundary => {
         // (#291) If any token is an HTML opening with no known source span,
         // the tail-window prefix is unsound: `.raw` is only the opening tag
         // itself, while children and the closing tag live elsewhere. Closed
         // HTML tokens carry `sourceLength`, so only truly partial HTML forces
-        // the empty boundary that falls through to a full re-parse.
-        if (tokens.length === 0 || hasHtmlSpanMismatch) {
+        // the empty boundary that falls through to a full re-parse. The same
+        // holds when the roots do not add up to the source length (CRLF, a
+        // duplicate reference definition): `sourceLength - raw.length` would
+        // land in the wrong place.
+        if (tokens.length === 0 || offsetsUnsafe) {
             return { prefixCount: 0, reparseOffset: 0 }
         }
 
@@ -966,6 +1040,9 @@ export class IncrementalParser {
         const hasHtmlSpanMismatch = parseResult.usedTailWindow
             ? this.prevHasHtmlSpanMismatch || this.hasAnyHtmlSpanMismatch(parseResult.tailTokens)
             : this.hasAnyHtmlSpanMismatch(parseResult.tokens)
+        // Computed by `parseSource`: O(tail) on the tail-window paths, a full
+        // sum only after a full re-lex (which was already O(document)).
+        const { hasLengthMismatch } = parseResult
 
         // `isAppendOnly` already guarantees `source.startsWith(prevSource)`, so
         // call `appendIntroducesMatch` directly rather than re-checking it.
@@ -980,10 +1057,11 @@ export class IncrementalParser {
         this.prevSource = source
         this.prevTokens = parseResult.tokens
         this.prevHasHtmlSpanMismatch = hasHtmlSpanMismatch
+        this.prevHasLengthMismatch = hasLengthMismatch
         this.prevTailWindowBoundary = this.getNextTailWindowBoundary(
             parseResult.tokens,
             source.length,
-            hasHtmlSpanMismatch
+            hasHtmlSpanMismatch || hasLengthMismatch
         )
     }
 

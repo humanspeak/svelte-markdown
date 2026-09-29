@@ -107,13 +107,13 @@ const chunkBy = (source: string, size: number): string[] => {
 
 describe('streaming parity', () => {
     describe('A. offset integrity (marked consumed source without a same-length token)', () => {
-        red('CRLF line endings do not drop earlier content', () => {
+        it('CRLF line endings do not drop earlier content', () => {
             // marked normalizes `\r\n` to `\n`, so token raws are shorter than
             // the source span and the reparse offset lands past paragraph `a`.
             expectParity(chunkBy('a\r\n\r\nb', 3))
         })
 
-        red('CRLF prose keeps parity at every chunk size', () => {
+        it('CRLF prose keeps parity at every chunk size', () => {
             const source = '# Title\r\n\r\nFirst paragraph.\r\n\r\n- one\r\n- two\r\n\r\nLast.\r\n'
             for (const size of [1, 2, 3, 5, 8]) expectParity(chunkBy(source, size))
         })
@@ -122,7 +122,7 @@ describe('streaming parity', () => {
             expectParity(['first\r', '\n\r', '\nsecond\r\n'])
         })
 
-        red('a duplicate reference definition does not leak its URL as text', () => {
+        it('a duplicate reference definition does not leak its URL as text', () => {
             // marked consumes a duplicate `[label]:` without emitting a token.
             expectParity([
                 'See [1] for details.\n\n[1]: https://a.example\n\nSome prose.\n\n',
@@ -132,7 +132,7 @@ describe('streaming parity', () => {
             ])
         })
 
-        red('a duplicate definition streamed character by character keeps parity', () => {
+        it('a duplicate definition streamed character by character keeps parity', () => {
             const head = 'See [a].\n\n[a]: /first\n\nProse.\n\n'
             expectParity([head, ...chunkBy('[a]: /second\n\nEnd.\n', 1)])
         })

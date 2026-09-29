@@ -56,13 +56,13 @@ const expectRenderedParity = async (chunks: string[]): Promise<void> => {
 
 describe('streaming rendered parity', () => {
     describe('A. offset integrity', () => {
-        red('CRLF source keeps every paragraph', async () => {
+        it('CRLF source keeps every paragraph', async () => {
             const container = await renderStreamed(['a\r\n', '\r\nb'])
             const paragraphs = Array.from(container.querySelectorAll('p'), (p) => p.textContent)
             expect(paragraphs).toEqual(['a', 'b'])
         })
 
-        red('a duplicate definition renders no stray text', async () => {
+        it('a duplicate definition renders no stray text', async () => {
             const container = await renderStreamed([
                 'See [1] for details.\n\n[1]: https://a.example\n\nSome prose.\n\n',
                 '[1]: https://b.exam',

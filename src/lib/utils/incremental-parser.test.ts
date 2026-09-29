@@ -677,6 +677,107 @@ describe('IncrementalParser', () => {
 
             expect(lexSpy.mock.calls[1]?.[0]).toBe(appended)
         })
+
+        // Offset integrity (stream-parity-fixes plan 001): marked can consume
+        // source without a token of the same length, which would land the
+        // tail-window offset in the wrong place.
+        it('never uses the tail window for a CRLF document and matches a one-shot parse', () => {
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            const document =
+                '# Title\r\n\r\nFirst paragraph.\r\n\r\n- one\r\n- two\r\n\r\nLast paragraph.\r\n'
+            let source = ''
+            for (const chunk of document.match(/[\s\S]{1,3}/g) ?? []) {
+                source += chunk
+                const result = parser.update(source)
+                expect(result.usedTailWindow, JSON.stringify(source)).toBe(false)
+                expectSemanticParity(
+                    result.tokens,
+                    parseAndCacheModule.lexAndClean(source, options, false),
+                    source
+                )
+            }
+        })
+
+        it('leaves the tail window once CRLF arrives after an LF prefix, keeping parity', () => {
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            const chunks = [
+                '# Title\n\nFirst',
+                ' paragraph.\n\n',
+                'CRLF paragraph.\r\n\r\n',
+                'Next paragraph.\r\n\r\n',
+                'Last paragraph.\r\n'
+            ]
+            let source = ''
+            const usedTailWindow: boolean[] = []
+            for (const chunk of chunks) {
+                source += chunk
+                const result = parser.update(source)
+                usedTailWindow.push(result.usedTailWindow)
+                expectSemanticParity(
+                    result.tokens,
+                    parseAndCacheModule.lexAndClean(source, options, false),
+                    source
+                )
+            }
+
+            // The CRLF chunk is lexed in the tail window from a valid offset,
+            // so its tokens are correct; the mismatch it leaves turns the
+            // tail window off for every later update.
+            expect(usedTailWindow).toEqual([false, true, true, false, false])
+            expect(asInternalParser(parser).getTailWindowBoundary()).toEqual({
+                prefixCount: 0,
+                reparseOffset: 0
+            })
+        })
+
+        it('keeps the tail window for an LF-only document', () => {
+            const parser = new IncrementalParser(createDefaultOptions())
+            // The first update already has a stable heading root, so every
+            // append after it has a non-empty tail-window boundary.
+            let source = '# Title\n\nFirst'
+            const rest = ' paragraph.\n\n- one\n- two\n\nSecond paragraph.\n\nLast one.\n'
+            expect(parser.update(source).usedTailWindow).toBe(false)
+            const usedTailWindow: boolean[] = []
+            for (const chunk of rest.match(/[\s\S]{1,6}/g) ?? []) {
+                source += chunk
+                usedTailWindow.push(parser.update(source).usedTailWindow)
+            }
+
+            expect(usedTailWindow.length).toBeGreaterThan(5)
+            // Every append after the first update stays on the fast path.
+            expect(usedTailWindow.every(Boolean)).toBe(true)
+        })
+
+        it('keeps parity through three more paragraphs after a duplicate definition', () => {
+            const options = createDefaultOptions()
+            const parser = new IncrementalParser(options)
+            const chunks = [
+                'See [1] for details.\n\n',
+                '[1]: https://a.example\n\n',
+                'Some prose.\n\n',
+                '[1]: https://b.example\n\n',
+                'Paragraph one after.\n\n',
+                'Paragraph two after.\n\n',
+                'Paragraph three after.\n'
+            ]
+            let source = ''
+            for (const chunk of chunks) {
+                source += chunk
+                const result = parser.update(source)
+                expectSemanticParity(
+                    result.tokens,
+                    parseAndCacheModule.lexAndClean(source, options, false),
+                    source
+                )
+            }
+            const text = parser
+                .update(source)
+                .tokens.map((token) => token.raw)
+                .join('')
+            expect(text).not.toContain('b.example')
+        })
     })
 
     describe('Streaming Bookkeeping Performance', () => {
