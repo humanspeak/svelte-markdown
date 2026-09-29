@@ -72,9 +72,9 @@ export const competitors: Competitor[] = [
             },
             {
                 name: 'Incomplete Markdown',
-                us: true,
-                them: true,
-                note: 'Both keep partial output readable while more arrives.'
+                us: 'Shown as typed until it closes',
+                them: 'Repaired while streaming',
+                note: 'Streamdown closes unfinished bold, code and links on the fly. We render exactly what has arrived, so markers show briefly until the closing one lands. Open code blocks render as code right away.'
             },
             {
                 name: 'Streaming HTML',
@@ -90,7 +90,7 @@ export const competitors: Competitor[] = [
             {
                 name: 'Streaming Speed',
                 us: 'About 1.2–2.7x less work on prose, lists, tables, and long documents',
-                them: 'Less work on a single open code block and on citation-heavy text',
+                them: 'Less work on a single open code block, on citation-heavy text, and on HTML blocks, which it shows as text by default',
                 note: 'Measured 2026-09-28 against svelte-streamdown 4.2.0 with both renderers run back to back on the same content. Results vary by machine and content. Method and full numbers: Streaming Benchmarks in the docs.'
             },
             {

@@ -50,7 +50,10 @@
      * Corpora mirror common LLM output shapes: mixed prose, one long bullet
      * list (a single block that stays open until the end), one long code fence
      * (same), and a citation-heavy answer with `[n]` markers and a trailing
-     * `[n]: url` definitions block. Prefix-scaling scenarios mount a closed
+     * `[n]: url` definitions block. Two corpora cover shapes the streaming
+     * parity fixes changed: a loose numbered list (blank line between items)
+     * and HTML blocks (`<div>` / `<details>`) with blank lines around markdown
+     * content inside them. Prefix-scaling scenarios mount a closed
      * prefix of growing size (24 / 96 / 384 KB) and then stream the same short
      * tail, so work that scales with document length shows up as growth in
      * `avgWorkMs` across the three. `large-closed-block` does the same with a
@@ -73,7 +76,14 @@
      */
 
     type Renderer = 'svelte-markdown' | 'svelte-streamdown'
-    type CorpusKind = 'prose-mixed' | 'long-list' | 'long-table' | 'long-code-fence' | 'citations'
+    type CorpusKind =
+        | 'prose-mixed'
+        | 'long-list'
+        | 'long-table'
+        | 'long-code-fence'
+        | 'citations'
+        | 'loose-ordered-list'
+        | 'html-blocks'
     type PrefixKind = 'closed-paragraphs' | 'closed-nested-list'
     type InputMode = 'prop' | 'writeChunk'
 
@@ -242,6 +252,24 @@
             renderers: BOTH
         },
         {
+            id: 'loose-ordered-list',
+            corpus: 'loose-ordered-list',
+            targetBytes: 24_000,
+            chunkSize: 32,
+            updatesPerFrame: 1,
+            inputMode: 'prop',
+            renderers: BOTH
+        },
+        {
+            id: 'html-blocks',
+            corpus: 'html-blocks',
+            targetBytes: 24_000,
+            chunkSize: 32,
+            updatesPerFrame: 1,
+            inputMode: 'prop',
+            renderers: BOTH
+        },
+        {
             id: 'prose-mixed-writechunk',
             corpus: 'prose-mixed',
             targetBytes: 24_000,
@@ -379,6 +407,38 @@ const section${index} = { active: true, value: ${index} }
         return body + definitions
     }
 
+    /**
+     * One numbered list with a blank line between items (a loose list), so
+     * every item boundary is a blank line the next chunk may still continue.
+     */
+    const makeLooseOrderedList = (targetBytes: number): string => {
+        let source = '# Migration steps\n\nFollow these steps in order:\n\n'
+        let index = 1
+        while (source.length < targetBytes) {
+            source += `${index}. **Step ${index}**: update \`config${index}\` as described in the [guide](https://example.com/step/${index}), then rerun the checks.\n\n`
+            index++
+        }
+        return `${source}That is every step.\n`
+    }
+
+    /**
+     * Repeated HTML blocks whose markdown content is surrounded by blank lines
+     * (so a blank line does not end the HTML construct), separated by prose.
+     */
+    const makeHtmlBlocks = (targetBytes: number): string => {
+        let source = '# Report\n\n'
+        let index = 0
+        while (source.length < targetBytes) {
+            source +=
+                index % 2 === 0
+                    ? `<div class="note">\n\nNote ${index} has **bold text**, \`inline code\` and a [link](https://example.com/note/${index}).\n\n</div>\n\n`
+                    : `<details>\n<summary>Details ${index}</summary>\n\n- First point ${index}\n- Second point with *emphasis*\n\n</details>\n\n`
+            source += `Paragraph ${index} between the blocks keeps the prose flowing with a [reference](https://example.com/p/${index}).\n\n`
+            index++
+        }
+        return source
+    }
+
     /** Many short, closed paragraphs and headings (ends with a blank line). */
     const makeClosedParagraphs = (targetBytes: number): string => {
         let source = ''
@@ -422,6 +482,10 @@ const section${index} = { active: true, value: ${index} }
                 return makeLongCodeFence(targetBytes)
             case 'citations':
                 return makeCitations(targetBytes)
+            case 'loose-ordered-list':
+                return makeLooseOrderedList(targetBytes)
+            case 'html-blocks':
+                return makeHtmlBlocks(targetBytes)
         }
     }
 

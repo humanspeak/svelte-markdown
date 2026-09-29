@@ -72,11 +72,20 @@ Server-rendered output contains Svelte's hydration marker comments inside `<code
 
 ### Streaming output now matches a one-shot parse
 
-Three parser bugs that affected output **while streaming** are fixed. If you snapshot intermediate frames, expect these differences from 1.x:
+Several parser bugs that affected output **while streaming** are fixed. If you snapshot intermediate frames, expect these differences from 1.x:
 
-- A list with blank lines between items (a loose list) streams as **one list**, not several.
+- A list with blank lines between items (a loose list) streams as **one list**, not several. This includes numbered lists where a chunk ends between the number and its dot.
 - Headings, thematic breaks, and fenced code blocks no longer get a different `raw` split depending on where a chunk boundary fell.
 - A reference definition whose URL arrives across several chunks (`[ref]: https://...`) updates the links that cite it on every chunk, instead of keeping the first partial URL.
+- Text with Windows line endings (`\r\n`) no longer loses or repeats content.
+- An HTML block that contains blank lines, such as a `<div>` or `<details>` around markdown, wraps its content once the closing tag arrives. Before, the tags and the content inside them came out as separate blocks.
+- An HTML comment or tag that is not closed yet no longer turns its text into visible paragraphs. The text stays inside the comment or tag, as it does in a one-shot parse.
+- A line that follows a block without a blank line in between joins that block when it should. For example, a line that only looks like a heading continues the paragraph above it.
+- A reference definition inside a blockquote or a list turns earlier `[ref]` text into a link.
+- A reference definition whose URL or title arrives on the next line is read in full. The title no longer shows up as a stray paragraph.
+- A second definition with the same name no longer leaks its URL into the text. The first definition wins, as in a one-shot parse.
+
+Streaming parity is enforced by a seeded fuzz suite that splits random documents at random chunk boundaries and compares the streamed result with a one-shot parse after every chunk.
 
 The final rendered output of a completed stream was already correct in most of these cases; the intermediate frames are what changed.
 

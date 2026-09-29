@@ -19,7 +19,7 @@ description: The technical details behind the streaming comparison -- what is me
 
 # Streaming Benchmarks
 
-This page holds the technical details behind the plain-language claims on the [Svelte Streamdown comparison](/compare/vs-svelte-streamdown) and the [LLM Streaming](/docs/advanced/llm-streaming) guide. If you only want the summary: on most content Svelte Markdown does less work per frame, on a single open code block and on citation-heavy text Svelte Streamdown does less, and every number below can be reproduced from the repository.
+This page holds the technical details behind the plain-language claims on the [Svelte Streamdown comparison](/compare/vs-svelte-streamdown) and the [LLM Streaming](/docs/advanced/llm-streaming) guide. If you only want the summary: on most content Svelte Markdown does less work per frame, on a single open code block, on citation-heavy text, and on HTML blocks Svelte Streamdown does less, and every number below can be reproduced from the repository.
 
 ## What is measured
 
@@ -42,7 +42,7 @@ Wall-clock time is deliberately not the metric. A renderer that defers work to t
 | Documents | About 24 KB per scenario, plus closed prefixes of 24, 96, and 384 KB |
 | Runs | One warmup, then five iterations; both renderers run back to back in alternating order; two full suites |
 | Competitor | `svelte-streamdown` 4.2.0 with animation, controls, and highlighting off |
-| Date and machine | 2026-09-28, Intel Core i7-6700K, Ubuntu 26.04 |
+| Date and machine | 2026-09-28 (the numbered list and HTML block rows: 2026-09-29), Intel Core i7-6700K, Ubuntu 26.04 |
 
 Two safeguards keep the numbers honest:
 
@@ -61,6 +61,8 @@ Median of five iterations. Ranges span the two suites. The ratio is their total 
 | One open table (~150 rows) | 1,569–1,620 | 3,577–3,745 | 2.28–2.31 | 1–2 of 314 | 81–95 |
 | One open code fence | 1,542–1,570 | 1,162–1,178 | 0.75 | 0 of 753 | 0 |
 | Citation-heavy prose | 1,456–1,703 | 1,405–1,445 | 0.85–0.97 | 0 of 753 | 0 |
+| Numbered list with blank lines between items | 4,334–4,425 | 10,770–10,896 | 2.43–2.51 | 1–4 of 753 | 293–306 |
+| HTML blocks with markdown inside | 3,686–4,007 | 2,352–2,401 | 0.60–0.64 | 6–9 of 751 | 0 |
 | 24 KB closed prefix + 2 KB tail | 113–120 | 156–162 | 1.35–1.37 | 0 of 67 | 0 |
 | 96 KB closed prefix + 2 KB tail | 231–232 | 417–425 | 1.81–1.83 | 0 of 67 | 0 |
 | 384 KB closed prefix + 2 KB tail | 906–909 | 2,436–2,454 | 2.69–2.70 | 14 of 67 | 67 of 67 |
@@ -80,6 +82,8 @@ Element counts at the end of each stream, identical across all runs:
 ## Caveats
 
 - **Citations are not a like-for-like comparison.** Svelte Streamdown rendered none of the reference-style links in that document; Svelte Markdown rendered 258. Resolving them is part of our cost.
+- **HTML blocks are not a like-for-like comparison.** By default Svelte Streamdown shows raw HTML as plain text, and the benchmark keeps that default. It builds none of the `<div>` and `<details>` elements that Svelte Markdown renders.
+- **Some documents are parsed in full on every update.** This trades speed for correct output. It applies to documents with Windows line endings (`\r\n`), and to documents that currently end inside an unfinished HTML tag, comment, or element. The HTML blocks row above includes this cost.
 - **Code fences differ in structure.** Svelte Streamdown wraps every line in its own element. Svelte Markdown emits one text node per line with no wrapper elements.
 - **Large documents include a full layout every frame.** The harness forces a layout of the whole document each frame, which both renderers pay. At 384 KB that pass is most of the frame. Svelte Markdown's own parsing and rendering work stays nearly flat: about 1.4 ms per frame at 24 KB and 1.9 ms at 384 KB.
 - **Milliseconds are machine-specific.** The ratios are the claim. Absolute totals moved by tens of percent between captures on the same machine.

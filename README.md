@@ -1029,7 +1029,7 @@ Appending directly to `source` is still supported:
 | One open ~200-item list          |      ~4.7 ms       |  7.3–7.9 ms   |      1 of 754       |
 | One open code fence              |      ~2.1 ms       |  3.3–3.4 ms   |      0 of 753       |
 
-Milliseconds are machine-specific; reproduce with `pnpm perf:stream-compare`. Streamed output is checked against a one-shot parse at every sampled frame.
+Milliseconds are machine-specific; reproduce with `pnpm perf:stream-compare`. Streamed output is checked against a one-shot parse at every sampled frame, and by a seeded fuzz suite that splits random documents at random chunk boundaries.
 
 When `streaming` is `false` (default), existing behavior is unchanged. With `streaming` enabled the component skips cache lookups (always a miss during streaming), coalesces updates once per animation frame, re-lexes only the open block at the end of the source, and reuses every unchanged token object so Svelte only updates components whose tokens actually changed.
 
