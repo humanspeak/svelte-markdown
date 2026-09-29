@@ -29,8 +29,8 @@ known gap (see the stopping rule in the amendments).
 | 007  | Do not freeze a block that is adjacent to the open last block       | B, D   | P0       | M      | 001–003, 005, 006 | PARTIAL at `d0e84c9` → 008 |
 | 008  | Close the three mechanisms left after plan 007                      | A, B   | P0       | S–M    | 001–003, 005–007  | DONE — PASS at `0c79f1d`   |
 | 009  | An autolink does not clear the inline link state                    | B      | P1       | S      | 006, 008          | DONE — PASS at `c6241dd`   |
-| 010  | A rule made of bullet markers can still become a list item          | B      | P1       | S      | 005, 007          | IN PROGRESS — dispatched   |
-| 004  | Regression bench and docs alignment                                 | —      | P1       | S–M    | 001–003, 005–010  | TODO                       |
+| 010  | A rule made of bullet markers can still become a list item          | B      | P1       | S      | 005, 007          | DONE — PASS at `13d4fc2`   |
+| 004  | Regression bench and docs alignment                                 | —      | P1       | S–M    | 001–003, 005–010  | IN PROGRESS — dispatched   |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 

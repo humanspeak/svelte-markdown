@@ -104,15 +104,18 @@ in both repeats. Archive logs, JSON and a README under `evidence/004/`.
 - `docs/.../migration/v2/+page.svx`, section "Streaming output now matches a
   one-shot parse": extend the bullet list with the shapes fixed in this
   batch (CRLF sources; numbered lists with blank lines; HTML blocks that
-  contain blank lines; definitions inside blockquotes or lists, or with the
-  URL or title on the next line; duplicate definitions). State that parity
+  contain blank lines; unclosed HTML comments and tags; blocks that follow
+  each other without a blank line; definitions inside blockquotes or lists,
+  or with the URL or title on the next line; duplicate definitions). Keep it
+  to one bullet per shape, plain language. State that parity
   is enforced by a seeded fuzz suite over random chunk boundaries.
 - `docs/.../llm-streaming/+page.svx` and `README.md`: where they say output
   is checked against a one-shot parse, mention the fuzz suite in one clause.
 - `docs/.../streaming-benchmarks/+page.svx`: add the two new scenarios to
-  the results table with the Step 3 numbers, and one caveat line: documents
-  with CRLF line endings or an unclosed HTML tag are fully re-lexed on every
-  update, trading speed for correctness.
+  the results table with the Step 3 numbers, and one caveat in plain
+  language: some documents are parsed in full on every update, trading speed
+  for correctness — documents with Windows line endings, and documents that
+  currently end inside an unfinished HTML tag, comment or element.
 - `docs/src/lib/compare-data.ts`, Streamdown entry, row `Incomplete Markdown`
   (decided by the maintainer, 2026-09-29): the row currently says both sides
   are equal; that overstates ours. Set `us: 'Shown as typed until it closes'`,
@@ -120,13 +123,9 @@ in both repeats. Archive logs, JSON and a README under `evidence/004/`.
   unfinished bold, code and links on the fly. We render exactly what has
   arrived, so markers show briefly until the closing one lands. Open code
   blocks render as code right away." Change no other row.
-- `docs/.../streaming-benchmarks/+page.svx`, same caveat list: for every `red(`
-  anchor still present in `src/lib/utils/incremental-parser.parity.test.ts`
-  after plan 008, add one known-gap line in plain language (none present:
-  add nothing). Example for the cut tag: add one known
-  gap: an HTML tag cut before its closing bracket (`<div` with no `>`)
-  followed by a blank line can differ from a one-shot parse until the
-  bracket arrives.
+- Known gaps: none. No `red(` anchor remains in the parity or fuzz suites
+  after plan 010 (verify with grep; if one exists, STOP). Do not add a
+  known-gaps list.
 - If any number in the docs changed by more than the ranges already printed,
   update it from Step 3; otherwise leave the published numbers alone.
 
