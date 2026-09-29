@@ -22,7 +22,7 @@ done when no `red(` call remains and the suite is green.
 | ---- | ------------------------------------------------------------------- | ------ | -------- | ------ | ---------- | ------------------------ |
 | 001  | Guard tail-window offsets with a source-length integrity check      | A      | P0       | S–M    | —          | DONE — PASS at `8805f29` |
 | 002  | Do not freeze a block the next chunk can still continue or enclose  | B      | P0       | M      | 001        | DONE — PASS at `8805f29` |
-| 003  | Detect reference definitions from marked's tokens, not line regexes | C, D   | P1       | M–L    | 001, 002   | TODO                     |
+| 003  | Detect reference definitions from marked's tokens, not line regexes | C, D   | P1       | M–L    | 001, 002   | IN PROGRESS — dispatched |
 | 004  | Regression bench and docs alignment                                 | —      | P1       | S–M    | 001–003    | TODO                     |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
