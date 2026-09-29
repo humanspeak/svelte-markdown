@@ -176,6 +176,16 @@ describe('streaming parity', () => {
             expectParity(['1. first\n\n2', '. second\n\n3', '. third\n'])
         })
 
+        // Found by guard after plan 009 (1 of 6200 documents). `- - -` is a
+        // thematic break, `- - -c` is a list item: while the break is the
+        // open last line, the list before the blank line can still continue.
+        red.each([['- a\n\n- - -c\n'], ['* a\n\n* * *c\n'], ['- [ ]\n \n- - -c\n']])(
+            'a loose list stays one list when its next item first looks like a rule: %j',
+            (source) => {
+                for (const size of [1, 2, 3]) expectParity(chunkBy(source, size))
+            }
+        )
+
         it('a loose bullet list stays one list when a boundary splits the marker (guard)', () => {
             // A lone `-` already lexes as an empty list item, so the list stays open.
             expectParity(['- first\n\n-', ' second\n\n-', ' third\n'])
