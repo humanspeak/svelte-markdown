@@ -1,0 +1,159 @@
+---
+title: Upgrading to 2.0
+description: Upgrade @humanspeak/svelte-markdown from 1.x to 2.0 -- what changed in the streaming engine, the two behavior changes to check, new parser API, and a copy-paste prompt for AI assistants.
+---
+
+<script>
+    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+
+    const seo = getSeoContext()
+    if (seo) {
+        seo.title = 'Upgrading to 2.0 | Svelte Markdown'
+        seo.description = 'Upgrade @humanspeak/svelte-markdown from 1.x to 2.0: what changed in the streaming engine, the two behavior changes to check, new parser API, and a copy-paste prompt for AI assistants.'
+        seo.ogTitle = 'Upgrading to 2.0'
+        seo.ogTagline = 'A rebuilt streaming engine. Two things to check.'
+        seo.ogFeatures = ['Behavior Changes', 'New Parser API', 'Streaming Fixes', 'AI Upgrade Prompt']
+        seo.ogSlug = 'docs-migration-v2'
+    }
+</script>
+
+# Upgrading to 2.0
+
+Version 2.0 rebuilds the streaming engine. For most applications the upgrade is a version bump: the component props, the `writeChunk()` / `resetStream()` API, renderers, snippets, extensions, and sanitization all work as they did in 1.x, and rendered output is verified against a one-shot parse at every sampled frame of the benchmark suite.
+
+It is a major version because the engine underneath changed substantially and two observable behaviors changed with it. Check the two items below, run your tests, and you are done.
+
+```bash
+npm install @humanspeak/svelte-markdown@^2
+```
+
+## Do I need to change anything?
+
+| If your app... | Action |
+|----------------|--------|
+| Uses `<SvelteMarkdown>` with default or custom renderers and never reads a parent's `raw`/`text` from a child | None |
+| Has a custom renderer or snippet used **inside list items or table cells** that reads `raw`, `text`, `items`, `header`, or `rows` from props expecting the **parent list or table's** value | See [Child props in lists and tables](#child-props-in-lists-and-tables) |
+| Reads `firstChild` / `childNodes` of a rendered `<code>` block | See [Code block text nodes](#code-block-text-nodes) |
+| Uses `IncrementalParser` directly | See [Headless parser](#headless-parser) |
+| Snapshot-tests streamed DOM or tokens mid-stream | See [Streaming output now matches a one-shot parse](#streaming-output-now-matches-a-one-shot-parse) |
+
+## Behavior changes
+
+### Child props in lists and tables
+
+In 1.x, the renderers for tokens **inside** a list item or table cell received the parent list's or table's fields through rest props -- including its `raw` and `text`, which change on every streaming frame. In 2.0 they receive only their own token's fields.
+
+Item and cell renderers themselves (`listitem`, `orderedlistitem`, `unorderedlistitem`, `tablecell`, and the matching snippets) are unchanged.
+
+```svelte
+<!-- A custom `text` renderer used inside a list item -->
+<script lang="ts">
+    // 1.x: `raw` could be the whole parent list's source when the token had none of its own.
+    // 2.0: `raw` and `text` are always this token's own values.
+    const { text, raw } = $props()
+</script>
+```
+
+If you relied on the parent's values, pass what you need explicitly from a custom `list` or `table` renderer.
+
+### Code block text nodes
+
+The default `code` renderer now emits one text node per line inside `<code>` so a streaming fence lays out incrementally. There are no new elements, and `textContent` and `innerHTML` are unchanged.
+
+```ts
+// 1.x and 2.0
+const source = codeElement.textContent
+
+// 2.0: this is only the first line
+const firstLine = codeElement.firstChild?.nodeValue
+```
+
+Server-rendered output contains Svelte's hydration marker comments inside `<code>`; they are not part of `textContent`.
+
+### Streaming output now matches a one-shot parse
+
+Three parser bugs that affected output **while streaming** are fixed. If you snapshot intermediate frames, expect these differences from 1.x:
+
+- A list with blank lines between items (a loose list) streams as **one list**, not several.
+- Headings, thematic breaks, and fenced code blocks no longer get a different `raw` split depending on where a chunk boundary fell.
+- A reference definition whose URL arrives across several chunks (`[ref]: https://...`) updates the links that cite it on every chunk, instead of keeping the first partial URL.
+
+The final rendered output of a completed stream was already correct in most of these cases; the intermediate frames are what changed.
+
+### Root rendering
+
+Top-level tokens are rendered in segments keyed by source offset so that a streaming update re-diffs only the segment it touched. This adds Svelte comment anchors between groups of top-level elements and nothing else. Element order, keys, heading ids, and component lifecycles are unchanged -- a block is mounted once and never remounted as the stream grows. Code that indexes `container.childNodes` directly will see additional comment nodes; use `children` or a selector instead.
+
+## New in 2.0
+
+### Headless parser
+
+`IncrementalParser` gained an optional argument and richer results. Existing calls keep working.
+
+```ts
+const result = parser.update(source)
+const next = parser.update(source, previousSource) // skips the internal append check
+```
+
+| Field | Meaning |
+|-------|---------|
+| `reuseMode` | `'prefix'` (reuse the first `divergeAt` roots), `'tree'` (a reference definition arrived; compare all roots), or `'none'` (the source was edited) |
+| `reusedPrefixCount` | Leading roots that are the same objects as in the previous result |
+| `usedTailWindow` | Whether only the appended tail was re-lexed |
+| `canReuse` | Unchanged; equals `reuseMode === 'prefix'` |
+
+Treat the returned `tokens` array as read-only. See [Headless Parser](/docs/advanced/headless-parser).
+
+### `parsed` is optional in practice
+
+The `parsed` prop now defaults to `undefined` instead of a no-op function. When you do not pass it, no token snapshot is taken per update. Passing a callback behaves exactly as before.
+
+### Performance
+
+Per-frame work is now proportional to the open block at the end of the stream rather than to the document. Measured numbers and method are on the [LLM Streaming](/docs/advanced/llm-streaming#performance-characteristics) page, and a comparison under the same method is on the [Svelte Streamdown comparison](/compare/vs-svelte-streamdown).
+
+### Opt-in flush profiling
+
+Set `globalThis.__svelteMarkdownProfile = true` before streaming to record a `svelte-markdown:stream-flush` User Timing measure per flush. It is off by default.
+
+## Upgrade checklist
+
+1. Install `@humanspeak/svelte-markdown@^2`.
+2. Search custom renderers and snippets used inside lists and tables for reads of `raw`, `text`, `items`, `header`, or `rows`.
+3. Search for `firstChild` or `childNodes` on rendered `<code>` elements or on the markdown container.
+4. If you use `IncrementalParser`, handle `reuseMode === 'tree'` or keep using `divergeAt` (it is `0` in that mode, which is always safe).
+5. Re-run tests, paying attention to mid-stream snapshots.
+
+## Prompt for AI assistants
+
+Paste this into your coding assistant to have it perform the upgrade check with the right sources:
+
+```text
+I am upgrading @humanspeak/svelte-markdown from 1.x to 2.0 in a Svelte 5 project.
+Before changing anything, read these sources:
+
+- Upgrade guide: https://markdown.svelte.page/docs/migration/v2
+- Documentation index for LLMs: https://markdown.svelte.page/llms.txt
+- Full documentation text: https://markdown.svelte.page/llms-full.txt
+- Streaming behavior: https://markdown.svelte.page/docs/advanced/llm-streaming
+- Direct parser use: https://markdown.svelte.page/docs/advanced/headless-parser
+- Release notes: https://github.com/humanspeak/svelte-markdown/releases
+
+Then search my codebase for:
+
+1. Custom renderers or snippets used inside lists and tables that read raw,
+   text, items, header, or rows from props.
+2. Code that reads firstChild or childNodes of rendered <code> elements or of
+   the markdown container.
+3. Direct IncrementalParser usage.
+4. Tests that snapshot streamed output mid-stream.
+
+List each place that needs a change, explain why using the guide, and propose
+the smallest fix.
+```
+
+## Related
+
+- [Migration Guide](/docs/migration) -- moving from the original `svelte-markdown` package
+- [LLM Streaming](/docs/advanced/llm-streaming)
+- [Headless Parser](/docs/advanced/headless-parser)

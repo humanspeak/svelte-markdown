@@ -50,6 +50,7 @@ const sectionBreadcrumbOverrides: Record<string, string> = {
 /** Per-pathname breadcrumb-title overrides for the deepest crumb. */
 const itemBreadcrumbOverrides: Record<string, string> = {
     '/docs/migration': 'Migration',
+    '/docs/migration/v2': 'Upgrading to 2.0',
     '/docs/examples': 'Examples',
     '/docs/renderers/markdown-renderers': 'Markdown',
     '/docs/renderers/html-renderers': 'HTML',
@@ -119,7 +120,8 @@ export const docsSections: NavSection[] = [
         icon: Rocket,
         items: [
             { title: 'Getting Started', href: '/docs/getting-started', icon: Rocket },
-            { title: 'Migration Guide', href: '/docs/migration', icon: ArrowRightLeft }
+            { title: 'Migration Guide', href: '/docs/migration', icon: ArrowRightLeft },
+            { title: 'Upgrading to 2.0', href: '/docs/migration/v2', icon: ArrowRightLeft }
         ]
     },
     {

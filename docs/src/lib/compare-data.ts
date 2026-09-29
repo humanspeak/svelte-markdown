@@ -35,15 +35,21 @@ export const competitors: Competitor[] = [
     {
         slug: 'vs-svelte-streamdown',
         name: 'Svelte Streamdown',
-        tagline: 'Two Svelte 5 Renderers Built for AI Streaming',
+        tagline: 'Two Svelte 5 Streaming Renderers — One Accepts Late and Out-of-Order Chunks',
         description:
-            'Compare svelte-streamdown and @humanspeak/svelte-markdown: two Svelte 5 markdown renderers for streaming AI output, with different approaches to styling, caching, HTML, MDX, and rich content.',
+            'Compare svelte-streamdown and @humanspeak/svelte-markdown: two Svelte 5 markdown renderers for streaming AI output. Svelte Markdown natively assembles late, out-of-order, and corrected chunks by offset; Svelte Streamdown renders a complete content string that the application must assemble. They also differ in styling, caching, HTML, MDX, and rich content.',
         website: 'https://svelte-streamdown.beynar.workers.dev',
         github: 'https://github.com/beynar/svelte-streamdown',
         npm: 'svelte-streamdown',
         type: 'Streaming Markdown Renderer',
         approach: 'Reactive content prop with cached block splitting and block-level reuse',
         features: [
+            {
+                name: 'Late & Out-of-Order Packets',
+                us: 'Native: writeChunk({ value, offset }) assembles chunks in any arrival order',
+                them: false,
+                note: 'The headline capability difference. Real transports (websockets, multi-region fan-out, retried requests) deliver chunks late, duplicated, or out of order. Svelte Markdown accepts offset-addressed chunks and converges on the correct document as gaps fill: a chunk that arrives before its predecessors is placed at its offset, the gap is padded, and the earlier chunk overwrites the padding when it lands. Output is rendered progressively the whole time. Svelte Streamdown renders a single complete content string and has no offset-addressed input, so the application must buffer, reorder, pad, and reassemble packets itself before each update.'
+            },
             { name: 'Svelte 5 Compatibility', us: true, them: true },
             { name: 'TypeScript Support', us: true, them: true },
             {
@@ -51,12 +57,6 @@ export const competitors: Competitor[] = [
                 us: 'Reactive source or direct writeChunk() ingestion',
                 them: 'Reactive complete-content prop',
                 note: 'Svelte Markdown can consume transport deltas directly. With Svelte Streamdown, the application maintains and repeatedly supplies the accumulated content string.'
-            },
-            {
-                name: 'Out-of-Order Chunk Delivery',
-                us: 'Native offset-addressed chunk assembly',
-                them: false,
-                note: 'Svelte Markdown accepts writeChunk({ value, offset }) and assembles websocket-style chunks even when they arrive out of order. Svelte Streamdown accepts a complete content string, so callers must order and assemble chunks before updating the prop.'
             },
             {
                 name: 'Mid-Stream Corrections',
@@ -162,8 +162,8 @@ export const competitors: Competitor[] = [
         ],
         prosUs: [
             ...shared.prosUs,
+            'Accepts late and out-of-order packets natively: offset-addressed chunks are assembled in any arrival order and rendered progressively, with no reordering buffer in application code',
             'Direct transport-delta ingestion without maintaining a second reactive accumulator',
-            'Native out-of-order chunk assembly with offset-addressed writes',
             'Mid-stream replacement writes for corrections and retransmission',
             'Explicit resetStream() and streamId lifecycle boundaries',
             'Less main-thread work per frame than svelte-streamdown 4.2.0 on mixed prose (1.21–1.26x), long open lists and tables (2.3–2.7x), and after large closed prefixes (up to 2.7x), with no frames over budget on mixed prose even at four updates per frame (2026-09-28, paired runs)',
@@ -188,8 +188,9 @@ export const competitors: Competitor[] = [
             'More main-thread work per frame than svelte-streamdown 4.2.0 on one open code fence (Streamdown 1.33x less) and on citation-heavy prose (1.03–1.18x less, though Streamdown renders none of the reference-style citation links); a few frames still exceed 16.7 ms on long open lists and tables, and 14 of 67 after a 384 KB closed prefix (2026-09-28)'
         ],
         consThem: [
+            'Cannot accept late or out-of-order packets: it renders one complete content string, so the application must buffer, reorder, and reassemble chunks itself',
             'No imperative chunk-ingestion API — callers update the complete content string',
-            'No native offset-addressed assembly for out-of-order chunks or earlier-range corrections',
+            'No offset-addressed writes for correcting or retransmitting an earlier range',
             'Stream resets and response isolation are managed in caller-owned content state',
             'No reusable LRU cache for switching among previously rendered documents',
             'Parses on every content assignment, so bursts are not coalesced: 2.05–2.16x more main-thread work than Svelte Markdown at four updates per frame on mixed prose (2026-09-28)',
@@ -198,14 +199,16 @@ export const competitors: Competitor[] = [
             'A newer, single-maintainer port that tracks the upstream React project'
         ],
         verdict:
-            'Choose Svelte Streamdown when you want a batteries-included AI response UI with animated reveals, citations, MDX-style components, interactive diagrams, and Tailwind styling. Choose @humanspeak/svelte-markdown when you want a lower-level, unstyled renderer with direct and out-of-order chunk ingestion, explicit stream lifecycle controls, frame-coalesced updates, reusable document caching, broad raw-HTML customization, and configurable URL and attribute sanitization. Both are credible Svelte 5 choices for incomplete streaming markdown; the deciding factor is whether you want an opinionated presentation layer or a composable rendering primitive.',
+            'Choose Svelte Streamdown when you want a batteries-included AI response UI with animated reveals, citations, MDX-style components, interactive diagrams, and Tailwind styling. Choose @humanspeak/svelte-markdown when your transport can deliver packets late or out of order — it is the only one of the two that assembles offset-addressed chunks natively and keeps rendering while gaps fill — or when you want a lower-level, unstyled renderer with direct chunk ingestion, explicit stream lifecycle controls, frame-coalesced updates, reusable document caching, broad raw-HTML customization, and configurable URL and attribute sanitization. Both are credible Svelte 5 choices for incomplete streaming markdown; the deciding factor is whether you want an opinionated presentation layer or a composable rendering primitive.',
         keywords: [
             'svelte-streamdown',
             'svelte streamdown',
             'svelte-streamdown vs svelte-markdown',
             'svelte streaming markdown',
             'svelte ai markdown renderer',
-            'streamdown svelte'
+            'streamdown svelte',
+            'out of order streaming markdown',
+            'late packet markdown streaming'
         ]
     },
     {
