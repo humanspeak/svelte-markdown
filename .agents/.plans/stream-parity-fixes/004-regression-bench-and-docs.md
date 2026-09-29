@@ -15,7 +15,7 @@
 - **Priority**: P1
 - **Effort**: S–M
 - **Risk**: LOW
-- **Depends on**: 001, 002, 003
+- **Depends on**: 001, 002, 003, 005, 006, 007
 - **Category**: perf (measurement) / docs
 - **Planned at**: commit `<filled by reviewer at dispatch>`, 2026-09-29
 
@@ -66,7 +66,8 @@ only); `.agents/.plans/stream-parity-fixes/evidence/004/` (create);
 (wording only, as specified in Step 4).
 
 **Out of scope**: anything under `src/lib/`; `docs/src/lib/compare-data.ts`
-unless Step 3 shows a ratio in it is no longer true (then STOP and report).
+except the one row named in Step 4 (if Step 3 shows a ratio in it is no
+longer true, STOP and report).
 
 ## Steps
 
@@ -112,6 +113,17 @@ in both repeats. Archive logs, JSON and a README under `evidence/004/`.
   the results table with the Step 3 numbers, and one caveat line: documents
   with CRLF line endings or an unclosed HTML tag are fully re-lexed on every
   update, trading speed for correctness.
+- `docs/src/lib/compare-data.ts`, Streamdown entry, row `Incomplete Markdown`
+  (decided by the maintainer, 2026-09-29): the row currently says both sides
+  are equal; that overstates ours. Set `us: 'Shown as typed until it closes'`,
+  `them: 'Repaired while streaming'`, and the note to: "Streamdown closes
+  unfinished bold, code and links on the fly. We render exactly what has
+  arrived, so markers show briefly until the closing one lands. Open code
+  blocks render as code right away." Change no other row.
+- `docs/.../streaming-benchmarks/+page.svx`, same caveat list: add one known
+  gap: an HTML tag cut before its closing bracket (`<div` with no `>`)
+  followed by a blank line can differ from a one-shot parse until the
+  bracket arrives.
 - If any number in the docs changed by more than the ranges already printed,
   update it from Step 3; otherwise leave the published numbers alone.
 
@@ -134,6 +146,7 @@ worktree and stop the previews you started.
 - [ ] Parity 0 on every run; no scenario worse by more than 3% in both repeats
 - [ ] Two new bench scenarios exist and run
 - [ ] Docs wording updated as Step 4 specifies; docs check 0 errors
+- [ ] `Incomplete Markdown` compare row corrected; no other compare row changed
 - [ ] `pnpm check` 0 errors; `pnpm test` exits 0; `trunk check` clean
 - [ ] No files under `src/lib/` modified
 

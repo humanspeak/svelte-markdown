@@ -424,6 +424,17 @@ describe('streaming parity', () => {
             expectParity(['<!--\n<hr>\n', '\n', '!'])
         })
 
+        // Found by guard after plan 007 with inputs from upstream
+        // Streamdown's tests. For a block-level tag name directly followed
+        // by a line break, marked consumes that line break as part of the
+        // opener, so the blank line after it does not end the block
+        // (`<div\n\ns` => one html root; `<div>\n\ns` => html, space,
+        // paragraph). The stream froze `<div` when the blank line arrived.
+        red('a tag cut before its closing bracket stays open across a blank line', () => {
+            expectParity(['<div\n', '\n', 's'])
+            expectParity(chunkBy('Intro.\n\n</div\n\nHeading text\n', 1))
+        })
+
         it('a long chain of adjacent open blocks refuses the boundary, then regains it (guard)', () => {
             // `> q` and `- l` interrupt each other, so no blank line closes
             // any of them: past the walk's cap the boundary is refused (a full
