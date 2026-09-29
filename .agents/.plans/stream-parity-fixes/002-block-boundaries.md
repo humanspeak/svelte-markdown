@@ -7,7 +7,7 @@
 > commits.
 >
 > **Drift check (run first)**:
-> `git diff --stat <Planned-at SHA>..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/token-cleanup.ts`
+> `git diff --stat 8805f29..HEAD -- src/lib/utils/incremental-parser.ts src/lib/utils/token-cleanup.ts`
 > Plan 001 is EXPECTED to have changed `incremental-parser.ts`. Re-read the
 > live code for every excerpt; proceed if the differences are only plan
 > 001's; otherwise STOP.
@@ -20,7 +20,7 @@
 - **Depends on**: 001 (its integrity guard is the safety net for the HTML
   span arithmetic in Part 2)
 - **Category**: bug
-- **Planned at**: commit `<filled by reviewer at dispatch>`, 2026-09-29
+- **Planned at**: commit `8805f29`, 2026-09-29
 
 ## Why this matters
 

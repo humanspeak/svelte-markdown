@@ -12,6 +12,15 @@
 > Re-read the live code for every excerpt; proceed if the differences are
 > only theirs; otherwise STOP.
 
+> **Pre-flight note (2026-09-29, from plan 001's guard report):** a duplicate
+> definition with NO earlier reference use takes the plain tail path without
+> seeded links, so the tail emits a `def` token where a one-shot parse emits
+> none. Lengths add up, so plan 001's integrity guard cannot see it. Seeding
+> every tail lex with the known definitions (Step 3.1) must make the tail
+> drop that duplicate exactly as a one-shot parse does; add a parity test for
+> it (`'Intro.\n\n[a]: /first\n\nProse.\n\n'` then `'[a]: /second\n'` then
+> `'\nEnd.\n'`).
+
 ## Status
 
 - **Priority**: P1
