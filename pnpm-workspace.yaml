@@ -25,3 +25,5 @@ onlyBuiltDependencies:
 minimumReleaseAge: 2880
 minimumReleaseAgeExclude:
     - '@humanspeak/*'
+    # Explicitly reviewed and verified for the Highlight 1.0 upgrade.
+    - '@tanstack/highlight@1.0.0'
