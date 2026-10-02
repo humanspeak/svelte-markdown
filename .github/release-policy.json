@@ -1,0 +1,7 @@
+{
+    "manager": "pnpm",
+    "event": "push",
+    "manifests": ["package.json"],
+    "lockfile": null,
+    "readme": "managed"
+}
