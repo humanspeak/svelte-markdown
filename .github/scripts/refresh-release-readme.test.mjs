@@ -42,12 +42,16 @@ function bumpRun() {
 }
 
 function implementation() {
+    const target = process.env.RELEASE_UPDATER_TEST_TARGET
+    assert.ok(target === undefined || target === 'helper', 'Invalid implementation selector')
+    if (target === 'helper') {
+        assert.ok(existsSync(helper), 'Source helper must exist')
+        return [helper]
+    }
     const run = bumpRun()
     const count = run.split(invocation).length - 1
     assert.ok(count <= 1, 'Ambiguous helper invocation')
-    const target = process.env.RELEASE_UPDATER_TEST_TARGET
-    assert.ok(target === undefined || target === 'helper', 'Invalid implementation selector')
-    if (target === 'helper' || count === 1) {
+    if (count === 1) {
         assert.ok(existsSync(helper), 'Workflow helper must exist')
         return [helper]
     }
@@ -157,19 +161,30 @@ test('missing download credential skips download and execution with a warning', 
     assert.match(result.output, /::warning::/)
 })
 
-test('workflow refreshes after versioning and shim updates, before Git write authentication', () => {
-    if (process.env.RELEASE_UPDATER_TEST_TARGET === 'helper') return
-    const run = bumpRun()
-    const refresh = uniqueIndex(run, invocation)
-    const policy = JSON.parse(readFileSync(join(checkout, '.github/release-policy.json'), 'utf8'))
-    const version = uniqueIndex(run, `${policy.manager} version "$BUMP_TYPE" --no-git-tag-version`)
-    const shims = run.includes('for SHIM in ') ? uniqueIndex(run, 'done\n') : version + 1
-    const authentication = uniqueIndex(
-        run,
-        'git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/'
-    )
-    const staging = uniqueIndex(run, 'git add package.json README.md')
-    assert.ok(version < shims && shims < refresh, 'Versioning and shims must precede refresh')
-    assert.ok(refresh < authentication && authentication < staging, 'Authenticate after refresh')
-    assert.ok(!run.includes(movingUrl), 'Workflow must not download from a moving branch')
-})
+test(
+    'workflow refreshes after versioning and shim updates, before Git write authentication',
+    { skip: process.env.RELEASE_UPDATER_TEST_TARGET === 'helper' },
+    () => {
+        const run = bumpRun()
+        const refresh = uniqueIndex(run, invocation)
+        const policy = JSON.parse(
+            readFileSync(join(checkout, '.github/release-policy.json'), 'utf8')
+        )
+        const version = uniqueIndex(
+            run,
+            `${policy.manager} version "$BUMP_TYPE" --no-git-tag-version`
+        )
+        const shims = run.includes('for SHIM in ') ? uniqueIndex(run, 'done\n') : version + 1
+        const authentication = uniqueIndex(
+            run,
+            'git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/'
+        )
+        const staging = uniqueIndex(run, 'git add package.json README.md')
+        assert.ok(version < shims && shims < refresh, 'Versioning and shims must precede refresh')
+        assert.ok(
+            refresh < authentication && authentication < staging,
+            'Authenticate after refresh'
+        )
+        assert.ok(!run.includes(movingUrl), 'Workflow must not download from a moving branch')
+    }
+)

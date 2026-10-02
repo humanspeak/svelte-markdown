@@ -1,4 +1,4 @@
-# Release safety managed by humanspeak/svelte-diff .github/release-workflows/sync.py
+# Release safety managed by humanspeak/docs-kit .github/release-workflows/sync.py
 # 1. Workflow metadata
 name: Publish to NPM
 

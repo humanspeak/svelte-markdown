@@ -1,13 +1,13 @@
 {
     "files": {
         ".github/scripts/refresh-release-readme.sh": "ff948dde0435219f7f76be1b3d4a661f47df222c7f246c8c12f6a0fccc15b535",
-        ".github/scripts/refresh-release-readme.test.mjs": "f0b6ba3a6aebac781a25caa0dc83dd2d2569a57154bcc1574e3f59476a84463c",
+        ".github/scripts/refresh-release-readme.test.mjs": "98c0216995560c636d54b1e89016ae8691aaef075193d9bac3157473e92bf470",
         ".github/scripts/release-publication.mjs": "c03d90062b6fcb38e11f9bb4cb5fd8c9a14a34a56bb67870f64d81af43f56e8e",
         ".github/scripts/release-publication.test.mjs": "a6176fdcf61b0d118670ce1d43a09f39a12d4171e1ab6fed7960dfe048145ebf",
         ".github/scripts/release-workflow.test.mjs": "7a9e393cad156ac86e19b4b6aa1c72afedd5a6012652c6459e288f501ab43609",
-        ".github/workflows/npm-publish.yml": "3fa45fc7a488d5dc2678832eb57cff74306f26151ea1f15c6258b8b23bd4264b",
+        ".github/workflows/npm-publish.yml": "4629c8dfab55bbf1f30c2bd360a62cdc019a164e40df44f37fabd2254ff6aef1",
         ".github/workflows/run-tests.yml": "5ee50471d7b5c36bb23c930971864408c1e0858e970b6130ab6565a93a3dd36e"
     },
-    "repository": "humanspeak/svelte-diff",
-    "revision": "1f23be02075a83577e06d40de496d2e2409335bf"
+    "repository": "humanspeak/docs-kit",
+    "revision": "1ba2cdbd682d0c6c11e0937147919565d88b9949"
 }
