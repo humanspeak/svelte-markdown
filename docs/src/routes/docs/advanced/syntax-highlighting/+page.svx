@@ -29,6 +29,8 @@ description: Add opt-in syntax highlighting to @humanspeak/svelte-markdown with 
 
 You pick an engine at setup time. The renderer, the context key, and the singleton are the same regardless of engine, so switching is a one-line factory change and two engines can coexist on one page. Both engines are synchronous, so **streaming stays enabled**. Neither is re-exported from the `extensions` barrel, so consumers who skip highlighting never need either peer installed.
 
+The TanStack adapter supports Highlight 0.1 and 1.x. Upgrading to 1.0 requires no changes to imports, factory options, or theme setup; JavaScript and TypeScript property names that are keywords may receive corrected colors.
+
 ## Why It's a Renderer, Not a Marked Extension
 
 KaTeX, Mermaid, alerts, and footnotes are [marked extensions](/docs/advanced/marked-extensions): they add custom token types via the `extensions` prop. Highlighting is different. A code fence is already a first-class `code` token, so there is nothing new to tokenize — the work is purely at render time. `HighlightedCode` is therefore a **drop-in replacement for the built-in `code` renderer** with the same `Props` shape (`lang`, `text`):

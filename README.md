@@ -691,6 +691,8 @@ Unlike the marked extensions above, syntax highlighting is a **renderer-level ov
 | `@humanspeak/svelte-markdown/extensions/shiki`              | `createShikiHighlighter` — TextMate grammars, inline theme colors                        | `shiki`               | ~87 KB gzip             |
 | `@humanspeak/svelte-markdown/extensions/tanstack-highlight` | `createTanstackHighlighter` — hand-written scanners, semantic `th-*` classes, CSS themes | `@tanstack/highlight` | ~4 KB gzip              |
 
+The TanStack adapter supports Highlight 0.1 and 1.x. Upgrading to 1.0 requires no changes to imports, factory options, or theme setup; JavaScript and TypeScript property names that are keywords may receive corrected colors.
+
 Pick Shiki for editor-exact colors and 200+ grammars; pick TanStack Highlight for chat and agent UIs that stream a lot of code and care about weight (25 languages, themes are CSS variables so light/dark is a CSS toggle). Install the peer you use:
 
 ```bash

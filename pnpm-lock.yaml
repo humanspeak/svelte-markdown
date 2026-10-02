@@ -208,8 +208,8 @@ importers:
         specifier: ^7.3.1
         version: 7.3.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
       '@tanstack/highlight':
-        specifier: 0.1.0
-        version: 0.1.0
+        specifier: 1.0.0
+        version: 1.0.0
       '@testing-library/jest-dom':
         specifier: ^7.0.1
         version: 7.0.1(@testing-library/dom@10.4.2)(vitest@5.0.1)
@@ -322,8 +322,8 @@ importers:
         specifier: workspace:*
         version: link:..
       '@tanstack/highlight':
-        specifier: 0.1.0
-        version: 0.1.0
+        specifier: 1.0.0
+        version: 1.0.0
       katex:
         specifier: ^0.18.7
         version: 0.18.7
@@ -1688,6 +1688,10 @@ packages:
 
   '@tanstack/highlight@0.1.0':
     resolution: {integrity: sha512-B/NdJETsgoQ7ludUbflIiYQk74bE6VSgP3kLR99P1OsRX1Gepr3EVg6oVLRZ+duKWs+P4lrhWC4vVJsrRSnV2g==}
+    engines: {node: '>=18'}
+
+  '@tanstack/highlight@1.0.0':
+    resolution: {integrity: sha512-nrg2iZSQUZlDZGTPKh/CNlg6Orm3vFHIaIi/9DqPC1rUpfe/M6rD2iokrckWTc2Z5jYDz185BK76GUh9VIjQRw==}
     engines: {node: '>=18'}
 
   '@testing-library/dom@10.4.2':
@@ -5400,6 +5404,8 @@ snapshots:
       vite: 8.3.0(@types/node@26.6.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)
 
   '@tanstack/highlight@0.1.0': {}
+
+  '@tanstack/highlight@1.0.0': {}
 
   '@testing-library/dom@10.4.2':
     dependencies:
