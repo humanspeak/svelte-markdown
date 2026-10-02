@@ -449,7 +449,6 @@ jobs:
         runs-on: ubuntu-latest
         environment: production
         env:
-            RELEASE_STATE: ${{ runner.temp }}/release-${{ github.run_id }}-${{ github.run_attempt }}.json
             PREPARED_SHA: ${{ needs.prepare.outputs.checkout_sha }}
         permissions:
             contents: write
@@ -459,6 +458,10 @@ jobs:
             id-token: write
 
         steps:
+            - name: Initialize release state path
+              run: |
+                  printf 'RELEASE_STATE=%s/release-%s-%s.json\n' "$RUNNER_TEMP" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_ENV"
+
             - name: Checkout
               uses: actions/checkout@v7.0.1 # zizmor: ignore[unpinned-uses]
               with:

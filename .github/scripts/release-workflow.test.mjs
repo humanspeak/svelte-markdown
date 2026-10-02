@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { env } from 'node:process'
 import test from 'node:test'
 import { fileURLToPath, URL } from 'node:url'
 import { selectBaseline, validateMetadata } from './release-publication.mjs'
@@ -8,6 +12,40 @@ const root = fileURLToPath(new URL('../../', import.meta.url))
 const read = (path) => readFileSync(`${root}${path}`, 'utf8')
 const policy = JSON.parse(read('.github/release-policy.json'))
 const workflow = policy.event === 'calver' ? null : read('.github/workflows/npm-publish.yml')
+
+test('release state is initialized on the runner outside checkout and isolated by attempt', () => {
+    const releaseWorkflow = workflow ?? read('.github/workflows/release.yml')
+    const job = releaseWorkflow
+        .split(policy.event === 'calver' ? '    release:\n' : '    publish-github-packages:\n')[1]
+        .split(/\n {4}[a-z][\w-]*:\n/)[0]
+    assert.doesNotMatch(job.split('        steps:\n')[0], /\$\{\{\s*runner\./)
+    const initialization = job.split('            - name: Initialize release state path\n')[1]
+    assert.ok(initialization, 'Release state must be initialized by a runner step')
+    const script = initialization.split(/\n {12}- /)[0].split('              run: |\n')[1]
+    assert.ok(job.indexOf('Initialize release state path') < job.indexOf('uses: actions/checkout@'))
+    const directory = mkdtempSync(join(tmpdir(), 'release-state-environment-'))
+    try {
+        for (const attempt of ['1', '2']) {
+            const environment = join(directory, `environment-${attempt}`)
+            execFileSync('/bin/bash', ['--noprofile', '--norc', '-eu', '-c', script], {
+                cwd: root,
+                env: {
+                    PATH: env.PATH,
+                    RUNNER_TEMP: directory,
+                    GITHUB_ENV: environment,
+                    GITHUB_RUN_ID: '12345',
+                    GITHUB_RUN_ATTEMPT: attempt
+                }
+            })
+            assert.equal(
+                readFileSync(environment, 'utf8'),
+                `RELEASE_STATE=${directory}/release-12345-${attempt}.json\n`
+            )
+        }
+    } finally {
+        rmSync(directory, { recursive: true, force: true })
+    }
+})
 
 test('consumer policy rejects unowned manifest, dependency, lockfile, and README changes', () => {
     for (const config of [
