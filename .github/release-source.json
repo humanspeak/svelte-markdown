@@ -4,10 +4,10 @@
         ".github/scripts/refresh-release-readme.test.mjs": "98c0216995560c636d54b1e89016ae8691aaef075193d9bac3157473e92bf470",
         ".github/scripts/release-publication.mjs": "c03d90062b6fcb38e11f9bb4cb5fd8c9a14a34a56bb67870f64d81af43f56e8e",
         ".github/scripts/release-publication.test.mjs": "a6176fdcf61b0d118670ce1d43a09f39a12d4171e1ab6fed7960dfe048145ebf",
-        ".github/scripts/release-workflow.test.mjs": "7a9e393cad156ac86e19b4b6aa1c72afedd5a6012652c6459e288f501ab43609",
-        ".github/workflows/npm-publish.yml": "4629c8dfab55bbf1f30c2bd360a62cdc019a164e40df44f37fabd2254ff6aef1",
+        ".github/scripts/release-workflow.test.mjs": "3a131742d49cb7e643ddfbc91582a9c9722f7bce9cbb6976a1a4e9097ff77243",
+        ".github/workflows/npm-publish.yml": "de403b5699a130fb5fedbd72d13826f72b7ca527f829db580058b10325d03c18",
         ".github/workflows/run-tests.yml": "5ee50471d7b5c36bb23c930971864408c1e0858e970b6130ab6565a93a3dd36e"
     },
     "repository": "humanspeak/docs-kit",
-    "revision": "1ba2cdbd682d0c6c11e0937147919565d88b9949"
+    "revision": "cd74e655507ae20931f82f3bdb954503dce3bab3"
 }
