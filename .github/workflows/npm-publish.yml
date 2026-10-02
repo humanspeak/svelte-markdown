@@ -1,3 +1,4 @@
+# Release safety managed by humanspeak/docs-kit .github/release-workflows/sync.py
 # 1. Workflow metadata
 name: Publish to NPM
 
@@ -28,6 +29,19 @@ on:
             - package.json
             - pnpm-lock.yaml
             - .github/workflows/npm-publish.yml
+            - pnpm-workspace.yaml
+            - tsconfig*.json
+            - svelte.config.*
+            - vite.config.*
+            - vitest.config.*
+            - vitest.setup.*
+            - playwright.config.*
+            - eslint.config.*
+            - .npmrc
+            - .github/scripts/**
+            - .github/release-policy.json
+            - .github/release-source.json
+
     workflow_dispatch:
         inputs:
             # trunk-ignore(checkov/CKV_GHA_7): We need manual version control for releases
@@ -45,7 +59,42 @@ on:
                 required: false
                 type: string
 
+# Pending runs may be replaced; neither every event nor trigger order is guaranteed.
+concurrency:
+    group: repository-release
+    cancel-in-progress: false
+
 jobs:
+    prepare:
+        needs: check-if-merged
+        if: needs.check-if-merged.outputs.should_run == 'true'
+        runs-on: ubuntu-latest
+        outputs:
+            checkout_sha: ${{ steps.baseline.outputs.checkout_sha }}
+            ready: ${{ steps.baseline.outputs.ready }}
+            outcome: ${{ steps.baseline.outputs.outcome }}
+        steps:
+            # Sole bootstrap exception: read-only helper loading at original event SHA.
+            - name: Bootstrap baseline helper
+              uses: actions/checkout@v7 # zizmor: ignore[unpinned-uses]
+              with:
+                  ref: ${{ github.sha }}
+                  persist-credentials: false
+                  fetch-depth: 0
+            - uses: actions/setup-node@v7 # zizmor: ignore[unpinned-uses]
+              with:
+                  node-version: 24
+            - name: Select tested baseline
+              id: baseline
+              env:
+                  EVENT_NAME: ${{ github.event_name }}
+                  EVENT_SHA: ${{ github.sha }}
+                  EVENT_REF: ${{ github.ref }}
+                  PR_FOUND: ${{ needs.check-if-merged.outputs.should_run }}
+                  HAS_SKIP_LABEL: ${{ needs.check-if-merged.outputs.has_skip_label }}
+                  INPUT_VERSION: ${{ github.event.inputs.version_bump }}
+              run: node .github/scripts/release-publication.mjs prepare
+
     check-if-merged:
         runs-on: ubuntu-latest
         outputs:
@@ -117,14 +166,15 @@ jobs:
                   echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
 
     debug-check:
-        needs: check-if-merged
-        if: needs.check-if-merged.outputs.should_run == 'true'
+        needs: [check-if-merged, prepare]
+        if: needs.prepare.outputs.ready == 'true' && needs.check-if-merged.outputs.should_run == 'true'
         runs-on: ubuntu-latest
         environment: ci
         steps:
             - name: Checkout
               uses: actions/checkout@v7.0.1 # zizmor: ignore[unpinned-uses]
               with:
+                  ref: ${{ needs.prepare.outputs.checkout_sha }}
                   persist-credentials: false
                   token: ${{ secrets.ACTIONS_KEY }}
 
@@ -258,8 +308,8 @@ jobs:
 
     # 3. Testing jobs (grouped together)
     build:
-        needs: [check-if-merged, debug-check]
-        if: needs.check-if-merged.outputs.should_run == 'true'
+        needs: [check-if-merged, debug-check, prepare]
+        if: needs.prepare.outputs.ready == 'true' && needs.check-if-merged.outputs.should_run == 'true'
         runs-on: ubuntu-latest
         environment: ci
         strategy:
@@ -272,6 +322,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v7.0.1 # zizmor: ignore[unpinned-uses]
               with:
+                  ref: ${{ needs.prepare.outputs.checkout_sha }}
                   persist-credentials: false
                   token: ${{ secrets.ACTIONS_KEY }}
 
@@ -285,6 +336,12 @@ jobs:
             - name: Install
               run: |
                   pnpm install --filter . --prefer-offline --frozen-lockfile --ignore-scripts --config.engine-strict=false
+
+            - name: Check library types
+              run: pnpm run check
+
+            - name: Test release safety offline
+              run: node --test .github/scripts/*.test.mjs
 
             - name: Test
               run: |
@@ -315,14 +372,15 @@ jobs:
             # Removed dependency caching to reduce cache-poisoning risk
 
     playwright-tests:
-        needs: [check-if-merged, debug-check]
-        if: needs.check-if-merged.outputs.should_run == 'true' && needs.check-if-merged.outputs.has_skip_label != 'true'
+        needs: [check-if-merged, debug-check, prepare]
+        if: needs.prepare.outputs.ready == 'true' && needs.check-if-merged.outputs.should_run == 'true' && needs.check-if-merged.outputs.has_skip_label != 'true'
         timeout-minutes: 60
         runs-on: ubuntu-latest
         environment: ci
         steps:
             - uses: actions/checkout@v7.0.1 # zizmor: ignore[unpinned-uses]
               with:
+                  ref: ${{ needs.prepare.outputs.checkout_sha }}
                   persist-credentials: false
                   token: ${{ secrets.ACTIONS_KEY }}
 
@@ -379,8 +437,10 @@ jobs:
 
     # 5. Publishing job (main deployment logic)
     publish-github-packages:
-        needs: [check-if-merged, build, playwright-tests, coverage-report]
+        needs: [check-if-merged, debug-check, build, playwright-tests, coverage-report, prepare]
         if: |
+            needs.debug-check.result == 'success' &&
+            needs.prepare.outputs.ready == 'true' &&
             always() &&
             needs.check-if-merged.outputs.should_run == 'true' &&
             needs.build.result == 'success' &&
@@ -388,6 +448,9 @@ jobs:
             (needs.coverage-report.result == 'success' || needs.coverage-report.result == 'skipped')
         runs-on: ubuntu-latest
         environment: production
+        env:
+            RELEASE_STATE: ${{ runner.temp }}/release-${{ github.run_id }}-${{ github.run_attempt }}.json
+            PREPARED_SHA: ${{ needs.prepare.outputs.checkout_sha }}
         permissions:
             contents: write
             packages: write
@@ -399,6 +462,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v7.0.1 # zizmor: ignore[unpinned-uses]
               with:
+                  ref: ${{ needs.prepare.outputs.checkout_sha }}
                   persist-credentials: false
                   token: ${{ secrets.GITHUB_TOKEN }}
                   fetch-depth: 0
@@ -504,8 +568,13 @@ jobs:
 
                   echo "bump=$BUMP_TYPE" >> $GITHUB_OUTPUT
 
-            - name: Bump version
+            - name: Recheck tested main and initialize ownership
               if: steps.publish-check.outputs.should_publish == 'true'
+              id: ownership
+              run: node .github/scripts/release-publication.mjs begin
+
+            - name: Bump version
+              if: steps.ownership.outputs.ready == 'true'
               id: version
               env:
                   PR_TITLE: ${{ needs.check-if-merged.outputs.pr_title }}
@@ -526,9 +595,6 @@ jobs:
                   git config --global commit.gpgsign true
                   git config --global user.signingkey "$GPG_KEY_ID"
 
-                  # Set up authentication for push
-                  git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
-
                   # Validate bump type for security
                   case "$BUMP_TYPE" in
                     "major"|"minor"|"patch") ;;
@@ -548,20 +614,13 @@ jobs:
                   ESCAPED_TITLE=$(echo "$PR_TITLE" | sed 's/[`$"\]/\\&/g')
                   ESCAPED_URL=$(echo "$PR_URL" | sed 's/[`$"\]/\\&/g')
 
-                  # Refresh the managed README footer (the docs-kit ecosystem block +
-                  # standardized License/Credits). Runs AFTER `pnpm version` so the
-                  # working tree is clean when pnpm runs — pnpm version aborts on a
-                  # dirty tree. Fetched raw from the private docs-kit repo (no install,
-                  # no dependency here); reuses $GITHUB_TOKEN (ACTIONS_KEY) for auth.
-                  # Best-effort: a failed fetch or roster blip only warns.
-                  UPDATER="$RUNNER_TEMP/update-ecosystem-readme.mjs"
-                  if curl -fsSL -H "Authorization: token $GITHUB_TOKEN" \
-                      https://raw.githubusercontent.com/humanspeak/docs-kit/main/scripts/update-ecosystem-readme.mjs \
-                      -o "$UPDATER"; then
-                      node "$UPDATER" || echo "::warning::ecosystem updater errored; README left unchanged"
-                  else
-                      echo "::warning::could not fetch ecosystem updater; skipping README refresh"
-                  fi
+                  # Run the immutable updater with only PATH before Git write authentication.
+                  bash .github/scripts/refresh-release-readme.sh
+
+                  # Set up authentication for push
+                  git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+
+                  node .github/scripts/release-publication.mjs validate
 
                   # Commit the version changes (and any refreshed README ecosystem block)
                   git add package.json README.md
@@ -576,11 +635,10 @@ jobs:
                   PR: ${ESCAPED_URL}"
 
                   # Push changes
-                  git push
-                  git push --tags
+                  node .github/scripts/release-publication.mjs push
 
             - name: Create Release
-              if: steps.publish-check.outputs.should_publish == 'true'
+              if: steps.ownership.outputs.ready == 'true'
               id: create_release
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -590,44 +648,34 @@ jobs:
                   PR_TITLE: ${{ needs.check-if-merged.outputs.pr_title }}
                   PR_URL: ${{ needs.check-if-merged.outputs.pr_url }}
               run: |
-                  BODY="Changes in this Release
-                  ${CUSTOM_MESSAGE:-$PR_TITLE}"
-                  if [[ "$EVENT_NAME" == "push" && -n "$PR_URL" ]]; then
-                      BODY="$BODY
+                  node .github/scripts/release-publication.mjs release
 
-                  For more details, see the [Pull Request]($PR_URL)"
-                  fi
-                  gh release create "$NEW_VERSION" \
-                      --title "Release $NEW_VERSION" \
-                      --notes "$BODY" \
-                      --latest
-
-            - name: Publish
-              if: steps.publish-check.outputs.should_publish == 'true'
+            - name: Prepare canonical publication
+              if: steps.ownership.outputs.ready == 'true'
               run: |
                   # Clean up any existing npmrc files that might interfere with OIDC
                   rm -f ./.npmrc ~/.npmrc
                   # Configure registry for scoped package
                   pnpm config set @humanspeak:registry https://registry.npmjs.org/
                   # Publish using pnpm with OIDC (trusted publishing)
-                  pnpm publish --provenance --access public --no-git-checks
+                  node .github/scripts/release-publication.mjs registry-attempt
+
+            - name: Publish
+              id: canonical
+              if: steps.ownership.outputs.ready == 'true'
+              run: pnpm publish --provenance --access public --no-git-checks
+
+            - name: Record canonical publication
+              if: steps.canonical.outcome == 'success'
+              run: node .github/scripts/release-publication.mjs registry-success
 
             - name: Cleanup on failure
-              if: failure()
+              if: failure() && steps.ownership.outputs.ready == 'true' && steps.canonical.outcome != 'success'
               env:
-                  RELEASE_VERSION: ${{ steps.version.outputs.new_version }}
+                  CANONICAL_SUCCESS: ${{ steps.canonical.outcome }}
                   GITHUB_TOKEN: ${{ secrets.ACTIONS_KEY }}
               run: |
-                  # Validate version format first
-                  if [[ ! "$RELEASE_VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                    echo "Invalid version format: $RELEASE_VERSION"
-                    exit 1
-                  fi
-
-                  # Proceed with cleanup only if validation passes
-                  gh release delete "$RELEASE_VERSION" --yes || true
-                  git tag -d "$RELEASE_VERSION" || true
-                  git push --delete origin "$RELEASE_VERSION" || true
+                  node .github/scripts/release-publication.mjs cleanup
 
             - name: Notify on failure
               if: failure() && needs.check-if-merged.outputs.pr_number != ''
