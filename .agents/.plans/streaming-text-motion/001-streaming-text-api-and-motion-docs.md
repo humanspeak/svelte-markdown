@@ -5,7 +5,7 @@
 > Update the adjacent README status after completion. This is a single selected
 > feature plan, not a general repository audit.
 >
-> Drift check: `git diff --stat d4835ee..HEAD -- src/lib src/routes tests docs/src README.md scripts/tree-shaking.mjs`
+> Drift check: `git diff --stat 65a13ee..HEAD -- src/lib src/routes tests docs/src README.md scripts/tree-shaking.mjs`
 > Compare the excerpts below with live code if any scoped file changed.
 
 > Revision 2026-10-05: Operator approved expanding the investigation to parser
@@ -23,6 +23,12 @@
 > behavior, token semantics or animation defaults change. Unsupported custom
 > transforms conservatively expose unknown provenance instead of invented origins.
 
+> Revision 2026-10-05: Step 1 provenance implementation accepted at 65a13ee
+> after parent reproduced 335 passing focused tests, zero type errors and clean
+> Trunk checks, and reviewed the adapters/cache/reuse diff. Rebaseline for the
+> remaining implementation. Steps 0–1 are complete; proceed with Steps 2–5.
+> Keep provenance regressions passing and preserve scoped additive metadata.
+
 ## Status
 
 - Priority: P1
@@ -30,7 +36,7 @@
 - Risk: HIGH (stream identity, Unicode segmentation, SSR, parser performance)
 - Depends on: none
 - Category: direction
-- Planned at: commit `d4835ee`, 2026-10-05
+- Planned at: commit `65a13ee`, 2026-10-05
 
 ## Why this matters
 
@@ -395,7 +401,7 @@ not remap completed blocks. Existing fallback full parses may be O(document),
 and reparsing a long open paragraph/list may be proportional to that open block;
 document this honestly. Do not alter existing parser reuse decisions to hide cost.
 
-**Checkpoint:** this dispatch ends after Step 1. Return source diff and test
+**Checkpoint (completed at 65a13ee):** the provenance dispatch ended after Step 1. Return source diff and test
 results to parent for review; do not implement StreamingText, presets or docs yet.
 Net-new feature does not need an artificial failing missing-export test, but add
 real exact-origin regression assertions before adapters are complete.

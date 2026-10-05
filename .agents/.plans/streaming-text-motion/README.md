@@ -6,9 +6,9 @@ using @humanspeak/svelte-motion. This is a focused feature plan, not a full audi
 
 ## Execution order and status
 
-| Plan                                             | Title                                               | Priority | Effort | Depends on | Status                                             |
-| ------------------------------------------------ | --------------------------------------------------- | -------- | ------ | ---------- | -------------------------------------------------- |
-| [001](001-streaming-text-api-and-motion-docs.md) | Headless segments, optional preset exports and docs | P1       | L      | None       | IN PROGRESS — provenance implementation checkpoint |
+| Plan                                             | Title                                               | Priority | Effort | Depends on | Status                                                      |
+| ------------------------------------------------ | --------------------------------------------------- | -------- | ------ | ---------- | ----------------------------------------------------------- |
+| [001](001-streaming-text-api-and-motion-docs.md) | Headless segments, optional preset exports and docs | P1       | L      | None       | IN PROGRESS — API, presets and documentation implementation |
 
 Status values: TODO, IN PROGRESS, DONE, BLOCKED (reason), REJECTED (reason).
 Execute the single plan in step order: bookkeeping proof, helper, integration,
@@ -68,3 +68,12 @@ source mapping before cleanup and occurrence metadata through token reuse.
 Step 1 is dispatched alone; exact-origin/parity tests must pass before proceeding
 with the consumer API, presets and docs. Baseline re-stamped to d4835ee; only
 plan artifacts changed since c2ca115. Report is preserved alongside the plan.
+
+## Accepted Step 1 checkpoint
+
+Commit 65a13ee contains Sol's reviewed provenance implementation and regression
+suite. Parent reproduced 335 passing tests, pnpm check with zero errors and
+clean Trunk checks; pre-commit hooks also passed. This is a checkpoint acceptance,
+not overall feature completion. Steps 2–5 (headless API, source arrival ledger,
+consumer metadata wiring, optional Motion presets, docs and final gates) remain.
+The plan drift baseline is now 65a13ee to retain reviewed predecessor work.
