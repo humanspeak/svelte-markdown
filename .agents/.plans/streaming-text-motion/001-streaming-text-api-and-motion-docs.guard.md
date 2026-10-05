@@ -30,3 +30,36 @@ with grammar-transformation adapters and explicit unknown custom fallback.
 Expanded implementation scope to parse-and-cache, cleanup, incremental parser
 and dedicated provenance modules/tests. Step 1 alone is next; no API/preset
 implementation before parity review. Default behavior/requirements unchanged.
+
+## 2026-10-05T07:16-04:00 — DRIFTING: incomplete Step 1 checkpoint
+
+- Source edits are within approved provenance scope. Executor correctly stopped
+  and did not claim completion or edit plans. No API/presets/docs delivered yet.
+- Parent reproduced required six-file suite: 276 pass, 1 fail. At tracer.ts:286
+  blockquote raw adapter expects contiguous source; Marked constructs an extra
+  newline for `> - a\nlazy a\n>   a`. Reproduced directly with installed Lexer.
+- Parent reproduced pnpm check: missing renderers/childTokens on extension fixture,
+  one error and three existing warnings. Trunk check: nine new issues including
+  resolver complexity 67 vs allowed 15 and unused/prefer-const failures.
+- Review concern: collector.capture recursively walks all supplied occurrences;
+  cache unchanged occurrences before component integration. Probe normalization
+  currently repeats whole-frame normalization per block probe; cache that value.
+- Action: correction dispatch to Sol within unchanged scope. No source authored
+  by guard. Snapshot commit not made while required hooks would reject these
+  known type/lint failures; source remains a reviewable uncommitted partial diff.
+
+## 2026-10-05T07:33-04:00 — ON TRACK: Step 1 provenance checkpoint
+
+- Independently reproduced six-file focused suite: 335 tests pass, six files
+  pass, exit 0. pnpm check exits 0 with zero errors/three existing warnings.
+  Trunk check exits 0, no issues; git diff --check has no output.
+- Read mapped-string helpers, collector cache/invalidation, frame tracer, grammar
+  adapters, cleanup changes, incremental base plumbing and meaningful regression
+  assertions. Lazy continuation records synthetic runs with no fake origin.
+- Tests exercise 28 documents at every two-chunk split, exact repeated origins,
+  quote/list/task/table/pedantic transformations, targeted reference relex and
+  actual clone/reuse rebinding. Work counters expose completed-subtree cache hits.
+- Source scope matches plan; no dependencies, public API, Motion, docs runtime
+  or transport changes yet. Step 1 accepted only, not overall feature PASS.
+- Action: snapshot accepted checkpoint, rebaseline plan to that snapshot and
+  dispatch Steps 2–5. Full coverage/packaging/E2E are pending final feature gates.

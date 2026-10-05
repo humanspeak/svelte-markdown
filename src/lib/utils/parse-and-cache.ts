@@ -12,6 +12,8 @@ import type { Token, TokensList } from '$lib/utils/markdown-parser.js'
 import { tokenCache } from '$lib/utils/token-cache.js'
 import { shrinkHtmlTokens } from '$lib/utils/token-cleanup.js'
 import { Lexer, Marked } from 'marked'
+import type { ProvenanceCollector } from './streaming-provenance.js'
+import { traceLexer } from './streaming-provenance/tracer.js'
 
 /**
  * Lexes markdown source and cleans the resulting tokens. Shared by sync and async paths.
@@ -41,7 +43,9 @@ export const lexAndClean = (
     source: string,
     options: SvelteMarkdownOptions,
     isInline: boolean,
-    links?: TokensList['links']
+    links?: TokensList['links'],
+    provenance?: ProvenanceCollector,
+    baseOffset = 0
 ): Token[] => {
     // Shallow-copy: marked's Lexer writes its default tokenizer back onto the
     // options object it receives. Passing the caller's object directly would
@@ -55,8 +59,14 @@ export const lexAndClean = (
         // `constructor` must not resolve through Object.prototype.
         lexer.tokens.links = Object.assign(Object.create(null), links)
     }
+    const finishProvenance = provenance
+        ? traceLexer(lexer, source, isInline, provenance, baseOffset, !!options.tokenizer)
+        : undefined
     const parsedTokens = isInline ? lexer.inlineTokens(source) : lexer.lex(source)
-    return shrinkHtmlTokens(parsedTokens)
+    finishProvenance?.()
+    const cleaned = shrinkHtmlTokens(parsedTokens, provenance)
+    if (provenance) provenance.capture(cleaned)
+    return cleaned
 }
 
 /**

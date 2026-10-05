@@ -1,5 +1,13 @@
 import * as htmlparser2 from 'htmlparser2'
 import type { Token, Tokens } from 'marked'
+import {
+    concatMapped,
+    mappedSource,
+    replacementMapped,
+    sliceMapped,
+    type MappedView,
+    type ProvenanceCollector
+} from './streaming-provenance.js'
 import { isVoidElement } from './void-elements.js'
 
 /**
@@ -231,7 +239,11 @@ const hasMultipleTags = (html: string): boolean => {
  *
  * @internal
  */
-const expandHtmlBlockNested = (html: string): Token[] => {
+const expandHtmlBlockNested = (
+    html: string,
+    provenance?: ProvenanceCollector,
+    input?: MappedView
+): Token[] => {
     const root: Token[] = []
     const stack: Token[][] = [root]
     /** Source offset where each emitted token starts, for root source spans. */
@@ -258,15 +270,35 @@ const expandHtmlBlockNested = (html: string): Token[] => {
           }
     )[] = []
     let currentText = ''
+    let textMapping = provenance ? mappedSource('') : undefined
+    let previousEntity: MappedView | undefined
 
     const flushText = () => {
         if (currentText.length === 0) return
         if (currentText.trim()) {
             const textToken = { type: 'text', raw: currentText, text: currentText } as Token
             starts.set(textToken, textStart)
+            if (provenance && input)
+                provenance.set(textToken, {
+                    exact: true,
+                    sourceSpans: textMapping!.runs.flatMap((run) => run.sources),
+                    text: textMapping,
+                    raw: textMapping
+                })
             stack[stack.length - 1].push(textToken)
         }
         currentText = ''
+        if (provenance) textMapping = mappedSource('')
+    }
+
+    const mapOpening = (token: Token, start: number, end: number) => {
+        if (!provenance || !input) return
+        const span = sliceMapped(input, start, end)
+        provenance.set(token, {
+            exact: true,
+            sourceSpans: span.runs.flatMap((run) => run.sources),
+            raw: span.value === token.raw ? span : replacementMapped(token.raw, span)
+        })
     }
 
     const parser = new htmlparser2.Parser(
@@ -290,6 +322,7 @@ const expandHtmlBlockNested = (html: string): Token[] => {
                         attributes,
                         tokens: []
                     } as Token
+                    mapOpening(selfClosed, parser.startIndex, parser.endIndex + 1)
                     starts.set(selfClosed, parser.startIndex)
                     stack[stack.length - 1].push(selfClosed)
                     opens.push({ tag: name, selfClosed: true })
@@ -302,6 +335,7 @@ const expandHtmlBlockNested = (html: string): Token[] => {
                     tag: name,
                     attributes
                 } as Token
+                mapOpening(opening, parser.startIndex, parser.endIndex + 1)
                 starts.set(opening, parser.startIndex)
                 stack[stack.length - 1].push(opening)
                 stack.push(childTokens)
@@ -310,6 +344,16 @@ const expandHtmlBlockNested = (html: string): Token[] => {
             ontext: (text) => {
                 if (currentText.length === 0) textStart = parser.startIndex
                 currentText += text
+                if (provenance && input) {
+                    const span = sliceMapped(input, parser.startIndex, parser.endIndex + 1)
+                    const event = parser.endIndex < parser.startIndex ? previousEntity : span
+                    if (event) {
+                        const mapping =
+                            event.value === text ? event : replacementMapped(text, event)
+                        textMapping = concatMapped(textMapping!, mapping)
+                    }
+                    if (span.value) previousEntity = span
+                }
             },
             onclosetag: (name, implied) => {
                 flushText()
@@ -479,10 +523,22 @@ export const isFromUnterminatedHtmlBlock = (token: Token): boolean =>
  *
  * @internal
  */
-const expandHtmlToken = (token: Token): Token[] => {
-    const expansion = hasMultipleTags(token.raw)
-        ? expandHtmlBlockNested(token.raw)
+const expandHtmlToken = (token: Token, provenance?: ProvenanceCollector): Token[] => {
+    const nested = hasMultipleTags(token.raw)
+    const expansion = nested
+        ? expandHtmlBlockNested(token.raw, provenance, provenance?.get(token)?.raw)
         : [formatSelfClosingHtmlToken(token)]
+    if (provenance && !nested) {
+        const own = provenance.get(token)
+        if (own)
+            provenance.set(expansion[0], {
+                ...own,
+                raw:
+                    own.raw && own.raw.value !== expansion[0].raw
+                        ? replacementMapped(expansion[0].raw, own.raw)
+                        : own.raw
+            })
+    }
     // Record provenance only; what is rendered does not change.
     if ((token as Tokens.HTML).block && isUnterminatedHtmlBlock(token.raw)) {
         for (const root of expansion) unterminatedHtmlRoots.add(root)
@@ -500,7 +556,7 @@ const expandHtmlToken = (token: Token): Token[] => {
  *
  * @internal
  */
-const pairFlatHtmlTokens = (tokens: Token[]): Token[] => {
+const pairFlatHtmlTokens = (tokens: Token[], provenance?: ProvenanceCollector): Token[] => {
     const result: Token[] = []
     const stack: { tag: string; startIndex: number }[] = []
 
@@ -553,14 +609,16 @@ const pairFlatHtmlTokens = (tokens: Token[]): Token[] => {
                 getSourceSpan(openingToken) +
                 innerTokens.reduce((sum, innerToken) => sum + getSourceSpan(innerToken), 0) +
                 getSourceSpan(token)
-            result.push({
+            const paired = {
                 type: 'html',
                 raw: openingToken.raw,
                 tag: lastOpen.tag,
                 tokens: innerTokens,
                 attributes: extractAttributes(openingToken.raw),
                 sourceLength
-            } as Token)
+            } as Token
+            if (provenance) provenance.transfer(openingToken, paired)
+            result.push(paired)
         }
     }
 
@@ -619,19 +677,21 @@ const tokensShallowEqual = (left: Token[] | undefined, right: Token[]): left is 
  * const cleaned = cleanListItem(item, 0)
  * // cleaned === item when nothing nested changed on a re-clean
  */
-const cleanListItem = (item: Tokens.ListItem, index: number): IndexedListItem => {
-    const cleanedTokens = item.tokens ? shrinkHtmlTokens(item.tokens) : []
+const cleanListItem = (
+    item: Tokens.ListItem,
+    index: number,
+    provenance?: ProvenanceCollector
+): IndexedListItem => {
+    const cleanedTokens = item.tokens ? shrinkHtmlTokens(item.tokens, provenance) : []
     const indexedItem = item as IndexedListItem
 
     if (indexedItem.listItemIndex === index && tokensShallowEqual(item.tokens, cleanedTokens)) {
         return indexedItem
     }
 
-    return {
-        ...item,
-        listItemIndex: index,
-        tokens: cleanedTokens
-    }
+    const cleaned = { ...item, listItemIndex: index, tokens: cleanedTokens }
+    provenance?.transfer(item, cleaned)
+    return cleaned
 }
 
 /**
@@ -652,17 +712,19 @@ const cleanListItem = (item: Tokens.ListItem, index: number): IndexedListItem =>
  * const cleaned = cleanTableCell(cell)
  * // cleaned === cell when nothing nested changed on a re-clean
  */
-const cleanTableCell = (cell: Tokens.TableCell): Tokens.TableCell => {
-    const cleanedTokens = cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
+const cleanTableCell = (
+    cell: Tokens.TableCell,
+    provenance?: ProvenanceCollector
+): Tokens.TableCell => {
+    const cleanedTokens = cell.tokens ? shrinkHtmlTokens(cell.tokens, provenance) : []
 
     if (tokensShallowEqual(cell.tokens, cleanedTokens)) {
         return cell
     }
 
-    return {
-        ...cell,
-        tokens: cleanedTokens
-    }
+    const cleaned = { ...cell, tokens: cleanedTokens }
+    provenance?.transfer(cell, cleaned)
+    return cleaned
 }
 
 /**
@@ -690,7 +752,7 @@ const cleanTableCell = (cell: Tokens.TableCell): Tokens.TableCell => {
  *
  * @public
  */
-export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
+export const shrinkHtmlTokens = (tokens: Token[], provenance?: ProvenanceCollector): Token[] => {
     const expanded: Token[] = []
     for (const token of tokens) {
         if (
@@ -699,29 +761,36 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
             Array.isArray((token as Token & { tokens: Token[] }).tokens)
         ) {
             const t = token as Token & { tokens: Token[] }
-            t.tokens = shrinkHtmlTokens(t.tokens)
+            provenance?.invalidate(t)
+            t.tokens = shrinkHtmlTokens(t.tokens, provenance)
             expanded.push(token)
         } else if (token.type === 'list') {
-            token.items = token.items.map(cleanListItem)
+            provenance?.invalidate(token)
+            token.items = token.items.map((item: Tokens.ListItem, index: number) =>
+                cleanListItem(item, index, provenance)
+            )
             expanded.push(token)
         } else if (token.type === 'table') {
+            provenance?.invalidate(token)
             const tableToken = token as Tokens.Table
             if (tableToken.header) {
-                tableToken.header = tableToken.header.map(cleanTableCell)
+                tableToken.header = tableToken.header.map((cell) =>
+                    cleanTableCell(cell, provenance)
+                )
             }
             if (tableToken.rows) {
                 tableToken.rows = tableToken.rows.map((row: Tokens.TableCell[]) =>
-                    row.map(cleanTableCell)
+                    row.map((cell) => cleanTableCell(cell, provenance))
                 )
             }
             expanded.push(token)
         } else if (token.type === 'html') {
-            const expansion = expandHtmlToken(token)
+            const expansion = expandHtmlToken(token, provenance)
             for (const t of expansion) expanded.push(t)
         } else {
             expanded.push(token)
         }
     }
 
-    return pairFlatHtmlTokens(expanded)
+    return pairFlatHtmlTokens(expanded, provenance)
 }
