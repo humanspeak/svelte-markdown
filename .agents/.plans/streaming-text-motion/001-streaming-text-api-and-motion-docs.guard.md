@@ -19,3 +19,14 @@ Operator approved expanding investigation scope after the independently
 reproduced counterexample. Added a read-only Step 0 covering parser/cleanup
 provenance with exact examples and a parent-review gate. No implementation
 requirements or default-behavior guarantees were relaxed.
+
+## 2026-10-05 — PLAN AMENDED: provenance implementation checkpoint
+
+Parent reproduced installed Lexer recursion for escaped link labels and nested
+quote/list content, disappearing duplicate-definition spans, and HTMLParser2's
+second empty-range callback for &NotEqualTilde;. Read actual lexAndClean,
+cleanup, incremental parse and adoption sites. Accepted additive opt-in tracer
+with grammar-transformation adapters and explicit unknown custom fallback.
+Expanded implementation scope to parse-and-cache, cleanup, incremental parser
+and dedicated provenance modules/tests. Step 1 alone is next; no API/preset
+implementation before parity review. Default behavior/requirements unchanged.

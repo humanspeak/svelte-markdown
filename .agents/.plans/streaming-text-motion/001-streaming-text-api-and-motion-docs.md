@@ -5,7 +5,7 @@
 > Update the adjacent README status after completion. This is a single selected
 > feature plan, not a general repository audit.
 >
-> Drift check: `git diff --stat c2ca115..HEAD -- src/lib src/routes tests docs/src README.md scripts/tree-shaking.mjs`
+> Drift check: `git diff --stat d4835ee..HEAD -- src/lib src/routes tests docs/src README.md scripts/tree-shaking.mjs`
 > Compare the excerpts below with live code if any scoped file changed.
 
 > Revision 2026-10-05: Operator approved expanding the investigation to parser
@@ -15,6 +15,14 @@
 > Default behavior, headless control, optional presets and verification gates
 > remain unchanged. Implementation awaits parent review of the proposed design.
 
+> Revision 2026-10-05: Parent reviewed Sol's provenance report and reproduced
+> recursive inline transformations, dropped-definition spans and multi-codepoint
+> HTML entity callbacks. Accept the opt-in mapped-input tracer design, with
+> provenance parity as the next implementation checkpoint. Parser/cleanup changes
+> below are additive instrumentation only; Marked remains authoritative. No core
+> behavior, token semantics or animation defaults change. Unsupported custom
+> transforms conservatively expose unknown provenance instead of invented origins.
+
 ## Status
 
 - Priority: P1
@@ -22,7 +30,7 @@
 - Risk: HIGH (stream identity, Unicode segmentation, SSR, parser performance)
 - Depends on: none
 - Category: direction
-- Planned at: commit `c2ca115`, 2026-10-05
+- Planned at: commit `d4835ee`, 2026-10-05
 
 ## Why this matters
 
@@ -124,11 +132,20 @@ Use these names unless a documented type/name collision is found:
    text. Cache Intl.Segmenter by locale/granularity. Feature-detect it; document
    that grapheme/locale-aware words require Intl.Segmenter or a custom segmenter,
    and report missing support clearly rather than splitting surrogate pairs.
-5. Segment snippet fields: `id` (stable within stream epoch), `text`, `index`,
-   `start`, `end` (leaf-local UTF-16 offsets), `isNew`, `batchId`, `batchIndex`,
-   and `isWhitespace`. Metadata carries epoch, leaf identity, render batch and
-   arrival ranges sufficient for the helper to derive these fields. Document
-   exact exported types with readonly fields; do not expose mutable token objects.
+5. Metadata must distinguish provenance as exact or unknown and expose immutable
+   text-local arrival ranges based on source identity. Use the report's compact
+   mapping runs internally. Unknown provenance suppresses automatic animation
+   while preserving text output. Component ledgers record baseline/append/revision
+   source runs and reveal history, with synthetic offset gaps baseline and fills
+   revision. Replacement source starts a baseline epoch. Bind mappings to adopted
+   token occurrences, not just original lexer objects.
+
+    Segment snippet fields: `id` (stable within stream epoch), `text`, `index`,
+    `start`, `end` (leaf-local UTF-16 offsets), `isNew`, `batchId`, `batchIndex`,
+    and `isWhitespace`. Metadata carries epoch, leaf identity, render batch and
+    arrival ranges sufficient for the helper to derive these fields. Document
+    exact exported types with readonly fields; do not expose mutable token objects.
+
 6. isNew describes eligibility for an entrance on creation, not a timer. Retain
    segment creation metadata across unrelated updates. New segment ids should
    mount once in the helper's keyed each; updates to an unfinished word retain
@@ -246,6 +263,14 @@ Only modify:
   use .svelte.ts instead if runes are required, not a second redundant module).
 - `src/lib/SvelteMarkdown.svelte`, `src/lib/Parser.svelte`, `src/lib/types.ts`,
   `src/lib/index.ts`; additive metadata plumbing only.
+- `src/lib/utils/parse-and-cache.ts`, `parse-and-cache.test.ts` for opt-in tracer construction.
+- `src/lib/utils/token-cleanup.ts`, `token-cleanup.test.ts` for additive mapping
+  transfer through HTML construction/decoding and copied containers.
+- `src/lib/utils/incremental-parser.ts` and existing parity/nested-HTML/fuzz tests
+  for optional provenance collection and exact reparse base offsets.
+- `src/lib/utils/streaming-provenance.ts`, `streaming-provenance.test.ts` (new)
+  for mapped strings, rule adapters, occurrence sidecars and counters; split into
+  additional modules under `src/lib/utils/streaming-provenance/` if needed.
 - `src/lib/utils/render-metadata.ts` and its tests only if required for leaf
   identity plumbing; do not change existing render keys or heading slug behavior.
 - `src/lib/SvelteMarkdown.streaming-text.test.ts` and fixtures under
@@ -261,7 +286,8 @@ Only modify:
   `MotionStreamingText.svelte` in that same folder (new).
 - Existing example page, existing streaming guide, README.md, and this batch index.
 
-Do not modify the parser algorithm, sanitizer, transport semantics, other docs
+Do not replace the parser algorithm or Marked grammar, alter token semantics,
+sanitizer, transport semantics, other docs
 pages, generated docs/static files, release workflows or coverage thresholds.
 Do not add Motion to regular dependencies or mandatory peers. The operator's
 competitive-intel state was restored separately; preserve it and do not edit it
@@ -328,33 +354,67 @@ conservative fallback without claiming unsupported provenance is exact.
 **Verify:** parent independently reproduces decisive experiments, reads cited
 code and accepts a concrete scope/test design before source implementation.
 
-### 1. Prove bookkeeping feasibility before UI work
+### 1. Implement exact provenance and prove parity before UI work
 
-Implement the pure reconciler with tests in streaming-text.ts and its test.
-Keep per-instance records across leaf component remounts. Project ordered rawtext
-leaves into visible text ranges, comparing previous and next visible sequences;
-reuse common prefix/suffix coverage for wrapper-only changes and revisions.
-Keep leaf boundaries to avoid combining separate blocks; do not mistake token
-raw lengths for visible character offsets. Include removed/blocked content only
-according to the same parser routing that actually renders it. Extension code,
-code blocks and codespans are excluded from default word animations.
+Read `002-provenance-research-report.md` in this batch first. Implement its opt-in
+mapped-input tracer and mapping composition in streaming-provenance.ts, with
+optional collector arguments at lexAndClean, cleanup and incremental parser
+entry points. Do not flatten visible text and assign identity by common suffix.
+Track accepted tokenization frames/consuming probes, deferred inline inputs and
+final reachable token occurrences. Paragraph/text probes can be clipped by
+extension hints, so argument length alone is not universally a position.
 
-Prepare this projection once per committed render batch, before snippet rendering;
-reading metadata or rendering a snippet must not advance arrival state. Use
-per-component WeakMaps/context and bounded live records; release on reset/destroy.
-Default disabled mode must skip projection and segmentation entirely. Optimize
-stable token subtrees and append tails; do not flatten the full accumulated
-source every update. For grammar revisions allow a bounded divergent-block walk.
+Map the actual built-in transformations: emphasis delimiters; link label captures
+and bracket unescaping; heading trimming; tables including escaped pipes; quote
+markers/continuations/setext protection; list markers, tabs, indentation, task
+mutation and merged inline inputs; CRLF/pedantic normalization. Marked selects
+tokens; adapters only propagate positions through transformations. Validate each
+adapter's mapped output against the actual input/text to detect drift, but do not
+claim text equality proves exactness for repeated characters.
 
-If the projection cannot match default parser routing without rewriting parsing,
-STOP and report the exact limitation. Do not substitute approximate source keys
-or a global string-match heuristic. Scope guarantees to supported built-in leaf
-paths and document custom renderer responsibility explicitly.
+MappedView carries compact copy/replacement/synthetic runs and half-open UTF-16
+source intervals. Parsed occurrence sidecars mirror tokens/items/header/rows,
+remaining outside enumerable token fields. HTML collector uses ontext callback
+source ranges and groups empty-range entity continuation callbacks with the
+preceding entity; preserve current Markdown named-entity behavior exactly.
+Transfer mappings through copied and normalized cleanup tokens. Preserve
+occurrences through stable prefixes and exact tail/base offsets, targeted
+reference relexing and full parse fallbacks. At this checkpoint exercise paired
+binding to reused/cloned nodes with the actual adoption helpers in tests; actual
+component ledger wiring belongs to Step 3.
 
-**Verify:** `pnpm test:only src/lib/utils/streaming-text.test.ts` passes cases for
-append, unfinished word, repeated words, whitespace, revisions, wrapper changes,
-reset epochs and unchanged-prefix work counters. This is a net-new API; no
-artificial red test is required for absent exports.
+Unknown custom tokenizers, extension results or text-mutating walk callbacks
+receive exact=false, with affected descendants unknown unless a trusted adapter
+proves otherwise. Such text still renders, but automatic arrival eligibility is
+suppressed. Do not guess by token type or raw equality. Standard supported
+built-in transformations must have parity tests, not a universal unknown escape.
+
+No collector/ledger allocations or traversal when disabled. Add deterministic
+counters for mapped input units and projected leaves. Ordinary tail appends must
+not remap completed blocks. Existing fallback full parses may be O(document),
+and reparsing a long open paragraph/list may be proportional to that open block;
+document this honestly. Do not alter existing parser reuse decisions to hide cost.
+
+**Checkpoint:** this dispatch ends after Step 1. Return source diff and test
+results to parent for review; do not implement StreamingText, presets or docs yet.
+Net-new feature does not need an artificial failing missing-export test, but add
+real exact-origin regression assertions before adapters are complete.
+
+**Verify:** `pnpm test:only src/lib/utils/streaming-provenance.test.ts
+src/lib/utils/parse-and-cache.test.ts src/lib/utils/token-cleanup.test.ts
+src/lib/utils/incremental-parser.parity.test.ts
+src/lib/utils/incremental-parser.nested-html.test.ts
+src/lib/utils/incremental-parser.fuzz.test.ts` and `pnpm check` pass.
+
+Required evidence: old bold a at [2,3), appended a at [6,7) for `**a** a`;
+repeated link label origins vs URL and appended final a; escaped brackets;
+numeric and named Markdown entities; HTML two-codepoint entity callbacks;
+duplicate definitions that disappear from emitted raw totals; nested quote/list,
+task/tabs/lazy continuations and tables; split CRLF; one-shot/incremental origin
+parity at every tested split; exact bases under targeted reference relexing;
+metadata surviving actual parent clone/child reuse. If a built-in adapter cannot
+produce exact mapping under these tests, report the specific remaining case,
+not a broad unproved implementation or a silent product downgrade.
 
 ### 2. Implement the headless component and exported types
 
@@ -362,7 +422,8 @@ Add StreamingText using keyed segments and consumer snippet rendering. Segment
 Unicode using Intl.Segmenter or validated custom segmentation. When a trailing
 word/grapheme extends, preserve its id. Changing locale/segmentation rebaselines
 existing text (no automatic replay). Cache segmentation of stable content and
-only resegment the unstable tail when valid; grapheme boundaries may change.
+only resegment the unstable tail when valid. Arbitrary custom segmenters may
+resegment a changed leaf; never resegment completed unchanged leaves; grapheme boundaries may change.
 Add public types and exports. No Motion import in the headless helper or core;
 Motion imports belong exclusively to the optional preset subpath in Step 4.
 

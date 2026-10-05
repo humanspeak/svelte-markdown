@@ -6,9 +6,9 @@ using @humanspeak/svelte-motion. This is a focused feature plan, not a full audi
 
 ## Execution order and status
 
-| Plan                                             | Title                                               | Priority | Effort | Depends on | Status                                                 |
-| ------------------------------------------------ | --------------------------------------------------- | -------- | ------ | ---------- | ------------------------------------------------------ |
-| [001](001-streaming-text-api-and-motion-docs.md) | Headless segments, optional preset exports and docs | P1       | L      | None       | IN PROGRESS — approved provenance design investigation |
+| Plan                                             | Title                                               | Priority | Effort | Depends on | Status                                             |
+| ------------------------------------------------ | --------------------------------------------------- | -------- | ------ | ---------- | -------------------------------------------------- |
+| [001](001-streaming-text-api-and-motion-docs.md) | Headless segments, optional preset exports and docs | P1       | L      | None       | IN PROGRESS — provenance implementation checkpoint |
 
 Status values: TODO, IN PROGRESS, DONE, BLOCKED (reason), REJECTED (reason).
 Execute the single plan in step order: bookkeeping proof, helper, integration,
@@ -59,3 +59,12 @@ Operator approved a focused parser/HTML cleanup provenance investigation. Step 0
 is a read-only Sol design checkpoint; implementation remains gated on review of
 its architecture and concrete regression cases. Default behavior and optional
 Motion preset requirements are unchanged.
+
+## Reviewed architecture
+
+Parent read the report and verified actual recursive lexer inputs and HTML
+entity callback ranges with installed packages. The approved design adds opt-in
+source mapping before cleanup and occurrence metadata through token reuse.
+Step 1 is dispatched alone; exact-origin/parity tests must pass before proceeding
+with the consumer API, presets and docs. Baseline re-stamped to d4835ee; only
+plan artifacts changed since c2ca115. Report is preserved alongside the plan.
