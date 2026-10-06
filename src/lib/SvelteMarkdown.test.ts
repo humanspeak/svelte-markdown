@@ -1300,32 +1300,57 @@ describe('async extension paths', () => {
         expect(container.textContent).toContain('Hello async world')
     })
 
-    test('async path handles pre-parsed token array', async () => {
-        const asyncExtension = {
-            async: true,
-            extensions: [],
-            walkTokens() {
-                return Promise.resolve()
-            }
-        }
-
-        const { container } = render(SvelteMarkdown, {
-            props: {
-                source: [
-                    {
-                        type: 'paragraph',
-                        raw: 'pre-parsed',
-                        text: 'pre-parsed',
-                        tokens: [{ type: 'text', raw: 'pre-parsed', text: 'pre-parsed' }]
-                    }
-                ],
-                extensions: [asyncExtension]
-            }
+    test('async path renders pre-parsed token arrays without parsing', async () => {
+        const walkTokens = vi.fn(() => Promise.resolve())
+        const asyncExtension = { async: true, extensions: [], walkTokens }
+        const lexSpy = vi.spyOn(parseAndCacheModule, 'lexAndClean')
+        const syncParseSpy = vi.spyOn(parseAndCacheModule, 'parseAndCacheTokens')
+        const asyncParseSpy = vi.spyOn(parseAndCacheModule, 'parseAndCacheTokensAsync')
+        const paragraph = (text: string): Token => ({
+            type: 'paragraph',
+            raw: text,
+            text,
+            tokens: [{ type: 'text', raw: text, text }]
         })
 
-        await vi.runAllTimersAsync()
+        try {
+            const { container, rerender } = render(SvelteMarkdown, {
+                props: {
+                    source: [paragraph('pre-parsed')],
+                    extensions: [asyncExtension]
+                }
+            })
 
-        expect(container.textContent).toContain('pre-parsed')
+            // Rendered synchronously: no timers or microtasks flushed yet.
+            expect(container.querySelector('p')).toHaveTextContent('pre-parsed')
+
+            await rerender({ source: [paragraph('replacement')] })
+            expect(container.querySelector('p')).toHaveTextContent('replacement')
+            expect(container.textContent).not.toContain('pre-parsed')
+
+            await rerender({ source: [] })
+            expect(container.querySelector('p')).not.toBeInTheDocument()
+
+            await vi.runAllTimersAsync()
+
+            expect(lexSpy).not.toHaveBeenCalled()
+            expect(syncParseSpy).not.toHaveBeenCalled()
+            expect(asyncParseSpy).not.toHaveBeenCalled()
+            expect(walkTokens).not.toHaveBeenCalled()
+
+            // Control: a string source still takes the async parse path.
+            await rerender({ source: 'string source' })
+            await vi.runAllTimersAsync()
+            await vi.runAllTimersAsync()
+
+            expect(asyncParseSpy).toHaveBeenCalledTimes(1)
+            expect(walkTokens).toHaveBeenCalled()
+            expect(container.querySelector('p')).toHaveTextContent('string source')
+        } finally {
+            lexSpy.mockRestore()
+            syncParseSpy.mockRestore()
+            asyncParseSpy.mockRestore()
+        }
     })
 
     test('async path handles empty string source', async () => {

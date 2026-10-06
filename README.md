@@ -869,6 +869,12 @@ and toggle the heading renderer. The fixture uses a prerendered SvelteKit load
 result, TypeScript, typed component props, and compiled control flow. The
 `.mdproof` extension is confined to this experiment.
 
+A token array passed as `source` is treated as already processed: it renders
+synchronously, including during SSR, even when `extensions` contains an async
+extension. Extensions do not reparse or transform supplied arrays (no lexing
+or `walkTokens`). Async string sources still parse after mount and are not
+server-rendered.
+
 See [NOTES.md](./NOTES.md) for the decision evidence and remaining boundaries.
 
 ## Performance

@@ -554,11 +554,8 @@
     const syncTokens = $derived.by(() => {
         if (hasAsyncExtension) return undefined
         if (streaming) return undefined
-
-        // Pre-parsed tokens - skip caching and parsing
-        if (Array.isArray(source)) {
-            return source as Token[]
-        }
+        // Pre-parsed tokens are selected directly by rawTokens below.
+        if (Array.isArray(source)) return undefined
 
         // Empty string - return empty array (avoid cache overhead)
         if (source === '') {
@@ -607,13 +604,17 @@
             })
     })
 
-    // Unified tokens: streaming > sync > async
+    // Unified tokens: pre-parsed array > streaming > sync > async.
+    // Arrays are already processed, so they render synchronously (including
+    // SSR, where effects never run) without parsing or extension hooks.
     const rawTokens = $derived(
-        streaming && !hasAsyncExtension
-            ? streamTokens
-            : hasAsyncExtension
-              ? asyncTokens
-              : syncTokens
+        Array.isArray(source)
+            ? (source as Token[])
+            : streaming && !hasAsyncExtension
+              ? streamTokens
+              : hasAsyncExtension
+                ? asyncTokens
+                : syncTokens
     )
 
     const tokens = $derived.by(() => {
