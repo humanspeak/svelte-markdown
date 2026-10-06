@@ -42,10 +42,7 @@ function parseScalar(raw) {
         if (!inner) return []
         return inner.split(',').map((item) => parseScalar(item.trim()))
     }
-    if (
-        (raw.startsWith('"') && raw.endsWith('"') && raw.length > 1) ||
-        (raw.startsWith("'") && raw.endsWith("'") && raw.length > 1)
-    ) {
+    if (['"', "'"].includes(raw[0]) && raw.endsWith(raw[0]) && raw.length > 1) {
         return raw.slice(1, -1)
     }
     if (/^-?\d+(\.\d+)?$/.test(raw)) return Number(raw)
