@@ -1,29 +1,26 @@
 # Guard report — 003 HTML routing
 
-**Recommendation: NO-PASS** — two contradictions prevent a reliable implementation handoff.
+**Recommendation: NO-PASS** — one new factual overgeneralization needs correction.
 
-**Reviewed at:** 9b0614d · 2026-10-06 · **Planned at:** e6195d0
+**Reviewed at:** e153e79 · 2026-10-06 · **Planned at:** e6195d0
 
-The report meets the nine-section, alternatives, routing matrix, sanitizer ownership,
-no-delimiter and no-runtime-lexing requirements. AST and structured-token probes
-were independently reproduced against installed packages. Trunk report check and
-git diff --check pass. The sole contribution is the design artifact; no source,
-dependencies, or executor-owned plan/index edits occurred.
+The original dependency and test-scope contradictions are fixed. Scope is solely
+the design report; full correction diff read. All nine headings, scoped Trunk
+check (one file, no issues) and git diff --check pass. No runtime checks required
+for this design-only contribution. No source or dependencies changed.
 
-To earn PASS:
+Probe4 now claims the structured-token path always preserves raw entity strings.
+Independent installed-API probes show two paths: a complete HTML block such as
+a closed section with inline text gets decoded attributes through htmlparser2;
+a blank-line-separated section gets raw entities through flat token pairing.
+An unclosed opening section (the report's stated input) has no structured
+attributes. Both closed source shapes are eligible Text-only Svelte nodes.
 
-1. Correct the false dependency on plan005 for general component binding analysis
-   (report:336–340 and Deferred work).005 only handles snippet scope/root placement.
-2. Align the proposed production red test (report:385–387) with the Text-only first
-   slice (report:363–368). The current section contains compiled descendants and
-   remains native in that slice; use a separately proposed eligible static fixture.
-3. State the first slice's conservative descendant rule explicitly throughout,
-   separate unchanged green controls from expected-red tests, and qualify unprobed
-   attribute entity differences rather than stating them as established facts.
+To earn PASS, correct Probe4 and its downstream Compiler integration/D7 claims
+to distinguish those shapes and preserve rendered DOM behavior as unverified.
+No source fix is authorized; this remains a design feasibility report. The
+report's token probe sketch requires filling its CASES list, disclosed as a
+verification limitation; AST/compile commands are directly runnable.
 
-No performance or mdsvex parity claim is accepted. Nested marker token feasibility
-is established; end-to-end rendering/hydration of the proposed routing is unbuilt.
-The design remains advisory and does not authorize routing implementation.
-
-Source snapshot9b0614d remains unmerged. Correction returns to the executor;
-guard authored no design/source changes. No push/PR while the batch remains active.
+Snapshot e153e79 is committed; correction returns to Opus5.5. No push/PR while
+the batch is active. Guard authored no design/source changes.
