@@ -6,9 +6,9 @@ using @humanspeak/svelte-motion. This is a focused feature plan, not a full audi
 
 ## Execution order and status
 
-| Plan                                             | Title                                               | Priority | Effort | Depends on | Status                                                      |
-| ------------------------------------------------ | --------------------------------------------------- | -------- | ------ | ---------- | ----------------------------------------------------------- |
-| [001](001-streaming-text-api-and-motion-docs.md) | Headless segments, optional preset exports and docs | P1       | L      | None       | IN PROGRESS — API, presets and documentation implementation |
+| Plan                                             | Title                                               | Priority | Effort | Depends on | Status                                                                         |
+| ------------------------------------------------ | --------------------------------------------------- | -------- | ------ | ---------- | ------------------------------------------------------------------------------ |
+| [001](001-streaming-text-api-and-motion-docs.md) | Headless segments, optional preset exports and docs | P1       | L      | None       | BLOCKED — Motion container emits whitespace; separate-repo fix approval needed |
 
 Status values: TODO, IN PROGRESS, DONE, BLOCKED (reason), REJECTED (reason).
 Execute the single plan in step order: bookkeeping proof, helper, integration,
@@ -77,3 +77,12 @@ clean Trunk checks; pre-commit hooks also passed. This is a checkpoint acceptanc
 not overall feature completion. Steps 2–5 (headless API, source arrival ledger,
 consumer metadata wiring, optional Motion presets, docs and final gates) remain.
 The plan drift baseline is now 65a13ee to retain reviewed predecessor work.
+
+## Steps 2–5 partial implementation
+
+Sol delivered provisional API/ledger/presets but stopped after repeated preset
+text-preservation failures. Parent traced extra whitespace to svelte-motion's
+container template and confirmed published 2.0.0 retains that template. A separate
+Motion fix is recommended; approval needed for that repository scope. Parent also
+reproduced an in-scope incremental word boundary defect for can' → can't. Docs,
+README, E2E fixture and final gates remain outstanding. No feature PASS.

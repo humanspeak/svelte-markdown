@@ -63,3 +63,22 @@ implementation before parity review. Default behavior/requirements unchanged.
   or transport changes yet. Step 1 accepted only, not overall feature PASS.
 - Action: snapshot accepted checkpoint, rebaseline plan to that snapshot and
   dispatch Steps 2–5. Full coverage/packaging/E2E are pending final feature gates.
+
+## 2026-10-05T07:52-04:00 — BLOCKED: Motion output whitespace
+
+- Executor Steps 2–5 incomplete; source diff preserved, no docs/README/E2E fixture
+  yet. Verbatim report preserved in 005-api-presets-implementation-report.md.
+- Parent reproduced preset suite: four pass/four fail. Single a renders `a `;
+  grapheme text gains a trailing space for every MotionSpan.
+- Read installed MotionSpan/_MotionContainer sources and compiled container with
+  Svelte compiler: original root is from_html(`<!> <!>`); adjacent element/html
+  output compiles from_html(`<!><!>`). This proves dependency output whitespace,
+  not an input segment or caller indentation issue. Published Motion 2.0.0
+  tarball retains the same separated template; no version bump assumed sufficient.
+- Parent transpiled helper in memory and reproduced word segmentation defect:
+  update("can'") then update("can't") gives ["can", "'", "t"] versus one-shot
+  ["can't"]. The last-segment-only optimization is unsound for word boundaries.
+- Action: request approval for a separate svelte-motion fix before redispatch.
+  Keep core default semantics and exact-text assertions unchanged; no trimming,
+  manual DOM whitespace removal or weakened test. Helper fix stays in current
+  approved scope. No source authored by parent; no final PASS/commit/PR.
