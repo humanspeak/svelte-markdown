@@ -3,7 +3,13 @@
 > **Executor instructions:** Read this entire plan; follow steps in order and
 > run each verification. Honor STOP conditions. The conductor maintains index.
 >
-> **Drift check (first):** `git diff --stat e6195d0..HEAD -- src/lib/preprocess/hybrid.js src/lib/preprocess/hybrid.test.ts src/lib/preprocess/hybrid-render.test.ts src/routes/test/preprocess/hybrid/+page.mdproof README.md`.
+> Revision 2026-10-06: Rebaseline to reviewed54eff01 after001-003 PASS. The only
+> in-scope predecessor change is001's six README lines documenting synchronous
+> preparsed arrays with async context; preserve that behavior/text. Hybrid code,
+> tests and fixture are unchanged. Routing design003 remains advisory; no scope
+> or acceptance criterion changed.
+>
+> **Drift check (first):** `git diff --stat 54eff01..HEAD -- src/lib/preprocess/hybrid.js src/lib/preprocess/hybrid.test.ts src/lib/preprocess/hybrid-render.test.ts src/routes/test/preprocess/hybrid/+page.mdproof README.md`.
 > Compare the current-state excerpts if paths changed; STOP on unexplained drift.
 > Also inspect `git status --short`; unrelated pre-existing edits must not be
 > staged, reformatted, or included in your report as your work.
@@ -15,7 +21,7 @@
 - **Risk:** MED
 - **Depends on:** 002 and 003 DONE
 - **Category:** bug
-- **Planned at:** commit `e6195d0`, 2026-10-06
+- **Planned at:** commit `54eff01`, 2026-10-06
 
 ## Why this matters
 

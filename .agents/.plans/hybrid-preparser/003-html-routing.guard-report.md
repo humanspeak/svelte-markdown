@@ -1,26 +1,35 @@
 # Guard report — 003 HTML routing
 
-**Recommendation: NO-PASS** — one new factual overgeneralization needs correction.
+**Recommendation: PASS** — a feasible staged routing contract is specified, with unbuilt behavior and maintainer decisions explicit.
 
-**Reviewed at:** e153e79 · 2026-10-06 · **Planned at:** e6195d0
+**Reviewed at:**54eff01 ·2026-10-06 · **Planned at:**e6195d0
 
-The original dependency and test-scope contradictions are fixed. Scope is solely
-the design report; full correction diff read. All nine headings, scoped Trunk
-check (one file, no issues) and git diff --check pass. No runtime checks required
-for this design-only contribution. No source or dependencies changed.
+| Done criterion              | Result and independently observed evidence                                                                                                                                                                                    |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nine sections               | rg lists Goals, Evidence, Routing matrix, Alternatives, Recommended contract, Compiler integration, Verification strategy, Open decisions, Deferred work.                                                                     |
+| Syntax/ownership matrix     | Sixteen categories cover static/custom HTML, components/member names, expression/spread/directive attributes, snippets, expressions, blocks, special tags, nesting, Markdown and CMS; props and sanitizer ownership explicit. |
+| Alternatives/recommendation | Three design alternatives compared plus rejected runtime parsing; recommends staged AST-classified renderer routing.                                                                                                          |
+| Evidence/unknowns           | Local installed AST, server compiler, structured token/reference/nested marker observations reproduced; exact runnable Probe4 matches all A/B/C outputs on Node26. End-to-end routed DOM/SSR/hydration explicitly unverified. |
+| Quality                     | Scoped Trunk check one file/no issues; git diff --check passes; snapshot precommit formatting/lint/types pass.                                                                                                                |
+| Scope                       | Entire original report and all correction diffs read; executor changes only003-html-routing-design.md, no source/dependencies/plan/index/guard edits.                                                                         |
+| Limitations                 | Verbatim three executor reports preserved; Probe2 is a sketch needing CASES inputs, Probe4 executable; no performance/full mdsvex claim.                                                                                      |
 
-Probe4 now claims the structured-token path always preserves raw entity strings.
-Independent installed-API probes show two paths: a complete HTML block such as
-a closed section with inline text gets decoded attributes through htmlparser2;
-a blank-line-separated section gets raw entities through flat token pairing.
-An unclosed opening section (the report's stated input) has no structured
-attributes. Both closed source shapes are eligible Text-only Svelte nodes.
+The design serves the intended distinction: build-time tokens can target existing
+HTML renderers/sanitizers while typed components remain compiled Svelte. The
+first future slice is conservative Text-only static elements. Nested-static and
+nested-compiled elements, dynamic attribute adapters and general component binding
+analysis are separate work.005 preserves snippet scope/root metadata only.
+Existing compiled-island remains a control for that first routing slice.
 
-To earn PASS, correct Probe4 and its downstream Compiler integration/D7 claims
-to distinguish those shapes and preserve rendered DOM behavior as unverified.
-No source fix is authorized; this remains a design feasibility report. The
-report's token probe sketch requires filling its CASES list, disclosed as a
-verification limitation; AST/compile commands are directly runnable.
+All original contradictions and the later entity-path overgeneralization are
+corrected. Complete HTML blocks decode entities; blank-line-separated flat tokens
+preserve raw entity strings; an unclosed opening remains unstructured. Future DOM
+fidelity checks must cover both closed shapes. No token-cleanup fix is authorized.
 
-Snapshot e153e79 is committed; correction returns to Opus5.5. No push/PR while
-the batch is active. Guard authored no design/source changes.
+No implementation of this routing was built, mounted, server-rendered or hydrated.
+Maintainer decisions D1-D7 remain open. This PASS accepts the design artifact;
+it grants no routing implementation or release approval. Plans004/005 retain
+current native HTML routing. No runtime suite rerun required for design-only work.
+
+Integration: snapshots9b0614d/e153e79/54eff01 on issue372 branch; no push/PR.
+Batch003 DONE;004 can proceed after its baseline-only preflight amendment.
