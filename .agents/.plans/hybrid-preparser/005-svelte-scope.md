@@ -3,7 +3,13 @@
 > **Executor instructions:** Read this entire plan; follow steps in order and
 > run each verification. Honor STOP conditions. The conductor maintains index.
 >
-> **Drift check (first):** `git diff --stat e6195d0..HEAD -- src/lib/preprocess/hybrid.js src/lib/preprocess/hybrid.test.ts src/lib/preprocess/hybrid-render.test.ts src/routes/test/preprocess/hybrid/+page.mdproof README.md`.
+> Revision 2026-10-06: Rebaseline to reviewed410cc72 after004 PASS.004 added
+> lexical-aware masking, paired regressions, template-literal greeting and
+> experimental README boundary text;001 added preparsed-array/async semantics.
+> Preserve these reviewed changes. Extraction still wraps every non-Text node
+> independently; only its line anchors moved. No scope/gate/routing change.
+>
+> **Drift check (first):** `git diff --stat 410cc72..HEAD -- src/lib/preprocess/hybrid.js src/lib/preprocess/hybrid.test.ts src/lib/preprocess/hybrid-render.test.ts src/routes/test/preprocess/hybrid/+page.mdproof README.md`.
 > Compare the current-state excerpts if paths changed; STOP on unexplained drift.
 > Also inspect `git status --short`; unrelated pre-existing edits must not be
 > staged, reformatted, or included in your report as your work.
@@ -15,7 +21,7 @@
 - **Risk:** MED
 - **Depends on:** 004 DONE
 - **Category:** bug
-- **Planned at:** commit `e6195d0`, 2026-10-06
+- **Planned at:** commit `410cc72`, 2026-10-06
 
 ## Why this matters
 
@@ -25,16 +31,16 @@ nodes through compiled snippets and build-time tokens.
 
 ## Current state
 
-`hybrid.js:61` loops tree.fragment.nodes, skipping only Text; :64 captures each
-node; :148 wraps every island independently in `{#snippet smProofIslandN()}`.
+`hybrid.js:305` loops tree.fragment.nodes, skipping only Text; :308 captures each
+node; :392 wraps every island independently in `{#snippet smProofIslandN()}`.
 For `{#snippet greeting()}Hello{/snippet}
 {@render greeting()}`, generated JS
 places greeting inside smProofIsland0 and calls it from smProofIsland1: compile
 passes but SSR throws ReferenceError. `<svelte:window onresize={() => {}} />`
 compiles natively but generated output fails svelte_meta_invalid_placement.
 Svelte AST options may live outside fragment.nodes. Original scripts are still
-leading-only; no styles support. Plan004 changes lexical masking, so conductor
-must rebaseline this plan after verifying that predecessor.
+leading-only; no styles support. Verified004 changed lexical masking while
+preserving extraction/generation behavior; this plan is rebaselined above.
 
 ## Repository conventions and commands
 

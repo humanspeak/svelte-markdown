@@ -12,8 +12,8 @@ executors own in-scope implementation. Run serially on the current branch.
 | 001  | Preparsed SSR with async context        | P1       | S      | none       | DONE        |
 | 002  | Production hydration regression         | P1       | S      | 001        | DONE        |
 | 003  | HTML-routing design report              | P1       | M      | none       | DONE        |
-| 004  | Context-aware literal masking           | P1       | M      | 002, 003   | IN PROGRESS |
-| 005  | Svelte declaration scope/root placement | P1       | M      | 004        | TODO        |
+| 004  | Context-aware literal masking           | P1       | M      | 002, 003   | DONE        |
+| 005  | Svelte declaration scope/root placement | P1       | M      | 004        | IN PROGRESS |
 
 ## Dependency notes
 
