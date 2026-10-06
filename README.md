@@ -860,9 +860,18 @@ The investigation branch includes an opt-in `markdown({ preparse: true })`
 experiment. It parses markdown into tokens at build time, passes those tokens
 through the existing customizable renderer, and recognizes embedded Svelte
 markup, expressions, and control-flow blocks as compiled snippets. No custom
-delimiters are required. Fenced code and inline code remain literal. The normal
-`.md` prototype path is unchanged. This experiment has no published package
-entry point.
+delimiters are required. Fenced code and inline code remain literal. The
+document is scanned left to right: a Markdown literal (code span, fence,
+autolink, link destination, image, or reference definition) that starts first
+stays literal, while a Svelte `{expression}` or start tag that starts first
+extends by JavaScript lexical rules. Template literals (including nested
+`${}` interpolation), strings, comments, and regular expressions inside
+expressions and attribute values therefore never pair with Markdown backticks,
+so ``{`hello`}`` and ``<Counter value={`hi`} />`` compile as they would in
+Svelte. A backslash escapes `{`, `}`, `<`, or `>` only when it is not itself
+escaped (odd backslash count). Regular expressions are recognized with the
+usual previous-token heuristic. The normal `.md` prototype path is unchanged.
+This experiment has no published package entry point.
 
 Run `pnpm dev` and open `/test/preprocess/hybrid`. Increment the typed counter
 and toggle the heading renderer. The fixture uses a prerendered SvelteKit load

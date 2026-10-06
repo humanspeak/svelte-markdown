@@ -103,4 +103,119 @@ describe('hybrid preprocessor architecture proof', () => {
         expect(source).toBe('😀 Hello **<sm-proof-island-0 />** and <sm-proof-island-1 />!')
         expect(preparseTokens(source)[0]).toMatchObject({ type: 'paragraph' })
     })
+
+    describe('JavaScript literals inside Svelte syntax', () => {
+        const prelude = '<script>let data = {}; let value; let Counter</script>'
+        const nativeAccepts = (body: string) =>
+            expect(() => compile(prelude + body, { generate: 'server' })).not.toThrow()
+
+        it.each([
+            ['standalone template literal', 'Text {`hello`} end', ['{`hello`}']],
+            [
+                'nullish fallback template literal',
+                'Hello {data.name ?? `friend`}!',
+                ['{data.name ?? `friend`}']
+            ],
+            [
+                'component prop template literal',
+                '<Counter value={`hello`} />',
+                ['<Counter value={`hello`} />']
+            ],
+            [
+                'nested interpolation with braces and backticks',
+                '{`${[1, 2].map((n) => `{${n}}`).join(`}`)}`}',
+                ['{`${[1, 2].map((n) => `{${n}}`).join(`}`)}`}']
+            ],
+            [
+                'strings containing Markdown syntax',
+                '{\'`\'} and {"**not bold** [x](y) `"}',
+                ["{'`'}", '{"**not bold** [x](y) `"}']
+            ],
+            [
+                'comments containing Markdown syntax',
+                '{value /* ` {} */} `{literal}` {value // `\n}',
+                ['{value /* ` {} */}', '{value // `\n}']
+            ],
+            [
+                'quoted attribute expressions and regular expressions',
+                '<Counter label="say {`hi`}" title={/`}/.source} /> {value++ / `${value}`.length} `{x}`',
+                [
+                    '<Counter label="say {`hi`}" title={/`}/.source} />',
+                    '{value++ / `${value}`.length}'
+                ]
+            ]
+        ])('compiles a %s like native Svelte', (_name, body, islands) => {
+            nativeAccepts(body)
+            expect(extractSvelteIslands(body).islands).toEqual(islands)
+            const { code } = run(
+                `<script>let data = {}; let value; let Counter</script>\n${body}\n`
+            )
+            expect(() => compile(code, { generate: 'server' })).not.toThrow()
+            expect(() => compile(code, { generate: 'client' })).not.toThrow()
+        })
+
+        it('keeps paired inline, fenced and blockquoted Markdown code literal', () => {
+            const body =
+                "{'`'} then `{literal}` and {`live`}.\n\n> ```svelte\n> {`quoted`}\n> ```\n\n```js\nconst x = `${y}`\n```\n"
+            const { source, islands } = extractSvelteIslands(body)
+            expect(islands).toEqual(["{'`'}", '{`live`}'])
+            expect(source).toBe(
+                '<sm-proof-island-0 /> then `{literal}` and <sm-proof-island-1 />.\n\n> ```svelte\n> {`quoted`}\n> ```\n\n```js\nconst x = `${y}`\n```\n'
+            )
+            const tokens = preparseTokens(source)
+            expect(tokens[0]).toMatchObject({
+                type: 'paragraph',
+                tokens: expect.arrayContaining([
+                    expect.objectContaining({ type: 'codespan', text: '{literal}' })
+                ])
+            })
+            expect(tokens).toContainEqual(
+                expect.objectContaining({ type: 'code', text: 'const x = `${y}`' })
+            )
+            expect(tokens).toContainEqual(
+                expect.objectContaining({
+                    type: 'blockquote',
+                    tokens: [expect.objectContaining({ type: 'code', text: '{`quoted`}' })]
+                })
+            )
+        })
+
+        it('uses backslash parity for Markdown escapes', () => {
+            expect(extractSvelteIslands('Odd \\{data.name} and \\<Counter />')).toEqual({
+                source: 'Odd \\{data.name} and \\<Counter />',
+                islands: []
+            })
+            expect(extractSvelteIslands('Triple \\\\\\{data.name}').islands).toEqual([])
+            const even = extractSvelteIslands('Even \\\\{data.name} and \\\\<Counter />')
+            expect(even.islands).toEqual(['{data.name}', '<Counter />'])
+            expect(even.source).toBe('Even \\\\<sm-proof-island-0 /> and \\\\<sm-proof-island-1 />')
+            expect(extractSvelteIslands("{'\\{'}").islands).toEqual(["{'\\{'}"])
+        })
+
+        it('preserves UTF-16 offsets, inline bold and references around template literals', () => {
+            const { source, islands } = extractSvelteIslands(
+                '😀 **{`${data.greeting} 😀`}** [a][ref] `😀 {x}` <Counter value={`😀 ${data.name}`} />\n\n[ref]: /shared'
+            )
+            expect(islands).toEqual([
+                '{`${data.greeting} 😀`}',
+                '<Counter value={`😀 ${data.name}`} />'
+            ])
+            expect(source).toBe(
+                '😀 **<sm-proof-island-0 />** [a][ref] `😀 {x}` <sm-proof-island-1 />\n\n[ref]: /shared'
+            )
+            expect(preparseTokens(source)[0]).toMatchObject({
+                type: 'paragraph',
+                tokens: expect.arrayContaining([
+                    expect.objectContaining({
+                        type: 'strong',
+                        tokens: [
+                            expect.objectContaining({ type: 'html', tag: 'sm-proof-island-0' })
+                        ]
+                    }),
+                    expect.objectContaining({ type: 'link', href: '/shared', text: 'a' }),
+                    expect.objectContaining({ type: 'codespan', text: '😀 {x}' })
+                ])
+            })
+        })
+    })
 })

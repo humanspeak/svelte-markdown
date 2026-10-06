@@ -37,6 +37,10 @@ describe('preparsed document runtime proof', () => {
             const { rerender } = render(Proof, { data: { greeting: 'Initial load', start: 6 } })
             expect(screen.getByTestId('load-greeting')).toHaveTextContent('Initial load')
             expect(screen.getByText('Initial load', { selector: 'strong' })).toBeInTheDocument()
+            // The inline greeting passes through a JavaScript template literal.
+            expect(screen.getByText(/^Inline page data:/, { selector: 'p' })).toHaveTextContent(
+                /^Inline page data: Initial load\.$/
+            )
             expect(screen.getByTestId('typed-counter')).toHaveAttribute('data-start-type', 'number')
             expect(screen.getByTestId('typed-counter')).toHaveAttribute(
                 'data-details-type',
@@ -50,6 +54,9 @@ describe('preparsed document runtime proof', () => {
             await rerender({ data: { greeting: 'Updated load', start: 10 } })
             expect(screen.getByTestId('load-greeting')).toHaveTextContent('Updated load')
             expect(screen.getByText('Updated load', { selector: 'strong' })).toBeInTheDocument()
+            expect(screen.getByText(/^Inline page data:/, { selector: 'p' })).toHaveTextContent(
+                /^Inline page data: Updated load\.$/
+            )
             expect(screen.getByTestId('typed-counter')).toHaveTextContent('Count: 11')
             expect(screen.getAllByRole('link', { name: 'reference link' })).toHaveLength(2)
             expect(block).not.toHaveBeenCalled()

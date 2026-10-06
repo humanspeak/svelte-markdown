@@ -24,7 +24,7 @@ This **bold text**, [reference link][shared], and table use our existing rendere
     {#if changes > 0}<p data-testid="conditional">Compiled control flow works</p>{/if}
 </section>
 
-Inline page data: **{data.greeting}**.
+Inline page data: **{`${data.greeting}`}**.
 
 ## Markdown after the compiled island
 

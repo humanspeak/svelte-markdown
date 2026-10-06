@@ -3,12 +3,12 @@ import { fromMarkdown } from 'mdast-util-from-markdown'
 import { parse } from 'svelte/compiler'
 
 /**
- * Identify literal Markdown regions before asking Svelte's parser to recognize
- * template nodes. Source offsets stay unchanged, including UTF-16 characters.
+ * Literal Markdown ranges (code, definitions, images, link destinations and
+ * autolinks) as UTF-16 offsets, sorted by start.
  *
- * @param {string} body
+ * @param {string} text
  */
-function maskMarkdownLiterals(body) {
+function markdownLiteralRanges(text) {
     /** @type {{ start: number, end: number }[]} */
     const ranges = []
     /** @param {import('mdast').Root | import('mdast').RootContent} node */
@@ -21,7 +21,7 @@ function maskMarkdownLiterals(body) {
             return
         }
         if (node.type === 'link') {
-            if (body[start] === '<') {
+            if (text[start] === '<') {
                 ranges.push({ start, end })
                 return
             }
@@ -30,16 +30,260 @@ function maskMarkdownLiterals(body) {
         }
         if ('children' in node) node.children.forEach(visit)
     }
-    visit(fromMarkdown(body))
-    const characters = body.split('')
-    for (const { start, end } of ranges) {
-        for (let index = start; index < end; index++) {
-            if (characters[index] !== '\n' && characters[index] !== '\r') characters[index] = ' '
-        }
+    visit(fromMarkdown(text))
+    return ranges.sort((a, b) => a.start - b.start)
+}
+
+const regexKeywords = new Set([
+    'return',
+    'typeof',
+    'instanceof',
+    'in',
+    'of',
+    'new',
+    'delete',
+    'void',
+    'throw',
+    'case',
+    'do',
+    'else',
+    'yield',
+    'await'
+])
+
+/**
+ * End offset of a quoted JavaScript string or regular expression starting at
+ * `start`, or -1 when it is unterminated on its line.
+ *
+ * @param {string} text
+ * @param {number} start
+ */
+function skipQuoted(text, start) {
+    const quote = text[start]
+    let inClass = false
+    for (let index = start + 1; index < text.length; index++) {
+        const character = text[index]
+        if (character === '\\') index++
+        else if (character === '\n') return -1
+        else if (quote === '/' && character === '[') inClass = true
+        else if (quote === '/' && character === ']') inClass = false
+        else if (character === quote && !inClass) return index + 1
     }
-    // Markdown escapes must stay literal rather than becoming Svelte syntax.
-    for (const match of body.matchAll(/\\[{}<>]/g)) {
-        characters[match.index + 1] = ' '
+    return -1
+}
+
+/** @typedef {{ index: number, closers: string[], regexAllowed: boolean }} ScanState */
+
+/**
+ * End offset of a JavaScript comment at `index`, -1 when unterminated, or
+ * undefined when no comment starts there.
+ *
+ * @param {string} text
+ * @param {number} index
+ */
+function skipComment(text, index) {
+    if (text[index] !== '/') return undefined
+    if (text[index + 1] === '/') return text.indexOf('\n', index)
+    if (text[index + 1] !== '*') return undefined
+    const close = text.indexOf('*/', index + 2)
+    return close === -1 ? -1 : close + 2
+}
+
+/**
+ * Advance through template literal text, entering `${` interpolations.
+ *
+ * @param {string} text
+ * @param {ScanState} state
+ */
+function stepTemplate(text, state) {
+    const character = text[state.index]
+    if (character === '`') {
+        state.closers.pop()
+        state.regexAllowed = false
+    } else if (character === '$' && text[state.index + 1] === '{') {
+        state.closers.push('}')
+        state.regexAllowed = true
+        state.index++
+    } else if (character === '\\') state.index++
+    state.index++
+}
+
+/**
+ * Advance one JavaScript token: comment, string, regular expression, word or
+ * punctuator. Regular expressions follow the usual previous-token heuristic.
+ *
+ * @param {string} text
+ * @param {ScanState} state
+ */
+function stepCode(text, state) {
+    const character = text[state.index]
+    const comment = skipComment(text, state.index)
+    if (comment !== undefined) {
+        state.index = comment
+        return
+    }
+    if (character === '"' || character === "'" || (character === '/' && state.regexAllowed)) {
+        state.index = skipQuoted(text, state.index)
+        state.regexAllowed = false
+        return
+    }
+    const word = /^[\p{ID_Continue}$]+/u.exec(text.slice(state.index, state.index + 64))?.[0]
+    if (word) {
+        state.regexAllowed = regexKeywords.has(word)
+        state.index += word.length
+        return
+    }
+    state.index++
+    if (/\s/.test(character)) return
+    // Postfix and prefix updates leave the operand/operator state unchanged.
+    if ('+-'.includes(character) && text[state.index] === character) {
+        state.index++
+        return
+    }
+    state.regexAllowed = !')]}'.includes(character)
+    if (character === '`') state.closers.push('`')
+    else if (character === '{') state.closers.push('}')
+    else if (character === '}') state.closers.pop()
+}
+
+/**
+ * End offset of the Svelte expression or block tag opened by `{` at `open`.
+ * JavaScript strings, comments, template literals with nested interpolation,
+ * regular expressions and braces are skipped lexically. Returns -1 when the
+ * expression is unterminated so the Svelte parser can report it. Block markers
+ * (`{#`, `{:`, `{@`, `{/`) only exist in markup, not attribute values.
+ *
+ * @param {string} text
+ * @param {number} open
+ * @param {boolean} [markup]
+ */
+function scanExpression(text, open, markup = true) {
+    let index = open + 1
+    if (markup && text[index] === '/') {
+        const close = text.indexOf('}', index)
+        return close === -1 ? -1 : close + 1
+    }
+    if (markup && '#:@'.includes(text[index])) index++
+    /** @type {ScanState} */
+    const state = { index, closers: ['}'], regexAllowed: true }
+    while (state.index !== -1 && state.index < text.length) {
+        if (state.closers.at(-1) === '`') stepTemplate(text, state)
+        else stepCode(text, state)
+        if (state.closers.length === 0) return state.index
+    }
+    return -1
+}
+
+/**
+ * End offset of a Svelte start tag (including attribute expressions and
+ * quoted values containing expressions) or comment opened at `open`, or -1.
+ *
+ * @param {string} text
+ * @param {number} open
+ */
+function scanTag(text, open) {
+    if (text.startsWith('<!--', open)) {
+        const close = text.indexOf('-->', open + 4)
+        return close === -1 ? -1 : close + 3
+    }
+    let index = open + 1
+    let quote = ''
+    while (index < text.length) {
+        const character = text[index]
+        if (character === '{') {
+            index = scanExpression(text, index, false)
+            if (index === -1) return -1
+        } else if (quote) {
+            if (character === quote) quote = ''
+            index++
+        } else if (character === '"' || character === "'") {
+            quote = character
+            index++
+        } else if (character === '>') return index + 1
+        else index++
+    }
+    return -1
+}
+
+/**
+ * Mask an escaped `{`, `}`, `<` or `>` after the backslash run at `index`.
+ * Odd parity escapes the next character; even parity is literal backslashes.
+ * Returns the offset of the last character handled.
+ *
+ * @param {string} body
+ * @param {number} index
+ * @param {number} limit
+ * @param {string[]} characters
+ */
+function maskEscape(body, index, limit, characters) {
+    let run = index
+    while (body[run] === '\\') run++
+    if ((run - index) % 2 === 0 || run >= limit || !'{}<>'.includes(body[run])) return run - 1
+    characters[run] = ' '
+    return run
+}
+
+/**
+ * First complete Svelte expression, start tag or comment in [cursor, limit),
+ * masking Markdown escapes passed along the way.
+ *
+ * @param {string} body
+ * @param {number} cursor
+ * @param {number} limit
+ * @param {string[]} characters
+ */
+function findSvelteRegion(body, cursor, limit, characters) {
+    for (let index = cursor; index < limit; index++) {
+        if (body[index] === '\\') {
+            index = maskEscape(body, index, limit, characters)
+            continue
+        }
+        let end = -1
+        if (body[index] === '{') end = scanExpression(body, index)
+        else if (/^<(?:[A-Za-z]|!--)/.test(body.slice(index, index + 4))) end = scanTag(body, index)
+        if (end !== -1) return { start: index, end }
+    }
+    return undefined
+}
+
+/**
+ * Identify literal Markdown regions before asking Svelte's parser to recognize
+ * template nodes. Source offsets stay unchanged, including UTF-16 characters.
+ *
+ * Scanning runs left to right; whichever begins first wins: a Markdown literal
+ * (ties go to Markdown) or an unescaped Svelte `{` expression or `<` tag. A
+ * Svelte region ends by JavaScript lexical rules, so backticks, quotes and
+ * comments inside it never pair with Markdown code spans. When a region
+ * overlaps CommonMark's pairing, the remaining literals are recomputed with
+ * that region neutralized. Escapes follow backslash parity outside regions.
+ *
+ * @param {string} body
+ */
+function maskMarkdownLiterals(body) {
+    const characters = body.split('')
+    let neutralized = body
+    let ranges = markdownLiteralRanges(body)
+    let cursor = 0
+    while (cursor < body.length) {
+        const literal = ranges.find((range) => range.start >= cursor)
+        const region = findSvelteRegion(body, cursor, literal?.start ?? body.length, characters)
+        if (region) {
+            const { start, end } = region
+            if (ranges.some((range) => range.start < end && range.end > start)) {
+                neutralized =
+                    neutralized.slice(0, start) +
+                    body.slice(start, end).replace(/[^\r\n]/g, 'x') +
+                    neutralized.slice(end)
+                ranges = markdownLiteralRanges(neutralized)
+            }
+            cursor = end
+        } else if (literal) {
+            for (let index = literal.start; index < literal.end; index++) {
+                if (characters[index] !== '\n' && characters[index] !== '\r')
+                    characters[index] = ' '
+            }
+            cursor = literal.end
+        } else break
     }
     return characters.join('')
 }
