@@ -84,7 +84,11 @@ measured), and productionizing Markdown nested inside components.
   `Record<string, string>`. `:117-142`: the default strips `on*` and `srcdoc`
   and runs URL attributes through `sanitizeUrl`.
 - `src/lib/utils/token-cleanup.ts:86`: tag names are lowercased. `:693`
-  `shrinkHtmlTokens` builds nested structured HTML tokens using htmlparser2.
+  `shrinkHtmlTokens` builds nested structured HTML tokens. A Marked `html`
+  token holding several tags goes through htmlparser2
+  (`expandHtmlBlockNested`, `:234`); opens and closes split across Marked
+  tokens are paired by `pairFlatHtmlTokens` (`:503`) with the regex
+  `extractAttributes` (see Probe 4).
   SvelteMarkdown does not call it for array sources; the hybrid generator does
   not call it at all.
 - `src/lib/preprocess/script-block.js:36`: `collectComponentImports` is the
@@ -204,18 +208,30 @@ for (const src of CASES /* the inputs listed below */) {
 
 ### Probe 4: attribute literals across the parsers
 
-Inputs were `<section title="&#123;" alt="&amp;" q="&quot;" hidden>` and
-`<section title={x}>`. Svelte was run through `parse(…, { modern: true })`,
-bare htmlparser2 through `parseDocument(src)`, and the token path through the
-Probe 2 script.
+Round 3 reran this probe with the runnable script below (Node 24.15.0; the
+parent reproduced the same token results on Node 26). Let
+`O = <section title="&#123;" alt="&amp;" q="&quot;" hidden>`. The inputs were:
 
-| Source attribute | Svelte `Attribute.value`                             | bare htmlparser2 `attribs` | `shrinkHtmlTokens` `attributes` |
-| ---------------- | ---------------------------------------------------- | -------------------------- | ------------------------------- |
-| `title="&#123;"` | `[Text { raw: '&#123;', data: '{' }]` (static)       | `'{'`                      | `'&#123;'` (not decoded)        |
-| `alt="&amp;"`    | `[Text { raw: '&amp;', data: '&' }]`                 | `'&'`                      | `'&amp;'`                       |
-| `q="&quot;"`     | `[Text { raw: '&quot;', data: '"' }]`                | `'"'`                      | `'&quot;'`                      |
-| `hidden`         | `true`                                               | `''`                       | `''`                            |
-| `title={x}`      | `ExpressionTag` object (dynamic, not eligible for R) | `'{x}/'` (meaningless)     | n/a                             |
+- **A**: `O` alone (unclosed opening tag).
+- **B**: `O + 'text</section>'` (closed, inline text, one HTML block).
+- **C**: `O + '\n\ntext\n\n</section>'` (closed, blank-line separated).
+- `<section title={x}>` for the dynamic case (Svelte and bare htmlparser2 only, round 2).
+
+The token path is `shrinkHtmlTokens(new Marked().lexer(src))`. Svelte is
+`parse(src, { modern: true })`, and bare htmlparser2 is `parseDocument(src)`.
+B and C both parse in Svelte as one `RegularElement` whose only child is
+`Text`. Both are therefore eligible slice 1 shapes.
+
+| Source attribute | Svelte `Attribute.value` (B and C)                   | bare htmlparser2 (B and C) | token path A | token path B (nested) | token path C (flat pair) |
+| ---------------- | ---------------------------------------------------- | -------------------------- | ------------ | --------------------- | ------------------------ |
+| `title="&#123;"` | `[Text { raw: '&#123;', data: '{' }]` (static)       | `'{'`                      | none         | `'{'`                 | `'&#123;'`               |
+| `alt="&amp;"`    | `[Text { raw: '&amp;', data: '&' }]`                 | `'&'`                      | none         | `'&'`                 | `'&amp;'`                |
+| `q="&quot;"`     | `[Text { raw: '&quot;', data: '"' }]`                | `'"'`                      | none         | `'"'`                 | `'&quot;'`               |
+| `hidden`         | `true`                                               | `''`                       | none         | `''`                  | `''`                     |
+| `title={x}`      | `ExpressionTag` object (dynamic, not eligible for R) | `'{x}/'` (meaningless)     | n/a          | n/a                   | n/a                      |
+
+"none" means A yields one unstructured `html` token with no `tag` or
+`attributes` property.
 
 **[established]** for these samples only:
 
@@ -223,21 +239,91 @@ Probe 2 script.
   expression, which makes the element dynamic. An entity-encoded brace
   (`&#123;`) is static text whose decoded `data` is `{`.
 - Svelte's decoded `data` and bare htmlparser2 agree on all three entity
-  samples.
-- The token path that slice 1 would actually use does **not** go through bare
-  htmlparser2 for attributes. `shrinkHtmlTokens` reads them with the regex
-  `extractAttributes` (`token-cleanup.ts:109`, `:141`, `:561`), which keeps
-  entities **undecoded** and trims values.
-- Bare htmlparser2 and the token path both report a boolean attribute as `''`.
+  samples. They differ on the boolean form (`true` vs `''`).
+- `shrinkHtmlTokens` has two attribute paths, and the source shape picks one:
+    - **B** is a single Marked `html` token containing two tags, so
+      `expandHtmlToken` (`token-cleanup.ts:482-485`) sends it to
+      `expandHtmlBlockNested` (`:234`). That function takes attributes from
+      `htmlparser2.Parser` `onopentag` (`:272`), so entities come out
+      **decoded**, matching bare htmlparser2.
+    - **C** is lexed as separate opening, paragraph and closing tokens. The
+      opening tag alone is not structured (`:93` returns it unchanged), and
+      `pairFlatHtmlTokens` (`:503`) later pairs it with `</section>` and calls
+      the regex `extractAttributes` (`:561`, defined at `:141`). Entities
+      stay **undecoded**.
+    - **A** has no closing tag to pair with, so it stays unstructured.
+- In both B and C a boolean attribute is `''`, where Svelte has `true`.
 
-**[unknown]** Whether the undecoded string (`'&#123;'`) is later rendered as the
-literal text `&#123;` or as `{` in the DOM attribute. That needs a mount (or
-SSR) through Parser and was not run. The same question applies to the runtime
-CMS path, which reaches the same function through
-`parse-and-cache.ts:59` → `shrinkHtmlTokens`. Build-time and runtime tokens
-would therefore match each other. Only native compile (Svelte `data`) may
-differ. Other entities, unquoted values,
-whitespace inside values and serialization back to HTML were not probed.
+**[unknown]** How Parser renders either string in the DOM: whether B's `'{'`
+and C's `'&#123;'` produce the same attribute value as each other and as a
+native compile. That needs a mount (or SSR) through Parser and was not run.
+The runtime CMS path reaches the same function through
+`parse-and-cache.ts:59` → `shrinkHtmlTokens`, so the same source shape gives
+the same token at build time and at runtime. Across the two closed shapes,
+though, the token path is not consistent with itself. Other entities,
+unquoted values, whitespace inside values, other block shapes and
+serialization back to HTML were not probed.
+
+Runnable script. Save it **outside** the repo and run it from the repo root
+(`node <path>/attrs.mjs`). It uses the same resolve hook as Probe 2:
+
+```js
+import { registerHooks, createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
+registerHooks({
+    resolve(spec, ctx, next) {
+        try {
+            return next(spec, ctx)
+        } catch (e) {
+            if (spec.startsWith('.') && spec.endsWith('.js'))
+                return next(spec.slice(0, -3) + '.ts', ctx)
+            throw e
+        }
+    }
+})
+const root = pathToFileURL(process.cwd() + '/').href
+const req = createRequire(root)
+const { shrinkHtmlTokens } = await import(root + 'src/lib/utils/token-cleanup.ts')
+const { Marked } = await import(req.resolve('marked'))
+const { parseDocument } = await import(req.resolve('htmlparser2'))
+const sc = await import(req.resolve('svelte/compiler'))
+const parse = sc.parse ?? sc.default.parse
+const open = '<section title="&#123;" alt="&amp;" q="&quot;" hidden>'
+const CASES = { A: open, B: open + 'text</section>', C: open + '\n\ntext\n\n</section>' }
+for (const [name, src] of Object.entries(CASES)) {
+    const tokens = shrinkHtmlTokens(new Marked().lexer(src))
+    const show = (t) =>
+        t.type === 'html'
+            ? { type: t.type, tag: t.tag, attributes: t.attributes }
+            : { type: t.type }
+    console.log(name, JSON.stringify(tokens.map(show)))
+    if (name === 'A') continue
+    const el = parse(src, { modern: true }).fragment.nodes[0]
+    const attrs = el.attributes.map((a) => [
+        a.name,
+        a.value === true ? true : a.value.map((v) => v.data)
+    ])
+    console.log(
+        '  svelte',
+        el.type,
+        el.fragment.nodes.map((n) => n.type).join(','),
+        JSON.stringify(Object.fromEntries(attrs))
+    )
+    console.log('  htmlparser2', JSON.stringify(parseDocument(src).children[0].attribs))
+}
+```
+
+Round 3 output:
+
+```text
+A [{"type":"html"}]
+B [{"type":"html","tag":"section","attributes":{"title":"{","alt":"&","q":"\"","hidden":""}}]
+  svelte RegularElement Text {"title":["{"],"alt":["&"],"q":["\""],"hidden":true}
+  htmlparser2 {"title":"{","alt":"&","q":"\"","hidden":""}
+C [{"type":"html","tag":"section","attributes":{"title":"&#123;","alt":"&amp;","q":"&quot;","hidden":""}}]
+  svelte RegularElement Text {"title":["{"],"alt":["&"],"q":["\""],"hidden":true}
+  htmlparser2 {"title":"{","alt":"&","q":"\"","hidden":""}
+```
 
 ### Probe 3: undeclared components compile silently
 
@@ -411,7 +497,7 @@ approved spike.
                                           needs the separate binding analysis step,
                                           until then treated as "in scope"
   → Marked lexer (+ marker extension, build options)          [build time]
-  → shrinkHtmlTokens(tokens)                                  [build time, htmlparser2]
+  → shrinkHtmlTokens(tokens)            [build time; htmlparser2 or flat pairing, Probe 4]
   → validate: every html token is structured (tag/attributes) or a marker
   → scriptData(tokens) → module const (JSON)
   → snippets smProofIslandN + html_sm-proof-island-N props   (unchanged mechanism)
@@ -479,13 +565,17 @@ runtime:
   value starts a Svelte expression, so that element is dynamic and stays
   compiled. An encoded brace (`&#123;`) is static `Text` and can be routed.
   For `&#123;`, `&amp;` and `&quot;`, Svelte's decoded `data` agrees with bare
-  htmlparser2. However, the token path (`extractAttributes`) keeps the raw
-  entity string, and a boolean attribute becomes `''` where Svelte has `true`.
-  Whether rendering through Parser displays the same attribute value as a
-  native compile is **[unknown]**. Other entities, unquoted values and
+  htmlparser2. The token path depends on source shape. A closed element in one
+  HTML block (Probe 4 B) goes through htmlparser2 and gets **decoded** values.
+  A blank-line-separated element (C) goes through flat pairing and
+  `extractAttributes` and keeps the **raw** entity strings. Both shapes are
+  Text-only to Svelte, so slice 1 would route both. In both, a boolean
+  attribute becomes `''` where Svelte has `true`. Whether rendering through
+  Parser gives the same attribute value as a native compile, for either shape,
+  is **[unknown]**. Other entities, unquoted values, other block shapes and
   serialization are unprobed. Future tests must assert rendered DOM attribute
-  values for `&#123;`, `&amp;`, `&quot;` and a boolean attribute, under both
-  native compile and the routed path.
+  values for `&#123;`, `&amp;`, `&quot;` and a boolean attribute on **both**
+  closed shapes (B and C), under both native compile and the routed path.
 - Markers stay inert: `tag` `sm-proof-island-N` is not in `Html`, so the Parser
   inline fast path (Parser.svelte:299-305) is skipped and the snippet override
   wins (:576-580). The hybrid.js:116-121 validator must be widened to accept
@@ -557,8 +647,10 @@ ineligible for slice 1 and serves as a **control** that must remain compiled.
    hydration.
 6. Attribute literals (Probe 4): rendered DOM attribute values for
    `title="&#123;"`, `alt="&amp;"`, `q="&quot;"` and boolean `hidden` on a
-   routed Text-only element. The expected values are a maintainer decision
-   (see D7). The test pins them and records any difference from native
+   routed Text-only element, in **both** closed source shapes: inline text in
+   one HTML block (Probe 4 B, decoded token values) and blank-line-separated
+   content (Probe 4 C, raw entity token values). The expected values are a
+   maintainer decision (see D7). The test pins them and records any difference from native
    compile. This test is red only because routing does not exist yet. Its
    expected values must be decided, not assumed.
 
@@ -620,9 +712,14 @@ not count.
   (NOTES.md item 1); this design neither solves nor blocks it.
 - **D7: attribute literal fidelity** (Probe 4). For routed elements, decide
   whether the rendered attribute value must match native compile (Svelte
-  decodes `&#123;` to `{`) or match the runtime CMS path (raw strings from
-  `extractAttributes`). Routed and runtime tokens agree with each other today.
-  The rendered DOM result of either choice is unmeasured.
+  decodes `&#123;` to `{`) or simply whatever the runtime CMS path produces.
+  The runtime path is not one behavior: a closed element in one HTML block
+  gets decoded values through htmlparser2, and a blank-line-separated element
+  keeps raw entity strings through `extractAttributes`. For a given source
+  shape, routed and runtime tokens agree. Whether the two shapes should be
+  made consistent is part of this decision, and any change to
+  `token-cleanup.ts` needs its own plan. The rendered DOM result of every
+  option is unmeasured.
 
 ## Deferred work
 
