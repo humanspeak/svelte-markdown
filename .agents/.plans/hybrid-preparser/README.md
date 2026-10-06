@@ -7,13 +7,13 @@ executors own in-scope implementation. Run serially on the current branch.
 
 ## Execution order and status
 
-| Plan | Title                                   | Priority | Effort | Depends on | Status |
-| ---- | --------------------------------------- | -------- | ------ | ---------- | ------ |
-| 001  | Preparsed SSR with async context        | P1       | S      | none       | TODO   |
-| 002  | Production hydration regression         | P1       | S      | 001        | TODO   |
-| 003  | HTML-routing design report              | P1       | M      | none       | TODO   |
-| 004  | Context-aware literal masking           | P1       | M      | 002, 003   | TODO   |
-| 005  | Svelte declaration scope/root placement | P1       | M      | 004        | TODO   |
+| Plan | Title                                   | Priority | Effort | Depends on | Status      |
+| ---- | --------------------------------------- | -------- | ------ | ---------- | ----------- |
+| 001  | Preparsed SSR with async context        | P1       | S      | none       | DONE        |
+| 002  | Production hydration regression         | P1       | S      | 001        | IN PROGRESS |
+| 003  | HTML-routing design report              | P1       | M      | none       | TODO        |
+| 004  | Context-aware literal masking           | P1       | M      | 002, 003   | TODO        |
+| 005  | Svelte declaration scope/root placement | P1       | M      | 004        | TODO        |
 
 ## Dependency notes
 
