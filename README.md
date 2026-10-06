@@ -873,6 +873,21 @@ escaped (odd backslash count). Regular expressions are recognized with the
 usual previous-token heuristic. The normal `.md` prototype path is unchanged.
 This experiment has no published package entry point.
 
+Top-level `{#snippet}` declarations keep document scope, as in a `.svelte`
+file: any island before or after the declaration can `{@render}` it, and the
+snippet reads the leading script's props and state. Snippets declared inside
+an element or block stay scoped to that parent. Top-level `<svelte:head>`,
+`<svelte:window>`, `<svelte:document>`, and `<svelte:body>` are emitted at the
+component root. Svelte's placement rules still apply, so these elements are
+rejected inside elements, blocks, or snippets. Declarations and root elements
+render nothing where they appear; a line containing only one is dropped from
+the Markdown. `<svelte:options>` must follow any leading `<script>` blocks and
+supports only `runes`; other options are rejected rather than ignored.
+Top-level `{@const}`, `<svelte:self>`, and `{let}`/`{const}` declaration tags
+are rejected. TypeScript syntax in template expressions (including snippet
+parameter annotations) is not recognized yet, and authored names must not
+collide with generated `smProofIsland*` identifiers.
+
 Run `pnpm dev` and open `/test/preprocess/hybrid`. Increment the typed counter
 and toggle the heading renderer. The fixture uses a prerendered SvelteKit load
 result, TypeScript, typed component props, and compiled control flow. The

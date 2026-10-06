@@ -35,6 +35,9 @@ describe('preparsed document runtime proof', () => {
         const inline = vi.spyOn(Lexer.prototype, 'inlineTokens')
         try {
             const { rerender } = render(Proof, { data: { greeting: 'Initial load', start: 6 } })
+            // The greeting paragraph comes from an authored snippet declared at
+            // document scope and rendered inside a later compiled island.
+            expect(screen.getAllByTestId('load-greeting')).toHaveLength(1)
             expect(screen.getByTestId('load-greeting')).toHaveTextContent('Initial load')
             expect(screen.getByText('Initial load', { selector: 'strong' })).toBeInTheDocument()
             // The inline greeting passes through a JavaScript template literal.

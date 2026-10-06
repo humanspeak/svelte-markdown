@@ -22,7 +22,8 @@ function markdownLiteralRanges(text) {
         }
         if (node.type === 'link') {
             if (text[start] === '<') {
-                ranges.push({ start, end })
+                // `<svelte:head>` is also a valid autolink; Svelte owns it.
+                if (!text.startsWith('<svelte:', start)) ranges.push({ start, end })
                 return
             }
             const labelEnd = node.children.at(-1)?.position?.end.offset
@@ -289,28 +290,128 @@ function maskMarkdownLiterals(body) {
 }
 
 /**
- * Parse ordinary Svelte markup and expressions without authoring delimiters.
- * Markdown outside those nodes remains a single build-time token tree.
+ * Deliberate classification of every top-level Svelte node type (Text stays
+ * Markdown). Rendered nodes become compiled island snippets at their Markdown
+ * position. Declarations keep document scope so any island can render them,
+ * in either order. Root-only elements stay at component root, where Svelte
+ * requires them; wrapping them in a snippet would be invalid. Nested nodes
+ * always stay inside their compiled parent. Unclassified types are rejected.
+ */
+const renderedTypes = new Set([
+    'AwaitBlock',
+    'Comment',
+    'Component',
+    'DebugTag',
+    'EachBlock',
+    'ExpressionTag',
+    'HtmlTag',
+    'IfBlock',
+    'KeyBlock',
+    'RegularElement',
+    'RenderTag',
+    'SlotElement',
+    'SvelteBoundary',
+    'SvelteComponent',
+    'SvelteElement',
+    'SvelteFragment',
+    'TitleElement'
+])
+const declarationTypes = new Set(['SnippetBlock'])
+const rootTypes = new Set(['SvelteBody', 'SvelteDocument', 'SvelteHead', 'SvelteWindow'])
+/**
+ * Top-level nodes Svelte rejects (or the proof cannot scope yet) that a
+ * snippet wrapper would otherwise accept.
+ *
+ * @type {Record<string, string>}
+ */
+const rejectedTypes = {
+    ConstTag: '{@const} must be inside a block or element (const_tag_invalid_placement)',
+    SvelteSelf: '<svelte:self> must be inside a block or element (svelte_self_invalid_placement)',
+    DeclarationTag: 'Top-level {let}/{const} declaration tags are not supported in the hybrid proof'
+}
+
+/**
+ * Source range dropped from Markdown for a node that renders nothing in place:
+ * its whole line when it stands alone there, so paragraphs are not split.
  *
  * @param {string} body
- * @returns {{ source: string, islands: string[] }}
+ * @param {number} start
+ * @param {number} end
+ */
+function removalRange(body, start, end) {
+    const lineStart = body.lastIndexOf('\n', start - 1) + 1
+    const trailing = /^[ \t]*(?:\r?\n|$)/.exec(body.slice(end))
+    if (trailing && /^[ \t]*$/.test(body.slice(lineStart, start))) {
+        return { start: lineStart, end: end + trailing[0].length }
+    }
+    return { start, end }
+}
+
+/**
+ * `<svelte:options>` is root-only and lives outside the fragment. Only `runes`
+ * is supported: it passes through verbatim with native semantics. Options
+ * that would change how the generated wrapper or Markdown output compiles
+ * (namespace, customElement, css, legacy flags) are rejected, not ignored.
+ *
+ * @param {import('svelte/compiler').AST.SvelteOptions} options
+ */
+function checkOptions(options) {
+    for (const attribute of options.attributes) {
+        if (attribute.type !== 'Attribute' || attribute.name !== 'runes') {
+            const name = attribute.type === 'Attribute' ? attribute.name : attribute.type
+            throw new Error(
+                `Hybrid proof <svelte:options> supports only the runes option; found ${name}`
+            )
+        }
+    }
+}
+
+/**
+ * Parse ordinary Svelte markup and expressions without authoring delimiters.
+ * Markdown outside those nodes remains a single build-time token tree.
+ * Top-level snippet declarations and root-only elements (including
+ * `<svelte:options>`) are returned separately, in source order, and leave no
+ * marker in the Markdown source.
+ *
+ * @param {string} body
+ * @returns {{ source: string, islands: string[], declarations: string[], root: string[] }}
  */
 export function extractSvelteIslands(body) {
     const tree = parse(maskMarkdownLiterals(body), { modern: true })
     if (tree.instance || tree.module) throw new Error('Hybrid proof scripts must precede markdown')
     if (tree.css) throw new Error('Styles are not supported yet in the hybrid proof')
+    if (tree.options) checkOptions(tree.options)
+    /** @type {{ type: string, start: number, end: number }[]} */
+    const nodes = tree.fragment.nodes.filter((node) => node.type !== 'Text')
+    if (tree.options) nodes.push({ type: 'SvelteOptions', ...tree.options })
+    nodes.sort((a, b) => a.start - b.start)
+    /** @type {string[]} */
     const islands = []
+    /** @type {string[]} */
+    const declarations = []
+    /** @type {string[]} */
+    const root = []
     const output = []
     let cursor = 0
-    for (const node of tree.fragment.nodes) {
-        if (node.type === 'Text') continue
-        const tag = `sm-proof-island-${islands.length}`
-        islands.push(body.slice(node.start, node.end))
-        output.push(body.slice(cursor, node.start), `<${tag} />`)
-        cursor = node.end
+    for (const node of nodes) {
+        const text = body.slice(node.start, node.end)
+        if (node.type in rejectedTypes) throw new Error(rejectedTypes[node.type])
+        if (renderedTypes.has(node.type)) {
+            const tag = `sm-proof-island-${islands.length}`
+            islands.push(text)
+            output.push(body.slice(cursor, node.start), `<${tag} />`)
+            cursor = node.end
+            continue
+        }
+        if (declarationTypes.has(node.type)) declarations.push(text)
+        else if (rootTypes.has(node.type) || node.type === 'SvelteOptions') root.push(text)
+        else throw new Error(`Unclassified Svelte node type ${node.type} in the hybrid proof`)
+        const range = removalRange(body, node.start, node.end)
+        output.push(body.slice(cursor, range.start))
+        cursor = range.end
     }
     output.push(body.slice(cursor))
-    return { source: output.join(''), islands }
+    return { source: output.join(''), islands, declarations, root }
 }
 
 /**
@@ -382,7 +483,7 @@ export function scriptData(value) {
  * @param {{ body: string, data: Record<string, unknown>, scripts: { attrs: string, code: string }[], document: string, layout?: string, options?: import('marked').MarkedExtension }} input
  */
 export function generateHybridDocument(input) {
-    const { source, islands } = extractSvelteIslands(input.body)
+    const { source, islands, declarations, root } = extractSvelteIslands(input.body)
     const tokens = preparseTokens(source, input.options)
     const moduleScripts = input.scripts.filter((script) => /\bmodule\b/.test(script.attrs))
     const instanceScripts = input.scripts.filter((script) => !/\bmodule\b/.test(script.attrs))
@@ -410,6 +511,8 @@ export function generateHybridDocument(input) {
             ...(input.layout ? [`import SmProofLayout from ${JSON.stringify(input.layout)}`] : []),
             ...instanceScripts.map((script) => script.code),
             '</script>',
+            ...root,
+            ...declarations,
             ...snippets,
             template
         ].join('\n')
