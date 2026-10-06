@@ -1,7 +1,9 @@
 # Design 003: Routing authored HTML between our renderer and compiled Svelte
 
-Design/spike report for plan 003. Checkout `investigate/issue-372-md-preprocessor`
-at `5fae1e2`. Read-only on source; this report is the only file written.
+Design/spike report for plan 003. Checkout `investigate/issue-372-md-preprocessor`.
+Round 1 was written at `5fae1e2`. Round 2 corrections were made at `031d0ff`,
+and no source changed between those commits. Read-only on source; this report
+is the only file written.
 
 **This report does not authorize implementing its proposal.** Plans 004 and 005
 keep the current routing (every non-Text top-level node compiles natively) while
@@ -95,9 +97,28 @@ measured), and productionizing Markdown nested inside components.
 
 ### Probe 1: Svelte AST classification (svelte 5.57.1, `parse(src, { modern: true })`)
 
-Command: `node /tmp/sm003probe/ast.mjs <repo>`. This is an in-memory probe that
-resolves `svelte/compiler` from the repo's installed `node_modules`. No fixtures
-were written. Observed top-level node types:
+In-memory probe, run from the repo root so `svelte/compiler` resolves from the
+installed `node_modules`. No fixtures are written. Rerun it with:
+
+```sh
+node --input-type=module -e "
+import { parse } from 'svelte/compiler';
+const val = v => v === true ? 'true' : Array.isArray(v) ? v.map(p => p.type).join('+') : v.type;
+const attr = a => a.type === 'Attribute' ? a.name + '=' + val(a.value) : a.type;
+const show = n => n.type + (n.name ? '(' + n.name + ')' : '')
+  + (n.attributes?.length ? '[' + n.attributes.map(attr).join(' ') + ']' : '')
+  + (n.fragment?.nodes.length ? ' > ' + n.fragment.nodes.map(show).join(', ') : '');
+for (const s of process.argv.slice(1)) console.log(s, '=>', parse(s, { modern: true }).fragment.nodes.map(show).join(' | '));
+" '<section data-x="1">hi</section>' '<TypedCounter start={s} />' '<section title={t} class="a {b}" hidden></section>'
+```
+
+Pass any input from the table below as an extra argument. The `val` helper
+reflects the installed modern AST: `Attribute.value` is `true` for a boolean
+attribute, an **array** of `Text`/`ExpressionTag` parts for quoted or mixed
+values, and a single **`ExpressionTag` object (not an array)** for a value that
+is exactly one `{expression}`. Code that assumes `value` is always an array
+misreads the single-expression case. Observed top-level node types (round 2
+rerun on Node 24.15.0, svelte 5.57.1):
 
 | Input                                                        | Node type and attribute shapes                                                                          |
 | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
@@ -111,7 +132,7 @@ were written. Observed top-level node types:
 | `<Card>{#snippet header()}…{/snippet}body</Card>`            | `Component(Card)` > `SnippetBlock`, `Text`                                                              |
 | `Text {data.greeting} more`                                  | `Text`, `ExpressionTag(MemberExpression)`, `Text`                                                       |
 | `{#if}{:else}`, `{#each}`, `{#await}`, `{#key}`              | `IfBlock`, `EachBlock`, `AwaitBlock`, `KeyBlock`                                                        |
-| `{@html}{@const}{@render}`                                   | `HtmlTag`, `ConstTag`, `RenderTag` (parse only; no analysis run)                                        |
+| `{@html}{@render}`; `{@const}` inside a block                | `HtmlTag`, `RenderTag`; `ConstTag` sits inside the block, not at top level (parse only)                 |
 | `<svelte:element>`, `<svelte:component>`, `<svelte:head>`    | `SvelteElement`, `SvelteComponent`, `SvelteHead` (> `TitleElement`)                                     |
 | `<Card>\n\n# Heading **bold** [ref][r]\n\n</Card>`           | `Component(Card)` > a single `Text` (Markdown is invisible to Svelte)                                   |
 | `<Section>x</Section><DIV>y</DIV>`                           | `Component(Section)`, `Component(DIV)`: the Svelte parser classifies by case                            |
@@ -123,10 +144,41 @@ hyphenated custom elements). It also marks every attribute as static (`Text`
 or `true`) or dynamic (`ExpressionTag`, mixed, spread or directive). A router
 can read this without new syntax.
 
-### Probe 2: build-time HTML tokens (`/tmp/sm003probe/tokens.mjs`, `nest.mjs`, `nest2.mjs`)
+### Probe 2: build-time HTML tokens
 
-These probes ran under Node 24 with an in-memory resolve hook (`.js` → `.ts`),
-importing `src/lib/utils/token-cleanup.ts` and `src/lib/preprocess/hybrid.js`.
+Round 1 scripts lived in a temporary directory that has since been deleted. Round 2
+reran the central cases with the self-contained script below. Save it anywhere
+**outside** the repo and run it from the repo root (`node <path>/tokens.mjs`).
+It uses only installed dependencies and Node's built-in type stripping (Node 24
+and 26 both work). A `module.registerHooks` resolve hook retries a failing
+relative `.js` import as `.ts`, because `token-cleanup.ts` imports its siblings
+with `.js` specifiers.
+
+```js
+import { registerHooks, createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
+registerHooks({
+    resolve(spec, ctx, next) {
+        try {
+            return next(spec, ctx)
+        } catch (e) {
+            if (spec.startsWith('.') && spec.endsWith('.js'))
+                return next(spec.slice(0, -3) + '.ts', ctx)
+            throw e
+        }
+    }
+})
+const root = pathToFileURL(process.cwd() + '/').href
+const { shrinkHtmlTokens } = await import(root + 'src/lib/utils/token-cleanup.ts')
+const { preparseTokens } = await import(root + 'src/lib/preprocess/hybrid.js')
+const { Marked } = await import(createRequire(root).resolve('marked'))
+for (const src of CASES /* the inputs listed below */) {
+    const tokens = shrinkHtmlTokens(new Marked().lexer(src))
+    // print html tokens as { tag, attributes, tokens }, other tokens as { type, href? }
+    // compare JSON.stringify(JSON.parse(JSON.stringify(tokens))) with JSON.stringify(tokens)
+    // try { preparseTokens(src) } catch (e) { print e.message }
+}
+```
 
 - `shrinkHtmlTokens(new Marked().lexer(src))` on
   `<section data-x="1" class="a">\n\nInside **md** [ref][r]\n\n</section>\n\n[r]: …`
@@ -142,11 +194,50 @@ importing `src/lib/utils/token-cleanup.ts` and `src/lib/preprocess/hybrid.js`.
   `html` tokens with `tag: 'sm-proof-island-N'` inside the section's `tokens`.
   Inside a raw HTML block with no blank lines (`<section>\n<p>Hi <sm-proof-island-0 /> **x**</p>`),
   the marker also nests, and `**x**` stays text. That matches CommonMark and
-  runtime behavior.
+  runtime behavior. (This no-blank-line case comes from round 1 and was not
+  rerun. Round 2 reran the blank-line marker case above, and it reproduced.)
 - `JSON.parse(JSON.stringify(tokens))` round-trips equal. **[established]** The
   nested structured tokens are serializable data.
-- `preparseTokens(src)` **throws** for all three inputs, and `extractSvelteIslands`
-  turns each whole element into one island. This confirms the current routing.
+- `preparseTokens(src)` **throws** `Unsupported HTML token in the hybrid proof`
+  for every input above, and `extractSvelteIslands` turns each whole element
+  into one island. This confirms the current routing.
+
+### Probe 4: attribute literals across the parsers
+
+Inputs were `<section title="&#123;" alt="&amp;" q="&quot;" hidden>` and
+`<section title={x}>`. Svelte was run through `parse(…, { modern: true })`,
+bare htmlparser2 through `parseDocument(src)`, and the token path through the
+Probe 2 script.
+
+| Source attribute | Svelte `Attribute.value`                             | bare htmlparser2 `attribs` | `shrinkHtmlTokens` `attributes` |
+| ---------------- | ---------------------------------------------------- | -------------------------- | ------------------------------- |
+| `title="&#123;"` | `[Text { raw: '&#123;', data: '{' }]` (static)       | `'{'`                      | `'&#123;'` (not decoded)        |
+| `alt="&amp;"`    | `[Text { raw: '&amp;', data: '&' }]`                 | `'&'`                      | `'&amp;'`                       |
+| `q="&quot;"`     | `[Text { raw: '&quot;', data: '"' }]`                | `'"'`                      | `'&quot;'`                      |
+| `hidden`         | `true`                                               | `''`                       | `''`                            |
+| `title={x}`      | `ExpressionTag` object (dynamic, not eligible for R) | `'{x}/'` (meaningless)     | n/a                             |
+
+**[established]** for these samples only:
+
+- In source text, an unescaped `{` in an attribute value starts a Svelte
+  expression, which makes the element dynamic. An entity-encoded brace
+  (`&#123;`) is static text whose decoded `data` is `{`.
+- Svelte's decoded `data` and bare htmlparser2 agree on all three entity
+  samples.
+- The token path that slice 1 would actually use does **not** go through bare
+  htmlparser2 for attributes. `shrinkHtmlTokens` reads them with the regex
+  `extractAttributes` (`token-cleanup.ts:109`, `:141`, `:561`), which keeps
+  entities **undecoded** and trims values.
+- Bare htmlparser2 and the token path both report a boolean attribute as `''`.
+
+**[unknown]** Whether the undecoded string (`'&#123;'`) is later rendered as the
+literal text `&#123;` or as `{` in the DOM attribute. That needs a mount (or
+SSR) through Parser and was not run. The same question applies to the runtime
+CMS path, which reaches the same function through
+`parse-and-cache.ts:59` → `shrinkHtmlTokens`. Build-time and runtime tokens
+would therefore match each other. Only native compile (Svelte `data`) may
+differ. Other entities, unquoted values,
+whitespace inside values and serialization back to HTML were not probed.
 
 ### Probe 3: undeclared components compile silently
 
@@ -156,23 +247,46 @@ warnings**, and the output references `Callout` / `UI.Card` as free identifiers.
 **[established]** A capitalized tag that the page author expects a _layout_ to
 supply through `renderers.html` compiles to an unresolved reference in today's
 hybrid path. Svelte gives no build-time diagnostic. Runtime failure was not
-exercised (that would need a mount).
+exercised (that would need a mount). Rerun from the repo root (round 2 printed
+`0` three times):
+
+```sh
+node --input-type=module -e "
+import { compile } from 'svelte/compiler';
+for (const s of process.argv.slice(1)) console.log(s, compile(s, { generate: 'server' }).warnings.length);
+" '<Callout kind="warn">x</Callout>' '<UI.Card />' '<my-widget data={obj}></my-widget>'
+```
 
 ## Routing matrix
 
 Owner key: **R** = build-time token → `SvelteMarkdown`/Parser HTML branch
 (customizable). **C** = compiled Svelte inside a snippet island (trusted
-application source). The **Current** column is what `5fae1e2` does. The
-**Recommended** column is the proposal in the next sections. Rows marked
-[proposal] are unbuilt.
+application source). The **Current** column is what `5fae1e2`/`031d0ff` does.
+The **Recommended** column is the **eventual target** of the proposal, not
+slice 1. Rows marked [proposal] are unbuilt.
+
+The rows use three terms for renderer-owned (R) elements:
+
+- **Text-only static element:** a top-level `RegularElement` whose own
+  attributes are all static (`value` is `true` or an array of only `Text`) and
+  whose fragment holds only `Text` nodes. Markdown inside it is `Text` to
+  Svelte, so `<details>\n\n**md**\n\n</details>` qualifies. Slice 1 covers
+  only this subset of rows 1 and 2.
+- **Nested-static:** a static element whose descendants include other static
+  `RegularElement`s but nothing compiled (`<section><h2>t</h2></section>`).
+  This is part of the row 1/2 target and comes in a later slice. In slice 1 it
+  stays compiled.
+- **Nested-compiled:** row 14, a static element with any compiled descendant.
+  This is a later slice that needs nested markers. In slice 1 it stays
+  compiled.
 
 | #   | Authored syntax                                                                   | Current            | Recommended owner                                                                            | Props / children                                                                                                               | Sanitization                                                                                              |
 | --- | --------------------------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| 1   | Lowercase element, static attrs only (`<section data-x="1">`)                     | C (whole subtree)  | **R** [proposal]                                                                             | `attributes` bag of strings; `children` = build-time tokens, so Markdown inside follows CommonMark blank-line rules            | Runtime `sanitizeAttributes`/`sanitizeUrl` from props or layout context (Parser.svelte:234-251)           |
-| 2   | Hyphenated custom element, static attrs (`<my-widget foo="bar">`)                 | C                  | **R** [proposal]                                                                             | `renderers.html['my-widget']` gets `{...sanitizedRest}` + `children`; `html_my-widget` snippet gets `{ attributes, children }` | Runtime hooks, as row 1. **Unregistered tag drops its wrapper** (Parser.svelte:588-595): open decision D2 |
+| 1   | Lowercase element, static attrs only (`<section data-x="1">`)                     | C (whole subtree)  | **R** [proposal; slice 1 = Text-only subset]                                                 | `attributes` bag of strings; `children` = build-time tokens, so Markdown inside follows CommonMark blank-line rules            | Runtime `sanitizeAttributes`/`sanitizeUrl` from props or layout context (Parser.svelte:234-251)           |
+| 2   | Hyphenated custom element, static attrs (`<my-widget foo="bar">`)                 | C                  | **R** [proposal; slice 1 = Text-only subset]                                                 | `renderers.html['my-widget']` gets `{...sanitizedRest}` + `children`; `html_my-widget` snippet gets `{ attributes, children }` | Runtime hooks, as row 1. **Unregistered tag drops its wrapper** (Parser.svelte:588-595): open decision D2 |
 | 3   | Uppercase component in script scope (`<TypedCounter start={…} />`)                | C                  | **C**                                                                                        | Normal typed props, callbacks, `$bindable`, snippets                                                                           | None from this library; Svelte escapes text/attributes; trusted source                                    |
-| 4   | Member component (`<UI.Card>`)                                                    | C                  | **C** if root identifier `UI` is declared                                                    | Normal typed props                                                                                                             | None (trusted)                                                                                            |
-| 5   | Uppercase tag **not** declared in page scope (`<Callout>` from a layout renderer) | C, silent free ref | **R** with lowercased key [proposal], or build error (D1)                                    | Layout `renderers.html.callout` gets the string `attributes` bag. Dynamic attrs on it are a build error (cannot be typed)      | Runtime hooks                                                                                             |
+| 4   | Member component (`<UI.Card>`)                                                    | C                  | **C** (declared-root check needs binding analysis, see Compiler integration)                 | Normal typed props                                                                                                             | None (trusted)                                                                                            |
+| 5   | Uppercase tag **not** declared in page scope (`<Callout>` from a layout renderer) | C, silent free ref | **R** with lowercased key, or build error (D1) [proposal; needs binding analysis]            | Layout `renderers.html.callout` gets the string `attributes` bag. Dynamic attrs on it are a build error (cannot be typed)      | Runtime hooks                                                                                             |
 | 6   | Lowercase element with any dynamic attr value (`title={x}`, `class="a {b}"`)      | C                  | **C** in slice 1 (unchanged). Later: optional attribute-bag adapter **A** (Alt. C) [unknown] | C: native element. A: `attributes` evaluated at runtime, stringified, passed to the renderer                                   | C: none (documented bypass). A: runtime hooks on evaluated values                                         |
 | 7   | Lowercase element with `{...spread}`                                              | C                  | **C** (slice 1); adapter candidate later                                                     | as row 6                                                                                                                       | as row 6                                                                                                  |
 | 8   | Element with directives (`bind:`, `use:`, `class:`, `style:`, `on*={fn}`)         | C                  | **C** permanently                                                                            | Directives have no meaning in a renderer component's attribute bag                                                             | None (trusted); documented bypass                                                                         |
@@ -181,7 +295,7 @@ application source). The **Current** column is what `5fae1e2` does. The
 | 11  | Control flow (`{#if}`, `{#each}`, `{#await}`, `{#key}`)                           | C                  | **C** (whole block, contents included)                                                       | Contents compiled natively; Markdown inside stays text (deferred)                                                              | None                                                                                                      |
 | 12  | `{@html}`, `{@render}`, `{@const}`                                                | C                  | **C**. `{@html}` is the author's explicit raw-HTML choice                                    | n/a                                                                                                                            | None; `{@html}` bypasses everything by design (trusted source)                                            |
 | 13  | `svelte:*` special elements                                                       | C                  | **C**                                                                                        | n/a                                                                                                                            | None                                                                                                      |
-| 14  | R element containing a C descendant (`<section><TypedCounter/></section>`)        | C (whole)          | **R outer + nested C marker** [proposal; token nesting established by Probe 2]               | Outer gets the attribute bag; inner gets typed props through a nested marker snippet                                           | Outer: runtime hooks. Inner: none                                                                         |
+| 14  | R element containing a C descendant (`<section><TypedCounter/></section>`)        | C (whole)          | **R outer + nested C marker** [proposal, later slice; token nesting: Probe 2]                | Outer gets the attribute bag; inner gets typed props through a nested marker snippet                                           | Outer: runtime hooks. Inner: none                                                                         |
 | 15  | Markdown-generated HTML (`[x](y)`, `**b**`)                                       | R                  | R (unchanged)                                                                                | Existing renderer props                                                                                                        | Runtime hooks (unchanged)                                                                                 |
 | 16  | Runtime CMS string to `<SvelteMarkdown source>`                                   | R                  | R (unchanged). No expressions ever                                                           | Existing                                                                                                                       | Runtime hooks (unchanged)                                                                                 |
 
@@ -253,7 +367,9 @@ approved spike.
 1. **Uppercase means compiled; lowercase means renderer.** A node the Svelte
    parser classifies as `Component` (uppercase or dotted) whose root identifier
    is declared in the page's instance or module script is compiled Svelte with
-   normal typed props (rows 3, 4, 9). `RegularElement`, including hyphenated
+   normal typed props (rows 3, 4, 9). The "declared" check needs a binding
+   analysis that does not exist yet (see Compiler integration). Until it
+   exists, every `Component` stays compiled, as today. `RegularElement`, including hyphenated
    custom elements, is a renderer-owned HTML node when all its own attributes
    are static (rows 1, 2). Static HTML therefore **stays customizable** through
    `renderers.html`, `html_<tag>` snippets and the sanitizer hooks, the same
@@ -288,9 +404,12 @@ approved spike.
   → svelte.parse(masked)                     [classification only]
   → walk fragment: for each node
         RegularElement & static attrs  → keep source text; recurse into children
+                                          (slice 1: only if every child is Text)
         Component in scope / dynamic / directive / block / tag / expression
                                         → island N (source slice), replace with marker
-        Component not in scope          → D1 policy (route as lowercase HTML or error)
+        Component not in scope          → D1 policy (route as lowercase HTML or error);
+                                          needs the separate binding analysis step,
+                                          until then treated as "in scope"
   → Marked lexer (+ marker extension, build options)          [build time]
   → shrinkHtmlTokens(tokens)                                  [build time, htmlparser2]
   → validate: every html token is structured (tag/attributes) or a marker
@@ -333,11 +452,22 @@ runtime:
   types (`RegularElement`, `Component`, `Attribute.value` shape,
   `SpreadAttribute`, `*Directive`, blocks, tags), as observed in Probe 1. It does
   not use compiler internals or `analyze`.
-- "Declared in page scope" needs the scope analysis plan 005 is building (instance
-  and module declarations, imports). Do not reuse the regex
+- "Declared in page scope" needs **binding analysis**: resolving a component's
+  root identifier against instance and module script declarations, imports
+  and destructuring. No current or planned step in this batch provides it.
+  Plan 005 (`005-svelte-scope.md`) only keeps authored `{#snippet}`
+  declarations at generated document scope and places root-only Svelte
+  metadata (`svelte:window`, `svelte:options`) at the component root. It does
+  not implement general binding or import analysis and does not publish a
+  resolver for component classification. Plan 005 may make island placement
+  more faithful, but it is **not sufficient** for rows 4/5. **Dependency:
+  scope-based `Component` routing (rows 4/5, D1) needs its own binding-analysis
+  design and implementation plan beyond 005.** That plan must also decide
+  between Svelte's own analysis (compiler internals, which this report avoids)
+  and a separate walk of the script AST. Do not reuse the regex
   `collectComponentImports` (script-block.js:36). It misses non-import
-  declarations such as `const UI = { Card }`. **Dependency: implementing row 4/5
-  routing should wait for plan 005.**
+  declarations such as `const UI = { Card }`. Slice 1 does not depend on any of
+  this, because it never reclassifies a `Component`.
 - Element boundaries: the island slice for a compiled node uses Svelte offsets
   (as today). The text kept for a renderer-owned element is the original source,
   re-tokenized by Marked/htmlparser2. Where the two parsers disagree on an
@@ -345,10 +475,17 @@ runtime:
   termination at blank lines), the generator must detect it and fail the build
   with a diagnostic rather than mis-nest. **[unknown]** How often this occurs on
   real pages has not been measured.
-- Attribute literals: Svelte treats `{` in an attribute value as an expression,
-  so a static attribute in Svelte terms contains no braces. Entities in
-  attribute values are decoded by htmlparser2 differently from Svelte. Tests
-  must cover `&amp;`/`&quot;` round-trips.
+- Attribute literals (Probe 4): an unescaped `{` in the source of an attribute
+  value starts a Svelte expression, so that element is dynamic and stays
+  compiled. An encoded brace (`&#123;`) is static `Text` and can be routed.
+  For `&#123;`, `&amp;` and `&quot;`, Svelte's decoded `data` agrees with bare
+  htmlparser2. However, the token path (`extractAttributes`) keeps the raw
+  entity string, and a boolean attribute becomes `''` where Svelte has `true`.
+  Whether rendering through Parser displays the same attribute value as a
+  native compile is **[unknown]**. Other entities, unquoted values and
+  serialization are unprobed. Future tests must assert rendered DOM attribute
+  values for `&#123;`, `&amp;`, `&quot;` and a boolean attribute, under both
+  native compile and the routed path.
 - Markers stay inert: `tag` `sm-proof-island-N` is not in `Html`, so the Parser
   inline fast path (Parser.svelte:299-305) is skipped and the snippet override
   wins (:576-580). The hybrid.js:116-121 validator must be widened to accept
@@ -360,39 +497,98 @@ runtime:
 
 ### Smallest next implementation slice (needs its own approved plan)
 
-**Slice 1: route top-level static lowercase elements without compiled
-descendants.** Change only `extractSvelteIslands` classification and
+**Slice 1: route top-level Text-only static elements only.** This is a
+deliberately conservative first step, not the whole matrix. A top-level
+`RegularElement` (lowercase or hyphenated) moves to the renderer only if
+**all** of these hold:
+
+- every own attribute is static: `value === true`, or an array of only `Text`
+  parts;
+- it has no spread or directive;
+- every node in its fragment is `Text`. Markdown inside it is `Text` to Svelte,
+  so it still qualifies.
+
+Anything else stays fully compiled, exactly as today. That includes any element
+child (nested-static), any compiled descendant (nested-compiled, row 14), and
+any dynamic attribute. Change only `extractSvelteIslands` classification and
 `preparseTokens` (add build-time `shrinkHtmlTokens`; widen the validator).
-Out of slice 1: nested markers (row 14), D1 handling, Alternative C. A
-`RegularElement` with any dynamic attribute or any non-Text descendant stays
-fully compiled, as today.
 
-### Red tests to write first (expected to fail on `5fae1e2`)
+Out of slice 1, each needing its own later approved plan:
 
-1. Vitest render: a page with `<section data-x="1">` and a layout
+- nested-static routing (the rest of rows 1/2);
+- nested markers (row 14);
+- the binding-analysis step and D1 (rows 4/5);
+- Alternative C.
+
+Slice 1 does not solve the routing matrix. It only proves the build-time-token
+→ renderer → sanitizer path end to end for the simplest eligible case.
+
+The future plan needs fixture files in its scope. These are **not** edited by
+this design:
+
+- **Fixture F1:** a new Text-only static section in
+  `src/routes/test/preprocess/hybrid/+page.mdproof`, for example
+  `<section data-testid="routed-static" data-x="1">` + blank line +
+  `Routed **static** text with [shared][shared].` + blank line + `</section>`.
+- **Fixture F2:** a `section` renderer toggle registered by
+  `src/routes/test/preprocess/hybrid/+layout.svelte`, next to its existing
+  heading-renderer toggle.
+
+The existing `data-testid="compiled-island"` section (`+page.mdproof:19-25`)
+contains `<h2>`, `<p>`, `TypedCounter`, expressions and `{#if}`. It is
+ineligible for slice 1 and serves as a **control** that must remain compiled.
+
+### Expected-red regression tests (should fail on `031d0ff`, pass after slice 1)
+
+1. Vitest render: a page with a Text-only `<section data-x="1">` and a layout
    `renderers.html.section = CustomSection` renders `CustomSection`. Assert
    rendered DOM, not generated source.
-2. `html_section` snippet override applies to the authored `<section>`.
+2. `html_section` snippet override applies to the same authored Text-only
+   `<section>`.
 3. A layout `sanitizeAttributes` that strips `data-x` takes effect, and so does
-   the default stripping `onclick="…"` from an authored static element.
-   Replacing the sanitizer after mount updates output with zero Lexer calls
-   (reuse the spy in `hybrid-render.test.ts:33`).
-4. `<details>\n\n**md** [ref][r]\n\n</details>` with `[r]` defined later renders
-   `<strong>` and a resolved `href`.
-5. Control (must stay green): `<TypedCounter start={data.start} …/>` keeps
-   number/object prop types and callbacks; `<section title={x}>` stays native
-   and live.
-6. Production SSR + hydration (the plan 002 Playwright fixture): the custom
-   section renderer appears in prerendered HTML and survives a renderer toggle
-   after hydration.
-7. Lexer spy: zero block/inline lexer calls on mount for the routed page.
+   the default stripping `onclick="…"` from an authored Text-only static
+   element. Replacing the sanitizer after mount updates output with zero Lexer
+   calls (reuse the spy in `hybrid-render.test.ts:33`).
+4. `<details>\n\n**md** [ref][r]\n\n</details>` (Text-only to Svelte) with
+   `[r]` defined later renders `<strong>` and a resolved `href`.
+5. Production SSR + hydration (plan 002 Playwright file, using the new
+   Text-only fixture F1 and toggle F2): the custom section renderer appears in
+   prerendered HTML for `routed-static` and survives a renderer toggle after
+   hydration.
+6. Attribute literals (Probe 4): rendered DOM attribute values for
+   `title="&#123;"`, `alt="&amp;"`, `q="&quot;"` and boolean `hidden` on a
+   routed Text-only element. The expected values are a maintainer decision
+   (see D7). The test pins them and records any difference from native
+   compile. This test is red only because routing does not exist yet. Its
+   expected values must be decided, not assumed.
+
+Each red test must fail for the intended reason. Today `preparseTokens` throws
+`Unsupported HTML token in the hybrid proof`, or the element renders natively
+without the custom renderer. A test that fails on a mock or import error does
+not count.
+
+### Unchanged green controls (pass on `031d0ff` and must stay green)
+
+- C1: `<TypedCounter start={data.start} …/>` keeps number/object prop types and
+  callbacks.
+- C2: `<section title={x}>` (dynamic attribute) stays native and live.
+- C3: the existing `compiled-island` section, which has element and compiled
+  descendants, stays fully compiled. Its plan 001/002 Vitest and Playwright
+  assertions (counter, callbacks, `{#if}`, load greeting) pass unchanged, and
+  `renderers.html.section` does **not** apply to it in slice 1.
+- C4: a nested-static element (`<section><h2>t</h2></section>`) stays compiled.
+- C5: a lexer spy shows zero block/inline lexer calls on mount for the
+  hybrid page, now including the routed section.
 
 ### STOP conditions for that slice
 
 - The Svelte and CommonMark element extents disagree on any fixture, and the
   generator cannot detect it: stop and report rather than emit mis-nested tokens.
 - Routing requires runtime Markdown/HTML parsing (goal 4 conflict).
-- Typed component props regress (control test 5 fails).
+- Typed component props regress (control C1 fails), or any green control
+  C1-C5 turns red.
+- The existing `compiled-island` section would have to change routing or be
+  re-baselined for slice 1 to pass. It is a control; it is not slice 1's target.
 - The fix needs changes to Parser/SvelteMarkdown public API or a new dependency.
 - The unregistered custom-element fallback (D2) would silently drop markup on an
   existing fixture without a maintainer decision.
@@ -422,14 +618,23 @@ fully compiled, as today.
   compile for the whole element.
 - **D6: Markdown inside components and control flow.** Remains deferred
   (NOTES.md item 1); this design neither solves nor blocks it.
+- **D7: attribute literal fidelity** (Probe 4). For routed elements, decide
+  whether the rendered attribute value must match native compile (Svelte
+  decodes `&#123;` to `{`) or match the runtime CMS path (raw strings from
+  `extractAttributes`). Routed and runtime tokens agree with each other today.
+  The rendered DOM result of either choice is unmeasured.
 
 ## Deferred work
 
 - Implementing slice 1 or any routing change. This report does not authorize
   it. Plans 004 (literal masking) and 005 (scope/root placement) keep the
   current all-compiled routing.
-- Nested markers inside routed HTML (row 14), D1 scope-based routing (after
-  plan 005), and the Alternative C adapter spike.
+- Nested-static routing (rest of rows 1/2) and nested markers inside routed
+  HTML (row 14, nested-compiled), each as a separate later slice.
+- A separate binding-analysis design and implementation plan, which rows 4/5
+  and D1 need. It is not part of plan 005: 005 keeps snippet declarations and
+  root metadata placement only, and must not be enlarged for this.
+- The Alternative C adapter spike.
 - Markdown inside components/control flow, styles, source maps, HMR, YAML,
   package entry points and identifier hygiene (batch README "Considered and
   deferred").
