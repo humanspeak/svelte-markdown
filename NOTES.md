@@ -99,7 +99,7 @@ These reproduce with plain `<SvelteMarkdown>` and custom `renderers.html` keys:
 Until #383 is fixed, the paired form `<Counter attr="x">child</Counter>` is the
 only reliable syntax.
 
-### Architectural — will not change
+### Original string-wrapper constraints
 
 - **No expression props.** `start={6}` never becomes an attribute; props are
   inert strings. mdsvex compiles to real Svelte template syntax, so its props
@@ -136,3 +136,95 @@ only reliable syntax.
    with shared custom renderers, including static builds" — genuinely useful,
    and it does unify the dynamic-CMS and static-page paths behind one renderer.
    It is not a drop-in mdsvex replacement, and shouldn't be sold as one.
+
+## Hybrid architecture proof — October 6, 2026
+
+The branch now includes current main and the fixes for #383. The custom-tag
+limitations above describe the original spike, not the current renderer.
+
+The question tested is whether build-time parsing can target our existing
+customizable renderer while selected parts of the document compile as Svelte.
+
+### Mechanism and reproduction
+
+- `markdown({ preparse: true })` recognizes ordinary embedded Svelte without
+  custom delimiters. A Markdown AST identifies literal code, autolinks, image
+  syntax, and reference definitions; their positions are masked before the
+  Svelte compiler parser finds template nodes. Original source offsets are
+  preserved. Native markup, expressions, and blocks become compiled snippets
+  connected through private HTML snippet markers.
+- Marked tokenizes the remaining document as one tree during preprocessing.
+  This preserves reference definitions across compiled-node boundaries. The
+  Markdown AST protection pass also runs at build time; this is not a claim
+  that the build uses only one parser.
+- Generated module code holds the JSON token tree. Generated Svelte snippets
+  hold the islands, capture the document's script scope, and connect to the
+  existing `html_<tag>` snippet override API.
+- `MarkdownDocument` passes the token array to `SvelteMarkdown`. No changes to
+  the core renderer or Parser were required. Layout renderer overrides remain
+  reactive and can switch after hydration.
+- `mdast-util-from-markdown` is a build-only devDependency in this proof,
+  with `@types/mdast` for checked visitor types. Packaging its parser entry
+  point for consumers remains release work.
+- The fixture is `src/routes/test/preprocess/hybrid/+page.mdproof`. Run
+  `pnpm dev` and open `/test/preprocess/hybrid`, click the typed counter, and
+  toggle the heading renderer. Its sibling `+page.ts` opts into prerendering.
+- Run `pnpm test:only src/lib/preprocess/` for the focused proof tests.
+
+### Evidence
+
+- Compiler tests accept both client and server output containing TypeScript,
+  page props, state, event handlers, expressions, and conditional blocks.
+- Runtime tests deliver a number and object to an ordinary Svelte component,
+  update parent state from a callback, and react to a replacement data prop.
+- Lexer spies observe **zero block or inline tokenization calls** while mounting,
+  interacting, changing data props, or switching layout renderers.
+- Heading and link component overrides work through the existing context API.
+  Reference links before and after an island resolve against one definition.
+- A custom build-time tokenizer produces serializable tokens. Executable
+  values in token data are rejected rather than silently dropped by JSON.
+- Production prerendered HTML contains the load greeting, typed prop markers,
+  custom heading output, and initial counter value. Browser hydration supports
+  the counter, parent update, conditional markup, and heading renderer toggle.
+- Metadata and token strings containing `</script>` are safely serialized.
+
+The delimiter-free revision adds protection for inline code and nested fenced
+code, inline expressions, native components, adjacent compiled nodes, autolinks,
+and reference-definition URLs. All 1,441 tests pass across 168 files. Coverage
+is 97.52% statements, 92.96% branches, 98.28% functions, and 98.71% lines.
+Trunk passes; svelte-check reports zero errors and three existing warnings.
+The production build and publint pass, with the existing `import.meta.env`
+packaging warning. The production browser fixture hydrates without console
+or network errors.
+
+### Decision
+
+**GO for the architecture; NO-GO for releasing this proof as a finished API.**
+The proposed combination is feasible using the existing renderer and snippet
+API. It keeps runtime rendering customization available after build-time parsing.
+It does not establish full mdsvex compatibility or a performance advantage.
+
+A production implementation still needs:
+
+1. Finish syntax integration: markdown inside components/control-flow blocks,
+   styles, nesting, source maps, original-file compiler diagnostics, editor
+   support, and agreement between Markdown parsers and custom extensions.
+   This proof compiles the full native markup subtree; markdown inside that
+   subtree remains text rather than going through the markdown renderer.
+2. Decide the literal HTML contract. Authored HTML elements currently compile
+   as native Svelte, so HTML renderer overrides and sanitizer hooks do not apply
+   to those compiled elements. Markdown-generated elements still use the
+   existing renderer. The compiler boundaries are application source.
+3. A contract for build-time parser options and extensions. Layout renderer
+   changes remain reactive; layout parser changes cannot retokenize an already
+   compiled document. Non-JSON extension tokens need an explicit policy.
+4. Proper YAML parsing, robust script extraction, generated identifier hygiene,
+   dependency tracking/HMR, and package entry points/consumer integration tests.
+5. Measurements against the string-wrapper prototype and mdsvex before making
+   speed or payload claims. The fixture is 1,076 bytes of source and produces
+   4,980 bytes of generated Svelte. This is not a final bundle-size comparison;
+   token fields repeat text and the current renderer still imports Marked.
+
+The proof's compiled Svelte markup and expressions are application source.
+Runtime CMS strings continue through the normal renderer and do not gain
+compiled expressions merely because local files support them.

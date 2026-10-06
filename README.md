@@ -854,6 +854,23 @@ Seamlessly mix HTML and Markdown:
 </details>
 ```
 
+### Experimental hybrid preprocessor proof (branch checkout only)
+
+The investigation branch includes an opt-in `markdown({ preparse: true })`
+experiment. It parses markdown into tokens at build time, passes those tokens
+through the existing customizable renderer, and recognizes embedded Svelte
+markup, expressions, and control-flow blocks as compiled snippets. No custom
+delimiters are required. Fenced code and inline code remain literal. The normal
+`.md` prototype path is unchanged. This experiment has no published package
+entry point.
+
+Run `pnpm dev` and open `/test/preprocess/hybrid`. Increment the typed counter
+and toggle the heading renderer. The fixture uses a prerendered SvelteKit load
+result, TypeScript, typed component props, and compiled control flow. The
+`.mdproof` extension is confined to this experiment.
+
+See [NOTES.md](./NOTES.md) for the decision evidence and remaining boundaries.
+
 ## Performance
 
 ### Intelligent Token Caching

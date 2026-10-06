@@ -11,6 +11,7 @@ body resolves to the imported component.
 -->
 <script lang="ts">
     import type { HtmlRenderers } from '$lib/renderers/html/index.js'
+    import type { Token } from 'marked'
     import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
     import { getMarkdownDocumentContext } from './context.js'
 
@@ -19,7 +20,7 @@ body resolves to the imported component.
         components = {},
         ...passThrough
     }: {
-        source: string
+        source: string | Token[]
         components?: HtmlRenderers
         [key: string]: unknown
     } = $props()

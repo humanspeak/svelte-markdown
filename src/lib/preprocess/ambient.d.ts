@@ -13,3 +13,9 @@ declare module '*.md' {
     const component: Component<Record<string, unknown>>
     export default component
 }
+
+declare module '*.mdproof' {
+    export const metadata: Record<string, unknown>
+    const component: import('svelte').Component<Record<string, unknown>>
+    export default component
+}

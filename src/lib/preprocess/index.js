@@ -1,4 +1,5 @@
 import { extractFrontmatter } from './frontmatter.js'
+import { generateHybridDocument } from './hybrid.js'
 import { collectComponentImports, extractLeadingScripts } from './script-block.js'
 
 /**
@@ -8,6 +9,8 @@ import { collectComponentImports, extractLeadingScripts } from './script-block.j
  *   Defaults to the package's `MarkdownDocument` wrapper.
  * @property {string} [layout] Optional import specifier for a layout component that wraps the
  *   rendered markdown and receives front matter as props (mdsvex-style).
+ * @property {boolean} [preparse] Enable the experimental build-time token/Svelte island proof.
+ * @property {import('marked').MarkedExtension} [options] Build-time Marked options for the proof.
  */
 
 const DEFAULT_DOCUMENT = '@humanspeak/svelte-markdown/document'
@@ -36,6 +39,17 @@ export function markdown(options = {}) {
 
             const { data, content: withScripts } = extractFrontmatter(content)
             const { scripts, content: body } = extractLeadingScripts(withScripts)
+
+            if (options.preparse) {
+                return generateHybridDocument({
+                    body,
+                    data,
+                    scripts,
+                    document: documentSpecifier,
+                    layout: layoutSpecifier,
+                    options: options.options
+                })
+            }
 
             // A leading `<script>` block may import Svelte components; those
             // become HTML tag renderers so the markdown body can use them.
