@@ -561,6 +561,14 @@
         resetStreamingState(nextSource)
     }
 
+    // Opted-in SSR and hydration must share a visible baseline. Ordinary streaming
+    // keeps its existing initialization path and allocates no arrival bookkeeping.
+    if (streamingText && streaming && !hasAsyncExtension && typeof source === 'string') {
+        resetStreamingState(source)
+        lastSourceProp = source
+        lastStreamId = streamId
+    }
+
     $effect(() => {
         return () => {
             cancelScheduledStreamFlush()

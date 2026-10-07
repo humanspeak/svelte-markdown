@@ -1,4 +1,5 @@
 import { svelte } from '@sveltejs/vite-plugin-svelte'
+import { execFileSync } from 'node:child_process'
 import { access, mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -16,7 +17,31 @@ try {
     )
 }
 
+const motionModules = [
+    'node_modules/@humanspeak/svelte-motion',
+    'node_modules/motion',
+    'node_modules/motion-dom'
+]
 const cases = [
+    ...[
+        [
+            'core motion isolation',
+            "import SvelteMarkdown from '@humanspeak/svelte-markdown/SvelteMarkdown'; console.log(SvelteMarkdown)"
+        ],
+        [
+            'root motion isolation',
+            "import SvelteMarkdown from '@humanspeak/svelte-markdown'; console.log(SvelteMarkdown)"
+        ],
+        [
+            'headless motion isolation',
+            "import { StreamingText } from '@humanspeak/svelte-markdown'; console.log(StreamingText)"
+        ]
+    ].map(([name, source]) => ({ name, source, expectAllMissing: motionModules })),
+    {
+        name: 'explicit motion presets',
+        source: "import { FadeWords, RiseWords, FadeCharacters } from '@humanspeak/svelte-markdown/streaming/motion'; console.log(FadeWords, RiseWords, FadeCharacters)",
+        expectInitialPresent: ['node_modules/@humanspeak/svelte-motion', 'node_modules/motion-dom']
+    },
     {
         name: 'core component subpath',
         source: `
@@ -230,13 +255,13 @@ function assertExcludes(chunks, needle, label, caseName) {
     }
 }
 
-async function buildCase(testCase) {
-    const dir = await mkdtemp(join(tmpdir(), 'svm-tree-shaking-'))
+async function buildCase(testCase, consumerDir) {
+    const dir = consumerDir ?? (await mkdtemp(join(tmpdir(), 'svm-tree-shaking-')))
     try {
         const entry = join(dir, 'entry.js')
         const packageDir = join(dir, 'node_modules', '@humanspeak')
         await mkdir(packageDir, { recursive: true })
-        await symlink(repoRoot, join(packageDir, 'svelte-markdown'), 'dir')
+        if (!consumerDir) await symlink(repoRoot, join(packageDir, 'svelte-markdown'), 'dir')
         await writeFile(entry, testCase.source)
 
         const result = await build({
@@ -286,10 +311,60 @@ async function buildCase(testCase) {
 
         console.log(`✓ ${testCase.name}`)
     } finally {
-        await rm(dir, { force: true, recursive: true })
+        if (!consumerDir) await rm(dir, { force: true, recursive: true })
     }
 }
 
 for (const testCase of cases) {
     await buildCase(testCase)
+}
+
+// An installed tarball in an isolated directory proves resolution without any
+// optional peers. A symlink to this workspace would accidentally see its dev peers.
+const consumerDir = await mkdtemp(join(tmpdir(), 'svm-no-peer-'))
+try {
+    const packed = JSON.parse(
+        execFileSync(
+            'npm',
+            ['pack', '--ignore-scripts', '--json', '--pack-destination', consumerDir],
+            { cwd: repoRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }
+        )
+    )
+    await writeFile(
+        join(consumerDir, 'package.json'),
+        JSON.stringify({ private: true, type: 'module' })
+    )
+    execFileSync(
+        'npm',
+        [
+            'install',
+            '--ignore-scripts',
+            '--no-audit',
+            '--no-fund',
+            join(consumerDir, packed[0].filename),
+            'svelte@5.57.1'
+        ],
+        { cwd: consumerDir, stdio: ['ignore', 'pipe', 'pipe'] }
+    )
+    try {
+        await access(join(consumerDir, 'node_modules/@humanspeak/svelte-motion'))
+        throw new Error('No-peer consumer unexpectedly installed Motion')
+    } catch (error) {
+        if (error.code !== 'ENOENT') throw error
+    }
+    for (const testCase of cases.slice(0, 3))
+        await buildCase({ ...testCase, name: `no-peer ${testCase.name}` }, consumerDir)
+    let missingPeer = false
+    try {
+        await buildCase(cases[3], consumerDir)
+    } catch (error) {
+        if (!String(error).includes('@humanspeak/svelte-motion')) throw error
+        missingPeer = true
+    }
+    if (!missingPeer) throw new Error('Preset subpath must fail normal resolution without Motion')
+    console.log(
+        '✓ isolated installed package: core/headless work; presets require the optional peer'
+    )
+} finally {
+    await rm(consumerDir, { force: true, recursive: true })
 }

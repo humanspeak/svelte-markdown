@@ -31,7 +31,7 @@
         "@cloudflare/workers-types": "^5.20260923.1",
         "@eslint/compat": "^2.1.1",
         "@eslint/js": "^10.0.1",
-        "@humanspeak/svelte-motion": "^1.2.1",
+        "@humanspeak/svelte-motion": "^2.0.1-0",
         "@icons-pack/svelte-simple-icons": "^7.2.0",
         "@lucide/svelte": "^1.47.0",
         "@sveltejs/adapter-cloudflare": "^7.2.9",

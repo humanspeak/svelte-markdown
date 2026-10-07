@@ -1,5 +1,6 @@
 import { render } from '@testing-library/svelte'
 import { describe, expect, it } from 'vitest'
+import Consumer from '../../test/streaming-text/MotionConsumer.svelte'
 import type { StreamingTextMetadata } from '../../types.js'
 import { FadeCharacters, FadeWords, RiseWords } from './index.js'
 const baseline: StreamingTextMetadata = {
@@ -57,5 +58,59 @@ describe('optional motion presets', () => {
         expect(
             render(FadeWords, { text: 'a' }).container.querySelector('span')?.style.display
         ).toBe('')
+    })
+})
+
+describe('consumer motion controls', () => {
+    const arrival = (change: 'append' | 'revision'): StreamingTextMetadata => ({
+        ...baseline,
+        renderBatchId: 1,
+        ranges: [{ ...baseline.ranges[0], change, batchId: 1 }]
+    })
+    it('runs the consumer segment snippet in place of preset markup', () => {
+        const { container } = render(Consumer, { text: 'a', streamingText: arrival('append') })
+        expect(container.textContent).toBe('a')
+        expect(container.querySelector('span')).toBeNull()
+        expect(container.querySelector('mark')?.getAttribute('data-new')).toBe('true')
+    })
+    it.each([FadeWords, RiseWords, FadeCharacters])(
+        'honors entrance overrides and explicit revision/initial opt-ins',
+        (preset) => {
+            const props = {
+                text: 'a',
+                streamingText: arrival('append'),
+                initial: { opacity: 0.25 },
+                animate: { opacity: 0.8 },
+                transition: { duration: 0 },
+                variants: { visible: { opacity: 0.8 } },
+                custom: 3
+            }
+            const entered = render(preset, props)
+            expect(entered.container.querySelector('span')?.style.opacity).toBe('0.25')
+            const revised = render(preset, { ...props, streamingText: arrival('revision') })
+            expect(revised.container.querySelector('span')?.style.opacity).not.toBe('0.25')
+            const optedRevision = render(preset, {
+                ...props,
+                streamingText: arrival('revision'),
+                animateRevisions: true
+            })
+            expect(optedRevision.container.querySelector('span')?.style.opacity).toBe('0.25')
+            const optedBaseline = render(preset, {
+                ...props,
+                streamingText: baseline,
+                animateInitialContent: true
+            })
+            expect(optedBaseline.container.querySelector('span')?.style.opacity).toBe('0.25')
+        }
+    )
+    it('does not animate unknown provenance and preserves custom segmentation', () => {
+        const { container } = render(FadeWords, {
+            text: 'a',
+            streamingText: { ...arrival('append'), provenance: 'unknown' },
+            initial: { opacity: 0 },
+            segmenter: (text) => [{ text, start: 0, end: text.length }]
+        })
+        expect(container.textContent).toBe('a')
+        expect(container.querySelector('span')?.style.opacity).not.toBe('0')
     })
 })

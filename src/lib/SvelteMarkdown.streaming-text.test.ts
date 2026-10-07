@@ -1,8 +1,11 @@
 import { act, render } from '@testing-library/svelte'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
 import Markdown from './test/streaming-text/Markdown.svelte'
+import Race from './test/streaming-text/Race.svelte'
 import { flushStreamingBatch, useStreamingTestHarness } from './test/streaming/harness.js'
+import { ProvenanceCollector } from './utils/streaming-provenance.js'
+import { StreamingTextLedger } from './utils/streaming-text.js'
 
 useStreamingTestHarness()
 const parts = (container: HTMLElement) => Array.from(container.querySelectorAll('span[data-id]'))
@@ -127,5 +130,74 @@ describe('streaming text metadata', () => {
         expect(
             words(container).every((node) => node.getAttribute('data-provenance') === 'exact')
         ).toBe(true)
+    })
+})
+
+describe('tracking lifecycle boundaries', () => {
+    it('resets arrival identities before a same-tick streamId/write', async () => {
+        const { container, component } = render(Race)
+        await act(() => component.write('old'))
+        await flushStreamingBatch()
+        const oldId = words(container)[0].getAttribute('data-id')
+        await act(() => component.switchAndWrite('new'))
+        await flushStreamingBatch()
+        expect(container.textContent).toBe('new')
+        expect(words(container)[0].getAttribute('data-id')).not.toBe(oldId)
+        expect(words(container)[0].getAttribute('data-new')).toBe('true')
+    })
+    it('discards tracking across streaming and async mode switches', async () => {
+        const { container, rerender } = render(Markdown, { source: 'old' })
+        await rerender({ source: 'old new' })
+        await flushStreamingBatch()
+        expect(words(container).at(-1)?.getAttribute('data-new')).toBe('true')
+        await rerender({ source: 'old new', streaming: false })
+        expect(words(container).every((node) => node.getAttribute('data-new') === 'false')).toBe(
+            true
+        )
+        await rerender({ source: 'old new', streaming: true })
+        expect(words(container).every((node) => node.getAttribute('data-new') === 'false')).toBe(
+            true
+        )
+        const warning = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        await rerender({
+            source: 'async',
+            streaming: true,
+            extensions: [{ async: true, walkTokens: async () => {} }]
+        })
+        await act(async () => {
+            await Promise.resolve()
+            await Promise.resolve()
+        })
+        expect(container.textContent).toBe('async')
+        expect(words(container).every((node) => node.getAttribute('data-new') === 'false')).toBe(
+            true
+        )
+        await rerender({ source: 'async', streaming: true, extensions: [] })
+        expect(words(container).every((node) => node.getAttribute('data-new') === 'false')).toBe(
+            true
+        )
+        warning.mockRestore()
+    })
+    it('never traverses a ledger or captures provenance unless tracking is enabled', async () => {
+        const prepare = vi.spyOn(StreamingTextLedger.prototype, 'prepare')
+        const capture = vi.spyOn(ProvenanceCollector.prototype, 'capture')
+        const { container, component } = render(SvelteMarkdown, { source: 'old', streaming: true })
+        await act(() => component.writeChunk(' new'))
+        await flushStreamingBatch()
+        expect(container.textContent).toBe('old new')
+        expect(Array.from(container.querySelectorAll('*'), (node) => node.tagName)).toEqual(['P'])
+        expect(prepare).not.toHaveBeenCalled()
+        expect(capture).not.toHaveBeenCalled()
+        prepare.mockRestore()
+        capture.mockRestore()
+    })
+    it('shrinking snapshots remove segments and a replacement seed starts baseline', async () => {
+        const { container, rerender } = render(Markdown, { source: 'same same' })
+        const ids = words(container).map((node) => node.getAttribute('data-id'))
+        expect(new Set(ids).size).toBe(2)
+        await rerender({ source: 'same' })
+        expect(words(container)).toHaveLength(1)
+        expect(words(container)[0].getAttribute('data-new')).toBe('false')
+        expect(words(container)[0].getAttribute('data-id')).not.toBe(ids[0])
     })
 })

@@ -901,6 +901,31 @@ Images automatically lazy load using native `loading="lazy"` and IntersectionObs
 <SvelteMarkdown source={markdown} {renderers} />
 ```
 
+### Optional streaming text segments and Motion
+
+Default rendering remains ordinary unwrapped text. `streamingText` (default `false`) enables immutable source arrival metadata only with synchronous `streaming`; animation requires an explicitly selected renderer or snippet.
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { FadeWords } from '@humanspeak/svelte-markdown/streaming/motion'
+    let source = $state('')
+    let streamId = $state(0)
+</script>
+
+<SvelteMarkdown {source} {streamId} streaming streamingText renderers={{ rawtext: FadeWords }} />
+```
+
+Install `@humanspeak/svelte-motion@^2.0.1-0` explicitly for the optional `streaming/motion` subpath. It exports `FadeWords` (opacity), `RiseWords` (opacity plus vertical rise), `FadeCharacters` (graphemes) and `StreamingMotionProps`. Motion is an optional peer; installing it alone enables nothing. Presets accept `enabled`, `animateRevisions`, `animateInitialContent`, `initial`, `animate`, `transition`, `variants`, `custom`, `locale`, `segmenter` and a complete markup replacement `segment` snippet. Whitespace stays literal; only RiseWords uses inline-block. Consumers control reduced motion via `enabled`.
+
+The core exports headless `StreamingText` with `text`, optional `metadata`, `granularity: 'word' | 'grapheme'` (word by default), `locale`, `segmenter`, and `segment: Snippet<[StreamingTextSegment]>`. Forward leaf/snippet `streamingText` into `metadata`. Without a snippet it emits escaped text without wrappers or segmentation. No Motion installation is required for core or headless use.
+
+`StreamingTextSegment` has readonly `id`, `text`, `index`, `start`, `end`, `isNew`, `batchId`, `batchIndex`, `isWhitespace` and `change: 'baseline' | 'append' | 'revision'`. Offsets are leaf-local UTF-16. Creation eligibility and batch fields persist while an unfinished word grows. `StreamingTextMetadata` has readonly `epoch`, `leafId`, `renderBatchId`, `provenance: 'exact' | 'unknown'` and readonly `ranges`. Each `StreamingTextRange` has readonly `start`, `end`, `originId`, `change`, `batchId` and `revealedBeforeBatch`. Other exported types are `StreamingTextProps`, `StreamingTextSpan`, `StreamingTextSegmenter`, `StreamingTextGranularity` and `StreamingTextChange`.
+
+First/reset content is baseline; appends are arrivals; offset overwrites are revisions. Structural remounts do not replay already revealed source characters. Unknown custom-transform provenance suppresses automatic entrances. Tracking is per instance and discarded on resets, replacements, mode changes and toggles. Unicode boundaries require `Intl.Segmenter` or validated custom spans covering the exact text; locale/segmentation changes rebaseline. Changed leaves are resegmented with full context; completed unchanged leaves stay cached. Segment DOM cost is opt-in, and long open blocks/full-parser fallbacks retain their existing costs. Code renderers are excluded.
+
+See the [streaming text API and complete prop/imperative, custom snippet, SSR and reduced-motion examples](https://markdown.svelte.page/docs/advanced/llm-streaming#optional-text-arrival-effects) and [executable demo with actual source](https://markdown.svelte.page/examples/llm-streaming).
+
 ### LLM Streaming
 
 For real-time rendering of AI responses from ChatGPT, Claude, Gemini, and other LLMs, enable the `streaming` prop. This uses a smart diff algorithm that re-parses the full source for correctness but only updates changed DOM nodes, keeping render times constant regardless of document size.

@@ -144,7 +144,7 @@
     "devDependencies": {
         "@eslint/compat": "^2.1.1",
         "@eslint/js": "^10.0.1",
-        "@humanspeak/svelte-motion": "^1.2.1",
+        "@humanspeak/svelte-motion": "^2.0.1-0",
         "@playwright/cli": "^0.1.21",
         "@playwright/test": "^1.63.0",
         "@sveltejs/adapter-auto": "^7.0.1",
@@ -186,7 +186,7 @@
         "vitest": "^5.0.1"
     },
     "peerDependencies": {
-        "@humanspeak/svelte-motion": "^1.2.1",
+        "@humanspeak/svelte-motion": "^2.0.1-0",
         "@tanstack/highlight": ">=0.1.0",
         "katex": ">=0.16.0",
         "mermaid": ">=10.0.0",

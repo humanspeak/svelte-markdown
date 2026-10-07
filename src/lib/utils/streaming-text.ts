@@ -158,15 +158,11 @@ export class StreamingTextSegments {
         policyChanged: boolean
     ): void {
         if (this.text !== text || policyChanged || this.granularity === undefined) {
-            // Intl boundaries before the final segment remain stable for append-only input.
-            const append =
-                !policyChanged && !custom && this.text !== undefined && text.startsWith(this.text)
-            const tailStart = append ? (this.spans.at(-1)?.start ?? 0) : 0
-            this.counters.segmentationInputUnits += text.length - tailStart
-            const tail = segmentText(text.slice(tailStart), granularity, locale, custom).map(
-                (span) => ({ ...span, start: span.start + tailStart, end: span.end + tailStart })
-            )
-            this.spans = [...this.spans.filter((span) => span.end <= tailStart), ...tail]
+            // Appends can change earlier word boundaries or join a dangling UTF-16
+            // surrogate to a preceding regional indicator cluster. Resegment the
+            // changed leaf; completed unchanged leaves remain cached above.
+            this.counters.segmentationInputUnits += text.length
+            this.spans = segmentText(text, granularity, locale, custom)
             this.text = text
             this.granularity = granularity
             this.locale = locale
