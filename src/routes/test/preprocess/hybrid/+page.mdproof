@@ -1,0 +1,41 @@
+---
+title: Hybrid preprocessor proof
+---
+<script lang="ts">
+    import TypedCounter from './TypedCounter.svelte'
+    const { data }: { data: { greeting: string, start: number } } = $props()
+    let changes = $state(0)
+</script>
+
+# Build-time markdown, runtime renderers
+
+{#snippet greeting(text)}
+    <p data-testid="load-greeting">{text}</p>
+{/snippet}
+
+This **bold text**, [reference link][shared], and table use our existing renderer.
+
+| Stage | Owner |
+| --- | --- |
+| Parsing | Build |
+| Rendering | SvelteMarkdown |
+
+<section data-testid="compiled-island">
+    <h2>Compiled Svelte</h2>
+    {@render greeting(data.greeting)}
+    <TypedCounter start={data.start} details={{ label: 'typed object' }} onchange={() => changes++} />
+    <p data-testid="parent-changes">Parent updates: {changes}</p>
+    {#if changes > 0}<p data-testid="conditional">Compiled control flow works</p>{/if}
+</section>
+
+Inline page data: **{`${data.greeting}`}**.
+
+## Markdown after the compiled island
+
+This second [reference link][shared] shares definitions with the first.
+
+```svelte
+<Counter start={6} />
+```
+
+[shared]: https://example.com/proof "shared definition"
