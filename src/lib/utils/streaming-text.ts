@@ -1,6 +1,8 @@
 import type {
+    StreamingTextChange,
     StreamingTextGranularity,
     StreamingTextMetadata,
+    StreamingTextRange,
     StreamingTextSegment,
     StreamingTextSegmenter,
     StreamingTextSpan
@@ -56,6 +58,45 @@ export function segmentText(
     return spans
 }
 
+function getSegmentId(
+    span: StreamingTextSpan,
+    anchor: StreamingTextRange | undefined,
+    metadata: StreamingTextMetadata | undefined,
+    granularity: StreamingTextGranularity,
+    locale: string | undefined
+): string {
+    return `${metadata?.epoch ?? 0}:${granularity}:${locale ?? ''}:${anchor?.originId ?? `${metadata?.leafId ?? 'plain'}:${span.start}`}`
+}
+
+function getMappedView(
+    occurrence: ProvenanceNode | undefined,
+    text: string
+): MappedView | undefined {
+    if (occurrence?.text?.value === text) return occurrence.text
+    if (occurrence?.raw?.value === text) return occurrence.raw
+    return undefined
+}
+
+function getRangeChange(ranges: readonly StreamingTextRange[]): StreamingTextChange {
+    if (ranges.some((range) => range.change === 'revision')) return 'revision'
+    if (ranges.some((range) => range.change === 'baseline')) return 'baseline'
+    return ranges[0]?.change ?? 'baseline'
+}
+
+function isNewSegment(
+    ranges: readonly StreamingTextRange[],
+    change: StreamingTextChange,
+    policyChanged: boolean,
+    currentBatch: number | undefined
+): boolean {
+    return (
+        !policyChanged &&
+        change === 'append' &&
+        ranges.length > 0 &&
+        ranges.every((range) => !range.revealedBeforeBatch && range.batchId === currentBatch)
+    )
+}
+
 /** One reconciler per mounted helper. Creation fields survive updates, never remounts. */
 export class StreamingTextSegments {
     private text: string | undefined
@@ -77,6 +118,45 @@ export class StreamingTextSegments {
         const policyChanged =
             this.granularity !== undefined &&
             (this.granularity !== granularity || this.locale !== locale || this.custom !== custom)
+        this.updateSpans(text, granularity, locale, custom, policyChanged)
+        const next = new Map<string, StreamingTextSegment>()
+        const batches = new Map<number, number>()
+        let rangeCursor = 0
+        const sourceRanges = metadata?.provenance === 'exact' ? metadata.ranges : []
+        const parts = this.spans.map((span, index) => {
+            while (rangeCursor < sourceRanges.length && sourceRanges[rangeCursor].end <= span.start)
+                rangeCursor++
+            const ranges = []
+            for (
+                let cursor = rangeCursor;
+                cursor < sourceRanges.length && sourceRanges[cursor].start < span.end;
+                cursor++
+            )
+                ranges.push(sourceRanges[cursor])
+            const part = this.createSegment(
+                span,
+                index,
+                ranges,
+                metadata,
+                granularity,
+                locale,
+                policyChanged,
+                batches,
+                currentBatch
+            )
+            next.set(part.id, part)
+            return part
+        })
+        this.previous = next
+        return parts
+    }
+    private updateSpans(
+        text: string,
+        granularity: StreamingTextGranularity,
+        locale: string | undefined,
+        custom: StreamingTextSegmenter | undefined,
+        policyChanged: boolean
+    ): void {
         if (this.text !== text || policyChanged || this.granularity === undefined) {
             // Intl boundaries before the final segment remain stable for append-only input.
             const append =
@@ -92,59 +172,46 @@ export class StreamingTextSegments {
             this.locale = locale
             this.custom = custom
         }
-        const next = new Map<string, StreamingTextSegment>()
-        const batches = new Map<number, number>()
-        let rangeCursor = 0
-        const sourceRanges = metadata?.provenance === 'exact' ? metadata.ranges : []
-        const parts = this.spans.map((span, index) => {
-            while (rangeCursor < sourceRanges.length && sourceRanges[rangeCursor].end <= span.start)
-                rangeCursor++
-            const ranges = []
-            for (
-                let cursor = rangeCursor;
-                cursor < sourceRanges.length && sourceRanges[cursor].start < span.end;
-                cursor++
-            )
-                ranges.push(sourceRanges[cursor])
-            const anchor = ranges[0]
-            const id = `${metadata?.epoch ?? 0}:${granularity}:${locale ?? ''}:${anchor?.originId ?? `${metadata?.leafId ?? 'plain'}:${span.start}`}`
-            const old = policyChanged ? undefined : this.previous.get(id)
-            const batchId = old?.batchId ?? anchor?.batchId ?? 0
-            const batchIndex = old?.batchIndex ?? batches.get(batchId) ?? 0
-            batches.set(batchId, batchIndex + 1)
-            const change = ranges.some((range) => range.change === 'revision')
-                ? 'revision'
-                : ranges.some((range) => range.change === 'baseline')
-                  ? 'baseline'
-                  : (anchor?.change ?? 'baseline')
-            const part: StreamingTextSegment = Object.freeze({
-                ...span,
-                id,
-                index,
-                isWhitespace: /^\s+$/u.test(span.text),
-                change: old?.change ?? change,
-                isNew:
-                    old?.isNew ??
-                    (!policyChanged &&
-                        change === 'append' &&
-                        ranges.length > 0 &&
-                        ranges.every(
-                            (range) => !range.revealedBeforeBatch && range.batchId === currentBatch
-                        )),
-                batchId,
-                batchIndex
-            })
-            next.set(id, part)
-            return part
+    }
+
+    private createSegment(
+        span: StreamingTextSpan,
+        index: number,
+        ranges: readonly StreamingTextRange[],
+        metadata: StreamingTextMetadata | undefined,
+        granularity: StreamingTextGranularity,
+        locale: string | undefined,
+        policyChanged: boolean,
+        batches: Map<number, number>,
+        currentBatch: number | undefined
+    ): StreamingTextSegment {
+        const anchor = ranges[0]
+        const id = getSegmentId(span, anchor, metadata, granularity, locale)
+        const old = policyChanged ? undefined : this.previous.get(id)
+        const batchId = old?.batchId ?? anchor?.batchId ?? 0
+        const batchIndex = old?.batchIndex ?? batches.get(batchId) ?? 0
+        batches.set(batchId, batchIndex + 1)
+        const change = getRangeChange(ranges)
+        return Object.freeze({
+            ...span,
+            id,
+            index,
+            isWhitespace: /^\s+$/u.test(span.text),
+            change: old?.change ?? change,
+            isNew: old?.isNew ?? isNewSegment(ranges, change, policyChanged, currentBatch),
+            batchId,
+            batchIndex
         })
-        this.previous = next
-        return parts
     }
 }
 
-import type { StreamingTextChange, StreamingTextRange } from '../types.js'
 import type { Token } from './markdown-parser.js'
-import type { ProvenanceCollector, ProvenanceNode } from './streaming-provenance.js'
+import type {
+    MappedView,
+    MappingRun,
+    ProvenanceCollector,
+    ProvenanceNode
+} from './streaming-provenance.js'
 
 interface SourcePiece {
     start: number
@@ -166,10 +233,10 @@ export class StreamingTextLedger {
     batchId = 0
     readonly counters = { projectedLeaves: 0, projectedUnits: 0, visitedNodes: 0, sourceUnits: 0 }
 
-    constructor(
-        readonly epoch: number,
-        source = ''
-    ) {
+    readonly epoch: number
+
+    constructor(epoch: number, source = '') {
+        this.epoch = epoch
         this.source = source
         this.add(0, source.length, 'baseline')
     }
@@ -298,6 +365,51 @@ export class StreamingTextLedger {
         for (const origin of pending)
             if (!this.revealed.has(origin)) this.revealed.set(origin, this.batchId)
     }
+    private getContributors(run: MappingRun, output: number): { id: string; piece: SourcePiece }[] {
+        const sources =
+            run.mode === 'copy'
+                ? [
+                      {
+                          start: run.sources[0].start + output - run.outputStart,
+                          end: run.sources[0].start + output - run.outputStart + 1
+                      }
+                  ]
+                : run.sources
+        const contributors: { id: string; piece: SourcePiece }[] = []
+        for (const span of sources) {
+            for (let position = span.start; position < span.end; position++) {
+                const piece = this.locate(position)
+                if (piece) contributors.push({ id: this.origin(piece, position), piece })
+            }
+        }
+        return contributors
+    }
+
+    private projectRange(
+        run: MappingRun,
+        output: number,
+        contributors: readonly { id: string; piece: SourcePiece }[]
+    ): StreamingTextRange | undefined {
+        const anchor = contributors[0]
+        if (!anchor) return undefined
+        const change = contributors.some(({ piece }) => piece.change === 'revision')
+            ? 'revision'
+            : contributors.some(({ piece }) => piece.change === 'baseline')
+              ? 'baseline'
+              : 'append'
+        const revealedBeforeBatch = contributors.some(({ id }) => this.revealed.has(id))
+        return Object.freeze({
+            start: output,
+            end: output + 1,
+            originId: `${anchor.id}${run.mode === 'copy' ? '' : `:out:${output - run.outputStart}`}`,
+            change,
+            batchId: revealedBeforeBatch
+                ? Math.min(...contributors.map(({ id }) => this.revealed.get(id) ?? this.batchId))
+                : this.batchId,
+            revealedBeforeBatch
+        })
+    }
+
     private project(
         node: object,
         occurrence: ProvenanceNode | undefined,
@@ -305,59 +417,16 @@ export class StreamingTextLedger {
         pending: Set<string>
     ): void {
         this.counters.projectedLeaves++
-        const view =
-            occurrence?.text?.value === text
-                ? occurrence.text
-                : occurrence?.raw?.value === text
-                  ? occurrence.raw
-                  : undefined
+        const view = getMappedView(occurrence, text)
         const ranges: StreamingTextRange[] = []
         if (occurrence?.exact && view) {
             for (const run of view.runs) {
                 for (let output = run.outputStart; output < run.outputEnd; output++) {
                     this.counters.projectedUnits++
-                    const sources =
-                        run.mode === 'copy'
-                            ? [
-                                  {
-                                      start: run.sources[0].start + output - run.outputStart,
-                                      end: run.sources[0].start + output - run.outputStart + 1
-                                  }
-                              ]
-                            : run.sources
-                    const contributors: { id: string; piece: SourcePiece }[] = []
-                    for (const span of sources) {
-                        for (let position = span.start; position < span.end; position++) {
-                            const piece = this.locate(position)
-                            if (piece)
-                                contributors.push({ id: this.origin(piece, position), piece })
-                        }
-                    }
-                    const anchor = contributors[0]
-                    if (!anchor) continue
-                    const change = contributors.some(({ piece }) => piece.change === 'revision')
-                        ? 'revision'
-                        : contributors.some(({ piece }) => piece.change === 'baseline')
-                          ? 'baseline'
-                          : 'append'
-                    ranges.push(
-                        Object.freeze({
-                            start: output,
-                            end: output + 1,
-                            originId: `${anchor.id}${run.mode === 'copy' ? '' : `:out:${output - run.outputStart}`}`,
-                            change,
-                            batchId: contributors.some(({ id }) => this.revealed.has(id))
-                                ? Math.min(
-                                      ...contributors.map(
-                                          ({ id }) => this.revealed.get(id) ?? this.batchId
-                                      )
-                                  )
-                                : this.batchId,
-                            revealedBeforeBatch: contributors.some(({ id }) =>
-                                this.revealed.has(id)
-                            )
-                        })
-                    )
+                    const contributors = this.getContributors(run, output)
+                    const range = this.projectRange(run, output, contributors)
+                    if (!range) continue
+                    ranges.push(range)
                     contributors.forEach(({ id }) => pending.add(id))
                 }
             }

@@ -259,6 +259,22 @@
         // copy is the only O(n) copy per update. When the rendered array is
         // the one the parser returned last, its reused prefix is already the
         // rendered objects and is skipped (plan 011).
+        adoptStreamingTokens(newTokens, reuseMode, divergeAt, reusedPrefixCount)
+        if (textCollector && occurrences && textLedger) {
+            const start = reuseMode === 'prefix' ? divergeAt : 0
+            textCollector.bind(streamTokens, occurrences, start)
+            textLedger.prepare(streamTokens, textCollector, start)
+        }
+        lastParserTokens = newTokens
+        updateStreamingRenderMetadataStart(reuseMode, divergeAt, divergeOffset)
+    }
+
+    const adoptStreamingTokens = (
+        newTokens: Token[],
+        reuseMode: 'prefix' | 'tree' | 'none',
+        divergeAt: number,
+        reusedPrefixCount: number
+    ) => {
         if (reuseMode === 'prefix') {
             const identicalPrefix = streamTokens === lastParserTokens ? reusedPrefixCount : 0
             streamTokens = reuseStableTokenArrayInPlace(
@@ -272,12 +288,13 @@
         } else {
             streamTokens = newTokens
         }
-        if (textCollector && occurrences && textLedger) {
-            const start = reuseMode === 'prefix' ? divergeAt : 0
-            textCollector.bind(streamTokens, occurrences, start)
-            textLedger.prepare(streamTokens, textCollector, start)
-        }
-        lastParserTokens = newTokens
+    }
+
+    const updateStreamingRenderMetadataStart = (
+        reuseMode: 'prefix' | 'tree' | 'none',
+        divergeAt: number,
+        divergeOffset: number | undefined
+    ) => {
         const canSkipRenderMetadataPrefix = reuseMode === 'prefix' && divergeOffset !== undefined
         const startIndex = canSkipRenderMetadataPrefix ? divergeAt : 0
         if (streamRenderMetadataConsumed || startIndex < streamRenderMetadataStartIndex) {

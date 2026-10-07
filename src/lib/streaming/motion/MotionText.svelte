@@ -15,7 +15,7 @@
         custom,
         locale,
         segmenter,
-        segment,
+        segment: renderSegment,
         granularity,
         rise = false
     }: MotionTextProps = $props()
@@ -24,8 +24,8 @@
 {#if enabled}
     <StreamingText {text} metadata={streamingText} {granularity} {locale} {segmenter}>
         {#snippet segment(part)}
-            {#if segment}
-                {@render segment(part)}
+            {#if renderSegment}
+                {@render renderSegment(part)}
             {:else if part.isWhitespace}
                 {part.text}
             {:else}
