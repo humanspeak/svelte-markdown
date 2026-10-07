@@ -123,3 +123,13 @@ implementation before parity review. Default behavior/requirements unchanged.
   attribution is unproved. Repeated-failure STOP honored; no further source edits.
 - NO-PASS: obtain a clean full-suite run or diagnose the heading interaction
   against baseline under an approved scope before changing acceptance/status.
+
+## 2026-10-07 — PLAN AMENDED — bounded readiness repairs
+
+Operator asked to dig into the heading blocker. Report 009 reproduces lost
+pre-hydration clicks and lazy-image src readiness on both baseline and feature
+HEAD. Reviewed diagnostic scripts: route-module gate holds hydration while the
+real SSR button accepts clicks; after onMount, exact 2,000 heading IDs pass.
+Approve bounded benchmark readiness signal and E2E synchronization, plus awaited
+exact image src assertion. Preserve original acceptance criteria and timeouts.
+This addresses baseline test preconditions, not heading parser semantics.

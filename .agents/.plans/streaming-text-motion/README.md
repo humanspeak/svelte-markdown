@@ -6,9 +6,9 @@ using @humanspeak/svelte-motion. This is a focused feature plan, not a full audi
 
 ## Execution order and status
 
-| Plan                                             | Title                                               | Priority | Effort | Depends on | Status                                                              |
-| ------------------------------------------------ | --------------------------------------------------- | -------- | ------ | ---------- | ------------------------------------------------------------------- |
-| [001](001-streaming-text-api-and-motion-docs.md) | Headless segments, optional preset exports and docs | P1       | L      | None       | BLOCKED — implementation committed; full E2E heading scenario fails |
+| Plan                                             | Title                                               | Priority | Effort | Depends on | Status                                                            |
+| ------------------------------------------------ | --------------------------------------------------- | -------- | ------ | ---------- | ----------------------------------------------------------------- |
+| [001](001-streaming-text-api-and-motion-docs.md) | Headless segments, optional preset exports and docs | P1       | L      | None       | IN PROGRESS — baseline readiness races diagnosed; bounded repairs |
 
 Status values: TODO, IN PROGRESS, DONE, BLOCKED (reason), REJECTED (reason).
 Execute the single plan in step order: bookkeeping proof, helper, integration,
@@ -118,3 +118,10 @@ received idle. Executor's prior runs also each failed a different unchanged test
 Unchanged tests do not prove a baseline defect; no coverage, assertions or
 projects were weakened. Verdict NO-PASS, no PR/push, batch remains active.
 See the guard report and verbatim reports 007/008 for evidence and next action.
+
+## Readiness investigation
+
+Operator requested deeper investigation. Sol reproduced lost clicks before
+hydration on baseline c2ca115 and feature HEAD with exact heading IDs after
+readiness; independently reproduced lazy-image src race. Bounded fixture/test
+repairs are now in scope. Report 009 preserves evidence; no pass claimed yet.

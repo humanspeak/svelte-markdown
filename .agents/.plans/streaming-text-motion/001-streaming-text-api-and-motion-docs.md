@@ -5,7 +5,7 @@
 > Update the adjacent README status after completion. This is a single selected
 > feature plan, not a general repository audit.
 >
-> Drift check: `git diff --stat 5519119..HEAD -- src/lib src/routes tests docs/src README.md scripts/tree-shaking.mjs`
+> Drift check: `git diff --stat c731780..HEAD -- src/lib src/routes tests docs/src README.md scripts/tree-shaking.mjs`
 > Compare the excerpts below with live code if any scoped file changed.
 
 > Revision 2026-10-05: Operator approved expanding the investigation to parser
@@ -43,6 +43,18 @@
 > provenance behavior intact. Executor may run install/tests in this full-access
 > worktree, but must not commit or edit .agents; parent maintains plan artifacts.
 
+> Revision 2026-10-07: Operator requested investigation of the full-E2E blocker.
+> Sol's controlled module-delivery probes reproduce the lost pre-hydration click
+> on both baseline c2ca115 and feature HEAD, with correct IDs after readiness.
+> Add bounded benchmark readiness synchronization and regression coverage in
+> src/routes/test/perf-bench/+page.svelte and tests/heading-metadata.test.ts.
+> The separately reproduced baseline issue-192 lazy-image race may be corrected
+> in tests/issues/issue-192.test.ts by awaiting the exact expected src attribute.
+> Preserve original heading count/ID and image URL assertions and timeouts.
+> No parser/product feature changes are authorized by these test repairs.
+> Rebaseline to c731780 (committed feature snapshot) and resume the failed gate
+> after readiness corrections. Prior repeated-failure stop remains recorded.
+
 ## Status
 
 - Priority: P1
@@ -50,7 +62,7 @@
 - Risk: HIGH (stream identity, Unicode segmentation, SSR, parser performance)
 - Depends on: none
 - Category: direction
-- Planned at: commit `5519119`, 2026-10-07
+- Planned at: commit `c731780`, 2026-10-07
 
 ## Why this matters
 
@@ -296,6 +308,8 @@ Only modify:
 - `src/lib/SvelteMarkdown.streaming-text.test.ts` and fixtures under
   `src/lib/test/streaming-text/` (new).
 - `src/lib/snippet-props.test.ts` and `src/lib/test/snippets/` for rawtext delivery.
+- `src/routes/test/perf-bench/+page.svelte`, `tests/heading-metadata.test.ts`,
+  `tests/issues/issue-192.test.ts` only for verified readiness races and regressions.
 - `src/routes/streaming-text/+page.svelte`, `tests/streaming-text.test.ts` (new).
 - `src/lib/streaming/motion/index.ts`, `FadeWords.svelte`, `RiseWords.svelte`,
   `FadeCharacters.svelte`, and preset implementation/tests under that folder (new).
