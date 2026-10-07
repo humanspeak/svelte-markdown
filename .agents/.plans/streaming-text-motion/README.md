@@ -6,9 +6,9 @@ using @humanspeak/svelte-motion. This is a focused feature plan, not a full audi
 
 ## Execution order and status
 
-| Plan                                             | Title                                               | Priority | Effort | Depends on | Status                                                                         |
-| ------------------------------------------------ | --------------------------------------------------- | -------- | ------ | ---------- | ------------------------------------------------------------------------------ |
-| [001](001-streaming-text-api-and-motion-docs.md) | Headless segments, optional preset exports and docs | P1       | L      | None       | BLOCKED — Motion container emits whitespace; separate-repo fix approval needed |
+| Plan                                             | Title                                               | Priority | Effort | Depends on | Status                                                             |
+| ------------------------------------------------ | --------------------------------------------------- | -------- | ------ | ---------- | ------------------------------------------------------------------ |
+| [001](001-streaming-text-api-and-motion-docs.md) | Headless segments, optional preset exports and docs | P1       | L      | None       | IN PROGRESS — verify published Motion 2.0.1-0 and finish Steps 2–5 |
 
 Status values: TODO, IN PROGRESS, DONE, BLOCKED (reason), REJECTED (reason).
 Execute the single plan in step order: bookkeeping proof, helper, integration,
@@ -86,3 +86,15 @@ container template and confirmed published 2.0.0 retains that template. A separa
 Motion fix is recommended; approval needed for that repository scope. Parent also
 reproduced an in-scope incremental word boundary defect for can' → can't. Docs,
 README, E2E fixture and final gates remain outstanding. No feature PASS.
+
+## Resumed 2026-10-07
+
+Operator supplied published @humanspeak/svelte-motion 2.0.1-0 addressing
+[upstream issue 498](https://github.com/humanspeak/svelte-motion/issues/498).
+Resolution is pending local runtime verification. This thread now works on
+feat/streaming-text-motion-resume in an isolated worktree. The previous feature
+branch already held checkpoint 04a7afe, including all provisional sources and
+report 005. Applying the identified stash conflicted only with checkpoint
+formatting; committed versions were retained after comparison. Stash is retained.
+The plan authorizes root/docs Motion dependency updates to the supplied prerelease,
+word-boundary correction, and completion of remaining API/presets/docs/gates.

@@ -68,7 +68,7 @@ implementation before parity review. Default behavior/requirements unchanged.
 
 - Executor Steps 2–5 incomplete; source diff preserved, no docs/README/E2E fixture
   yet. Verbatim report preserved in 005-api-presets-implementation-report.md.
-- Parent reproduced preset suite: four pass/four fail. Single a renders `a `;
+- Parent reproduced preset suite: four pass/four fail. Single a renders `"a "`;
   grapheme text gains a trailing space for every MotionSpan.
 - Read installed MotionSpan/_MotionContainer sources and compiled container with
   Svelte compiler: original root is from_html(`<!> <!>`); adjacent element/html
@@ -82,3 +82,28 @@ implementation before parity review. Default behavior/requirements unchanged.
   Keep core default semantics and exact-text assertions unchanged; no trimming,
   manual DOM whitespace removal or weakened test. Helper fix stays in current
   approved scope. No source authored by parent; no final PASS/commit/PR.
+
+## 2026-10-07 — PLAN AMENDED — resume after upstream publication
+
+- Snapshot: 04a7afe (previous provisional implementation checkpoint; not a PASS).
+- Operator authorized using published Motion 2.0.1-0 to move the feature forward.
+- Rebaseline remaining work to checkpoint; authorize scoped root/docs dependency
+  updates, retain all correctness/gate requirements, and require whitespace verification.
+- Preserve stash after comparing checkpoint contents; isolated worktree avoids
+  unrelated issue-372 checkout. Word segmentation can' → can't remains a required fix.
+- Next: Sol execution of remaining Steps 2–5; parent independently verifies.
+
+- Plan-only amendment commit was attempted through normal hooks; Trunk rejected
+  lint defects in checkpoint source (complexity, duplicate import, unused props).
+  Parent corrected the log's code-span formatting; source repair is delegated
+  to Sol before retrying the amendment commit. No hooks bypassed.
+
+## 2026-10-07 — ON TRACK — prerequisite lint repair checkpoint
+
+- Snapshot: 5519119; only three authorized source files changed.
+- Full diff read: extracted adoption/projection helpers preserve logic; Motion
+  consumer snippet alias corrects shadowing instead of suppressing a lint rule.
+- Parent reproduced 125 focused non-preset tests passing and pnpm check with
+  zero errors, three existing warnings; normal commit hooks passed Trunk and types.
+- Known Motion 1.2.1 whitespace and incremental word segmentation remain unresolved.
+- Plan rebaselined to 5519119 for resumed implementation. This is not a feature PASS.

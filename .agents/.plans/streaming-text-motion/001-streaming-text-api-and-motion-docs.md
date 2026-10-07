@@ -5,7 +5,7 @@
 > Update the adjacent README status after completion. This is a single selected
 > feature plan, not a general repository audit.
 >
-> Drift check: `git diff --stat 65a13ee..HEAD -- src/lib src/routes tests docs/src README.md scripts/tree-shaking.mjs`
+> Drift check: `git diff --stat 5519119..HEAD -- src/lib src/routes tests docs/src README.md scripts/tree-shaking.mjs`
 > Compare the excerpts below with live code if any scoped file changed.
 
 > Revision 2026-10-05: Operator approved expanding the investigation to parser
@@ -29,6 +29,20 @@
 > remaining implementation. Steps 0–1 are complete; proceed with Steps 2–5.
 > Keep provenance regressions passing and preserve scoped additive metadata.
 
+> Revision 2026-10-07: Operator supplied published Motion 2.0.1-0 to resume
+> implementation after upstream issue 498. Update the root optional peer and
+> devDependency, docs Motion dependency and scoped lockfile to the fixed prerelease;
+> verify exact text preservation before finishing Steps 2–5. This dependency update
+> is authorized and supersedes the installed-version STOP condition for this version.
+> Runtime compatibility remains a verification gate. Lint repairs were reviewed at
+> 5519119 after 125 focused tests, zero type errors and normal hooks passed.
+> Provisional source was snapshot
+> committed at 04a7afe; it is not accepted as complete. Correct the known incremental
+> word segmentation defect (can' → can't) with regression coverage and preserve
+> completed-leaf caching. Rebaseline to this existing checkpoint; keep accepted
+> provenance behavior intact. Executor may run install/tests in this full-access
+> worktree, but must not commit or edit .agents; parent maintains plan artifacts.
+
 ## Status
 
 - Priority: P1
@@ -36,7 +50,7 @@
 - Risk: HIGH (stream identity, Unicode segmentation, SSR, parser performance)
 - Depends on: none
 - Category: direction
-- Planned at: commit `65a13ee`, 2026-10-05
+- Planned at: commit `5519119`, 2026-10-07
 
 ## Why this matters
 
@@ -285,6 +299,7 @@ Only modify:
 - `src/routes/streaming-text/+page.svelte`, `tests/streaming-text.test.ts` (new).
 - `src/lib/streaming/motion/index.ts`, `FadeWords.svelte`, `RiseWords.svelte`,
   `FadeCharacters.svelte`, and preset implementation/tests under that folder (new).
+- `docs/package.json` for the explicitly authorized Motion prerelease update.
 - `package.json` for the isolated streaming/motion export, optional Motion peer
   and test-only devDependency; `pnpm-lock.yaml` for these scoped changes only.
 - `scripts/tree-shaking.mjs` for core isolation and preset import assertions.
