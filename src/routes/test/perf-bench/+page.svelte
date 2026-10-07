@@ -340,6 +340,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
     let source = $state('')
     let previewEl: HTMLDivElement | undefined = $state()
     let markdown: ImperativeMarkdownHandle | undefined = $state()
+    let ready = $state(false)
     let scenario = $state<string>('idle')
 
     let stat = $state({
@@ -1337,6 +1338,8 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         }, 250)
         cleanups.push(() => clearInterval(refreshHandle))
 
+        ready = true
+
         return () => {
             for (const fn of cleanups) fn()
         }
@@ -1394,6 +1397,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         </button>
         <button
             data-testid="parse-heading-heavy"
+            disabled={!ready}
             onclick={() => runDocScenario('parse-heading-heavy', generateHeadingHeavy(2_000))}
         >
             Parse 2,000 headings
@@ -1418,7 +1422,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         <button
             data-testid="stream-large"
             onclick={() => runStreamingLarge()}
-            disabled={isStreaming}
+            disabled={!ready || isStreaming}
         >
             {isStreaming ? 'Streaming…' : 'Stream large'}
         </button>
@@ -1486,7 +1490,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         </div>
     {/if}
 
-    <div class="stats" data-testid="perf-stats">
+    <div class="stats" data-testid="perf-stats" data-ready={ready}>
         scenario={scenario} srcKb={stat.srcKb} tokenCount={stat.tokenCount} parseColdMs={stat.parseColdMs}
         parseWarmMs={stat.parseWarmMs} lexMs={stat.lexMs} cleanupMs={stat.cleanupMs} hashMs={stat.hashMs}
         firstPaintMs={stat.firstPaintMs} renderOnlyMs={stat.renderOnlyMs} domNodes={stat.domNodes}
