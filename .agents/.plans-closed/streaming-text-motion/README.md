@@ -1,5 +1,9 @@
 # Streaming text and Motion implementation plan
 
+> CLOSED 2026-10-07 — PASS. Headless streaming text API, optional Motion presets,
+> docs and readiness regressions delivered; parent verified 1,564 unit and 620
+> E2E tests with all gates passing. No PR requested; branch ready for review.
+
 Generated with improve on 2026-10-05, against fresh origin/main `c2ca115`.
 The user selected a headless streaming text API plus optional predefined renderer exports and documentation examples
 using @humanspeak/svelte-motion. This is a focused feature plan, not a full audit.
