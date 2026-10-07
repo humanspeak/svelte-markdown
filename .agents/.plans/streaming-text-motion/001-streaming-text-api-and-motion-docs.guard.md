@@ -133,3 +133,16 @@ real SSR button accepts clicks; after onMount, exact 2,000 heading IDs pass.
 Approve bounded benchmark readiness signal and E2E synchronization, plus awaited
 exact image src assertion. Preserve original acceptance criteria and timeouts.
 This addresses baseline test preconditions, not heading parser semantics.
+
+## 2026-10-07 — ON TRACK — final PASS after readiness repair
+
+- Snapshot: 10838d0; source repairs confined to approved benchmark/test files.
+- Parent read full diff: readiness reflects onMount, controls disabled before
+  mount, regression gates real route modules; all original heading IDs, image
+  URL assertions and timeouts retained. No parser/feature changes.
+- Normal source commit hooks pass. Parent final production build/publint pass.
+- Parent full E2E: 620 passed (five projects), exit 0, no retries, 2.3 minutes.
+- Prior parent 1,564 full unit tests/coverage remain valid: no library source
+  changes after that run. Docs/types/bundle/no-peer/preview gates already passed.
+- PASS report replaces previous NO-PASS; historical blocked checkpoints retained.
+- No PR/push/merge. Own preview server stopped; batch ready for retirement.

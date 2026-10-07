@@ -1,61 +1,68 @@
 # Streaming text motion — final guard report
 
-Verdict: **NO-PASS** (2026-10-07). Implementation snapshot: `c731780`.
+Verdict: **PASS** (2026-10-07). Final source snapshot: `10838d0`;
+feature implementation: `c731780`. No PR, push or merge performed.
 
-## Delivered
+## Delivered behavior
 
-Default core rendering stays unchanged. Streaming text tracking and the headless
-StreamingText helper are explicit opt-ins. FadeWords, RiseWords and FadeCharacters
-are isolated in streaming/motion, using optional Motion ^2.0.1-0. Consumer snippets
-and Motion props control presentation. README, runnable docs, Unicode/revision/
-remount/lifecycle tests and packaging proofs are included. Motion's whitespace
-fix and the can' → can't segmentation correction were independently verified.
+Default core rendering stays unchanged. Consumers opt into streamingText
+bookkeeping and use the headless StreamingText helper or explicitly import
+FadeWords, RiseWords or FadeCharacters from streaming/motion. Motion ^2.0.1-0
+is an optional peer and must be installed for presets; core/headless consumers
+work without it. Consumer snippets and Motion props control presentation.
+
+README, runnable docs, Unicode/revision/remount/lifecycle coverage, browser
+fixtures, deterministic work counters and packaging proofs are included.
+Motion's whitespace fix and the can' → can't segmentation correction were
+independently verified. Changed leaves use full Unicode context; unchanged
+completed leaves remain cached.
 
 ## Parent verification
 
-| Gate                        | Result                                                                                                       |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Source snapshot hooks       | Passed Trunk formatting/lint and root types                                                                  |
-| Full unit/coverage          | 1,564 tests, 169 files; 97.52/92.70/97.89/98.27%                                                             |
-| Docs types                  | Zero errors, one existing CSS warning                                                                        |
-| Build/publint               | Passed in full E2E server bootstrap                                                                          |
-| Core/preset tree shaking    | Passed                                                                                                       |
-| Normal npm no-peer consumer | Core/root/headless succeed; presets require Motion                                                           |
-| Preset/ledger tests         | 31 passed                                                                                                    |
-| Interactive docs            | Three presets, custom path, disabled plain output, Unicode, controls and restart pass; captured errors empty |
-| Full E2E                    | Failed heading scenario; no feature test failures in log                                                     |
+| Gate                           | Result                                                                                                                           |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| Source snapshot hooks          | Trunk formatting/lint and root types pass                                                                                        |
+| Full unit/coverage             | 1,564 tests, 169 files; 97.52/92.70/97.89/98.27%                                                                                 |
+| Docs types                     | Zero errors, one existing CSS warning                                                                                            |
+| Final production build/publint | Pass; existing import.meta.env packaging warning retained                                                                        |
+| Core/preset tree shaking       | Pass                                                                                                                             |
+| Normal npm no-peer consumer    | Core/root/headless succeed; presets require Motion                                                                               |
+| Preset/ledger tests            | 31 pass                                                                                                                          |
+| Interactive docs               | Three presets, custom path, disabled plain output, Unicode, duration/stagger/granularity and restart pass; captured errors empty |
+| Final full E2E                 | **620 pass**, all five projects, no retries or timeout increases                                                                 |
 
 Logs: /tmp/streaming-guard-unit.log, /tmp/streaming-guard-docs.log,
-/tmp/streaming-guard-tree.log, /tmp/streaming-guard-e2e.log.
-The first parent E2E bootstrap attempt had a temporary-config cwd error, fixed
-in /tmp before the actual full test run. All configured projects were retained.
-Parent preview navigation initially timed out under concurrent test load;
-subsequent snapshot and actual interactions succeeded.
+/tmp/streaming-guard-tree.log, /tmp/streaming-guard-final-build.log,
+/tmp/streaming-guard-final-e2e.log. Parent reviewed all remaining implementation
+and readiness diffs, including assertions and package isolation proofs.
+The final readiness repair changes only a benchmark fixture and E2E tests;
+no library source changed after the parent's full coverage run.
 
-## Blocking evidence
+## Resolved E2E blocker
 
-`tests/heading-metadata.test.ts:4` on Chromium expected
-`scenario=parse-heading-heavy-done`, but `perf-stats` stayed `scenario=idle`
-after its click. The assertion timed out after five seconds. The test is
-unchanged, but a baseline defect has not been established. Sol's two prior
-full runs each had one unchanged failing test: mobile Safari issue-192 image
-URL (isolated rerun passed), then mobile Chrome heading stream scenario.
-Verbatim executor reports 007 and 008 record those results and 15 passing
-feature E2E cases across five projects.
+Earlier full runs failed heading scenarios that stayed idle after clicks. Sol's
+controlled module-delivery probes reproduced pre-hydration lost clicks on both
+baseline c2ca115 and feature HEAD; no heading ID defect was found. A separate
+probe reproduced issue-192's lazy-image src readiness race on both builds.
+Report 009 preserves the diagnosis.
 
-The parent runner finished with **614 passed, one failed**. Its
-preview child remained alive after execution; parent terminated only that
-port-4260 process, retaining exit 1. No claim of a clean full-suite pass is made.
+The benchmark now exposes readiness set in onMount and disables the two tested
+controls until ready. Heading tests synchronize with that signal and retain
+all exact 2,000-ID and streamed-heading assertions and timeouts. A deterministic
+regression holds route modules, checks real SSR readiness/disabled controls,
+then releases hydration and renders the exact expected heading IDs with one
+click. The image test awaits the same exact URL instead of reading too early.
+The parent independently reproduced the complete 620-case suite passing.
 
-Seven added root Svelte warnings describe deliberate synchronous initial-prop
-reads for opt-in SSR baseline seeding; lifecycle updates remain effect-driven.
-Three earlier root warnings remain. Sol observed two derived_inert warnings
-during rapid docs resets; parent captured no runtime errors during interactions.
-These are limitations recorded for review, not suppressed diagnostics.
+## Limits and disposition
 
-## Next action
+Seven added root Svelte warnings describe intentional initial-prop reads for
+opt-in SSR baseline seeding; lifecycle updates remain effect-driven. Three
+earlier root warnings remain. Sol observed two derived_inert warnings during
+rapid docs resets; parent captured no runtime errors in actual interactions.
+Unknown custom-transform provenance conservatively suppresses entrances.
+Open blocks and parser full-fallbacks retain their documented cost.
 
-Diagnose the heading interaction against baseline and obtain a clean full E2E
-run, with separate approval if a fix must cross this plan's scope. Then rerun
-the failed gate and update this report. Acceptance criteria and coverage remain
-unchanged. No PR, push or merge; batch stays active. Stash is retained.
+All criteria pass. Batch may be retired. The feature is committed on
+feat/streaming-text-motion-resume and ready for the user to request a PR.
+The preserved stash remains intact; unrelated checkout/server were untouched.

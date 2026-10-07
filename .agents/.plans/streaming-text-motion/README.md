@@ -6,9 +6,9 @@ using @humanspeak/svelte-motion. This is a focused feature plan, not a full audi
 
 ## Execution order and status
 
-| Plan                                             | Title                                               | Priority | Effort | Depends on | Status                                                            |
-| ------------------------------------------------ | --------------------------------------------------- | -------- | ------ | ---------- | ----------------------------------------------------------------- |
-| [001](001-streaming-text-api-and-motion-docs.md) | Headless segments, optional preset exports and docs | P1       | L      | None       | IN PROGRESS — baseline readiness races diagnosed; bounded repairs |
+| Plan                                             | Title                                               | Priority | Effort | Depends on | Status                                             |
+| ------------------------------------------------ | --------------------------------------------------- | -------- | ------ | ---------- | -------------------------------------------------- |
+| [001](001-streaming-text-api-and-motion-docs.md) | Headless segments, optional preset exports and docs | P1       | L      | None       | DONE — all gates pass; 620 full E2E cases verified |
 
 Status values: TODO, IN PROGRESS, DONE, BLOCKED (reason), REJECTED (reason).
 Execute the single plan in step order: bookkeeping proof, helper, integration,
@@ -125,3 +125,12 @@ Operator requested deeper investigation. Sol reproduced lost clicks before
 hydration on baseline c2ca115 and feature HEAD with exact heading IDs after
 readiness; independently reproduced lazy-image src race. Bounded fixture/test
 repairs are now in scope. Report 009 preserves evidence; no pass claimed yet.
+
+## Final acceptance
+
+Final source snapshot 10838d0: parent verified 620 E2E cases across five projects
+without retries, final build/publint and normal hooks. Combined with the prior
+parent 1,564 unit tests/coverage, docs/preview and no-peer bundle proofs, this
+earns final PASS. The baseline readiness failures were repaired with genuine
+onMount synchronization and an awaited exact lazy-image URL, preserving all
+original assertions/timeouts. Implementation complete; no PR requested or opened.
