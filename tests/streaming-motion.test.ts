@@ -77,6 +77,7 @@ async function startRecorder(page: Page) {
             Object.assign(window, { motionFrames: state })
             const previous: (Element | undefined)[] = []
             const history = new WeakMap<Element, { born: number; opacity: number }>()
+            const offsetRange = document.createRange()
             const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
             const record = (time: number) => {
                 const plain = document.querySelector('[data-testid="Plain"]')!
@@ -121,7 +122,7 @@ async function startRecorder(page: Page) {
                             oldestUnreadable[index] = Math.max(oldestUnreadable[index], time - born)
                         }
                         if (span.closest('p') !== paragraph) continue
-                        const range = document.createRange()
+                        const range = offsetRange
                         range.setStart(paragraph, 0)
                         range.setEndBefore(span)
                         const offset = range.toString().length
