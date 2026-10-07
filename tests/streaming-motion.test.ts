@@ -42,19 +42,277 @@ async function sample(output: Locator) {
     })
 }
 
+type MotionFrame = {
+    time: number
+    text: string
+    prefix: string
+    exact: boolean
+    baselineVisible: boolean
+    graphemesIntact: boolean
+    targets: {
+        text: string
+        start: number
+        end: number
+        opacity: number
+        y: number
+        layoutX: number
+        layoutY: number
+        retained: boolean
+    }[]
+    pending: number[]
+    oldestPending: number[]
+    unreadable: number[]
+    oldestUnreadable: number[]
+    resets: number[]
+}
+
+// The first paragraph has no markdown delimiters, so Range offsets are also
+// source offsets. Select the c in can/can't, never another c later in the sample.
+const targetOffset = baseline.length + 'We '.length
+
+async function startRecorder(page: Page) {
+    await page.evaluate(
+        ({ baseline, targetOffset }) => {
+            const state = { done: false, frames: [] as MotionFrame[] }
+            Object.assign(window, { motionFrames: state })
+            const previous: (Element | undefined)[] = []
+            const history = new WeakMap<Element, { born: number; opacity: number }>()
+            const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+            const record = (time: number) => {
+                const plain = document.querySelector('[data-testid="Plain"]')!
+                const motion = ['FadeWords', 'RiseWords', 'FadeCharacters'].map((name) =>
+                    document.querySelector(`[data-testid="${name}"]`)!
+                )
+                const pending: number[] = []
+                const oldestPending: number[] = []
+                const unreadable: number[] = []
+                const oldestUnreadable: number[] = []
+                const resets: number[] = []
+                let baselineVisible = true
+                let graphemesIntact = true
+                const targets = motion.map((element, index) => {
+                    const paragraph = element.querySelector('p')!
+                    const prefix = paragraph.textContent ?? ''
+                    const spans = [...element.querySelectorAll('span')]
+                    let coveredBaseline = 0
+                    let target: Element | undefined
+                    let start = -1
+                    let end = -1
+                    pending[index] = 0
+                    oldestPending[index] = 0
+                    unreadable[index] = 0
+                    oldestUnreadable[index] = 0
+                    resets[index] = 0
+                    const graphemes = new Map(
+                        Array.from(segmenter.segment(prefix), (part) => [part.index, part.segment])
+                    )
+                    for (const span of spans) {
+                        const opacity = Number(getComputedStyle(span).opacity)
+                        const old = history.get(span)
+                        if (old && opacity < old.opacity - 0.001) resets[index]++
+                        const born = old?.born ?? time
+                        history.set(span, { born, opacity })
+                        if (opacity < 0.99) {
+                            pending[index]++
+                            oldestPending[index] = Math.max(oldestPending[index], time - born)
+                        }
+                        if (opacity < 0.5) {
+                            unreadable[index]++
+                            oldestUnreadable[index] = Math.max(oldestUnreadable[index], time - born)
+                        }
+                        if (span.closest('p') !== paragraph) continue
+                        const range = document.createRange()
+                        range.setStart(paragraph, 0)
+                        range.setEndBefore(span)
+                        const offset = range.toString().length
+                        const text = span.textContent ?? ''
+                        if (offset < baseline.length) {
+                            coveredBaseline += text.length
+                            baselineVisible &&=
+                                (opacity === 1 && getComputedStyle(span).transform === 'none') ||
+                                (opacity === 1 &&
+                                    Math.abs(
+                                        new DOMMatrixReadOnly(getComputedStyle(span).transform).m42
+                                    ) < 0.01)
+                        }
+                        if (index === 2) graphemesIntact &&= graphemes.get(offset) === text
+                        if (offset === targetOffset) {
+                            target = span
+                            start = offset
+                            end = offset + text.length
+                        }
+                    }
+                    const expectedCovered = Array.from(baseline).filter(
+                        (char) => !/\s/u.test(char)
+                    ).length
+                    baselineVisible &&=
+                        prefix.startsWith(baseline) && coveredBaseline === expectedCovered
+                    const style = target ? getComputedStyle(target) : undefined
+                    const y =
+                        !style || style.transform === 'none'
+                            ? 0
+                            : new DOMMatrixReadOnly(style.transform).m42
+                    const box = target?.getBoundingClientRect()
+                    const parentBox = paragraph.getBoundingClientRect()
+                    const retained = !!target && (!previous[index] || previous[index] === target)
+                    if (target) previous[index] = target
+                    return {
+                        text: target?.textContent ?? '',
+                        start,
+                        end,
+                        opacity: style ? Number(style.opacity) : -1,
+                        y,
+                        layoutX: box ? box.x - parentBox.x : -1,
+                        layoutY: box ? box.y - parentBox.y - y : -1,
+                        retained
+                    }
+                })
+                state.frames.push({
+                    time,
+                    text: plain.textContent ?? '',
+                    prefix: plain.querySelector('p')?.textContent ?? '',
+                    exact: motion.every((element) => element.textContent === plain.textContent),
+                    baselineVisible,
+                    graphemesIntact,
+                    targets,
+                    pending,
+                    oldestPending,
+                    unreadable,
+                    oldestUnreadable,
+                    resets
+                })
+                if (!state.done) requestAnimationFrame(record)
+            }
+            requestAnimationFrame(record)
+        },
+        { baseline, targetOffset }
+    )
+}
+
+async function recordedFrames(page: Page, done = false) {
+    return page.evaluate((done) => {
+        const state = (
+            window as unknown as { motionFrames: { done: boolean; frames: MotionFrame[] } }
+        ).motionFrames
+        state.done = done
+        return state.frames
+    }, done)
+}
+
+for (const run of [
+    { name: 'partial word continuity with a long entrance', mode: 'fragment', duration: 2 },
+    { name: 'default presets at partial-word 50 ms cadence', mode: 'fragment', duration: 0.18 },
+    { name: 'default presets at whole-word 100 ms cadence', mode: 'word', duration: 0.18 }
+]) {
+    test(run.name, async ({ page }, testInfo) => {
+        await page.emulateMedia({ reducedMotion: 'no-preference' })
+        const errors = await setup(page, run.duration)
+        await page.getByLabel('Chunk shape').selectOption(run.mode)
+        await startRecorder(page)
+        await page.getByRole('button', { name: 'Stream / Replay sample' }).click()
+        await expect
+            .poll(() => page.getByTestId('Plain').textContent(), { timeout: 15000 })
+            .toBe(baseline + first + second)
+        await expect(page.getByRole('status')).toContainText('Complete')
+        await expect
+            .poll(async () => {
+                const frames = await recordedFrames(page)
+                const last = frames.at(-1)
+                return (
+                    !!last &&
+                    last.text === baseline + first + second &&
+                    last.pending.every((count) => count === 0)
+                )
+            })
+            .toBe(true)
+        const frames = await recordedFrames(page, true)
+        await writeFile(testInfo.outputPath('motion-browser-frames.json'), JSON.stringify(frames))
+        await testInfo.attach('motion-browser-frames', {
+            body: JSON.stringify(frames),
+            contentType: 'application/json'
+        })
+        expect(frames.length).toBeGreaterThan(10)
+        expect(
+            frames.every((frame) => frame.exact && frame.baselineVisible && frame.graphemesIntact)
+        ).toBe(true)
+        expect(frames.every((frame) => frame.resets.every((count) => count === 0))).toBe(true)
+        for (let preset = 0; preset < presets.length; preset++) {
+            const visible = frames.filter((frame) => frame.targets[preset].start === targetOffset)
+            expect(visible.length).toBeGreaterThan(2)
+            expect(visible.every((frame) => frame.targets[preset].retained)).toBe(true)
+            expect(
+                visible.some(
+                    (frame) =>
+                        frame.targets[preset].opacity > 0 && frame.targets[preset].opacity < 0.99
+                )
+            ).toBe(true)
+            expect(visible.at(-1)!.targets[preset].opacity).toBe(1)
+            if (preset === 1)
+                expect(visible.some((frame) => frame.targets[preset].y > 0.1)).toBe(true)
+            else
+                expect(visible.every((frame) => Math.abs(frame.targets[preset].y) < 0.01)).toBe(
+                    true
+                )
+            for (let index = 1; index < visible.length; index++) {
+                expect(visible[index].targets[preset].opacity).toBeGreaterThanOrEqual(
+                    visible[index - 1].targets[preset].opacity - 0.001
+                )
+            }
+            if (run.mode === 'fragment') {
+                const unfinished = visible.find((frame) => frame.prefix === baseline + 'We can')
+                const completed = visible.find((frame) => frame.prefix === baseline + "We can't ")
+                expect(unfinished).toBeDefined()
+                expect(completed).toBeDefined()
+                expect(unfinished!.targets[preset].text).toBe(preset === 2 ? 'c' : 'can')
+                expect(completed!.targets[preset].text).toBe(preset === 2 ? 'c' : "can't")
+                expect(unfinished!.targets[preset].end).toBe(targetOffset + (preset === 2 ? 1 : 3))
+                expect(completed!.targets[preset].end).toBe(targetOffset + (preset === 2 ? 1 : 5))
+                if (run.duration === 2) {
+                    expect(completed!.targets[preset].opacity).toBeLessThan(0.99)
+                    expect(completed!.targets[preset].opacity).toBeGreaterThan(
+                        unfinished!.targets[preset].opacity
+                    )
+                }
+            }
+        }
+        if (run.duration === 0.18) {
+            // Default entrance + capped 160 ms batch delay, with 60 ms of
+            // scheduling tolerance. An old, unreadable tail must not accumulate.
+            expect(Math.max(...frames.flatMap((frame) => frame.oldestPending))).toBeLessThan(400)
+        }
+        for (const preset of presets) {
+            const output = page.getByTestId(preset)
+            await exactText(output, baseline + first + second)
+            await expect(output.locator('span').filter({ hasText: /^👩‍💻$/ })).toHaveCount(1)
+            await expect(output.locator('span').filter({ hasText: /^é$/ })).toHaveCount(1)
+            await expect(output.locator('code')).toHaveText('const greeting = "Hello, 世界"')
+            await expect(output.locator('code span')).toHaveCount(0)
+        }
+        expect(errors).toEqual([])
+    })
+}
+
 async function exactText(output: Locator, expected: string) {
     await expect.poll(() => output.evaluate((element) => element.textContent)).toBe(expected)
 }
 
-async function setup(page: Page) {
+async function setup(page: Page, duration = 2) {
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
     page.on('console', (message) => {
         if (message.type() === 'error') errors.push(message.text())
     })
     await page.goto('/streaming-motion')
-    await expect(page.getByRole('button', { name: 'Append passage', exact: true })).toBeEnabled()
-    await page.getByLabel('Duration (seconds)').fill('2')
+    await expect
+        .poll(async () => ({
+            ready: await page
+                .getByRole('button', { name: 'Append passage', exact: true })
+                .isEnabled(),
+            errors
+        }))
+        .toEqual({ ready: true, errors: [] })
+    if (duration !== 0.18) await page.getByLabel('Duration (seconds)').fill(String(duration))
+    await expect(page.getByLabel('Duration (seconds)')).toHaveValue(String(duration))
     return errors
 }
 
@@ -112,8 +370,10 @@ for (const preset of presets) {
                     .first()
                     .evaluate(async (element) => {
                         await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
-                        return [...element.querySelectorAll('span')].every(
-                            (span) => Number(getComputedStyle(span).opacity) === 1
+                        const spans = [...element.querySelectorAll('span')]
+                        return (
+                            spans.length > 0 &&
+                            spans.every((span) => Number(getComputedStyle(span).opacity) === 1)
                         )
                     })
             })
@@ -137,11 +397,13 @@ for (const preset of presets) {
             .toBe(baseline + first + second)
         await expect(page.getByRole('status')).toContainText('Complete')
         await expect
-            .poll(async () =>
-                (await sample(output)).arriving.every(
-                    (part) => part.opacity > 0.99 && Math.abs(part.y) < 0.01
+            .poll(async () => {
+                const frame = await sample(output)
+                return (
+                    frame.arriving.length > 0 &&
+                    frame.arriving.every((part) => part.opacity > 0.99 && Math.abs(part.y) < 0.01)
                 )
-            )
+            })
             .toBe(true)
         expect(errors).toEqual([])
     })
@@ -171,9 +433,13 @@ for (const preset of presets) {
             } else await page.getByLabel('Disable motion').uncheck()
             // Re-enabling baselines existing content instead of replaying it.
             await expect
-                .poll(async () =>
-                    (await sample(output)).arriving.every((part) => part.opacity === 1)
-                )
+                .poll(async () => {
+                    const frame = await sample(output)
+                    return (
+                        frame.arriving.length > 0 &&
+                        frame.arriving.every((part) => part.opacity === 1)
+                    )
+                })
                 .toBe(true)
             await page.getByRole('button', { name: 'Append passage', exact: true }).click()
             await expect
@@ -193,110 +459,3 @@ for (const preset of presets) {
         })
     }
 }
-
-test('partial words retain their entrance and agree with plain at realistic cadence', async ({
-    page
-}, testInfo) => {
-    await page.emulateMedia({ reducedMotion: 'no-preference' })
-    const errors = await setup(page)
-    await page.getByLabel('Chunk shape').selectOption('fragment')
-    // Record every rendered frame through completion, including unfinished words.
-    await page.evaluate(() => {
-        const state = {
-            done: false,
-            frames: [] as {
-                text: string
-                exact: boolean
-                opacity: number[]
-                y: number[]
-                retained: boolean[]
-                baselineVisible: boolean
-            }[]
-        }
-        Object.assign(window, { motionFrames: state })
-        const previous: (Element | undefined)[] = []
-        const record = () => {
-            const plain = document.querySelector('[data-testid="Plain"]')!
-            const motion = ['FadeWords', 'RiseWords', 'FadeCharacters'].map((name) =>
-                document.querySelector(`[data-testid="${name}"]`)!
-            )
-            const targets = motion.map((element) =>
-                [...element.querySelectorAll('span')].find((span) =>
-                    /^(W|We)$/.test(span.textContent ?? '')
-                )
-            )
-            state.frames.push({
-                text: plain.textContent ?? '',
-                exact: motion.every((element) => element.textContent === plain.textContent),
-                opacity: targets.map((span) =>
-                    span ? Number(getComputedStyle(span).opacity) : -1
-                ),
-                y: targets.map((span) => {
-                    const transform = span ? getComputedStyle(span).transform : 'none'
-                    return transform === 'none' ? 0 : new DOMMatrixReadOnly(transform).m42
-                }),
-                retained: targets.map(
-                    (span, index) => !previous[index] || span === previous[index]
-                ),
-                baselineVisible: motion.every((element) =>
-                    [...element.querySelectorAll('p:first-child span')]
-                        .filter((span) => span.textContent === 'The' || span.textContent === 'T')
-                        .every((span) => Number(getComputedStyle(span).opacity) === 1)
-                )
-            })
-            targets.forEach((span, index) => {
-                if (span) previous[index] = span
-            })
-            if (!state.done) requestAnimationFrame(record)
-        }
-        requestAnimationFrame(record)
-    })
-    await page.getByRole('button', { name: 'Stream / Replay sample' }).click()
-    await expect
-        .poll(() => page.getByTestId('Plain').textContent(), { timeout: 15000 })
-        .toBe(baseline + first + second)
-    await expect(page.getByRole('status')).toContainText('Complete')
-    const frames = await page.evaluate(() => {
-        const state = (
-            window as unknown as {
-                motionFrames: {
-                    done: boolean
-                    frames: {
-                        text: string
-                        exact: boolean
-                        opacity: number[]
-                        y: number[]
-                        retained: boolean[]
-                        baselineVisible: boolean
-                    }[]
-                }
-            }
-        ).motionFrames
-        state.done = true
-        return state.frames
-    })
-    await writeFile(testInfo.outputPath('partial-word-browser-frames.json'), JSON.stringify(frames))
-    await testInfo.attach('partial-word-browser-frames', {
-        body: JSON.stringify(frames),
-        contentType: 'application/json'
-    })
-    expect(frames.every((frame) => frame.exact && frame.baselineVisible)).toBe(true)
-    expect(frames.some((frame) => frame.text === baseline + 'W')).toBe(true)
-    expect(frames.some((frame) => frame.text.startsWith(baseline + 'We '))).toBe(true)
-    for (let preset = 0; preset < presets.length; preset++) {
-        const visible = frames.filter((frame) => frame.opacity[preset] >= 0)
-        expect(visible.length).toBeGreaterThan(2)
-        expect(visible.every((frame) => frame.retained[preset])).toBe(true)
-        expect(
-            visible.some((frame) => frame.opacity[preset] > 0 && frame.opacity[preset] < 1)
-        ).toBe(true)
-        for (let index = 1; index < visible.length; index++) {
-            expect(visible[index].opacity[preset]).toBeGreaterThanOrEqual(
-                visible[index - 1].opacity[preset] - 0.001
-            )
-        }
-        if (preset !== 1)
-            expect(visible.every((frame) => Math.abs(frame.y[preset]) < 0.01)).toBe(true)
-    }
-    expect(errors).toEqual([])
-})

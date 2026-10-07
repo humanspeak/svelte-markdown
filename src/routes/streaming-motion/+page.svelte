@@ -163,7 +163,9 @@
                                     {text}
                                     {streamingText}
                                     {enabled}
-                                    transition={{ duration, ease: 'linear' }}
+                                    transition={duration === 0.18
+                                        ? undefined
+                                        : { duration, ease: 'linear' }}
                                 />{:else}{text}{/if}
                         {/snippet}
                     </SvelteMarkdown>
