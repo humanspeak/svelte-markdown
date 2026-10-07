@@ -277,6 +277,19 @@ for (const run of [
             }
         }
         if (run.duration === 0.18) {
+            // Observe actual default rise motion through a growing word: it must
+            // stay inside the smaller travel window, settle without reversal,
+            // and retain its layout position as can becomes can't.
+            const rise = frames
+                .filter((frame) => frame.targets[1].start === targetOffset)
+                .map((frame) => frame.targets[1])
+            expect(rise.every((part) => part.y >= -0.01 && part.y <= 4.01)).toBe(true)
+            expect(rise.at(-1)!.y).toBeLessThan(0.01)
+            for (let index = 1; index < rise.length; index++) {
+                expect(rise[index].y).toBeLessThanOrEqual(rise[index - 1].y + 0.01)
+                expect(Math.abs(rise[index].layoutX - rise[0].layoutX)).toBeLessThan(0.1)
+                expect(Math.abs(rise[index].layoutY - rise[0].layoutY)).toBeLessThan(0.1)
+            }
             // Default entrance + capped 160 ms batch delay, with 60 ms of
             // scheduling tolerance. An old, unreadable tail must not accumulate.
             expect(Math.max(...frames.flatMap((frame) => frame.oldestPending))).toBeLessThan(400)

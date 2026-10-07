@@ -201,7 +201,14 @@
                                 {granularity}
                             />
                         {:else}
-                            <Preset {text} {streamingText} {enabled} transition={{ duration }} />
+                            <Preset
+                                {text}
+                                {streamingText}
+                                {enabled}
+                                transition={effect === 'rise-words'
+                                    ? { duration, ease: [0.25, 0.1, 0.25, 1] }
+                                    : { duration }}
+                            />
                         {/if}
                     {/snippet}
                 </SvelteMarkdown>

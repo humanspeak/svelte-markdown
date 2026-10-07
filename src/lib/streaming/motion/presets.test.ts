@@ -67,6 +67,37 @@ describe('consumer motion controls', () => {
         renderBatchId: 1,
         ranges: [{ ...baseline.ranges[0], change, batchId: 1 }]
     })
+    it('gives arriving rise words a small lift while preserving consumer vertical targets', () => {
+        const props = { text: 'a', streamingText: arrival('append') }
+        const span = render(RiseWords, props).container.querySelector('span')!
+        expect(span.style.opacity).toBe('0')
+        expect(span.style.transform).toContain('translateY(4px)')
+
+        const custom = render(RiseWords, {
+            ...props,
+            initial: { opacity: 0.4, y: 12 },
+            animate: { opacity: 0.9, y: -2 },
+            transition: { duration: 0, ease: 'linear' }
+        }).container.querySelector('span')!
+        expect(custom.style.opacity).toBe('0.4')
+        expect(custom.style.transform).toContain('translateY(12px)')
+        const settled = render(RiseWords, {
+            ...props,
+            initial: false,
+            animate: { opacity: 0.9, y: -2 },
+            transition: { duration: 0 }
+        }).container.querySelector('span')!
+        expect(settled.style.opacity).toBe('0.9')
+        expect(settled.style.transform).toContain('translateY(-2px)')
+
+        const opacityOnly = render(RiseWords, {
+            ...props,
+            initial: { opacity: 0.4 },
+            animate: { opacity: 0.9 },
+            transition: { duration: 0 }
+        }).container.querySelector('span')!
+        expect(opacityOnly.style.transform).not.toContain('translateY')
+    })
     it('runs the consumer segment snippet in place of preset markup', () => {
         const { container } = render(Consumer, { text: 'a', streamingText: arrival('append') })
         expect(container.textContent).toBe('a')

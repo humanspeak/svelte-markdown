@@ -403,12 +403,12 @@ Swap the import and `rawtext` registration for `RiseWords` or `FadeCharacters`:
 | Export | Segmentation | Entrance | Layout |
 | --- | --- | --- | --- |
 | `FadeWords` | Locale-aware word spans | Opacity | Ordinary inline spans |
-| `RiseWords` | Locale-aware word spans | Opacity and 6px vertical rise | Inline-block spans |
+| `RiseWords` | Locale-aware word spans | Opacity and 4px vertical rise with gentle easing | Inline-block spans |
 | `FadeCharacters` | Unicode grapheme clusters | Opacity | Ordinary inline spans |
 
 Whitespace stays literal outside Motion spans. Rise's inline-block words can affect line wrapping; grapheme rendering creates more DOM nodes than word rendering. Code blocks and inline code retain their code renderers and are excluded from rawtext effects.
 
-All three presets accept `text`, `streamingText`, `enabled` (true), `animateRevisions` (false), `animateInitialContent` (false), `initial`, `animate`, `transition`, `variants`, `custom`, `locale`, `segmenter` and a `segment` snippet. Motion prop types come from `MotionSpan`; a consumer segment snippet replaces all preset markup. With `enabled={false}`, presets render escaped plain text without wrappers. Defaults use duration 0.18s and leaf-local batch stagger 0.02s capped at 0.16s; passing `transition` replaces those defaults.
+All three presets accept `text`, `streamingText`, `enabled` (true), `animateRevisions` (false), `animateInitialContent` (false), `initial`, `animate`, `transition`, `variants`, `custom`, `locale`, `segmenter` and a `segment` snippet. Motion prop types come from `MotionSpan`; a consumer segment snippet replaces all preset markup. With `enabled={false}`, presets render escaped plain text without wrappers. Defaults use duration 0.18s and leaf-local batch stagger 0.02s capped at 0.16s. RiseWords adds gentle cubic-bezier easing `[0.25, 0.1, 0.25, 1]` to its 4px rise; the fade presets use Motion's default easing. Passing `transition` replaces the entire default transition, including easing and stagger; `initial` and `animate` likewise replace the preset targets.
 
 For example, save a configured renderer as `MyRise.svelte` and register it with `renderers={{ rawtext: MyRise }}`:
 

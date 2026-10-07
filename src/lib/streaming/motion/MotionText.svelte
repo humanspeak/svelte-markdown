@@ -33,13 +33,20 @@
                     initial={part.isNew ||
                     (animateRevisions && part.change === 'revision') ||
                     (animateInitialContent && part.change === 'baseline')
-                        ? (initial ?? (rise ? { opacity: 0, y: 6 } : { opacity: 0 }))
+                        ? (initial ?? (rise ? { opacity: 0, y: 4 } : { opacity: 0 }))
                         : false}
                     animate={animate ?? (rise ? { opacity: 1, y: 0 } : { opacity: 1 })}
-                    transition={transition ?? {
-                        duration: 0.18,
-                        delay: Math.min(part.batchIndex * 0.02, 0.16)
-                    }}
+                    transition={transition ??
+                        (rise
+                            ? {
+                                  duration: 0.18,
+                                  delay: Math.min(part.batchIndex * 0.02, 0.16),
+                                  ease: [0.25, 0.1, 0.25, 1]
+                              }
+                            : {
+                                  duration: 0.18,
+                                  delay: Math.min(part.batchIndex * 0.02, 0.16)
+                              })}
                     {variants}
                     {custom}
                     style={rise ? { display: 'inline-block' } : undefined}>{part.text}</MotionSpan
