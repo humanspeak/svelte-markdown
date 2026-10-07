@@ -146,3 +146,16 @@ This addresses baseline test preconditions, not heading parser semantics.
   changes after that run. Docs/types/bundle/no-peer/preview gates already passed.
 - PASS report replaces previous NO-PASS; historical blocked checkpoints retained.
 - No PR/push/merge. Own preview server stopped; batch ready for retirement.
+
+## 2026-10-07 15:01 — ON TRACK — motion E2E corrective verification
+
+- User rejected unstyled docs/fixture review and requested actual motion E2E.
+  Corrective snapshots ea5a817 and95b3b98 add styled comparison and60 browser cases;
+  reports011–013 preserve failed gates and recorder diagnosis.
+- Round014 snapshot83c34ea: parent full diff read, normal hooks pass, assertions
+  unchanged; one reusable Range prevents recorder-induced Safari activation stalls.
+- Parent independently reproduced all60 motion cases passing, exit0,1.8m,
+  allfive configured projects. Log /tmp/motion014-guard-e2e.log.
+- Report014 is PASS for behavior/testing; user's subjective motion-quality
+  concern remains open. Plain library defaults unchanged. Both review servers live.
+- Action: record and commit guard evidence; no PR/push/merge requested.
