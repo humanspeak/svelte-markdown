@@ -6,9 +6,9 @@ using @humanspeak/svelte-motion. This is a focused feature plan, not a full audi
 
 ## Execution order and status
 
-| Plan                                             | Title                                               | Priority | Effort | Depends on | Status                                                             |
-| ------------------------------------------------ | --------------------------------------------------- | -------- | ------ | ---------- | ------------------------------------------------------------------ |
-| [001](001-streaming-text-api-and-motion-docs.md) | Headless segments, optional preset exports and docs | P1       | L      | None       | IN PROGRESS — verify published Motion 2.0.1-0 and finish Steps 2–5 |
+| Plan                                             | Title                                               | Priority | Effort | Depends on | Status                                                              |
+| ------------------------------------------------ | --------------------------------------------------- | -------- | ------ | ---------- | ------------------------------------------------------------------- |
+| [001](001-streaming-text-api-and-motion-docs.md) | Headless segments, optional preset exports and docs | P1       | L      | None       | BLOCKED — implementation committed; full E2E heading scenario fails |
 
 Status values: TODO, IN PROGRESS, DONE, BLOCKED (reason), REJECTED (reason).
 Execute the single plan in step order: bookkeeping proof, helper, integration,
@@ -98,3 +98,23 @@ report 005. Applying the identified stash conflicted only with checkpoint
 formatting; committed versions were retained after comparison. Stash is retained.
 The plan authorizes root/docs Motion dependency updates to the supplied prerelease,
 word-boundary correction, and completion of remaining API/presets/docs/gates.
+
+## Final guard checkpoint 2026-10-07
+
+Implementation snapshot c731780 contains the headless API, optional preset
+subpath, fixed Motion prerelease, full-context Unicode segmentation, docs,
+README, browser fixture and packaging proofs. Normal source commit hooks passed.
+Parent independently reproduced 1,564 unit tests passing with coverage
+97.52% statements, 92.70% branches, 97.89% functions and 98.27% lines.
+Docs check has zero errors and one existing CSS warning; normal npm no-peer
+installation and core/headless isolation pass. Parent docs preview exercised
+all three presets, custom snippets, disabled plain output, duration/stagger/
+grapheme controls and restart, with no captured runtime errors. Servers stopped.
+
+Feature E2E cases passed in the executor's five-project run (15 tests); parent
+full-suite log likewise has no streaming-text failures. Full E2E remains failed:
+parent Chromium heading-metadata test expected parse-heading-heavy-done but
+received idle. Executor's prior runs also each failed a different unchanged test.
+Unchanged tests do not prove a baseline defect; no coverage, assertions or
+projects were weakened. Verdict NO-PASS, no PR/push, batch remains active.
+See the guard report and verbatim reports 007/008 for evidence and next action.

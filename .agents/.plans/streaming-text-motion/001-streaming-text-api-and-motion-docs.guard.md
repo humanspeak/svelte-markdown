@@ -107,3 +107,19 @@ implementation before parity review. Default behavior/requirements unchanged.
   zero errors, three existing warnings; normal commit hooks passed Trunk and types.
 - Known Motion 1.2.1 whitespace and incremental word segmentation remain unresolved.
 - Plan rebaselined to 5519119 for resumed implementation. This is not a feature PASS.
+
+## 2026-10-07 — BLOCKED — final verification
+
+- Snapshot: c731780 (Sol implementation and corrections, normal hooks passed).
+- Full remaining diff read; within authorized API/presets/docs/packaging scope.
+- Parent reproduced full unit/coverage, docs types, tree-shaking/no-peer proofs,
+  preset exact-text tests, interactive docs controls. No core Motion dependency.
+- Parent full E2E failed Chromium heading-metadata.test.ts:4: expected
+  scenario=parse-heading-heavy-done, observed idle (5-second assertion timeout).
+- All 615 cases were scheduled; no streaming-text failure in log. Runner
+  termination waited on orphaned preview child; parent terminated its own
+  port-4260 preview after test execution to finish cleanup. Exit 1 retained.
+- Executor two full runs also failed unchanged issue-192/heading tests. Baseline
+  attribution is unproved. Repeated-failure STOP honored; no further source edits.
+- NO-PASS: obtain a clean full-suite run or diagnose the heading interaction
+  against baseline under an approved scope before changing acceptance/status.
