@@ -2,6 +2,7 @@
     import { onMount, tick } from 'svelte'
     import SvelteMarkdown from '$lib/index.js'
     import { FadeWords, RiseWords, FadeCharacters } from '$lib/streaming/motion/index.js'
+    import SoftFadeRise from './SoftFadeRise.svelte'
 
     const baseline = 'The notebook is already open. '
     const passages = [
@@ -21,6 +22,10 @@
     let source = $state(baseline)
     let streamId = $state(0)
     let duration = $state(0.18)
+    let softFadeRise = $state(false)
+    let lift = $state(2)
+    let liftDuration = $state(0.14)
+    let fadeDuration = $state(0.24)
     let chunkMode = $state('word')
     let disabled = $state(false)
     let reducedMotion = $state(true)
@@ -155,11 +160,61 @@
                 <div class="caption">
                     <h2>{effect.name}</h2>
                     <p>{effect.description}</p>
+                    {#if effect.name === 'RiseWords'}
+                        <label class="toggle trial-toggle"
+                            ><input type="checkbox" bind:checked={softFadeRise} /> Custom soft fade/rise
+                            trial</label
+                        >
+                        {#if softFadeRise}
+                            <p class="trial-note">
+                                Consumer trial: separate timings below replace Duration (seconds)
+                                for this pane. Replay to compare new arrivals.
+                            </p>
+                            <div class="settings trial-settings">
+                                <label
+                                    >Lift (pixels)<input
+                                        type="number"
+                                        min="0"
+                                        max="20"
+                                        step="0.5"
+                                        bind:value={lift}
+                                    /></label
+                                >
+                                <label
+                                    >Lift duration (seconds)<input
+                                        type="number"
+                                        min="0"
+                                        max="5"
+                                        step="0.01"
+                                        bind:value={liftDuration}
+                                    /></label
+                                >
+                                <label
+                                    >Fade duration (seconds)<input
+                                        type="number"
+                                        min="0"
+                                        max="5"
+                                        step="0.01"
+                                        bind:value={fadeDuration}
+                                    /></label
+                                >
+                            </div>
+                        {/if}
+                    {/if}
                 </div>
                 <div class="output" data-testid={effect.name}>
                     <SvelteMarkdown {source} {streamId} streaming streamingText>
                         {#snippet rawtext({ text, streamingText })}
-                            {#if effect.component}<effect.component
+                            {#if effect.name === 'RiseWords' && softFadeRise}
+                                <SoftFadeRise
+                                    {text}
+                                    {streamingText}
+                                    {enabled}
+                                    {lift}
+                                    {liftDuration}
+                                    {fadeDuration}
+                                />
+                            {:else if effect.component}<effect.component
                                     {text}
                                     {streamingText}
                                     {enabled}
@@ -298,6 +353,16 @@
         margin: 0;
         font-size: 12px;
         color: var(--muted);
+    }
+    .trial-toggle {
+        margin-top: 12px;
+        font-size: 13px;
+    }
+    .caption .trial-note {
+        margin-top: 10px;
+    }
+    .trial-settings {
+        margin: 12px 0 0;
     }
     .output {
         padding: 20px;
