@@ -926,7 +926,7 @@ The core exports headless `StreamingText` with `text`, optional `metadata`, `gra
 
 First/reset content is baseline; appends are arrivals; offset overwrites are revisions. Structural remounts do not replay already revealed source characters. Unknown custom-transform provenance suppresses automatic entrances. Tracking is per instance and discarded on resets, replacements, mode changes and toggles. Unicode boundaries require `Intl.Segmenter` or validated custom spans covering the exact text; locale/segmentation changes rebaseline. Changed leaves are resegmented with full context; completed unchanged leaves stay cached. Segment DOM cost is opt-in, and long open blocks/full-parser fallbacks retain their existing costs. Code renderers are excluded.
 
-See the [streaming text API and complete prop/imperative, custom snippet, SSR and reduced-motion examples](https://markdown.svelte.page/docs/advanced/llm-streaming#optional-text-arrival-effects) and [executable demo with actual source](https://markdown.svelte.page/examples/llm-streaming).
+See the [streaming text API and complete prop/imperative, custom snippet, SSR and reduced-motion examples](https://markdown.svelte.page/docs/advanced/llm-streaming#optional-text-arrival-effects) and [executable demo with actual source](https://markdown.svelte.page/examples/streaming-text-motion).
 
 ### LLM Streaming
 

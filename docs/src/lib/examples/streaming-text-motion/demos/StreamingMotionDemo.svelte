@@ -42,12 +42,12 @@
         effect === 'plain'
             ? 'Plain text is the library default. No arrival animation.'
             : effect === 'rise-words'
-              ? 'Words fade in with a small upward lift.'
+              ? 'Words fade, lift into place and ink in from the left.'
               : effect === 'fade-characters'
                 ? 'Letters and whole emoji fade in individually.'
                 : effect === 'custom'
                   ? 'Your headless snippet controls segmentation and stagger.'
-                  : 'Each new word fades into the sentence.'
+                  : 'Each new word fades and inks into the sentence.'
     )
     function stop() {
         clearInterval(timer)
@@ -119,7 +119,13 @@
                 </select>
             </label>
             <label class="sm-field">
-                <span>Duration <span class="sm-value">{duration.toFixed(2)} s</span></span>
+                <span
+                    >Duration <span class="sm-value"
+                        >{duration === 0.18 && effect !== 'custom' && effect !== 'plain'
+                            ? 'preset default'
+                            : `${duration.toFixed(2)} s`}</span
+                    ></span
+                >
                 <input type="range" min="0" max="1" step="0.02" bind:value={duration} />
             </label>
             <label class="sm-field">

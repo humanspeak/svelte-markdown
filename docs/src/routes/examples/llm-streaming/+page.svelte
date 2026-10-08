@@ -7,9 +7,8 @@
     } from '@humanspeak/docs-kit'
     import { demoCodeSample } from '$lib/demo-loaders'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import StreamingMotionDemo from '$lib/examples/llm-streaming/demos/StreamingMotionDemo.svelte'
     import StreamingConsole from '$lib/examples/llm-streaming/demos/StreamingConsole.svelte'
-    import { Activity, DollarSign, Lightbulb, Zap } from '@lucide/svelte'
+    import { Activity, DollarSign, Lightbulb, Sparkles, Zap } from '@lucide/svelte'
 
     const seo = getSeoContext()
     if (seo) {
@@ -45,41 +44,9 @@
                 { k: 'highlight', v: 'tanstack' }
             ],
             sourceUrl: `${SOURCE_URL}llm-streaming/demos/StreamingConsole.svelte`
-        },
-        {
-            figId: 'FIG-002',
-            tag: 'OPTIONAL MOTION',
-            title: { prefix: 'streaming ', accent: 'text motion', end: '.' },
-            description:
-                'Choose an explicitly imported preset or control every segment with a headless snippet. Existing content remains visible.',
-            snippet: motionSection,
-            codeSnippet: motionCode,
-            sourceUrl: `${SOURCE_URL}llm-streaming/demos/StreamingMotionDemo.svelte`
         }
     ]
 </script>
-
-{#snippet motionSection()}
-    <StreamingMotionDemo />
-{/snippet}
-
-{#snippet motionCode()}
-    <CodeReferenceV2
-        samples={[
-            demoCodeSample(
-                'llm-streaming/demos/StreamingMotionDemo.svelte',
-                'streaming-motion-demo',
-                'StreamingMotionDemo.svelte'
-            ),
-            demoCodeSample(
-                'llm-streaming/demos/MotionStreamingText.svelte',
-                'motion-streaming-text',
-                'MotionStreamingText.svelte'
-            )
-        ]}
-        columns={1}
-    />
-{/snippet}
 
 {#snippet streamingSection()}
     <StreamingConsole />
@@ -108,6 +75,13 @@
                 <a href="https://modelpricing.ai" target="_blank" rel="noopener noreferrer">
                     ModelPricing.ai
                 </a>.
+            </span>
+        </li>
+        <li>
+            <Sparkles />
+            <span>
+                Want arriving words to animate? See the
+                <a href="/examples/streaming-text-motion">streaming text motion demo</a>.
             </span>
         </li>
         <li>

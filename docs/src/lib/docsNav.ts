@@ -26,6 +26,7 @@ import {
     Terminal,
     TextCursor,
     TriangleAlert,
+    WandSparkles,
     Workflow,
     Zap
 } from '@lucide/svelte'
@@ -223,7 +224,12 @@ export const docsSections: NavSection[] = [
             { title: 'Footnotes', href: '/examples/footnotes', icon: Superscript },
             { title: 'Code Formatting', href: '/examples/code-formatting', icon: Code },
             { title: 'Linked Headings', href: '/examples/linked-headings', icon: Link },
-            { title: 'LLM Streaming', href: '/examples/llm-streaming', icon: Zap }
+            { title: 'LLM Streaming', href: '/examples/llm-streaming', icon: Zap },
+            {
+                title: 'Streaming Text Motion',
+                href: '/examples/streaming-text-motion',
+                icon: WandSparkles
+            }
         ]
     },
     {

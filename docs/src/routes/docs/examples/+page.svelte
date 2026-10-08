@@ -92,6 +92,14 @@
                     href: '/examples/llm-streaming',
                     icon: 'zap',
                     kind: 'live'
+                },
+                {
+                    title: 'Streaming Text Motion',
+                    description:
+                        'Animate arriving words with motion presets, an ink wipe, or a custom headless snippet.',
+                    href: '/examples/streaming-text-motion',
+                    icon: 'wand-sparkles',
+                    kind: 'live'
                 }
             ]
         }

@@ -430,7 +430,7 @@ Baseline text always uses `initial={false}`, even when you supply `initial`, unl
 
 ### Own every segment with StreamingText
 
-`StreamingText` is exported from the core and has no Motion dependency. Without a `segment` snippet it renders plain escaped text without wrappers. With a snippet it segments and keys your markup. The [live example](/examples/llm-streaming) exposes the actual `MotionStreamingText.svelte` source, plus duration, capped stagger, word/grapheme, preset selection and restart controls.
+`StreamingText` is exported from the core and has no Motion dependency. Without a `segment` snippet it renders plain escaped text without wrappers. With a snippet it segments and keys your markup. The [live example](/examples/streaming-text-motion) exposes the actual `MotionStreamingText.svelte` source, plus duration, capped stagger, word/grapheme, preset selection and restart controls.
 
 ```svelte
 <script lang="ts">
