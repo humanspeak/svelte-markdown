@@ -476,15 +476,15 @@ for (const preset of presets) {
 
 // Record only the first arriving word; keep the observer small enough that it
 // does not change the stream cadence or animation scheduling.
-async function recordTrial(page: Page) {
-    await page.evaluate(() => {
+async function recordTrial(page: Page, preset = 'RiseWords') {
+    await page.evaluate((preset) => {
         const state = {
             done: false,
             frames: [] as { opacity: number; y: number; baselineVisible: boolean }[]
         }
         Object.assign(window, { trialFrames: state })
         const record = () => {
-            const spans = [...document.querySelectorAll('[data-testid="RiseWords"] span')]
+            const spans = [...document.querySelectorAll(`[data-testid="${preset}"] span`)]
             const target = spans.find((span) => span.textContent === 'We')
             if (target) {
                 const style = getComputedStyle(target)
@@ -504,7 +504,7 @@ async function recordTrial(page: Page) {
             if (!state.done) requestAnimationFrame(record)
         }
         requestAnimationFrame(record)
-    })
+    }, preset)
 }
 
 async function trialFrames(page: Page, done = false) {
@@ -681,5 +681,198 @@ test('custom soft fade/rise: partial words retain their active entrance', async 
     expect(completed.targets[1].opacity).toBeLessThan(0.99)
     expect(rise.at(-1)!.targets[1].opacity).toBe(1)
     expect(rise.at(-1)!.targets[1].y).toBeLessThan(0.01)
+    expect(errors).toEqual([])
+})
+
+test('FadeWords soft fade/rise: independent controls and matching screenshot motion', async ({
+    page
+}, testInfo) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    const errors = await setup(page, 0.18)
+    const fade = page.getByRole('article', { name: 'FadeWords comparison', exact: true })
+    const rise = page.getByRole('article', { name: 'RiseWords comparison', exact: true })
+    const toggle = page.getByLabel('FadeWords soft lift and fade trial', { exact: true })
+    await expect(toggle).not.toBeChecked()
+    await expect(fade.getByLabel('Lift (pixels)', { exact: true })).toHaveCount(0)
+    await toggle.check()
+    await page.getByLabel('Custom soft fade/rise trial', { exact: true }).check()
+    for (const [label, fadeDefault, riseDefault] of [
+        ['Lift (pixels)', '3', '2'],
+        ['Lift duration (seconds)', '0.4', '0.14'],
+        ['Fade duration (seconds)', '0.5', '0.24']
+    ]) {
+        await expect(fade.getByLabel(label, { exact: true })).toHaveValue(fadeDefault)
+        await expect(rise.getByLabel(label, { exact: true })).toHaveValue(riseDefault)
+        await fade.getByLabel(label, { exact: true }).fill('1')
+        await expect(rise.getByLabel(label, { exact: true })).toHaveValue(riseDefault)
+        await rise.getByLabel(label, { exact: true }).fill(fadeDefault)
+        await expect(fade.getByLabel(label, { exact: true })).toHaveValue('1')
+        await fade.getByLabel(label, { exact: true }).fill(fadeDefault)
+    }
+    await page.getByLabel('Duration (seconds)', { exact: true }).fill('2')
+    const output = page.getByTestId('FadeWords')
+    await exactText(output, baseline)
+    await recordTrial(page, 'FadeWords')
+    await startRecorder(page)
+    await page.getByRole('button', { name: 'Append passage', exact: true }).click()
+    await exactText(output, baseline + first)
+    await expect
+        .poll(async () =>
+            (await trialFrames(page)).some(
+                (frame) => frame.opacity > 0 && frame.opacity < 0.99 && frame.y > 0.1
+            )
+        )
+        .toBe(true)
+    await expect
+        .poll(async () => {
+            const last = (await trialFrames(page)).at(-1)
+            return !!last && last.opacity === 1 && Math.abs(last.y) < 0.01
+        })
+        .toBe(true)
+    // The recorder follows can (batch index 1), which settles after We.
+    await expect
+        .poll(async () =>
+            (await recordedFrames(page))
+                .at(-1)
+                ?.targets.slice(0, 2)
+                .every((part) => part.opacity === 1 && Math.abs(part.y) < 0.01)
+        )
+        .toBe(true)
+    const frames = await trialFrames(page, true)
+    const matching = (await recordedFrames(page, true)).filter(
+        (frame) =>
+            frame.targets[0].start === targetOffset && frame.targets[1].start === targetOffset
+    )
+    await testInfo.attach('matching-fade-rise-frames', {
+        body: JSON.stringify({ frames, matching }),
+        contentType: 'application/json'
+    })
+    expect(
+        frames.every((frame) => frame.baselineVisible && frame.y >= -0.01 && frame.y <= 3.01)
+    ).toBe(true)
+    expect(
+        frames.some((frame) => frame.y < 0.01 && frame.opacity > 0 && frame.opacity < 0.99)
+    ).toBe(true)
+    expect(
+        matching.every((frame) => frame.exact && frame.baselineVisible && frame.graphemesIntact)
+    ).toBe(true)
+    expect(
+        matching.some((frame) =>
+            frame.targets
+                .slice(0, 2)
+                .every(
+                    (part) =>
+                        part.opacity > 0 && part.opacity < 0.99 && part.y > 0.1 && part.y <= 3.01
+                )
+        )
+    ).toBe(true)
+    expect(
+        matching
+            .at(-1)!
+            .targets.slice(0, 2)
+            .every((part) => part.opacity === 1 && Math.abs(part.y) < 0.01)
+    ).toBe(true)
+    for (let index = 1; index < frames.length; index++) {
+        expect(frames[index].opacity).toBeGreaterThanOrEqual(frames[index - 1].opacity - 0.001)
+        expect(frames[index].y).toBeLessThanOrEqual(frames[index - 1].y + 0.01)
+    }
+    await page.getByRole('button', { name: 'Append passage', exact: true }).click()
+    await exactText(output, baseline + first + second)
+    await expect
+        .poll(async () =>
+            (await sample(output)).arriving.every(
+                (part) => part.opacity === 1 && Math.abs(part.y) < 0.01
+            )
+        )
+        .toBe(true)
+    // Turning off the consumer trial restores the original FadeWords preset.
+    await toggle.uncheck()
+    await page.getByLabel('Duration (seconds)', { exact: true }).fill('0.18')
+    await page.getByRole('button', { name: 'Reset', exact: true }).click()
+    await recordTrial(page, 'FadeWords')
+    await page.getByRole('button', { name: 'Append passage', exact: true }).click()
+    await expect
+        .poll(async () =>
+            (await trialFrames(page)).some((frame) => frame.opacity > 0 && frame.opacity < 0.99)
+        )
+        .toBe(true)
+    await expect.poll(async () => (await trialFrames(page)).at(-1)?.opacity).toBe(1)
+    expect((await trialFrames(page, true)).every((frame) => Math.abs(frame.y) < 0.01)).toBe(true)
+    expect(errors).toEqual([])
+})
+
+for (const mode of ['disabled', 'reduced-motion'] as const) {
+    test(`FadeWords soft fade/rise: ${mode} and re-enabling preserve readable text`, async ({
+        page
+    }) => {
+        await page.emulateMedia({
+            reducedMotion: mode === 'reduced-motion' ? 'reduce' : 'no-preference'
+        })
+        const errors = await setup(page, 0.18)
+        await page.getByLabel('FadeWords soft lift and fade trial', { exact: true }).check()
+        if (mode === 'disabled') await page.getByLabel('Disable motion').check()
+        const output = page.getByTestId('FadeWords')
+        await page.getByRole('button', { name: 'Append passage', exact: true }).click()
+        await exactText(output, baseline + first)
+        await expect(output.locator('span')).toHaveCount(0)
+        if (mode === 'disabled') await page.getByLabel('Disable motion').uncheck()
+        else await page.emulateMedia({ reducedMotion: 'no-preference' })
+        await expect
+            .poll(async () => {
+                const frame = await sample(output)
+                return (
+                    frame.arriving.length > 0 &&
+                    [...frame.old, ...frame.arriving].every(
+                        (part) => part.opacity === 1 && Math.abs(part.y) < 0.01
+                    )
+                )
+            })
+            .toBe(true)
+        await page.getByRole('button', { name: 'Append passage', exact: true }).click()
+        await page.emulateMedia({ reducedMotion: 'reduce' })
+        await exactText(output, baseline + first + second)
+        await expect(output.locator('span')).toHaveCount(0)
+        expect(errors).toEqual([])
+    })
+}
+
+test('FadeWords soft fade/rise: partial words retain their active entrance', async ({
+    page
+}, testInfo) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    const errors = await setup(page, 0.18)
+    await page.getByLabel('FadeWords soft lift and fade trial', { exact: true }).check()
+    await page.getByLabel('Chunk shape').selectOption('fragment')
+    await startRecorder(page)
+    await page.getByRole('button', { name: 'Stream / Replay sample' }).click()
+    await expect
+        .poll(() => page.getByTestId('Plain').textContent(), { timeout: 15000 })
+        .toBe(baseline + first + second)
+    await expect
+        .poll(async () =>
+            (await recordedFrames(page)).at(-1)?.pending.every((count) => count === 0)
+        )
+        .toBe(true)
+    const frames = await recordedFrames(page, true)
+    await testInfo.attach('fade-trial-partial-word-frames', {
+        body: JSON.stringify(frames),
+        contentType: 'application/json'
+    })
+    expect(
+        frames.every((frame) => frame.exact && frame.baselineVisible && frame.graphemesIntact)
+    ).toBe(true)
+    const fade = frames.filter((frame) => frame.targets[0].start === targetOffset)
+    expect(fade.every((frame) => frame.targets[0].retained)).toBe(true)
+    const unfinished = fade.find((frame) => frame.prefix === baseline + 'We can')!
+    const completed = fade.find((frame) => frame.prefix === baseline + "We can't ")!
+    expect(unfinished).toBeDefined()
+    expect(completed).toBeDefined()
+    expect(unfinished.targets[0].text).toBe('can')
+    expect(completed.targets[0].text).toBe("can't")
+    expect(completed.targets[0].opacity).toBeGreaterThanOrEqual(unfinished.targets[0].opacity)
+    expect(completed.targets[0].opacity).toBeLessThan(0.99)
+    expect(fade.some((frame) => frame.targets[0].y > 0.1)).toBe(true)
+    expect(fade.at(-1)!.targets[0].opacity).toBe(1)
+    expect(fade.at(-1)!.targets[0].y).toBeLessThan(0.01)
     expect(errors).toEqual([])
 })

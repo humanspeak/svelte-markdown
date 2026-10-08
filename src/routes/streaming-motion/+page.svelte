@@ -26,6 +26,10 @@
     let lift = $state(2)
     let liftDuration = $state(0.14)
     let fadeDuration = $state(0.24)
+    let fadeWordsTrial = $state(false)
+    let fadeWordsLift = $state(3)
+    let fadeWordsLiftDuration = $state(0.4)
+    let fadeWordsFadeDuration = $state(0.5)
     let chunkMode = $state('word')
     let disabled = $state(false)
     let reducedMotion = $state(true)
@@ -156,10 +160,51 @@
     </section>
     <div class="comparison">
         {#each effects as effect (effect.name)}
-            <article>
+            <article aria-label={`${effect.name} comparison`}>
                 <div class="caption">
                     <h2>{effect.name}</h2>
                     <p>{effect.description}</p>
+                    {#if effect.name === 'FadeWords'}
+                        <label class="toggle trial-toggle"
+                            ><input type="checkbox" bind:checked={fadeWordsTrial} /> FadeWords soft lift
+                            and fade trial</label
+                        >
+                        {#if fadeWordsTrial}
+                            <p class="trial-note">
+                                Consumer trial: separate timings below replace Duration (seconds)
+                                for this pane. Replay to compare new arrivals.
+                            </p>
+                            <div class="settings trial-settings">
+                                <label
+                                    >Lift (pixels)<input
+                                        type="number"
+                                        min="0"
+                                        max="20"
+                                        step="0.5"
+                                        bind:value={fadeWordsLift}
+                                    /></label
+                                >
+                                <label
+                                    >Lift duration (seconds)<input
+                                        type="number"
+                                        min="0"
+                                        max="5"
+                                        step="0.01"
+                                        bind:value={fadeWordsLiftDuration}
+                                    /></label
+                                >
+                                <label
+                                    >Fade duration (seconds)<input
+                                        type="number"
+                                        min="0"
+                                        max="5"
+                                        step="0.01"
+                                        bind:value={fadeWordsFadeDuration}
+                                    /></label
+                                >
+                            </div>
+                        {/if}
+                    {/if}
                     {#if effect.name === 'RiseWords'}
                         <label class="toggle trial-toggle"
                             ><input type="checkbox" bind:checked={softFadeRise} /> Custom soft fade/rise
@@ -213,6 +258,15 @@
                                     {lift}
                                     {liftDuration}
                                     {fadeDuration}
+                                />
+                            {:else if effect.name === 'FadeWords' && fadeWordsTrial}
+                                <SoftFadeRise
+                                    {text}
+                                    {streamingText}
+                                    {enabled}
+                                    lift={fadeWordsLift}
+                                    liftDuration={fadeWordsLiftDuration}
+                                    fadeDuration={fadeWordsFadeDuration}
                                 />
                             {:else if effect.component}<effect.component
                                     {text}
