@@ -11,3 +11,7 @@ Snapshot: `b2cd6f9`; verdict ON TRACK. Implementation gates PASS; live user revi
 - Parent reran full suite without source/assertion changes, using three rather than five simultaneous browser workers: all 90 passed across five projects. Default partial-word pending maxima were about 259–267ms. Log `/tmp/soft-fade-rise-guard-rerun.log`, results `/tmp/soft-fade-rise-guard-rerun-results`. Initial failure demonstrates timing sensitivity; reduced concurrency passing does not establish its exact cause.
 - Parent inspected the root UI and selected the trial with 2px/.14s/.24s. Screenshot `/Users/jasonkummerl/.t3/userdata/browser-artifacts/browser-screenshot-127-0-0-1-muzshmx7-c2a6e094.png`. No subjective smoothness verdict from static screenshot or passing tests.
 - Raw-formatting remount snap remains unresolved. No continuity-scope API approval or implementation. No PR/push, batch retirement, or user acceptance claimed.
+
+## 2026-10-08 — PLAN AMENDED for matching FadeWords trial
+
+Operator explicitly requests matching lift/fade in FadeWords and supplies 3px/.4s/.5s via screenshot. Re-baselined to `a8d8741` after confirming no source drift. Added independently selectable FadeWords consumer trial and targeted tests to the contract, preserving the existing RiseWords trial and all library defaults. The parent will restore screenshot settings in both panes after reload for live comparison. Public continuity-scope proposal remains outside this amendment.
