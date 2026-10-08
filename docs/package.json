@@ -29,7 +29,7 @@
         "runed": "^0.37.1"
     },
     "devDependencies": {
-        "@cloudflare/workers-types": "^5.20260923.1",
+        "@cloudflare/workers-types": "^5.20261006.1",
         "@eslint/compat": "^2.1.1",
         "@eslint/js": "^10.0.1",
         "@humanspeak/svelte-motion": "^1.2.1",
@@ -65,7 +65,7 @@
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.70.1",
         "vite": "^8.3.0",
-        "wrangler": "^4.137.0"
+        "wrangler": "^4.148.0"
     },
     "volta": {
         "node": "24.15.0"
