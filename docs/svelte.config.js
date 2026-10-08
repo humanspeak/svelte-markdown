@@ -58,7 +58,13 @@ const config = {
             mode: 'hash',
             directives: {
                 'default-src': ['self'],
-                'script-src': ['self', 'https://*.ahrefs.com', 'unsafe-inline', 'wasm-unsafe-eval'],
+                'script-src': [
+                    'self',
+                    'https://*.ahrefs.com',
+                    'https://q.svelte.page',
+                    'unsafe-inline',
+                    'wasm-unsafe-eval'
+                ],
                 'style-src': ['self', 'unsafe-inline', 'https://cdn.jsdelivr.net'],
                 'img-src': ['self', 'data:', 'https:'],
                 'font-src': ['self', 'data:', 'https://cdn.jsdelivr.net'],

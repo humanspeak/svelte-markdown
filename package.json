@@ -1,6 +1,6 @@
 {
     "name": "@humanspeak/svelte-markdown",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "Markdown and HTML renderer for Svelte 5 — built for rendering streaming AI agent output from Claude Code, ChatGPT, and agentic workflows. XSS-safe defaults, streaming-aware sanitization, token caching, TypeScript types, and Svelte 5 runes.",
     "keywords": [
         "svelte",
@@ -156,6 +156,7 @@
         "@testing-library/svelte": "^5.4.2",
         "@testing-library/user-event": "^14.6.7",
         "@types/katex": "^0.16.8",
+        "@types/mdast": "^4.0.4",
         "@types/node": "^26.6.2",
         "@typescript-eslint/eslint-plugin": "^8.70.1",
         "@typescript-eslint/parser": "^8.70.1",
@@ -169,6 +170,7 @@
         "husky": "^9.1.7",
         "jsdom": "^30.1.1",
         "katex": "^0.18.7",
+        "mdast-util-from-markdown": "^2.1.0",
         "mermaid": "^12.0.0",
         "mprocs": "^0.9.6",
         "prettier": "^3.9.9",

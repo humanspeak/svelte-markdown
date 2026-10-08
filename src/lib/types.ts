@@ -35,6 +35,7 @@ export interface HeadingSnippetProps {
     depth: number
     raw: string
     text: string
+    id?: string
     options: SvelteMarkdownOptions
     slug: (val: string) => string // trunk-ignore(eslint/no-unused-vars)
     children?: Snippet
