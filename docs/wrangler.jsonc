@@ -34,7 +34,10 @@
     "vars": {
         "PUBLIC_ENVIRONMENT": "production",
         "ENVIRONMENT": "production",
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        // checkov:skip=CKV_SECRET_6: PostHog project tokens are public client-side SDK identifiers.
+        "PUBLIC_POSTHOG_PROJECT_TOKEN": "phc_p5acer9NtKThxwDKFUSYAeGaKYWJfvFPGifbyzSFpBqw",
+        "PUBLIC_POSTHOG_HOST": "https://q.svelte.page"
     }
     /**
      * Note: Use secrets to store sensitive data.
