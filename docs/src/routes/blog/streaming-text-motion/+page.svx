@@ -1,0 +1,163 @@
+---
+title: Streaming Text Motion, on Your Terms
+date: '2026-10-08T12:00:00-04:00'
+description: Add optional word and character arrival effects to streaming markdown in Svelte 5, with ready-made presets, an ink reveal, and full control over rendering.
+tags:
+    - streaming
+    - animation
+    - svelte-5
+author: Jason Kummerl
+readingTime: 6
+---
+
+<script lang="ts">
+    import { BlogPostV2, type BlogPostMeta } from '@humanspeak/docs-kit/blog'
+    import { docsConfig } from '$lib/docs-config'
+
+    const post: BlogPostMeta = {
+        slug: 'streaming-text-motion',
+        title: 'Streaming Text Motion, on Your Terms',
+        date: '2026-10-08T12:00:00-04:00',
+        description:
+            'Add optional word and character arrival effects to streaming markdown in Svelte 5, with ready-made presets, an ink reveal, and full control over rendering.',
+        tags: ['streaming', 'animation', 'svelte-5'],
+        author: 'Jason Kummerl',
+        readingTime: 6
+    }
+</script>
+
+<BlogPostV2 {post} config={docsConfig}>
+
+A streaming response is something you read while it is still being written. New words arrive, paragraphs take shape, and markdown becomes formatting as the closing delimiters appear. The way that text enters the page can make a difference to how it feels to read.
+
+We’ve added optional streaming text motion to `@humanspeak/svelte-markdown`. You can choose a packaged word or character effect, adjust its motion, or build your own rendering with a headless component.
+
+Existing rendering stays unchanged by default. Installing an animation library doesn’t turn anything on. You decide whether to track text arrivals and how to present them.
+
+## Three ways to welcome new text
+
+The optional motion entry point provides three presets:
+
+| Preset | What arrives | Default effect |
+| --- | --- | --- |
+| `FadeWords` | Words | A linear fade with a feathered ink reveal |
+| `RiseWords` | Words | The same fade and ink reveal, plus an eased upward entrance |
+| `FadeCharacters` | Unicode grapheme clusters | A shorter opacity fade |
+
+The word presets fade over 0.65 seconds. `RiseWords` also lifts words into place from 8 pixels below over 0.4 seconds. Their ink reveal runs over 0.8 seconds. `FadeCharacters` uses a 0.18-second fade and leaves the ink effect off by default.
+
+New segments in the same text leaf receive a small stagger: 0.02 seconds per segment, capped at 0.16 seconds. A chunk containing several words can have overlapping entrances. This isn’t a global queue that waits for every word to finish before starting the next one.
+
+Whitespace stays literal. Character segmentation follows grapheme boundaries, so a combining accent or a joined emoji can remain one visual unit.
+
+## Start with a preset
+
+The presets require `@humanspeak/svelte-motion`, installed separately:
+
+```sh
+pnpm add @humanspeak/svelte-markdown @humanspeak/svelte-motion@^2.0.1-0
+```
+
+Here is a small Svelte 5 example you can wire to your own stream:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { RiseWords } from '@humanspeak/svelte-markdown/streaming/motion'
+
+    let source = $state('')
+    let streamId = $state(0)
+
+    function receive(chunk: string) {
+        source += chunk
+    }
+
+    function restart() {
+        source = ''
+        streamId++
+    }
+</script>
+
+<button onclick={() => receive('A new thought arrives. ')}>Append</button>
+<button onclick={restart}>Restart</button>
+
+<SvelteMarkdown
+    {source}
+    {streamId}
+    streaming
+    streamingText
+    renderers={{ rawtext: RiseWords }}
+/>
+```
+
+`streaming` enables incremental markdown rendering. `streamingText` adds arrival bookkeeping. Registering the `rawtext` renderer chooses the presentation. You can also use the existing `writeChunk()` and `resetStream()` methods when your integration writes directly to the component.
+
+The effects apply to raw text. Inline code and fenced code blocks keep their code renderers.
+
+## Give the effect your own timing
+
+Presets are a starting point. To configure one, create a wrapper component and register that wrapper as your `rawtext` renderer.
+
+For example, save this as `MyRise.svelte`:
+
+```svelte
+<script lang="ts">
+    import { RiseWords } from '@humanspeak/svelte-markdown/streaming/motion'
+    import type { StreamingMotionProps } from '@humanspeak/svelte-markdown/streaming/motion'
+    import { onMount } from 'svelte'
+
+    const { text = '', streamingText }: StreamingMotionProps = $props()
+    let enabled = $state(false)
+
+    onMount(() => {
+        const query = window.matchMedia('(prefers-reduced-motion: reduce)')
+        const update = () => { enabled = !query.matches }
+        update()
+        query.addEventListener('change', update)
+        return () => query.removeEventListener('change', update)
+    })
+</script>
+
+<RiseWords
+    {text}
+    {streamingText}
+    {enabled}
+    initial={{ opacity: 0, y: 3 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{
+        opacity: { duration: 0.5, ease: 'linear' },
+        y: { duration: 0.4, ease: 'easeOut' }
+    }}
+    ink={false}
+/>
+```
+
+Then import `MyRise` in the parent and use `renderers={{ rawtext: MyRise }}`.
+
+This version uses a smaller lift, separate fade and movement durations, and no ink wipe. The wrapper also follows the reader’s reduced-motion preference, including changes made while the page is open. With motion disabled, the preset renders plain escaped text without its animation wrappers.
+
+An explicit `transition` replaces the preset’s entire default transition, including its easing and stagger. You can add your own delays, or use a segment snippet when those delays need to depend on individual words.
+
+For the ink effect alone, pass `ink={false}` to remove it or `ink={{ duration: 0.6 }}` to change its timing. It is a feathered left-to-right mask reveal; the word’s opacity and movement remain separate controls.
+
+## Own the markup, too
+
+The core package exports `StreamingText`, a headless component with no Motion dependency. It gives your snippet keyed segments with fields such as `text`, `isNew`, `isWhitespace`, and `batchIndex`.
+
+That lets you use Svelte Motion, CSS, or another approach to present arriving text. You choose word or grapheme segmentation, provide a custom segmenter when your application needs different boundaries, and decide what markup each segment should produce. Without a segment snippet, the helper renders plain escaped text.
+
+Existing content is baseline by default, so it remains visible rather than replaying an entrance. An unfinished word can retain its keyed segment as more characters arrive. Revisions and initial content animate only when you explicitly enable those options.
+
+Markdown still changes structure while it streams. Closing a backtick can replace visible text with an inline-code element; completing emphasis can move text under a formatting wrapper. Those changes can remount DOM or alter line wrapping. Arrival effects don’t guarantee an uninterrupted animation through every formatting change.
+
+## Try it with your own reading pace
+
+The [streaming text motion example](/examples/streaming-text-motion) lets you compare effects and inspect their source. The [LLM streaming guide](/docs/advanced/llm-streaming#optional-text-arrival-effects) covers the presets, custom snippets, metadata, and identity rules in more detail.
+
+Try both short and long responses, including code, emoji, and text in the languages your readers use. Word wrappers can affect wrapping, and character effects create more DOM nodes. The best settings depend on the content and the pace at which it arrives.
+
+Your stream controls when text reaches the page. Streaming text motion gives you control over how it enters.
+
+— Jason Kummerl
+
+</BlogPostV2>
