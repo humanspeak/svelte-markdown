@@ -117,6 +117,11 @@
      */
 
     import { getContext, hasContext, setContext } from 'svelte'
+    import type { StreamingTextMetadata } from './types.js'
+    import {
+        STREAMING_TEXT_CONTEXT,
+        type StreamingTextContext
+    } from './utils/streaming-text-context.js'
     import Parser from '$lib/Parser.svelte'
     import type { AnySnippet } from '$lib/utils/component-props.js'
     import type { FootnoteRenderMetadata } from '$lib/utils/footnote-render-metadata.js'
@@ -152,6 +157,7 @@
         sanitizeUrl?: SanitizeUrlFn
         sanitizeAttributes?: SanitizeAttributesFn
         footnoteMetadata?: FootnoteRenderMetadata
+        streamingText?: StreamingTextMetadata
     }
 
     const {
@@ -166,11 +172,13 @@
         sanitizeUrl = defaultSanitizeUrl,
         sanitizeAttributes = defaultSanitizeAttributes,
         footnoteMetadata = undefined,
+        streamingText = undefined,
         ...rest
     }: Props & {
         [key: string]: unknown
     } = $props()
 
+    const textContext = getContext<StreamingTextContext | undefined>(STREAMING_TEXT_CONTEXT)
     const hasRenderMetadataContext = hasContext(RENDER_METADATA_CONTEXT)
     const renderMetadata = hasRenderMetadataContext
         ? getContext<RenderMetadata>(RENDER_METADATA_CONTEXT)
@@ -290,6 +298,15 @@
     }
 </script>
 
+{#snippet rawTextLeaf()}
+    {@const leafText = (sanitizedRest.text ?? sanitizedRest.raw ?? '') as string}
+    {#if snippetOverrides.rawtext}
+        {@render snippetOverrides.rawtext({ ...sanitizedRest, text: leafText, streamingText })}
+    {:else if renderers.rawtext}
+        <renderers.rawtext {...sanitizedRest} text={leafText} {streamingText} />
+    {/if}
+{/snippet}
+
 {#snippet dispatch(token: Token, restProps: Record<string, unknown>)}
     {@const htmlTok = token as Token & {
         tag?: string
@@ -346,6 +363,7 @@
             {...token}
             {...headingIdProps}
             {...footnoteProps}
+            streamingText={textContext?.getMetadata(token)}
             {renderers}
             {snippetOverrides}
             {htmlSnippetOverrides}
@@ -570,7 +588,7 @@
                     {@render dispatch(childToken, localRestForChildren)}
                 {/each}
             {:else if !tokens}
-                <renderers.rawtext text={sanitizedRest.raw} {...sanitizedRest} />
+                {@render rawTextLeaf()}
             {/if}
         {/snippet}
         {#if htmlSnippet}
@@ -605,14 +623,14 @@
                     {@render dispatch(childToken, parserRest)}
                 {/each}
             {:else}
-                <renderers.rawtext text={sanitizedRest.raw} {...sanitizedRest} />
+                {@render rawTextLeaf()}
             {/if}
         {/snippet}
 
         {#if typeSnippet}
-            {@render typeSnippet({ ...sanitizedRest, children: renderChildren })}
+            {@render typeSnippet({ ...sanitizedRest, streamingText, children: renderChildren })}
         {:else if GeneralComponent}
-            <GeneralComponent {...sanitizedRest}>
+            <GeneralComponent {...sanitizedRest} {streamingText}>
                 {@render renderChildren()}
             </GeneralComponent>
         {/if}

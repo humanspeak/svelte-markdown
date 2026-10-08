@@ -50,6 +50,9 @@
      * - Provides parsed callback for external token access
      */
 
+    import { ProvenanceCollector } from './utils/streaming-provenance.js'
+    import { StreamingTextLedger } from './utils/streaming-text.js'
+    import { STREAMING_TEXT_CONTEXT } from './utils/streaming-text-context.js'
     import Parser from '$lib/Parser.svelte'
     import {
         type StreamingChunk,
@@ -96,6 +99,7 @@
     const {
         source = [],
         streaming = false,
+        streamingText = false,
         streamId = undefined,
         renderers = {},
         options = {},
@@ -121,6 +125,19 @@
     const hasAsyncExtension = $derived(getHasAsyncExtension(extensions))
 
     // Streaming mode: full re-parse + smart in-place diff
+    let textCollector: ProvenanceCollector | undefined
+    let textLedger: StreamingTextLedger | undefined
+    let textEpoch = 0
+    let lastTracking = false
+    setContext(STREAMING_TEXT_CONTEXT, {
+        getBatch: () => textLedger?.batchId,
+        getMetadata: (node: object) => textLedger?.get(node)
+    })
+    const baselineText = (value: string) => {
+        textCollector = streamingText ? new ProvenanceCollector() : undefined
+        textLedger = streamingText ? new StreamingTextLedger(++textEpoch, value) : undefined
+        lastTracking = streamingText
+    }
     let incrementalParser: IncrementalParser | undefined
     let lastOptionsSrc: typeof options | undefined
     let lastExtensionsSrc: typeof extensions | undefined
@@ -180,7 +197,10 @@
     }
 
     const hasStreamingParserConfigChanged = () =>
-        !incrementalParser || lastOptionsSrc !== options || lastExtensionsSrc !== extensions
+        !incrementalParser ||
+        lastOptionsSrc !== options ||
+        lastExtensionsSrc !== extensions ||
+        lastTracking !== streamingText
 
     /**
      * Parses `nextSource` and adopts the result as `streamTokens`.
@@ -193,10 +213,16 @@
     const applyStreamingSource = (
         nextSource: string,
         forceNewParser = false,
-        appendsTo?: string
+        appendsTo?: string,
+        patch?: StreamingOffsetChunk
     ) => {
+        if (lastTracking !== streamingText || (streamingText && !textLedger)) {
+            baselineText(nextSource)
+            forceNewParser = true
+        }
+        textLedger?.update(nextSource, patch)
         if (forceNewParser || hasStreamingParserConfigChanged()) {
-            incrementalParser = new IncrementalParser(combinedOptions)
+            incrementalParser = new IncrementalParser(combinedOptions, textCollector)
             lastOptionsSrc = options
             lastExtensionsSrc = extensions
         }
@@ -211,6 +237,8 @@
             reuseMode,
             reusedPrefixCount
         } = parser.update(nextSource, appendsTo)
+
+        const occurrences = textCollector?.capture(newTokens)
 
         // Replace the array reference rather than mutating per-index +
         // length. Under Svelte 5's reactive proxy, shrinking the array
@@ -231,6 +259,22 @@
         // copy is the only O(n) copy per update. When the rendered array is
         // the one the parser returned last, its reused prefix is already the
         // rendered objects and is skipped (plan 011).
+        adoptStreamingTokens(newTokens, reuseMode, divergeAt, reusedPrefixCount)
+        if (textCollector && occurrences && textLedger) {
+            const start = reuseMode === 'prefix' ? divergeAt : 0
+            textCollector.bind(streamTokens, occurrences, start)
+            textLedger.prepare(streamTokens, textCollector, start)
+        }
+        lastParserTokens = newTokens
+        updateStreamingRenderMetadataStart(reuseMode, divergeAt, divergeOffset)
+    }
+
+    const adoptStreamingTokens = (
+        newTokens: Token[],
+        reuseMode: 'prefix' | 'tree' | 'none',
+        divergeAt: number,
+        reusedPrefixCount: number
+    ) => {
         if (reuseMode === 'prefix') {
             const identicalPrefix = streamTokens === lastParserTokens ? reusedPrefixCount : 0
             streamTokens = reuseStableTokenArrayInPlace(
@@ -244,7 +288,13 @@
         } else {
             streamTokens = newTokens
         }
-        lastParserTokens = newTokens
+    }
+
+    const updateStreamingRenderMetadataStart = (
+        reuseMode: 'prefix' | 'tree' | 'none',
+        divergeAt: number,
+        divergeOffset: number | undefined
+    ) => {
         const canSkipRenderMetadataPrefix = reuseMode === 'prefix' && divergeOffset !== undefined
         const startIndex = canSkipRenderMetadataPrefix ? divergeAt : 0
         if (streamRenderMetadataConsumed || startIndex < streamRenderMetadataStartIndex) {
@@ -326,6 +376,8 @@
         pendingStreamAppendBase = undefined
         streamInputMode = null
         streamSourceBuffer = ''
+        textCollector = undefined
+        textLedger = undefined
         streamRenderMetadataStartIndex = 0
         streamRenderMetadataStartOffset = 0
         streamRenderMetadataConsumed = true
@@ -334,6 +386,7 @@
     const resetStreamingState = (nextSource = '') => {
         teardownStreamingBuffers()
         streamSourceBuffer = nextSource
+        baselineText(nextSource)
 
         if (nextSource === '') {
             clearStreamingParser()
@@ -345,6 +398,7 @@
     }
 
     const syncStreamingSourceFromProp = (nextSource: typeof source) => {
+        const previousSourceProp = lastSourceProp
         lastSourceProp = nextSource
 
         if (Array.isArray(nextSource)) {
@@ -376,7 +430,20 @@
             return
         }
 
+        // Empty initial content is a baseline; the first subsequent streamed write is an arrival.
+        const emptyArrival =
+            streamingText &&
+            previousSourceProp === '' &&
+            !!textLedger &&
+            streamSourceBuffer === '' &&
+            nextStr !== ''
+        const emptyLedger = emptyArrival ? textLedger : undefined
+        const emptyCollector = emptyArrival ? textCollector : undefined
         teardownStreamingBuffers()
+        if (emptyLedger) {
+            textLedger = emptyLedger
+            textCollector = emptyCollector
+        } else baselineText(nextStr)
 
         if (nextStr === '') {
             clearStreamingParser()
@@ -446,7 +513,7 @@
         streamSourceBuffer = applyStreamingOffsetChunk(streamSourceBuffer, chunk, {
             maxOffsetGap: STREAM_MAX_OFFSET_GAP
         })
-        applyStreamingSource(streamSourceBuffer)
+        applyStreamingSource(streamSourceBuffer, false, undefined, chunk)
     }
 
     export function writeChunk(chunk: StreamingChunk): void {
@@ -461,6 +528,10 @@
             resetStreamingSession()
         }
 
+        if (lastTracking !== streamingText) {
+            baselineText(streamSourceBuffer)
+            clearStreamingParser()
+        }
         if (pendingStreamFullSource !== null) {
             flushPendingStreamChanges()
         }
@@ -488,6 +559,14 @@
         if (!canUseImperativeStreaming('resetStream')) return
 
         resetStreamingState(nextSource)
+    }
+
+    // Opted-in SSR and hydration must share a visible baseline. Ordinary streaming
+    // keeps its existing initialization path and allocates no arrival bookkeeping.
+    if (streamingText && streaming && !hasAsyncExtension && typeof source === 'string') {
+        resetStreamingState(source)
+        lastSourceProp = source
+        lastStreamId = streamId
     }
 
     $effect(() => {
@@ -529,6 +608,10 @@
             return
         }
 
+        if (lastTracking !== streamingText) {
+            baselineText(streamSourceBuffer)
+            clearStreamingParser()
+        }
         if (hasStreamingParserConfigChanged()) {
             if (pendingStreamFullSource !== null) {
                 flushPendingStreamChanges(true)

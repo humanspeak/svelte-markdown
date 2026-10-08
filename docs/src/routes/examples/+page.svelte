@@ -118,6 +118,13 @@
                 'Stream markdown and rich HTML from AI agents in real time. Adjustable speed, jitter, and chunk modes — XSS-safe by default.'
         },
         {
+            slug: 'streaming-text-motion',
+            title: 'Streaming Text Motion',
+            tag: 'STREAMING',
+            description:
+                'Animate words as they stream in — FadeWords, RiseWords and FadeCharacters presets with a soft ink wipe, or your own headless snippet.'
+        },
+        {
             slug: 'agent-output',
             title: 'Agent Output',
             tag: 'STREAMING',

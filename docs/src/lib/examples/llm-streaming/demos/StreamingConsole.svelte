@@ -570,6 +570,9 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs).
     .ls-grid {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        /* Absorb extra height when the notes column stretches the frame, so
+           the controls and progress row stay pinned to the footer. */
+        flex: 1;
         min-height: 380px;
         border-bottom: 1px solid var(--brut-rule);
     }

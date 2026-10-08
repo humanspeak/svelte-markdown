@@ -370,6 +370,147 @@ Choose between **chunked** mode (imperative `writeChunk()` API) and **concat** m
 
 {/if}
 
+## Optional text arrival effects
+
+Core rendering stays unchanged: ordinary text has no segment wrappers, tracking or animation. Installing Motion enables nothing. `streamingText` opts into source arrival bookkeeping only, on the synchronous `streaming` path. Choose a renderer or snippet separately. Async extensions disable this bookkeeping along with synchronous streaming.
+
+Install Motion explicitly when using presets or your own Motion snippet (the presets require the compatible 2.0.1-0 release or later):
+
+```sh
+pnpm add @humanspeak/svelte-markdown @humanspeak/svelte-motion@^2.0.1-0
+```
+
+### Pick a packaged preset
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { FadeWords } from '@humanspeak/svelte-markdown/streaming/motion'
+
+    let source = $state('')
+    let streamId = $state(0)
+    function receive(chunk: string) { source += chunk }
+    function restart() { source = ''; streamId++ }
+</script>
+
+<button onclick={restart}>Restart</button>
+<button onclick={() => receive('New words ')}>Append</button>
+<SvelteMarkdown {source} {streamId} streaming streamingText renderers={{ rawtext: FadeWords }} />
+```
+
+Swap the import and `rawtext` registration for `RiseWords` or `FadeCharacters`:
+
+| Export | Segmentation | Entrance | Layout |
+| --- | --- | --- | --- |
+| `FadeWords` | Locale-aware word spans | Linear opacity fade with an ink wipe | Inline-block ink wrappers |
+| `RiseWords` | Locale-aware word spans | Linear opacity fade, 8px eased rise and an ink wipe | Inline-block spans |
+| `FadeCharacters` | Unicode grapheme clusters | Opacity | Ordinary inline spans |
+
+Whitespace stays literal outside Motion spans. Rise's inline-block words can affect line wrapping; grapheme rendering creates more DOM nodes than word rendering. Code blocks and inline code retain their code renderers and are excluded from rawtext effects.
+
+All three presets accept `text`, `streamingText`, `enabled` (true), `ink`, `animateRevisions` (false), `animateInitialContent` (false), `initial`, `animate`, `transition`, `variants`, `custom`, `locale`, `segmenter` and a `segment` snippet. Motion prop types come from `MotionSpan`; a consumer segment snippet replaces all preset markup. With `enabled={false}`, presets render escaped plain text without wrappers. All defaults use a leaf-local batch stagger of 0.02s capped at 0.16s. FadeWords fades over 0.65s with linear easing. RiseWords uses the same fade plus an 8px rise over 0.4s with `easeOut`. FadeCharacters fades over 0.18s with Motion's default easing.
+
+FadeWords and RiseWords also apply an ink wipe by default: a feathered left-to-right mask reveal over 0.8s on arriving words, sharing the batch stagger. Pass `ink={false}` to disable it or `ink={{ duration }}` to retime it; FadeCharacters accepts `ink` but leaves it off by default. The wipe runs only on entering segments, never on baseline content, and is skipped entirely with `enabled={false}` or a custom `segment` snippet. Passing `transition` replaces the entire default transition, including easing and stagger; `initial` and `animate` likewise replace the preset targets.
+
+For example, save a configured renderer as `MyRise.svelte` and register it with `renderers={{ rawtext: MyRise }}`:
+
+```svelte
+<script lang="ts">
+    import { RiseWords } from '@humanspeak/svelte-markdown/streaming/motion'
+    import type { StreamingMotionProps } from '@humanspeak/svelte-markdown/streaming/motion'
+    const { text = '', streamingText, enabled = true }: StreamingMotionProps = $props()
+</script>
+
+<RiseWords {text} {streamingText} {enabled}
+    initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.25 }} />
+```
+
+Baseline text always uses `initial={false}`, even when you supply `initial`, unless you explicitly set `animateInitialContent`. Revisions use `initial={false}` unless `animateRevisions` is enabled. SSR seeds are baseline, so existing text is visible on the server and during hydration. An unfinished segment retains its keyed node and creation eligibility as its text grows.
+
+### Own every segment with StreamingText
+
+`StreamingText` is exported from the core and has no Motion dependency. Without a `segment` snippet it renders plain escaped text without wrappers. With a snippet it segments and keys your markup. The [live example](/examples/streaming-text-motion) exposes the actual `MotionStreamingText.svelte` source, plus duration, capped stagger, word/grapheme, preset selection and restart controls.
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown, { StreamingText } from '@humanspeak/svelte-markdown'
+    import { MotionSpan } from '@humanspeak/svelte-motion'
+    import { onMount } from 'svelte'
+
+    let markdown = $state<SvelteMarkdown>()
+    let streamId = $state(0)
+    let enabled = $state(false)
+    onMount(() => {
+        const query = window.matchMedia('(prefers-reduced-motion: reduce)')
+        const update = () => { enabled = !query.matches }
+        update()
+        query.addEventListener('change', update)
+        return () => query.removeEventListener('change', update)
+    })
+    function restart() { streamId++; markdown?.resetStream('') }
+</script>
+
+<button onclick={restart}>Restart</button>
+<button onclick={() => markdown?.writeChunk('New words ')}>Append</button>
+<SvelteMarkdown bind:this={markdown} source="" {streamId} streaming streamingText>
+    {#snippet rawtext({ text, streamingText })}
+        <StreamingText {text} metadata={streamingText} granularity="word">
+            {#snippet segment(part)}
+                {#if !enabled || part.isWhitespace}
+                    {part.text}
+                {:else}
+                    <MotionSpan initial={part.isNew ? { opacity: 0 } : false}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.18, delay: Math.min(part.batchIndex * 0.02, 0.16) }}
+                        >{part.text}</MotionSpan>
+                {/if}
+            {/snippet}
+        </StreamingText>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+Reduced motion belongs to the consumer. Initialize animation disabled for SSR, then subscribe to `matchMedia` in `onMount` and remove the listener on teardown, as above. Pass the same reactive `enabled` to a configured preset wrapper. No `AnimatePresence` is needed for append entrances. Reveal pacing controls when text appears; arrival effects control its presentation once it appears. They are separate choices.
+
+### API and identity
+
+`StreamingText` props are `text` (empty by default), `metadata`, `granularity` (`'word'` by default or `'grapheme'`), `locale`, `segmenter`, and `segment: Snippet<[StreamingTextSegment]>`. `SvelteMarkdown` delivers reserved `streamingText?: StreamingTextMetadata` to leaf components and rawtext snippets; passthrough props cannot override it. Forward it to `metadata` on the helper rather than to a DOM element.
+
+The exported types contain only readonly fields:
+
+```ts
+interface StreamingTextSpan { readonly text: string; readonly start: number; readonly end: number }
+type StreamingTextGranularity = 'word' | 'grapheme'
+type StreamingTextChange = 'baseline' | 'append' | 'revision'
+type StreamingTextSegmenter = (text: string) => readonly StreamingTextSpan[]
+interface StreamingTextSegment extends StreamingTextSpan {
+    readonly id: string
+    readonly index: number
+    readonly isNew: boolean
+    readonly batchId: number
+    readonly batchIndex: number
+    readonly isWhitespace: boolean
+    readonly change: StreamingTextChange
+}
+interface StreamingTextRange {
+    readonly start: number; readonly end: number; readonly originId: string
+    readonly change: StreamingTextChange; readonly batchId: number
+    readonly revealedBeforeBatch: boolean
+}
+interface StreamingTextMetadata {
+    readonly epoch: number; readonly leafId: string; readonly renderBatchId: number
+    readonly provenance: 'exact' | 'unknown'
+    readonly ranges: readonly StreamingTextRange[]
+}
+```
+
+Offsets are leaf-local UTF-16 positions. `index` is the current segment position; `batchIndex` is leaf-local within its arrival batch, not global document stagger. `isNew`, `change`, `batchId` and `batchIndex` retain the segment's creation values during unrelated updates and unfinished-word completion; `isNew` describes entrance eligibility, not a timer. Metadata and segments are frozen. Never modify token objects to control this API.
+
+First content and reset seeds are baseline. Source replacements, `resetStream`, `streamId`, mode changes and disabling/re-enabling tracking discard the previous arrival epoch. Existing visible characters moved under completed markdown wrappers remain revealed, although their DOM may remount. New keys alone do not imply arrival. Offset overwrites classify changed positions as revisions while unchanged positions keep identity; padded gaps are baseline and later fills are revisions. Identical repeated words have distinct source identities. Custom parser transformations with unsupported provenance expose `provenance: 'unknown'` and suppress automatic entrances while preserving output.
+
+Word and grapheme segmentation require `Intl.Segmenter` (modern browsers and Node) or a custom `segmenter`. Missing support throws clearly. A custom segmenter returns ordered UTF-16 spans covering the exact input once; gaps, overlaps, invalid offsets or changed text throw instead of dropping content. Use a custom segmenter for your application's boundaries. Changing locale, granularity or segmenter rebaselines existing segments. Changed leaves are resegmented with full context to handle punctuation, combining marks and split surrogate pairs; completed unchanged leaves remain cached. Parsing a long open paragraph/list and full-parser fallbacks can still cost proportional to that block/document. Tracking and segment DOM cost are opt-in.
+
 ## Performance Characteristics
 
 Measured on 2026-09-28 with the repository's paired benchmark (`pnpm perf:stream-compare`): headless production Chromium, cumulative-source updates of 32 characters per animation frame (about 480 tokens per second, faster than real model output), ~24 KB corpora, and a metric of main-thread work per frame (synchronous update plus deferred frame work plus a forced layout). Median of five iterations, two suites; parity against a fresh parse was zero mismatches in every run.

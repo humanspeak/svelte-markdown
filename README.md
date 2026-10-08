@@ -908,6 +908,33 @@ The default Markdown `image` renderer lazy loads using native `loading="lazy"` a
 <SvelteMarkdown source={markdown} {renderers} />
 ```
 
+### Optional streaming text segments and Motion
+
+Default rendering remains ordinary unwrapped text. `streamingText` (default `false`) enables immutable source arrival metadata only with synchronous `streaming`; animation requires an explicitly selected renderer or snippet.
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { FadeWords } from '@humanspeak/svelte-markdown/streaming/motion'
+    let source = $state('')
+    let streamId = $state(0)
+</script>
+
+<SvelteMarkdown {source} {streamId} streaming streamingText renderers={{ rawtext: FadeWords }} />
+```
+
+Install `@humanspeak/svelte-motion@^2.0.1-0` explicitly for the optional `streaming/motion` subpath. It exports `FadeWords` (opacity), `RiseWords` (opacity plus vertical rise), `FadeCharacters` (graphemes) and `StreamingMotionProps`. Motion is an optional peer; installing it alone enables nothing. Presets accept `enabled`, `ink`, `animateRevisions`, `animateInitialContent`, `initial`, `animate`, `transition`, `variants`, `custom`, `locale`, `segmenter` and a complete markup replacement `segment` snippet. Whitespace stays literal; RiseWords motion spans and ink-wipe wrappers are inline-block. Consumers control reduced motion via `enabled`.
+
+All three presets use a leaf-local batch stagger of 0.02s capped at 0.16s. FadeWords fades over 0.65s (linear). RiseWords adds an 8px rise over 0.4s (`easeOut`) to the same fade. FadeCharacters keeps a 0.18s fade. FadeWords and RiseWords also apply an ink wipe, a feathered left-to-right mask reveal over 0.8s on arriving words; pass `ink={false}` to disable it or `ink={{ duration }}` to retime it (FadeCharacters leaves it off unless `ink` is passed). Consumer `initial` and `animate` replace the preset targets; `transition` replaces the entire default transition, including easing and stagger.
+
+The core exports headless `StreamingText` with `text`, optional `metadata`, `granularity: 'word' | 'grapheme'` (word by default), `locale`, `segmenter`, and `segment: Snippet<[StreamingTextSegment]>`. Forward leaf/snippet `streamingText` into `metadata`. Without a snippet it emits escaped text without wrappers or segmentation. No Motion installation is required for core or headless use.
+
+`StreamingTextSegment` has readonly `id`, `text`, `index`, `start`, `end`, `isNew`, `batchId`, `batchIndex`, `isWhitespace` and `change: 'baseline' | 'append' | 'revision'`. Offsets are leaf-local UTF-16. Creation eligibility and batch fields persist while an unfinished word grows. `StreamingTextMetadata` has readonly `epoch`, `leafId`, `renderBatchId`, `provenance: 'exact' | 'unknown'` and readonly `ranges`. Each `StreamingTextRange` has readonly `start`, `end`, `originId`, `change`, `batchId` and `revealedBeforeBatch`. Other exported types are `StreamingTextProps`, `StreamingTextSpan`, `StreamingTextSegmenter`, `StreamingTextGranularity` and `StreamingTextChange`.
+
+First/reset content is baseline; appends are arrivals; offset overwrites are revisions. Structural remounts do not replay already revealed source characters. Unknown custom-transform provenance suppresses automatic entrances. Tracking is per instance and discarded on resets, replacements, mode changes and toggles. Unicode boundaries require `Intl.Segmenter` or validated custom spans covering the exact text; locale/segmentation changes rebaseline. Changed leaves are resegmented with full context; completed unchanged leaves stay cached. Segment DOM cost is opt-in, and long open blocks/full-parser fallbacks retain their existing costs. Code renderers are excluded.
+
+See the [streaming text API and complete prop/imperative, custom snippet, SSR and reduced-motion examples](https://markdown.svelte.page/docs/advanced/llm-streaming#optional-text-arrival-effects) and [executable demo with actual source](https://markdown.svelte.page/examples/streaming-text-motion).
+
 ### LLM Streaming
 
 For real-time rendering of AI responses, enable the `streaming` prop. Append-only updates normally re-parse the open block at the end of the source and reuse unchanged tokens. Edits, reference definitions, and some extensions can require a full-document parse; work is not constant for every document or configuration.

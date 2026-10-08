@@ -24,6 +24,7 @@ import {
     isUnterminatedHtmlBlock
 } from '$lib/utils/token-cleanup.js'
 import { isVoidElement } from '$lib/utils/void-elements.js'
+import type { ProvenanceCollector } from './streaming-provenance.js'
 
 /**
  * The shape of an HTML token after the cleanup pipeline. Marked's base
@@ -136,6 +137,7 @@ interface CitingRoot {
     index: number
     /** The root's exact source span */
     source: string
+    start: number
     /** `source` normalized for label-use search */
     text: string
 }
@@ -656,7 +658,10 @@ export class IncrementalParser {
      *
      * @param options - Svelte markdown parser options forwarded to Marked's Lexer
      */
-    constructor(options: SvelteMarkdownOptions) {
+    private readonly provenance?: ProvenanceCollector
+
+    constructor(options: SvelteMarkdownOptions, provenance?: ProvenanceCollector) {
+        this.provenance = provenance
         this.options = options
 
         // Marked's `use()` stores each extension's tokenizer FUNCTION (by
@@ -971,12 +976,14 @@ export class IncrementalParser {
      * this.lexTail('See [a].', { a: { href: '/x', title: undefined } }) // paragraph with a link
      * ```
      */
-    private lexTail = (tailSource: string, links: LinkMap): Token[] =>
+    private lexTail = (tailSource: string, links: LinkMap, baseOffset: number): Token[] =>
         lexAndClean(
             tailSource,
             this.options,
             false,
-            hasAnyLabel(links) && tailSource.includes('[') ? links : undefined
+            hasAnyLabel(links) && tailSource.includes('[') ? links : undefined,
+            this.provenance,
+            baseOffset
         )
 
     /**
@@ -1005,13 +1012,13 @@ export class IncrementalParser {
     private parseTailWindow = (source: string, boundary: TailWindowBoundary): ParseSourceResult => {
         const tailSource = source.slice(boundary.reparseOffset)
         if (!tailSource.includes(DEFINITION_SIGIL)) {
-            const tailTokens = this.lexTail(tailSource, this.knownLinks)
+            const tailTokens = this.lexTail(tailSource, this.knownLinks, boundary.reparseOffset)
             return this.createTailWindowResult(source, boundary, tailTokens, this.knownLinks)
         }
 
         const previousTailLinks = this.collectLinks(this.prevTokens.slice(boundary.prefixCount))
         const prefixLinks = withoutLabels(this.knownLinks, previousTailLinks)
-        const tailTokens = this.lexTail(tailSource, prefixLinks)
+        const tailTokens = this.lexTail(tailSource, prefixLinks, boundary.reparseOffset)
         const tailLinks = this.collectLinks(tailTokens)
         const changedLabels = getChangedLabels(previousTailLinks, tailLinks, prefixLinks)
         // Earlier definitions win: prefix entries override tail entries (the
@@ -1149,7 +1156,7 @@ export class IncrementalParser {
             if (REFERENCE_INERT_ROOT_TYPES.has(root.type)) continue
             const text = this.getNormalizedRootText(root, source, start, offset)
             if (!matchers.some((matcher) => matcher.test(text))) continue
-            candidates.push({ index, source: source.slice(start, offset), text })
+            candidates.push({ index, start, source: source.slice(start, offset), text })
         }
         return offset === boundary.reparseOffset ? candidates : undefined
     }
@@ -1190,7 +1197,14 @@ export class IncrementalParser {
             const seed = candidate.source.includes(DEFINITION_SIGIL)
                 ? withoutLabels(links, this.collectLinks([root]))
                 : links
-            const relexed = lexAndClean(candidate.source, this.options, false, seed)
+            const relexed = lexAndClean(
+                candidate.source,
+                this.options,
+                false,
+                seed,
+                this.provenance,
+                candidate.start
+            )
             if (relexed.length !== 1) return undefined
             if (relexed[0].type !== root.type || relexed[0].raw !== root.raw) return undefined
             // Offset integrity: the root must still consume its exact span.
@@ -1243,7 +1257,7 @@ export class IncrementalParser {
      * ```
      */
     private parseFullSource = (source: string, isAppendOnly: boolean): ParseSourceResult => {
-        const tokens = lexAndClean(source, this.options, false)
+        const tokens = lexAndClean(source, this.options, false, undefined, this.provenance)
         // The lex was already O(document), so neither the scan for `]:`, the
         // definition walk nor the full length sum adds an order.
         const links = source.includes(DEFINITION_SIGIL) ? this.collectLinks(tokens) : NO_LINKS

@@ -8,7 +8,7 @@
     import { demoCodeSample } from '$lib/demo-loaders'
     import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
     import StreamingConsole from '$lib/examples/llm-streaming/demos/StreamingConsole.svelte'
-    import { Activity, DollarSign, Lightbulb, Zap } from '@lucide/svelte'
+    import { Activity, DollarSign, Lightbulb, Sparkles, Zap } from '@lucide/svelte'
 
     const seo = getSeoContext()
     if (seo) {
@@ -75,6 +75,13 @@
                 <a href="https://modelpricing.ai" target="_blank" rel="noopener noreferrer">
                     ModelPricing.ai
                 </a>.
+            </span>
+        </li>
+        <li>
+            <Sparkles />
+            <span>
+                Want arriving words to animate? See the
+                <a href="/examples/streaming-text-motion">streaming text motion demo</a>.
             </span>
         </li>
         <li>
