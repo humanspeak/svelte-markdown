@@ -21,7 +21,7 @@ async function sample(output: Locator) {
             }
         }
         const paragraphs = element.querySelectorAll('p')
-        const spans = [...element.querySelectorAll('span')]
+        const spans = [...element.querySelectorAll('span:not([data-ink])')]
         // Baseline occupies the first 29 UTF-16 units of the first paragraph.
         let offset = 0
         const old: ReturnType<typeof read>[] = []
@@ -68,6 +68,7 @@ type MotionFrame = {
 
 // The first paragraph has no markdown delimiters, so Range offsets are also
 // source offsets. Select the c in can/can't, never another c later in the sample.
+// Ink wrappers (`[data-ink]`) only carry the wipe mask; queries measure the motion span inside.
 const targetOffset = baseline.length + 'We '.length
 
 async function startRecorder(page: Page) {
@@ -94,7 +95,7 @@ async function startRecorder(page: Page) {
                 const targets = motion.map((element, index) => {
                     const paragraph = element.querySelector('p')!
                     const prefix = paragraph.textContent ?? ''
-                    const spans = [...element.querySelectorAll('span')]
+                    const spans = [...element.querySelectorAll('span:not([data-ink])')]
                     let coveredBaseline = 0
                     let target: Element | undefined
                     let start = -1
@@ -283,22 +284,30 @@ for (const run of [
             const rise = frames
                 .filter((frame) => frame.targets[1].start === targetOffset)
                 .map((frame) => frame.targets[1])
-            expect(rise.every((part) => part.y >= -0.01 && part.y <= 4.01)).toBe(true)
+            expect(rise.every((part) => part.y >= -0.01 && part.y <= 8.01)).toBe(true)
             expect(rise.at(-1)!.y).toBeLessThan(0.01)
             for (let index = 1; index < rise.length; index++) {
                 expect(rise[index].y).toBeLessThanOrEqual(rise[index - 1].y + 0.01)
                 expect(Math.abs(rise[index].layoutX - rise[0].layoutX)).toBeLessThan(0.1)
                 expect(Math.abs(rise[index].layoutY - rise[0].layoutY)).toBeLessThan(0.1)
             }
-            // Default entrance + capped 160 ms batch delay, with 60 ms of
-            // scheduling tolerance. An old, unreadable tail must not accumulate.
-            expect(Math.max(...frames.flatMap((frame) => frame.oldestPending))).toBeLessThan(400)
+            // Default entrance (0.65 s word fade, 0.18 s character fade) + capped
+            // 160 ms batch delay, with 60 ms of scheduling tolerance. An old,
+            // unreadable tail must not accumulate.
+            for (const [preset, limit] of [870, 870, 400].entries())
+                expect(
+                    Math.max(...frames.map((frame) => frame.oldestPending[preset]))
+                ).toBeLessThan(limit)
         }
         for (const preset of presets) {
             const output = page.getByTestId(preset)
             await exactText(output, baseline + first + second)
-            await expect(output.locator('span').filter({ hasText: /^👩‍💻$/ })).toHaveCount(1)
-            await expect(output.locator('span').filter({ hasText: /^é$/ })).toHaveCount(1)
+            await expect(
+                output.locator('span:not([data-ink])').filter({ hasText: /^👩‍💻$/ })
+            ).toHaveCount(1)
+            await expect(
+                output.locator('span:not([data-ink])').filter({ hasText: /^é$/ })
+            ).toHaveCount(1)
             await expect(output.locator('code')).toHaveText('const greeting = "Hello, 世界"')
             await expect(output.locator('code span')).toHaveCount(0)
         }
@@ -373,8 +382,12 @@ for (const preset of presets) {
             })
             .toBe(true)
         // Emoji/combining accents must occupy whole graphemes, not broken spans.
-        await expect(output.locator('span').filter({ hasText: /^👩‍💻$/ })).toHaveCount(1)
-        await expect(output.locator('span').filter({ hasText: /^é$/ })).toHaveCount(1)
+        await expect(
+            output.locator('span:not([data-ink])').filter({ hasText: /^👩‍💻$/ })
+        ).toHaveCount(1)
+        await expect(output.locator('span:not([data-ink])').filter({ hasText: /^é$/ })).toHaveCount(
+            1
+        )
         await page.getByRole('button', { name: 'Append passage', exact: true }).click()
         await exactText(output, baseline + first + second)
         await expect
@@ -384,7 +397,7 @@ for (const preset of presets) {
                     .first()
                     .evaluate(async (element) => {
                         await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
-                        const spans = [...element.querySelectorAll('span')]
+                        const spans = [...element.querySelectorAll('span:not([data-ink])')]
                         return (
                             spans.length > 0 &&
                             spans.every((span) => Number(getComputedStyle(span).opacity) === 1)
@@ -439,7 +452,7 @@ for (const preset of presets) {
             const output = page.getByTestId(preset)
             await page.getByRole('button', { name: 'Append passage', exact: true }).click()
             await exactText(output, baseline + first)
-            await expect(output.locator('span')).toHaveCount(0)
+            await expect(output.locator('span:not([data-ink])')).toHaveCount(0)
             expect(await output.evaluate((el) => getComputedStyle(el).opacity)).toBe('1')
             if (mode === 'reduced-motion') {
                 await page.emulateMedia({ reducedMotion: 'no-preference' })
@@ -467,7 +480,7 @@ for (const preset of presets) {
             await expect(page.getByTestId('motion-preference')).toContainText(
                 'System reduced motion'
             )
-            await expect(output.locator('span')).toHaveCount(0)
+            await expect(output.locator('span:not([data-ink])')).toHaveCount(0)
             await exactText(output, baseline + first + second)
             expect(errors).toEqual([])
         })
@@ -484,7 +497,9 @@ async function recordTrial(page: Page, preset = 'RiseWords') {
         }
         Object.assign(window, { trialFrames: state })
         const record = () => {
-            const spans = [...document.querySelectorAll(`[data-testid="${preset}"] span`)]
+            const spans = [
+                ...document.querySelectorAll(`[data-testid="${preset}"] span:not([data-ink])`)
+            ]
             const target = spans.find((span) => span.textContent === 'We')
             if (target) {
                 const style = getComputedStyle(target)
@@ -536,12 +551,10 @@ for (const setting of [
         await expect(trial).not.toBeChecked()
         await expect(page.getByLabel('Lift (pixels)', { exact: true })).toHaveCount(0)
         await trial.check()
-        await expect(page.getByLabel('Lift (pixels)', { exact: true })).toHaveValue('2')
-        await expect(page.getByLabel('Lift duration (seconds)', { exact: true })).toHaveValue(
-            '0.14'
-        )
+        await expect(page.getByLabel('Lift (pixels)', { exact: true })).toHaveValue('8')
+        await expect(page.getByLabel('Lift duration (seconds)', { exact: true })).toHaveValue('0.4')
         await expect(page.getByLabel('Fade duration (seconds)', { exact: true })).toHaveValue(
-            '0.24'
+            '0.65'
         )
         await page.getByLabel('Lift (pixels)', { exact: true }).fill(String(setting.lift))
         await page
@@ -594,8 +607,12 @@ for (const setting of [
             expect(frames[index].opacity).toBeGreaterThanOrEqual(frames[index - 1].opacity - 0.001)
             expect(frames[index].y).toBeLessThanOrEqual(frames[index - 1].y + 0.01)
         }
-        await expect(output.locator('span').filter({ hasText: /^👩‍💻$/ })).toHaveCount(1)
-        await expect(output.locator('span').filter({ hasText: /^é$/ })).toHaveCount(1)
+        await expect(
+            output.locator('span:not([data-ink])').filter({ hasText: /^👩‍💻$/ })
+        ).toHaveCount(1)
+        await expect(output.locator('span:not([data-ink])').filter({ hasText: /^é$/ })).toHaveCount(
+            1
+        )
         await page.getByRole('button', { name: 'Append passage', exact: true }).click()
         await exactText(output, baseline + first + second)
         await expect
@@ -622,7 +639,7 @@ for (const mode of ['disabled', 'reduced-motion'] as const) {
         const output = page.getByTestId('RiseWords')
         await page.getByRole('button', { name: 'Append passage', exact: true }).click()
         await exactText(output, baseline + first)
-        await expect(output.locator('span')).toHaveCount(0)
+        await expect(output.locator('span:not([data-ink])')).toHaveCount(0)
         if (mode === 'disabled') await page.getByLabel('Disable motion').uncheck()
         else await page.emulateMedia({ reducedMotion: 'no-preference' })
         await expect
@@ -639,7 +656,7 @@ for (const mode of ['disabled', 'reduced-motion'] as const) {
         await page.getByRole('button', { name: 'Append passage', exact: true }).click()
         await page.emulateMedia({ reducedMotion: 'reduce' })
         await exactText(output, baseline + first + second)
-        await expect(output.locator('span')).toHaveCount(0)
+        await expect(output.locator('span:not([data-ink])')).toHaveCount(0)
         expect(errors).toEqual([])
     })
 }
@@ -697,9 +714,9 @@ test('FadeWords soft fade/rise: independent controls and matching screenshot mot
     await toggle.check()
     await page.getByLabel('Custom soft fade/rise trial', { exact: true }).check()
     for (const [label, fadeDefault, riseDefault] of [
-        ['Lift (pixels)', '3', '2'],
-        ['Lift duration (seconds)', '0.4', '0.14'],
-        ['Fade duration (seconds)', '0.5', '0.24']
+        ['Lift (pixels)', '0', '8'],
+        ['Lift duration (seconds)', '0.4', '0.4'],
+        ['Fade duration (seconds)', '0.65', '0.65']
     ]) {
         await expect(fade.getByLabel(label, { exact: true })).toHaveValue(fadeDefault)
         await expect(rise.getByLabel(label, { exact: true })).toHaveValue(riseDefault)
@@ -709,6 +726,14 @@ test('FadeWords soft fade/rise: independent controls and matching screenshot mot
         await expect(fade.getByLabel(label, { exact: true })).toHaveValue('1')
         await fade.getByLabel(label, { exact: true }).fill(fadeDefault)
     }
+    // Defaults are the reviewed screenshot values; motion checks use one shared 3px setting.
+    for (const pane of [fade, rise])
+        for (const [label, value] of [
+            ['Lift (pixels)', '3'],
+            ['Lift duration (seconds)', '0.4'],
+            ['Fade duration (seconds)', '0.5']
+        ] as const)
+            await pane.getByLabel(label, { exact: true }).fill(value)
     await page.getByLabel('Duration (seconds)', { exact: true }).fill('2')
     const output = page.getByTestId('FadeWords')
     await exactText(output, baseline)
@@ -814,7 +839,7 @@ for (const mode of ['disabled', 'reduced-motion'] as const) {
         const output = page.getByTestId('FadeWords')
         await page.getByRole('button', { name: 'Append passage', exact: true }).click()
         await exactText(output, baseline + first)
-        await expect(output.locator('span')).toHaveCount(0)
+        await expect(output.locator('span:not([data-ink])')).toHaveCount(0)
         if (mode === 'disabled') await page.getByLabel('Disable motion').uncheck()
         else await page.emulateMedia({ reducedMotion: 'no-preference' })
         await expect
@@ -831,7 +856,7 @@ for (const mode of ['disabled', 'reduced-motion'] as const) {
         await page.getByRole('button', { name: 'Append passage', exact: true }).click()
         await page.emulateMedia({ reducedMotion: 'reduce' })
         await exactText(output, baseline + first + second)
-        await expect(output.locator('span')).toHaveCount(0)
+        await expect(output.locator('span:not([data-ink])')).toHaveCount(0)
         expect(errors).toEqual([])
     })
 }
@@ -842,6 +867,7 @@ test('FadeWords soft fade/rise: partial words retain their active entrance', asy
     await page.emulateMedia({ reducedMotion: 'no-preference' })
     const errors = await setup(page, 0.18)
     await page.getByLabel('FadeWords soft lift and fade trial', { exact: true }).check()
+    await page.getByLabel('Lift (pixels)', { exact: true }).fill('3')
     await page.getByLabel('Chunk shape').selectOption('fragment')
     await startRecorder(page)
     await page.getByRole('button', { name: 'Stream / Replay sample' }).click()
@@ -876,3 +902,44 @@ test('FadeWords soft fade/rise: partial words retain their active entrance', asy
     expect(fade.at(-1)!.targets[0].y).toBeLessThan(0.01)
     expect(errors).toEqual([])
 })
+for (const pane of ['RiseWords', 'FadeWords'] as const) {
+    test(`${pane} ink wipe: sweeps left to right and settles fully revealed`, async ({ page }) => {
+        await page.emulateMedia({ reducedMotion: 'no-preference' })
+        const errors = await setup(page, 0.18)
+        const article = page.getByRole('article', { name: `${pane} comparison`, exact: true })
+        await article
+            .getByLabel(
+                pane === 'RiseWords'
+                    ? 'Custom soft fade/rise trial'
+                    : 'FadeWords soft lift and fade trial',
+                { exact: true }
+            )
+            .check()
+        await article.getByLabel('Ink wipe', { exact: true }).check()
+        await expect(article.getByLabel('Ink duration (seconds)', { exact: true })).toHaveValue(
+            '0.6'
+        )
+        const output = page.getByTestId(pane)
+        await exactText(output, baseline)
+        // The baseline sentence never wipes; only arriving words do.
+        await expect(output.locator('[data-ink-wipe]')).toHaveCount(0)
+        await page.getByRole('button', { name: 'Append passage', exact: true }).click()
+        await exactText(output, baseline + first)
+        const positions: number[] = []
+        await expect
+            .poll(async () => {
+                const x = await output
+                    .locator('[data-ink-wipe]')
+                    .first()
+                    .evaluate((element) => parseFloat(getComputedStyle(element).maskPosition))
+                positions.push(x)
+                return x
+            })
+            .toBe(0)
+        expect(positions[0]).toBeGreaterThan(0)
+        for (let index = 1; index < positions.length; index++)
+            expect(positions[index]).toBeLessThanOrEqual(positions[index - 1])
+        await exactText(output, baseline + first)
+        expect(errors).toEqual([])
+    })
+}

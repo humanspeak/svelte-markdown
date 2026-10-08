@@ -4,4 +4,4 @@
     const props: StreamingMotionProps = $props()
 </script>
 
-<MotionText {...props} granularity="word" rise />
+<MotionText {...props} granularity="word" preset="rise-words" ink={props.ink ?? true} />

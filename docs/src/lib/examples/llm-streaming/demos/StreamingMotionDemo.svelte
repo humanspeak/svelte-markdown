@@ -205,9 +205,11 @@
                                 {text}
                                 {streamingText}
                                 {enabled}
-                                transition={effect === 'rise-words'
-                                    ? { duration, ease: [0.25, 0.1, 0.25, 1] }
-                                    : { duration }}
+                                transition={duration === 0.18
+                                    ? undefined
+                                    : effect === 'rise-words'
+                                      ? { duration, ease: 'easeOut' }
+                                      : { duration, ease: 'linear' }}
                             />
                         {/if}
                     {/snippet}

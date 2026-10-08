@@ -23,13 +23,17 @@
     let streamId = $state(0)
     let duration = $state(0.18)
     let softFadeRise = $state(false)
-    let lift = $state(2)
-    let liftDuration = $state(0.14)
-    let fadeDuration = $state(0.24)
+    let lift = $state(8)
+    let liftDuration = $state(0.4)
+    let fadeDuration = $state(0.65)
+    let ink = $state(false)
+    let inkDuration = $state(0.6)
     let fadeWordsTrial = $state(false)
-    let fadeWordsLift = $state(3)
+    let fadeWordsLift = $state(0)
     let fadeWordsLiftDuration = $state(0.4)
-    let fadeWordsFadeDuration = $state(0.5)
+    let fadeWordsFadeDuration = $state(0.65)
+    let fadeWordsInk = $state(false)
+    let fadeWordsInkDuration = $state(0.6)
     let chunkMode = $state('word')
     let disabled = $state(false)
     let reducedMotion = $state(true)
@@ -202,6 +206,20 @@
                                         bind:value={fadeWordsFadeDuration}
                                     /></label
                                 >
+                                <label class="toggle"
+                                    ><input type="checkbox" bind:checked={fadeWordsInk} /> Ink wipe</label
+                                >
+                                {#if fadeWordsInk}
+                                    <label
+                                        >Ink duration (seconds)<input
+                                            type="number"
+                                            min="0"
+                                            max="5"
+                                            step="0.01"
+                                            bind:value={fadeWordsInkDuration}
+                                        /></label
+                                    >
+                                {/if}
                             </div>
                         {/if}
                     {/if}
@@ -243,6 +261,20 @@
                                         bind:value={fadeDuration}
                                     /></label
                                 >
+                                <label class="toggle"
+                                    ><input type="checkbox" bind:checked={ink} /> Ink wipe</label
+                                >
+                                {#if ink}
+                                    <label
+                                        >Ink duration (seconds)<input
+                                            type="number"
+                                            min="0"
+                                            max="5"
+                                            step="0.01"
+                                            bind:value={inkDuration}
+                                        /></label
+                                    >
+                                {/if}
                             </div>
                         {/if}
                     {/if}
@@ -258,6 +290,8 @@
                                     {lift}
                                     {liftDuration}
                                     {fadeDuration}
+                                    {ink}
+                                    {inkDuration}
                                 />
                             {:else if effect.name === 'FadeWords' && fadeWordsTrial}
                                 <SoftFadeRise
@@ -267,6 +301,8 @@
                                     lift={fadeWordsLift}
                                     liftDuration={fadeWordsLiftDuration}
                                     fadeDuration={fadeWordsFadeDuration}
+                                    ink={fadeWordsInk}
+                                    inkDuration={fadeWordsInkDuration}
                                 />
                             {:else if effect.component}<effect.component
                                     {text}

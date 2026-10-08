@@ -4,4 +4,4 @@
     const props: StreamingMotionProps = $props()
 </script>
 
-<MotionText {...props} granularity="grapheme" />
+<MotionText {...props} granularity="grapheme" preset="fade-characters" />

@@ -21,8 +21,14 @@ export interface StreamingMotionProps {
     locale?: string
     segmenter?: StreamingTextSegmenter
     segment?: Snippet<[StreamingTextSegment]>
+    /**
+     * Feathered left-to-right mask reveal on arriving segments. On by default
+     * for FadeWords and RiseWords, off for FadeCharacters. Pass `false` to
+     * disable or `{ duration }` (seconds, default 0.8) to retime it.
+     */
+    ink?: boolean | { duration?: number }
 }
 export interface MotionTextProps extends StreamingMotionProps {
     granularity: StreamingTextGranularity
-    rise?: boolean
+    preset: 'fade-words' | 'rise-words' | 'fade-characters'
 }
