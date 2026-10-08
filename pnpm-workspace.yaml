@@ -12,6 +12,7 @@ overrides:
 allowBuilds:
     '@humanspeak/docs-kit@git+https://github.com/humanspeak/docs-kit.git': true
     '@humanspeak/docs-kit@https://codeload.github.com/humanspeak/docs-kit/tar.gz/9650ea563bc94ed534543644d5a46c5ab540b62f': true
+    core-js: false
     esbuild: true
     sharp: true
     workerd: true
