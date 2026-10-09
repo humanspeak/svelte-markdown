@@ -28,29 +28,35 @@ const takeFades = (page: Page) =>
         return fades.splice(0)
     })
 
-async function streamAnswer(page: Page, answer: string) {
-    await page.getByRole('combobox').selectOption(answer)
-    await page.getByRole('button', { name: /Stream again|Restart stream/ }).click()
-    await expect(page.getByRole('button', { name: 'Stream again' })).toBeVisible({
-        timeout: 15_000
-    })
+// "Stream again" is also the label before hydration, so wait for the stream's last
+// words rather than the button alone.
+async function waitForStream(page: Page, ending: string) {
+    await expect(page.getByTestId('streaming')).toContainText(ending, { timeout: 20_000 })
+    await expect(page.getByRole('button', { name: 'Stream again' })).toBeVisible()
     // Let the last fade start.
     await page.waitForTimeout(300)
+}
+
+async function streamAnswer(page: Page, answer: string, ending: string) {
+    await page.getByRole('combobox').selectOption(answer)
+    await page.getByRole('button', { name: 'Stream again' }).click()
+    await expect(page.getByRole('button', { name: 'Restart stream' })).toBeVisible()
+    await waitForStream(page, ending)
 }
 
 test.describe('KaTeX arrival fade', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/test/katex-motion')
-        await expect(page.getByRole('button', { name: 'Stream again' })).toBeVisible({
-            timeout: 15_000
-        })
+        // The page streams "With math" on load; record only after it and its fades finish.
+        await waitForStream(page, 'and moved on.')
+        await page.waitForFunction(() => document.getAnimations().length === 0)
         await recordMathFades(page)
     })
 
     test('fades each streamed formula once and never fades output that was already there', async ({
         page
     }) => {
-        await streamAnswer(page, 'With math')
+        await streamAnswer(page, 'With math', 'and moved on.')
         const fades = await takeFades(page)
         expect(fades.filter((fade) => fade.pane === 'already-output')).toEqual([])
         expect(fades.map((fade) => fade.tex)).toEqual([
@@ -66,7 +72,7 @@ test.describe('KaTeX arrival fade', () => {
     test('does not replay the fade when a paragraph holding math changes structure', async ({
         page
     }) => {
-        await streamAnswer(page, 'Structure changes')
+        await streamAnswer(page, 'Structure changes', 'item')
         const streaming = page.getByTestId('streaming')
         await expect(streaming.locator('h1 .katex')).toHaveCount(1)
         const fades = await takeFades(page)
