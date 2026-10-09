@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import { markedFootnote } from '@humanspeak/svelte-markdown/extensions'
 
     type FootnoteRefProps = {
@@ -35,7 +36,11 @@ When documenting APIs, footnotes[^api] help explain edge cases without breaking 
   component file.
 -->
 <div class="prose prose-sm dark:prose-invert mx-auto max-w-4xl px-6 py-6">
-    <SvelteMarkdown source={markdown} extensions={[markedFootnote()]}>
+    <SvelteMarkdown
+        source={markdown}
+        extensions={[markedFootnote()]}
+        renderers={{ code: HighlightedCode }}
+    >
         {#snippet footnoteRef(props: FootnoteRefProps)}
             <sup class="fn-ref">
                 <a href="#fn-{props.id}" id="fnref-{props.id}">[{props.id}]</a>

@@ -35,6 +35,7 @@ export interface HeadingSnippetProps {
     depth: number
     raw: string
     text: string
+    id?: string
     options: SvelteMarkdownOptions
     slug: (val: string) => string // trunk-ignore(eslint/no-unused-vars)
     children?: Snippet
@@ -47,17 +48,20 @@ export interface LinkSnippetProps {
     children?: Snippet
 }
 export interface ImageSnippetProps {
+    streamingText?: StreamingTextMetadata
     href?: string
     title?: string
     text?: string
     raw?: string
 }
 export interface CodeSnippetProps {
+    streamingText?: StreamingTextMetadata
     lang: string
     text: string
     codeBlockStyle?: 'indented'
 }
 export interface CodespanSnippetProps {
+    streamingText?: StreamingTextMetadata
     raw: string
     text?: string
 }
@@ -115,14 +119,17 @@ export interface DelSnippetProps {
 export type HrSnippetProps = Record<string, never>
 export type BrSnippetProps = Record<string, never>
 export interface TextSnippetProps {
+    streamingText?: StreamingTextMetadata
     raw?: string
     text?: string
     children?: Snippet
 }
 export interface RawTextSnippetProps {
+    streamingText?: StreamingTextMetadata
     text: string
 }
 export interface EscapeSnippetProps {
+    streamingText?: StreamingTextMetadata
     text: string
     raw?: string
 }
@@ -255,6 +262,9 @@ export type SvelteMarkdownProps<T extends Renderers = Renderers> = {
      */
     streaming?: boolean
 
+    /** Opt-in source arrival metadata for synchronous streaming; does not animate. */
+    streamingText?: boolean
+
     /**
      * Identity of the current stream. Changing this value resets all streaming
      * state: the internal source buffer, any pending (unflushed) chunk, the
@@ -332,4 +342,45 @@ export interface SvelteMarkdownOptions extends MarkedOptions {
      * @defaultValue `''`
      */
     headerPrefix?: string
+}
+
+export type StreamingTextChange = 'baseline' | 'append' | 'revision'
+export type StreamingTextGranularity = 'word' | 'grapheme'
+export interface StreamingTextSpan {
+    readonly text: string
+    readonly start: number
+    readonly end: number
+}
+export type StreamingTextSegmenter = (_text: string) => readonly StreamingTextSpan[]
+export interface StreamingTextRange {
+    readonly start: number
+    readonly end: number
+    readonly originId: string
+    readonly change: StreamingTextChange
+    readonly batchId: number
+    readonly revealedBeforeBatch: boolean
+}
+export interface StreamingTextMetadata {
+    readonly epoch: number
+    readonly leafId: string
+    readonly renderBatchId: number
+    readonly provenance: 'exact' | 'unknown'
+    readonly ranges: readonly StreamingTextRange[]
+}
+export interface StreamingTextSegment extends StreamingTextSpan {
+    readonly id: string
+    readonly index: number
+    readonly isNew: boolean
+    readonly batchId: number
+    readonly batchIndex: number
+    readonly isWhitespace: boolean
+    readonly change: StreamingTextChange
+}
+export interface StreamingTextProps {
+    text?: string
+    metadata?: StreamingTextMetadata
+    granularity?: StreamingTextGranularity
+    locale?: string
+    segmenter?: StreamingTextSegmenter
+    segment?: Snippet<[StreamingTextSegment]>
 }

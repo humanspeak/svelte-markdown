@@ -33,7 +33,7 @@
         },
         {
             q: 'Can it render streaming AI agent output safely?',
-            a: 'Yes — that is the primary use case. The streaming mode accepts `{ value, offset }` chunk patches that can arrive out of order, sanitization runs per token before render (so a javascript: URL or on*= handler emitted mid-stream is blocked before the DOM sees it), and partial HTML blocks reconcile correctly as the closing tag arrives. Median per-chunk update lands around ~3ms — well under the 60fps budget.'
+            a: 'Yes — that is the primary use case. The streaming mode accepts `{ value, offset }` chunk patches that can arrive out of order, sanitization runs per token before render (so a javascript: URL or on*= handler emitted mid-stream is blocked before the DOM sees it), and partial HTML blocks reconcile correctly as the closing tag arrives. Per-frame work lands around 2–3 ms on mixed prose (p95 under 5 ms), measured against a fresh parse for parity — well inside the 60fps budget.'
         }
     ]
 </script>

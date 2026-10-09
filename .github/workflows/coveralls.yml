@@ -19,15 +19,15 @@ jobs:
                 node-version: [22, 24]
         steps:
             - name: Checkout
-              uses: actions/checkout@v7 # zizmor: ignore[unpinned-uses]
+              uses: actions/checkout@v7.0.1 # zizmor: ignore[unpinned-uses]
               with:
                   persist-credentials: false
                   token: ${{ secrets.ACTIONS_KEY }}
 
-            - uses: pnpm/action-setup@v6 # zizmor: ignore[unpinned-uses]
+            - uses: pnpm/action-setup@v6.1.0 # zizmor: ignore[unpinned-uses]
 
             - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v7 # zizmor: ignore[unpinned-uses]
+              uses: actions/setup-node@v7.0.0 # zizmor: ignore[unpinned-uses]
               with:
                   node-version: ${{ matrix.node-version }}
 
@@ -38,7 +38,7 @@ jobs:
               run: pnpm test
 
             - name: Upload coverage to Coveralls
-              uses: coverallsapp/github-action@v2 # zizmor: ignore[unpinned-uses]
+              uses: coverallsapp/github-action@v2.3.8 # zizmor: ignore[unpinned-uses]
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   flag-name: node-${{ matrix.node-version }}
@@ -47,7 +47,7 @@ jobs:
               if: matrix.node-version == '22'
 
             - name: Cache dependencies
-              uses: actions/cache@v6 # zizmor: ignore[unpinned-uses]
+              uses: actions/cache@v6.1.0 # zizmor: ignore[unpinned-uses]
               with:
                   path: ~/.npm
                   key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -61,7 +61,7 @@ jobs:
         if: ${{ always() }}
         steps:
             - name: Coveralls Finished
-              uses: coverallsapp/github-action@v2 # zizmor: ignore[unpinned-uses]
+              uses: coverallsapp/github-action@v2.3.8 # zizmor: ignore[unpinned-uses]
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   parallel-finished: true

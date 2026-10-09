@@ -1,0 +1,197 @@
+{
+    "scenario": "long-code-fence",
+    "renderer": "svelte-markdown",
+    "capturedAt": "2026-09-28T11:12:10.456Z",
+    "url": "http://127.0.0.1:4183/test/stream-compare",
+    "warmups": 1,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "page": {
+        "totalWorkMs": 1793.2,
+        "frames": 753,
+        "avgWorkMs": 2.381,
+        "p95WorkMs": 4,
+        "libraryFlushMs": 160.9,
+        "libraryFlushCount": 752
+    },
+    "trace": {
+        "windowCount": 1347,
+        "windowMs": 1793.051,
+        "windowRawMs": 1793.051,
+        "flushMeasureMs": 160.907,
+        "flushMeasureCount": 720,
+        "paintOutsideWindowsMs": 748.714,
+        "jsOutsideSyncMs": 69.884,
+        "otherTopMs": [
+            {
+                "name": "RunTask",
+                "ms": 66.322
+            },
+            {
+                "name": "HitTest",
+                "ms": 16.613
+            }
+        ]
+    },
+    "bucketsMs": {
+        "flush": 151.597,
+        "jsOutside": 337.208,
+        "styleLayout": 1033.117,
+        "paint": 7.392,
+        "gc": 0,
+        "other": 82.935,
+        "untraced": 180.802
+    },
+    "bucketsMsPerFrame": {
+        "flush": 0.201,
+        "jsOutside": 0.448,
+        "styleLayout": 1.372,
+        "paint": 0.01,
+        "gc": 0,
+        "other": 0.11,
+        "untraced": 0.24
+    },
+    "tracedCoverageOfTotalWork": 0.899,
+    "tracedCoverageOfWindowUnion": 0.899,
+    "profile": {
+        "scope": "samples inside the measured windows",
+        "sampledMs": 1843.498,
+        "top": [
+            {
+                "functionName": "getBoundingClientRect",
+                "url": "",
+                "line": 0,
+                "column": 0,
+                "selfUs": 998067,
+                "selfMs": 998.067,
+                "share": 54.1
+            },
+            {
+                "functionName": "isAppendOnlyUpdate",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js",
+                "line": 71,
+                "column": 73,
+                "selfUs": 70639,
+                "selfMs": 70.639,
+                "share": 3.8
+            },
+            {
+                "functionName": "measure",
+                "url": "",
+                "line": 0,
+                "column": 0,
+                "selfUs": 28235,
+                "selfMs": 28.235,
+                "share": 1.5
+            },
+            {
+                "functionName": "fences",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js",
+                "line": 6,
+                "column": 725,
+                "selfUs": 18195,
+                "selfMs": 18.195,
+                "share": 1
+            },
+            {
+                "functionName": "Ri",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js",
+                "line": 1,
+                "column": 35060,
+                "selfUs": 7937,
+                "selfMs": 7.937,
+                "share": 0.4
+            },
+            {
+                "functionName": "(anonymous)",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js",
+                "line": 71,
+                "column": 7353,
+                "selfUs": 7470,
+                "selfMs": 7.47,
+                "share": 0.4
+            },
+            {
+                "functionName": "le",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js",
+                "line": 71,
+                "column": 6786,
+                "selfUs": 4797,
+                "selfMs": 4.797,
+                "share": 0.3
+            },
+            {
+                "functionName": "lex",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js",
+                "line": 34,
+                "column": 5394,
+                "selfUs": 4022,
+                "selfMs": 4.022,
+                "share": 0.2
+            },
+            {
+                "functionName": "get",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js",
+                "line": 1,
+                "column": 17336,
+                "selfUs": 3862,
+                "selfMs": 3.862,
+                "share": 0.2
+            },
+            {
+                "functionName": "Tc",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js",
+                "line": 71,
+                "column": 5619,
+                "selfUs": 3550,
+                "selfMs": 3.55,
+                "share": 0.2
+            },
+            {
+                "functionName": "Ce",
+                "url": "http://127.0.0.1:4183/_app/immutable/nodes/36.DM36nNAe.js",
+                "line": 296,
+                "column": 2677,
+                "selfUs": 3421,
+                "selfMs": 3.421,
+                "share": 0.2
+            },
+            {
+                "functionName": "#v",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js",
+                "line": 1,
+                "column": 11736,
+                "selfUs": 3328,
+                "selfMs": 3.328,
+                "share": 0.2
+            },
+            {
+                "functionName": "queueMicrotask",
+                "url": "",
+                "line": 0,
+                "column": 0,
+                "selfUs": 3326,
+                "selfMs": 3.326,
+                "share": 0.2
+            },
+            {
+                "functionName": "Z",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js",
+                "line": 1,
+                "column": 25787,
+                "selfUs": 3250,
+                "selfMs": 3.25,
+                "share": 0.2
+            },
+            {
+                "functionName": "update",
+                "url": "http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js",
+                "line": 71,
+                "column": 2245,
+                "selfUs": 2914,
+                "selfMs": 2.914,
+                "share": 0.2
+            }
+        ]
+    },
+    "pageErrors": []
+}

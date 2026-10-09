@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
 
     const markdown = `## Linked Headings Demo
 
@@ -40,5 +41,5 @@ This is a deeply nested heading to show all levels work correctly.`
   there's no visible anchor link.
 -->
 <div class="prose prose-sm dark:prose-invert mx-auto max-w-4xl px-6 py-6">
-    <SvelteMarkdown source={markdown} />
+    <SvelteMarkdown source={markdown} renderers={{ code: HighlightedCode }} />
 </div>

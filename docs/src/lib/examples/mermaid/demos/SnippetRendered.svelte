@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import { markedMermaid, MermaidRenderer } from '@humanspeak/svelte-markdown/extensions'
     import { DemoSplitV2 } from '@humanspeak/docs-kit'
 
@@ -77,7 +78,11 @@ classDiagram
     {/snippet}
     {#snippet right()}
         <div class="md-preview prose prose-sm dark:prose-invert max-w-none">
-            <SvelteMarkdown {source} extensions={[markedMermaid()]}>
+            <SvelteMarkdown
+                {source}
+                extensions={[markedMermaid()]}
+                renderers={{ code: HighlightedCode }}
+            >
                 {#snippet mermaid(props: { text: string })}
                     <!-- Inline snippet wraps each Mermaid diagram with a
                          labelled caption strip. Async rendering still

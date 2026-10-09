@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import {
         Check,
         ChevronRight,
@@ -98,7 +99,7 @@ Here is a feature comparison:
                 {#if lang}
                     <div class="so-code-lang">{lang}</div>
                 {/if}
-                <pre><code>{text}</code></pre>
+                <HighlightedCode {lang} {text} />
             </div>
         {/snippet}
 
@@ -207,6 +208,10 @@ Here is a feature comparison:
         font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
         font-size: 12.5px;
         line-height: 1.65;
+    }
+    :global(.so-code pre.th-code) {
+        background: var(--th-background);
+        color: var(--th-token);
     }
     :global(.so-code code) {
         background: transparent;

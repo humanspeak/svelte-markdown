@@ -1,0 +1,6 @@
+prose-mixed streamed types: heading,space,heading,space,paragraph,space,list,space,list,space,blockquote,space,code,space,table,space,heading,space,paragraph,space,list 
+fresh types:    heading,space,heading,space,paragraph,space,list,space,blockquote,space,code,space,table,space,heading,space,paragraph,space,list
+prose-mixed parser output (before reuse) differs: .length (21 vs 19)
+prose-mixed parser output (before reuse) differs: .length (41 vs 39)
+prose-mixed: 31/31 mismatched; first .length (21 vs 19) at 800
+citations: 2/31 mismatched; first [62].tokens[7].href ("ht" vs "https://example.com/source/38") at 24000

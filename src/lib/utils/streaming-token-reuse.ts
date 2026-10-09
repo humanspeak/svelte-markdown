@@ -8,6 +8,56 @@ export type ReusableStreamingNode = {
 
 type ReusableStreamingNodeArray = Array<ReusableStreamingNode | ReusableStreamingNodeArray>
 
+/**
+ * Dev-only per-update work counters, exposed as `globalThis.__svmStreamStats`
+ * (plan 011). They are the regression tripwire for work that scales with the
+ * document length on every streaming update:
+ *
+ * - `comparedRoots`: root tokens compared by the parser's divergence scan
+ * - `copiedRoots`: root token slots written into a new root array by the
+ *   parser or by {@link reuseStableTokenArray}
+ * - `keyEvaluations`: `getStableNodeKey` calls made by keyed `{#each}` blocks
+ *
+ * Tests and benches reset the object, stream, and read it back.
+ */
+export interface StreamStats {
+    comparedRoots: number
+    copiedRoots: number
+    keyEvaluations: number
+}
+
+type StreamStatsGlobal = typeof globalThis & { __svmStreamStats?: StreamStats }
+
+/**
+ * Whether {@link countStreamStat} call sites are live. Resolved from Vite's
+ * `import.meta.env.DEV`, which is statically `false` in production builds (so
+ * guarded call sites are dropped), and `false` when `import.meta.env` does not
+ * exist at all (e.g. the packaged library imported by plain Node).
+ */
+export const STREAM_STATS_ENABLED: boolean =
+    typeof import.meta.env === 'object' && import.meta.env.DEV === true
+
+/**
+ * Adds `amount` to one dev-only stream counter. Call only behind
+ * `if (STREAM_STATS_ENABLED)` so production bundles drop the call.
+ *
+ * @param stat - Counter to increment
+ * @param amount - Increment (default 1)
+ * @example
+ * ```ts
+ * if (STREAM_STATS_ENABLED) countStreamStat('comparedRoots')
+ * ```
+ */
+export const countStreamStat = (stat: keyof StreamStats, amount = 1): void => {
+    const target = globalThis as StreamStatsGlobal
+    const stats = (target.__svmStreamStats ??= {
+        comparedRoots: 0,
+        copiedRoots: 0,
+        keyEvaluations: 0
+    })
+    stats[stat] += amount
+}
+
 const isReusableStreamingNode = (value: unknown): value is ReusableStreamingNode =>
     typeof value === 'object' && value !== null && !Array.isArray(value)
 
@@ -17,64 +67,116 @@ const isReusableStreamingNodeArray = (value: unknown): value is ReusableStreamin
         Array.isArray(item) ? isReusableStreamingNodeArray(item) : isReusableStreamingNode(item)
     )
 
-const haveSameStableArrayIdentity = (
-    previousArray: ReusableStreamingNodeArray,
-    nextArray: ReusableStreamingNodeArray
-): boolean => {
-    if (previousArray.length !== nextArray.length) return false
-
-    return previousArray.every((previousItem, index) => {
-        const nextItem = nextArray[index]
-        if (Array.isArray(previousItem) || Array.isArray(nextItem)) {
-            return (
-                Array.isArray(previousItem) &&
-                Array.isArray(nextItem) &&
-                haveSameStableArrayIdentity(previousItem, nextItem)
-            )
-        }
-
-        return isSameStableNode(previousItem, nextItem)
-    })
+const hasPlainPrototype = (value: object): boolean => {
+    const prototype = Object.getPrototypeOf(value)
+    return prototype === Object.prototype || prototype === null
 }
 
-const haveSameStableChildIdentity = (
-    previousNode: ReusableStreamingNode,
-    nextNode: ReusableStreamingNode
-): boolean => {
-    const keys = new Set([...Object.keys(previousNode), ...Object.keys(nextNode)])
-    const previousRecord = previousNode as Record<string, unknown>
-    const nextRecord = nextNode as Record<string, unknown>
-
-    for (const key of keys) {
-        const previousValue = previousRecord[key]
-        const nextValue = nextRecord[key]
-        const previousIsChildArray = isReusableStreamingNodeArray(previousValue)
-        const nextIsChildArray = isReusableStreamingNodeArray(nextValue)
-
-        if (!previousIsChildArray && !nextIsChildArray) continue
-        if (!previousIsChildArray || !nextIsChildArray) return false
-        if (!haveSameStableArrayIdentity(previousValue, nextValue)) return false
+/** Element-wise comparison; elements may be primitives, `null`, arrays, or objects. */
+const areArraysSemanticallyEqual = (a: unknown[], b: unknown[]): boolean => {
+    if (a.length !== b.length) return false
+    for (let index = 0; index < a.length; index++) {
+        if (!isSemanticallyEqual(a[index], b[index])) return false
     }
-
     return true
 }
 
-/** Returns whether two nodes and every nested token array have one stable identity. */
+/** Own enumerable keys of both records; skips the union allocation when they match. */
+const getComparedKeys = (
+    previousRecord: Record<string, unknown>,
+    nextRecord: Record<string, unknown>
+): Iterable<string> => {
+    const previousKeys = Object.keys(previousRecord)
+    const nextKeys = Object.keys(nextRecord)
+    const sameKeys =
+        previousKeys.length === nextKeys.length &&
+        previousKeys.every((key, index) => key === nextKeys[index])
+    return sameKeys ? previousKeys : new Set([...previousKeys, ...nextKeys])
+}
+
+/** Field-by-field comparison of two plain records (tokens or data objects). */
+const areRecordsSemanticallyEqual = (
+    previousRecord: Record<string, unknown>,
+    nextRecord: Record<string, unknown>
+): boolean => {
+    // Cheap discriminators first: most real mismatches differ in type or raw.
+    if (previousRecord.type !== nextRecord.type) return false
+    if (previousRecord.raw !== nextRecord.raw) return false
+    if (previousRecord.text !== nextRecord.text) return false
+
+    for (const key of getComparedKeys(previousRecord, nextRecord)) {
+        const previousValue = previousRecord[key]
+        const nextValue = nextRecord[key]
+        // Unknown callable state can never be assumed render-equivalent.
+        if (typeof previousValue === 'function' || typeof nextValue === 'function') return false
+        if (!isSemanticallyEqual(previousValue, nextValue)) return false
+    }
+    return true
+}
+
+/**
+ * Recursively compares two token values by every own enumerable field.
+ *
+ * Handles every shape a token field can take: primitives, `null`, arrays of
+ * mixed primitives/`null`/objects (e.g. a table's `align`), nested token
+ * arrays, and plain data objects (e.g. an html token's `attributes`). Array
+ * elements are never assumed to be objects.
+ *
+ * @param a - Previous value.
+ * @param b - Next value.
+ * @returns `true` only when both values are provably render-equivalent.
+ */
+const isSemanticallyEqual = (a: unknown, b: unknown): boolean => {
+    // Same-object fast path: sound for a pure comparator, and it lets reused
+    // prefix objects short-circuit without a deep walk every frame.
+    if (a === b) return true
+    // Distinct primitives, and distinct functions, are never equal.
+    if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false
+
+    const previousIsArray = Array.isArray(a)
+    if (previousIsArray !== Array.isArray(b)) return false
+    if (previousIsArray) return areArraysSemanticallyEqual(a as unknown[], b as unknown[])
+
+    // Class instances (Map, Set, Date, ...) may hold state that is not an own
+    // enumerable key; conservatively treat distinct instances as unequal.
+    if (!hasPlainPrototype(a) || !hasPlainPrototype(b)) return false
+
+    return areRecordsSemanticallyEqual(a as Record<string, unknown>, b as Record<string, unknown>)
+}
+
+/**
+ * Returns whether a previously rendered token can stand in for a freshly
+ * parsed one.
+ *
+ * Contract: equal iff a renderer given either object would produce identical
+ * output; conservative on unknowns. Every own enumerable field is compared —
+ * `type`, `raw`, `text`, nested token arrays, and every scalar or data field
+ * (link `href`/`title`, heading `depth`, list `ordered`/`start`/`loose`, item
+ * `task`/`checked`, table `align`, code `lang`, html `tag`/`attributes`, and
+ * extension fields such as `displayMode`). Function-valued fields and class
+ * instances are never considered equal unless they are the same object.
+ * The same object is always equal to itself (fast path).
+ *
+ * Do not weaken this for speed: callers widen token reuse on the strength of
+ * this contract.
+ *
+ * @param previousNode - Token from the previous streaming parse.
+ * @param nextNode - Token from the current parse.
+ * @returns `true` when `previousNode` may be reused in place of `nextNode`.
+ * @example
+ * ```ts
+ * isSameStableNode(
+ *     { type: 'code', raw: '```\nx\n```', text: 'x', lang: 'js' },
+ *     { type: 'code', raw: '```\nx\n```', text: 'x', lang: 'ts' }
+ * ) // false — `lang` changes the rendered output
+ * ```
+ */
 export const isSameStableNode = (
     previousNode: ReusableStreamingNode,
     nextNode: ReusableStreamingNode
 ): boolean => {
-    if (previousNode.type !== nextNode.type) return false
-
-    if (typeof previousNode.raw === 'string' || typeof nextNode.raw === 'string') {
-        if (previousNode.raw !== nextNode.raw) return false
-    } else if (typeof previousNode.text === 'string' || typeof nextNode.text === 'string') {
-        if (previousNode.text !== nextNode.text) return false
-    } else {
-        return false
-    }
-
-    return haveSameStableChildIdentity(previousNode, nextNode)
+    if (previousNode === nextNode) return true
+    return isSemanticallyEqual(previousNode, nextNode)
 }
 
 const reuseStableNodeArray = (
@@ -148,6 +250,7 @@ export const reuseStableTokenArray = (
 
     if (reuseCount > 0) {
         reusedTokens = new Array<Token>(nextTokens.length)
+        if (STREAM_STATS_ENABLED) countStreamStat('copiedRoots', nextTokens.length)
 
         for (let index = 0; index < reuseCount; index++) {
             reusedTokens[index] = previousTokens[index]
@@ -165,6 +268,9 @@ export const reuseStableTokenArray = (
         ) as Token
 
         if (reusedToken !== nextTokens[reuseCount]) {
+            if (STREAM_STATS_ENABLED && !reusedTokens) {
+                countStreamStat('copiedRoots', nextTokens.length)
+            }
             reusedTokens ??= nextTokens.slice()
             reusedTokens[reuseCount] = reusedToken
         }
@@ -172,3 +278,79 @@ export const reuseStableTokenArray = (
 
     return reusedTokens ?? nextTokens
 }
+
+/**
+ * In-place form of {@link reuseStableTokenArray} for a freshly built array
+ * the caller owns (the array `IncrementalParser.update` just returned): the
+ * stable prefix is written into `nextTokens` itself instead of into a new
+ * N-length array, and indices below `identicalPrefixCount` are skipped
+ * because they already hold the previous objects (plan 011).
+ *
+ * Only valid when `nextTokens` is not yet rendered or shared, and when
+ * `nextTokens[i] === previousTokens[i]` for every `i < identicalPrefixCount`
+ * (pass 0 when that is not guaranteed). Every write replaces a token with a
+ * semantically equal one ({@link isSameStableNode}), so a parser that keeps
+ * `nextTokens` as its previous parse sees no difference.
+ *
+ * @param previousTokens - Token array currently rendered
+ * @param nextTokens - Freshly parsed array to adopt; mutated and returned
+ * @param divergeAt - Leading roots known to be semantically unchanged
+ * @param identicalPrefixCount - Leading roots already identical by construction
+ * @returns `nextTokens`, with previous objects in its stable prefix
+ * @example
+ * ```ts
+ * const result = parser.update(source)
+ * const identical = streamTokens === lastParserTokens ? result.reusedPrefixCount : 0
+ * streamTokens = reuseStableTokenArrayInPlace(streamTokens, result.tokens, result.divergeAt, identical)
+ * ```
+ */
+export const reuseStableTokenArrayInPlace = (
+    previousTokens: Token[],
+    nextTokens: Token[],
+    divergeAt: number,
+    identicalPrefixCount: number
+): Token[] => {
+    const reuseCount = Math.min(divergeAt, previousTokens.length, nextTokens.length)
+    const firstWrite = Math.min(identicalPrefixCount, reuseCount)
+    if (STREAM_STATS_ENABLED) countStreamStat('copiedRoots', reuseCount - firstWrite)
+    for (let index = firstWrite; index < reuseCount; index++) {
+        nextTokens[index] = previousTokens[index]
+    }
+
+    if (reuseCount < previousTokens.length && reuseCount < nextTokens.length) {
+        nextTokens[reuseCount] = reuseStableNode(
+            previousTokens[reuseCount] as ReusableStreamingNode,
+            nextTokens[reuseCount] as ReusableStreamingNode
+        ) as Token
+    }
+
+    return nextTokens
+}
+
+/**
+ * Reuses semantically unchanged token objects across the WHOLE array,
+ * index-aligned, for updates where no stable prefix is known — e.g. an
+ * appended reference definition that can change inline children of any root
+ * without changing its `raw`.
+ *
+ * Each root is compared with {@link isSameStableNode}: an equal root keeps the
+ * previous object (so its component receives no new props); an unequal root
+ * becomes a new object whose unchanged nested token arrays and children are
+ * still reused. When the arrays differ in length, only the shared index range
+ * is compared and extra next tokens are kept as-is.
+ *
+ * @param previousTokens - Token array from the previous streaming parse.
+ * @param nextTokens - Freshly parsed token array for the current source.
+ * @returns `nextTokens` itself when nothing could be reused, otherwise a new
+ *   array mixing reused previous objects and fresh tokens.
+ * @example
+ * ```ts
+ * // `[1]: /x` appended: only the paragraph citing `[1]` becomes a new object
+ * streamTokens = reuseStableTokenTree(streamTokens, parser.update(source).tokens)
+ * ```
+ */
+export const reuseStableTokenTree = (previousTokens: Token[], nextTokens: Token[]): Token[] =>
+    reuseStableNodeArray(
+        previousTokens as ReusableStreamingNodeArray,
+        nextTokens as ReusableStreamingNodeArray
+    ) as Token[]

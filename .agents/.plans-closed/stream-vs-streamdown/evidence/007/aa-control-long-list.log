@@ -1,0 +1,14 @@
+load before long-list: 0.98 2.59 2.60 at 2026-09-28T12:17:25Z (after: 1.26 2.21 2.46)
+
+=== long-list (long-list, 24000+ bytes, 32 chars × 1/frame, input prop, mode paired) ===
+svelte-markdown@A   run 1 [svelte-markdown@A > svelte-markdown@B]: work 13431.8ms total · avg 17.81 · p95 32.00 · peak 41.7 · over-budget 400/754 · growth 4.665 · overlap clamped 3340.3ms · parity 0/31 mismatched
+svelte-markdown@B   run 1 [svelte-markdown@A > svelte-markdown@B]: work 13454.3ms total · avg 17.84 · p95 32.50 · peak 40.7 · over-budget 386/754 · growth 4.565 · overlap clamped 2799.6ms · parity 0/31 mismatched
+svelte-markdown@B   run 2 [svelte-markdown@B > svelte-markdown@A]: work 13356.1ms total · avg 17.71 · p95 31.90 · peak 45.3 · over-budget 388/754 · growth 4.616 · overlap clamped 2853.4ms · parity 0/31 mismatched
+svelte-markdown@A   run 2 [svelte-markdown@B > svelte-markdown@A]: work 13421.1ms total · avg 17.80 · p95 32.60 · peak 47.9 · over-budget 395/754 · growth 4.693 · overlap clamped 2937.0ms · parity 0/31 mismatched
+parity svelte-markdown@A (vs fresh parse): OK — max 0 mismatched of 62 checks
+parity svelte-markdown@B (vs fresh parse): OK — max 0 mismatched of 62 checks
+median total work: A 13426.45ms · B 13405.2ms · lib flush A 4357.8ms · B 4330.6ms
+median p95 frame work: A 32.3ms · B 32.2ms · frames over 16.7ms: A 397.5 · B 387
+paired delta (A − B total work, median of 2 pairs): 21.25ms (0.158% of A) — B does less work
+output hash: MATCH · dom projection: MATCH
+

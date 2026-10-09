@@ -1,0 +1,58 @@
+{
+    "prefix-24kb": {
+        "prefixBytes": 24006,
+        "frames": 67,
+        "meanPerFrame": {
+            "comparedRoots": 1,
+            "copiedRoots": 857.9,
+            "keyEvaluations": 165.4
+        },
+        "maxPerFrame": {
+            "comparedRoots": 1,
+            "copiedRoots": 882,
+            "keyEvaluations": 430
+        }
+    },
+    "prefix-96kb": {
+        "prefixBytes": 96078,
+        "frames": 67,
+        "meanPerFrame": {
+            "comparedRoots": 1,
+            "copiedRoots": 3321.9,
+            "keyEvaluations": 283.7
+        },
+        "maxPerFrame": {
+            "comparedRoots": 1,
+            "copiedRoots": 3346,
+            "keyEvaluations": 358
+        }
+    },
+    "prefix-384kb": {
+        "prefixBytes": 384030,
+        "frames": 67,
+        "meanPerFrame": {
+            "comparedRoots": 1,
+            "copiedRoots": 12937.9,
+            "keyEvaluations": 203.4
+        },
+        "maxPerFrame": {
+            "comparedRoots": 1,
+            "copiedRoots": 12962,
+            "keyEvaluations": 401
+        }
+    },
+    "large-closed-block": {
+        "prefixBytes": 20081,
+        "frames": 67,
+        "meanPerFrame": {
+            "comparedRoots": 1,
+            "copiedRoots": 27.9,
+            "keyEvaluations": 74
+        },
+        "maxPerFrame": {
+            "comparedRoots": 2,
+            "copiedRoots": 52,
+            "keyEvaluations": 142
+        }
+    }
+}

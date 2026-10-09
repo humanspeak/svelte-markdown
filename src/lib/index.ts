@@ -176,3 +176,15 @@ export type {
     Token,
     TokensList
 }
+
+export { default as StreamingText } from './StreamingText.svelte'
+export type {
+    StreamingTextChange,
+    StreamingTextGranularity,
+    StreamingTextMetadata,
+    StreamingTextProps,
+    StreamingTextRange,
+    StreamingTextSegment,
+    StreamingTextSegmenter,
+    StreamingTextSpan
+} from './types.js'

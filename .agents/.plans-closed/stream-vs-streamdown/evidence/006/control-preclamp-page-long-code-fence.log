@@ -1,0 +1,17 @@
+
+=== long-code-fence (long-code-fence, 24000+ bytes, 32 chars × 1/frame, input prop, mode paired) ===
+svelte-markdown     run 1 [svelte-markdown > svelte-streamdown]: work 2785.3ms total · avg 3.70 · p95 6.00 · peak 12.1 · over-budget 0/753 · growth 2.083 · parity 0/31 mismatched
+svelte-streamdown   run 1 [svelte-markdown > svelte-streamdown]: work 1510.4ms total · avg 2.01 · p95 3.30 · peak 4.6 · over-budget 0/753 · growth 1.375
+svelte-streamdown   run 2 [svelte-streamdown > svelte-markdown]: work 1576.4ms total · avg 2.09 · p95 2.90 · peak 6.4 · over-budget 0/753 · growth 1.271
+svelte-markdown     run 2 [svelte-streamdown > svelte-markdown]: work 2803.3ms total · avg 3.72 · p95 6.30 · peak 14.4 · over-budget 0/753 · growth 2.155 · parity 0/31 mismatched
+svelte-markdown     run 3 [svelte-markdown > svelte-streamdown]: work 2732.6ms total · avg 3.63 · p95 6.50 · peak 15.3 · over-budget 0/753 · growth 2.135 · parity 0/31 mismatched
+svelte-streamdown   run 3 [svelte-markdown > svelte-streamdown]: work 1445.2ms total · avg 1.92 · p95 2.80 · peak 4.3 · over-budget 0/753 · growth 1.308
+parity (ours vs fresh parse): OK — max 0 mismatched of 93 checks
+median total work: ours 2785.3ms · theirs 1510.4ms → svelte-streamdown does 1.845x less main-thread work
+median p95 frame work: ours 6.3ms · theirs 2.9ms · frames over 16.7ms: ours 0 · theirs 0
+paired delta (theirs − ours total work, median of 3 pairs): -1274.9ms — theirs does less work
+output check: comparable normalized text lengths (ratio 0.984; hashes intentionally differ across renderer markup)
+dom projection: 1 difference(s)
+  - codeBlocks[0]: ours "export const value0 = compute(0, 'label-0') // step 0 export const value1 = compute(1, 'label-1') // step 1 export const value2 = compute(2, 'label-2') // step… · theirs "export const value0 = compute(0, 'label-0') // step 0export const value1 = compute(1, 'label-1') // step 1export const value2 = compute(2, 'label-2') // step 2…
+
+=== JSON ===

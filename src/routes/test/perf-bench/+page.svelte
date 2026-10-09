@@ -127,6 +127,14 @@ const x: number = 42
 \`\`\`
 `
 
+    // Large finished documents expose cumulative heading-history costs that
+    // short chat messages do not. Include duplicates to verify deduplication.
+    const generateHeadingHeavy = (count: number): string =>
+        Array.from(
+            { length: count },
+            (_, index) => `# ${index % 10 === 0 ? 'Overview' : `Section ${index}`}\n\n`
+        ).join('')
+
     const generateHtmlHeavy = (rows: number): string => {
         const out: string[] = ['# HTML Heavy Corpus\n']
         for (let i = 0; i < rows; i++) {
@@ -332,6 +340,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
     let source = $state('')
     let previewEl: HTMLDivElement | undefined = $state()
     let markdown: ImperativeMarkdownHandle | undefined = $state()
+    let ready = $state(false)
     let scenario = $state<string>('idle')
 
     let stat = $state({
@@ -751,6 +760,15 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             scenarioLongestTaskMs: observerSnap.longestTaskMs,
             scenarioMutations: observerSnap.mutations,
             scenarioLoafScriptMaxMs: observerSnap.loafScriptMaxMs
+        }
+
+        if (label === 'parse-heading-heavy') {
+            const expected = collectExpectedHeadingIds(cold)
+            const headingIdMismatches = countHeadingIdMismatches(getRenderedHeadingIds(), expected)
+            stat = { ...stat, headingCount: expected.length, headingIdMismatches }
+            if (headingIdMismatches > 0) {
+                throw new Error(`parse-heading-heavy: ${headingIdMismatches} heading id mismatches`)
+            }
         }
 
         scenario = `${label}-done`
@@ -1320,6 +1338,8 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         }, 250)
         cleanups.push(() => clearInterval(refreshHandle))
 
+        ready = true
+
         return () => {
             for (const fn of cleanups) fn()
         }
@@ -1376,6 +1396,13 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
             Parse realistic
         </button>
         <button
+            data-testid="parse-heading-heavy"
+            disabled={!ready}
+            onclick={() => runDocScenario('parse-heading-heavy', generateHeadingHeavy(2_000))}
+        >
+            Parse 2,000 headings
+        </button>
+        <button
             data-testid="parse-50kb-overridden"
             onclick={() => runDocScenario('parse-50kb-overridden', generateLarge(16, 10), true)}
         >
@@ -1395,7 +1422,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         <button
             data-testid="stream-large"
             onclick={() => runStreamingLarge()}
-            disabled={isStreaming}
+            disabled={!ready || isStreaming}
         >
             {isStreaming ? 'Streaming…' : 'Stream large'}
         </button>
@@ -1463,7 +1490,7 @@ For more, see the [Svelte docs](https://svelte.dev/docs).
         </div>
     {/if}
 
-    <div class="stats" data-testid="perf-stats">
+    <div class="stats" data-testid="perf-stats" data-ready={ready}>
         scenario={scenario} srcKb={stat.srcKb} tokenCount={stat.tokenCount} parseColdMs={stat.parseColdMs}
         parseWarmMs={stat.parseWarmMs} lexMs={stat.lexMs} cleanupMs={stat.cleanupMs} hashMs={stat.hashMs}
         firstPaintMs={stat.firstPaintMs} renderOnlyMs={stat.renderOnlyMs} domNodes={stat.domNodes}

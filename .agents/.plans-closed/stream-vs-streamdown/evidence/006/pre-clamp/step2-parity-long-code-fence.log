@@ -1,0 +1,160 @@
+
+=== long-code-fence (long-code-fence, 24000+ bytes, 32 chars × 1/frame, input prop, mode paired) ===
+svelte-markdown     run 1 [svelte-markdown > svelte-streamdown]: work 1836.5ms total · avg 2.44 · p95 5.60 · peak 11.4 · over-budget 0/753 · growth 3.22 · parity 0/31 mismatched
+svelte-streamdown   run 1 [svelte-markdown > svelte-streamdown]: work 1116.4ms total · avg 1.48 · p95 2.90 · peak 7.0 · over-budget 0/753 · growth 2.441
+parity (ours vs fresh parse): OK — max 0 mismatched of 31 checks
+median total work: ours 1836.5ms · theirs 1116.4ms → svelte-streamdown does 1.645x less main-thread work
+median p95 frame work: ours 5.6ms · theirs 2.9ms · frames over 16.7ms: ours 0 · theirs 0
+paired delta (theirs − ours total work, median of 1 pairs): -720.1ms — theirs does less work
+output check: comparable normalized text lengths (ratio 0.984; hashes intentionally differ across renderer markup)
+dom projection: 1 difference(s)
+  - codeBlocks[0]: ours "export const value0 = compute(0, 'label-0') // step 0 export const value1 = compute(1, 'label-1') // step 1 export const value2 = compute(2, 'label-2') // step… · theirs "export const value0 = compute(0, 'label-0') // step 0export const value1 = compute(1, 'label-1') // step 1export const value2 = compute(2, 'label-2') // step 2…
+
+=== JSON ===
+{
+  "metadata": {
+    "capturedAt": "2026-09-28T10:25:57.455Z",
+    "url": "http://127.0.0.1:4183/test/stream-compare",
+    "iterations": 1,
+    "warmups": 0,
+    "mode": "paired",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "pageErrors": []
+  },
+  "results": {
+    "long-code-fence": {
+      "svelte-markdown": {
+        "runs": [
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "long-code-fence",
+            "corpus": "long-code-fence",
+            "inputMode": "prop",
+            "prefixBytes": 0,
+            "sourceBytes": 24094,
+            "chunkSize": 32,
+            "updatesPerFrame": 1,
+            "frames": 753,
+            "totalWorkMs": 1836.5,
+            "avgWorkMs": 2.439,
+            "p50WorkMs": 2.2,
+            "p95WorkMs": 5.6,
+            "p99WorkMs": 7.8,
+            "peakWorkMs": 11.4,
+            "framesOverBudget": 0,
+            "growthRatio": 3.22,
+            "syncTotalMs": 68.5,
+            "frameWorkTotalMs": 1768,
+            "libraryFlushMs": 165.6,
+            "libraryFlushCount": 752,
+            "domNodes": 4,
+            "mutations": 37,
+            "heapDeltaKb": 1407.934,
+            "outputHash": "c6d0d10d",
+            "outputLength": 24079,
+            "parityChecks": 31,
+            "parityMismatches": 0,
+            "firstParityMismatch": null,
+            "parityMismatchSamples": [],
+            "order": "svelte-markdown > svelte-streamdown"
+          }
+        ],
+        "summary": {
+          "iterations": 1,
+          "frames": 753,
+          "totalWorkMsMedian": 1836.5,
+          "avgWorkMsMedian": 2.439,
+          "p50WorkMsMedian": 2.2,
+          "p95WorkMsMedian": 5.6,
+          "p99WorkMsMedian": 7.8,
+          "peakWorkMsMedian": 11.4,
+          "framesOverBudgetMedian": 0,
+          "growthRatioMedian": 3.22,
+          "syncTotalMsMedian": 68.5,
+          "frameWorkTotalMsMedian": 1768,
+          "libraryFlushMsMedian": 165.6,
+          "mutationsMedian": 37,
+          "heapDeltaKbMedian": 1407.934,
+          "domNodes": 4,
+          "outputHash": "c6d0d10d",
+          "outputLength": 24079,
+          "parityChecksTotal": 31,
+          "parityMismatchesMax": 0,
+          "firstParityMismatch": null
+        }
+      },
+      "svelte-streamdown": {
+        "runs": [
+          {
+            "renderer": "svelte-streamdown",
+            "scenario": "long-code-fence",
+            "corpus": "long-code-fence",
+            "inputMode": "prop",
+            "prefixBytes": 0,
+            "sourceBytes": 24094,
+            "chunkSize": 32,
+            "updatesPerFrame": 1,
+            "frames": 753,
+            "totalWorkMs": 1116.4,
+            "avgWorkMs": 1.483,
+            "p50WorkMs": 1.3,
+            "p95WorkMs": 2.9,
+            "p99WorkMs": 3.8,
+            "peakWorkMs": 7,
+            "framesOverBudget": 0,
+            "growthRatio": 2.441,
+            "syncTotalMs": 785.3,
+            "frameWorkTotalMs": 331.1,
+            "libraryFlushMs": null,
+            "libraryFlushCount": null,
+            "domNodes": 797,
+            "mutations": 428,
+            "heapDeltaKb": 7572.84,
+            "outputHash": "4bd10b2e",
+            "outputLength": 23689,
+            "parityChecks": null,
+            "parityMismatches": null,
+            "firstParityMismatch": null,
+            "parityMismatchSamples": null,
+            "order": "svelte-markdown > svelte-streamdown"
+          }
+        ],
+        "summary": {
+          "iterations": 1,
+          "frames": 753,
+          "totalWorkMsMedian": 1116.4,
+          "avgWorkMsMedian": 1.483,
+          "p50WorkMsMedian": 1.3,
+          "p95WorkMsMedian": 2.9,
+          "p99WorkMsMedian": 3.8,
+          "peakWorkMsMedian": 7,
+          "framesOverBudgetMedian": 0,
+          "growthRatioMedian": 2.441,
+          "syncTotalMsMedian": 785.3,
+          "frameWorkTotalMsMedian": 331.1,
+          "libraryFlushMsMedian": null,
+          "mutationsMedian": 428,
+          "heapDeltaKbMedian": 7572.84,
+          "domNodes": 797,
+          "outputHash": "4bd10b2e",
+          "outputLength": 23689,
+          "parityChecksTotal": null,
+          "parityMismatchesMax": null,
+          "firstParityMismatch": null
+        }
+      },
+      "pairedDeltaMsMedian": -720.1,
+      "pairedDeltasMs": [
+        -720.1
+      ],
+      "domProjectionMatches": false,
+      "domProjectionDifferenceCount": 1,
+      "domProjectionDifferences": [
+        "codeBlocks[0]: ours \"export const value0 = compute(0, 'label-0') // step 0 export const value1 = compute(1, 'label-1') // step 1 export const value2 = compute(2, 'label-2') // step… · theirs \"export const value0 = compute(0, 'label-0') // step 0export const value1 = compute(1, 'label-1') // step 1export const value2 = compute(2, 'label-2') // step 2…"
+      ],
+      "outputLengthRatio": 0.984,
+      "outputComparable": true,
+      "workRatioTheirsOverOurs": 0.608
+    }
+  }
+}

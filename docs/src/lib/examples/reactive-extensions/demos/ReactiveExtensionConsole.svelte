@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import type { MarkedExtension, RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
     import { DemoSplitV2 } from '@humanspeak/docs-kit'
     import DisplayButtonRenderer from './DisplayButtonRenderer.svelte'
@@ -96,7 +97,8 @@ Swap the format below. The same source markdown reparses with the newest tokeniz
     const extensions = $derived([makeDisplayButtonExtension(displayFormat, visualMode)])
 
     const renderers: Partial<DisplayButtonRenderers> = {
-        displayButton: DisplayButtonRenderer
+        displayButton: DisplayButtonRenderer,
+        code: HighlightedCode
     }
 
     const collectDisplayButtons = (tokens: MarkdownToken[]): MarkdownToken[] =>

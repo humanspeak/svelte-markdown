@@ -257,3 +257,11 @@ describe('Snippet Props Completeness', () => {
         })
     })
 })
+
+import RawTextInspector from './test/snippets/RawTextInspector.svelte'
+it('calls the rawtext snippet for plain paragraph leaves', () => {
+    const { container } = render(RawTextInspector)
+    expect(container.querySelector('[data-testid="rawtext-marker"]')?.textContent).toBe(
+        'Hello world'
+    )
+})

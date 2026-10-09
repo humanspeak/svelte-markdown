@@ -1,0 +1,43 @@
+| Scenario | Ours total | Theirs total | Paired delta (theirs − ours) | Ratio theirs ÷ ours | Ours avg/frame | Ours p95 | Theirs p95 | Ours over-budget | Theirs over-budget | Ours lib flush | Parity mismatches (checks) | DOM elements ours / theirs | DOM projection | vs 006 ours total (Δ%) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `prose-mixed` | 1,797 / 1,932 | 2,266 / 2,333 | 477 / 523 | 1.26 / 1.21 | 2.35 / 2.53 | 4.3 / 4.5 | 5.5 / 5.2 | 0 / 0 of 765 | 0 / 0 | 137 / 144 | 0 (155) / 0 (155) | 1381 / 1704 | MATCH / MATCH | -44.4% / -38.0% |
+| `prose-mixed-4x` | 559 / 537 | 1,206 / 1,103 | 649 / 595 | 2.16 / 2.05 | 2.91 / 2.80 | 5.4 / 5.5 | 11.1 / 10.3 | 0 / 0 of 192 | 0 / 1 | 36 / 37 | 0 (40) / 0 (40) | 1381 / 1704 | MATCH / MATCH | -38.8% / -49.7% |
+| `long-list` | 3,501 / 3,625 | 9,377 / 9,111 | 5,909 / 5,450 | 2.68 / 2.51 | 4.64 / 4.81 | 7.3 / 7.9 | 23.7 / 23.2 | 1 / 1 of 754 | 236 / 224 | 1,717 / 1,817 | 0 (155) / 0 (155) | 768 / 769 | MATCH / MATCH | -72.7% / -72.2% |
+| `long-table` | 1,620 / 1,569 | 3,745 / 3,577 | 2,105 / 2,036 | 2.31 / 2.28 | 5.16 / 5.00 | 11.2 / 8.2 | 23.8 / 23.3 | 2 / 1 of 314 | 95 / 81 | 428 / 390 | 0 (65) / 0 (65) | 1194 / 1196 | MATCH / MATCH | new |
+| `long-code-fence` | 1,542 / 1,570 | 1,162 / 1,178 | -379 / -465 | 0.75 / 0.75 | 2.05 / 2.09 | 3.3 / 3.4 | 2.8 / 2.5 | 0 / 0 of 753 | 0 / 0 | 87 / 96 | 0 (155) / 0 (155) | 4 / 797 | 1 diff / 1 diff | -45.7% / -46.5% |
+| `citations` | 1,456 / 1,703 | 1,405 / 1,445 | -50 / -174 | 0.97 / 0.85 | 1.93 / 2.26 | 3.9 / 4.3 | 3.1 / 3.1 | 0 / 0 of 753 | 0 / 0 | 189 / 213 | 0 (155) / 0 (155) | 776 / 519 | 1 diff / 1 diff | -68.0% / -62.6% |
+| `prose-mixed-writechunk` | 1,764 / 1,796 | skipped | — | — | 2.31 / 2.35 | 4.2 / 4.3 | — | 0 / 0 of 765 | — | 149 / 152 | 0 (155) / 0 (155) | 1381 | — | -43.9% / -44.5% |
+| `prefix-24kb` | 120 / 113 | 162 / 156 | 42 / 37 | 1.35 / 1.37 | 1.79 / 1.69 | 2.7 / 2.5 | 3.0 / 3.2 | 0 / 0 of 67 | 0 / 0 | 9 / 9 | 0 (15) / 0 (15) | 1369 / 1398 | MATCH / MATCH | -70.1% / -70.7% |
+| `prefix-96kb` | 232 / 231 | 425 / 417 | 187 / 200 | 1.83 / 1.81 | 3.46 / 3.45 | 4.8 / 4.6 | 7.8 / 7.3 | 0 / 0 of 67 | 0 / 0 | 8 / 8 | 0 (15) / 0 (15) | 5065 / 5094 | MATCH / MATCH | -71.6% / -71.0% |
+| `prefix-384kb` | 909 / 906 | 2,454 / 2,436 | 1,548 / 1,536 | 2.70 / 2.69 | 13.56 / 13.52 | 19.9 / 19.1 | 44.0 / 43.7 | 14 / 14 of 67 | 67 / 67 | 11 / 10 | 0 (15) / 0 (15) | 19489 / 19518 | MATCH / MATCH | -78.0% / -78.5% |
+| `large-closed-block` | 85 / 84 | 186 / 187 | 102 / 104 | 2.18 / 2.22 | 1.27 / 1.26 | 2.0 / 1.9 | 2.7 / 3.0 | 0 / 0 of 67 | 1 / 1 | 14 / 13 | 0 (15) / 0 (15) | 1319 / 1348 | MATCH / MATCH | -59.8% / -59.9% |
+
+Per-run maxima (every run, not medians):
+- prose-mixed: suite 1: ours over-budget per run [0,0,0,0,0] parity max 0; theirs over-budget [0,0,0,1,0] | suite 2: ours over-budget per run [0,0,0,0,0] parity max 0; theirs over-budget [0,0,2,0,0]
+- prose-mixed-4x: suite 1: ours over-budget per run [0,0,0,0,0] parity max 0; theirs over-budget [0,1,0,1,0] | suite 2: ours over-budget per run [0,0,0,0,0] parity max 0; theirs over-budget [1,2,0,2,0]
+- long-list: suite 1: ours over-budget per run [1,0,0,2,2] parity max 0; theirs over-budget [233,246,225,236,277] | suite 2: ours over-budget per run [5,0,0,3,1] parity max 0; theirs over-budget [224,224,220,231,231]
+- long-table: suite 1: ours over-budget per run [4,2,2,1,3] parity max 0; theirs over-budget [95,104,96,90,89] | suite 2: ours over-budget per run [4,1,0,0,1] parity max 0; theirs over-budget [76,85,79,81,82]
+- long-code-fence: suite 1: ours over-budget per run [0,0,0,0,0] parity max 0; theirs over-budget [0,0,0,0,0] | suite 2: ours over-budget per run [0,0,0,0,0] parity max 0; theirs over-budget [0,0,0,0,0]
+- citations: suite 1: ours over-budget per run [0,0,1,0,0] parity max 0; theirs over-budget [0,1,0,1,0] | suite 2: ours over-budget per run [1,1,0,0,0] parity max 0; theirs over-budget [0,0,0,0,0]
+- prose-mixed-writechunk: suite 1: ours over-budget per run [0,0,0,0,0] parity max 0 | suite 2: ours over-budget per run [1,0,0,0,0] parity max 0
+- prefix-24kb: suite 1: ours over-budget per run [0,0,0,0,0] parity max 0; theirs over-budget [0,0,0,0,0] | suite 2: ours over-budget per run [0,0,0,0,0] parity max 0; theirs over-budget [0,0,0,0,0]
+- prefix-96kb: suite 1: ours over-budget per run [0,0,0,0,0] parity max 0; theirs over-budget [0,0,0,0,0] | suite 2: ours over-budget per run [0,0,0,0,0] parity max 0; theirs over-budget [0,0,0,0,0]
+- prefix-384kb: suite 1: ours over-budget per run [20,14,14,15,14] parity max 0; theirs over-budget [67,67,67,67,67] | suite 2: ours over-budget per run [18,10,14,14,18] parity max 0; theirs over-budget [67,67,67,67,67]
+- large-closed-block: suite 1: ours over-budget per run [0,0,0,0,0] parity max 0; theirs over-budget [1,1,1,1,1] | suite 2: ours over-budget per run [0,0,0,0,0] parity max 0; theirs over-budget [1,1,1,1,1]
+
+Paired deltas per pair:
+- prose-mixed: 233.9, 559.4, 385.6, 597, 477.3 / 85, 311.5, 523, 640.3, 632.8
+- prose-mixed-4x: 400.7, 636.1, 649, 732.1, 688.7 / 369.9, 603, 526.4, 595.2, 623.1
+- long-list: 5246.7, 5909.3, 5720.1, 6162.3, 6633.2 / 4986.1, 5485.7, 5420.8, 5449.9, 5560.8
+- long-table: 1981.4, 2525.1, 2104.9, 2164.7, 2093.9 / 1588.1, 2041.6, 2036.1, 1991.3, 2089.3
+- long-code-fence: -424.7, -391.3, -379.4, -148.7, -278 / -504.7, -481.7, -464.6, -294.9, -288.6
+- citations: -291.5, -49.7, -149.1, 350.2, 101.5 / -354.9, -173.9, -230.1, -107.3, -51
+- prose-mixed-writechunk:  / 
+- prefix-24kb: -39.1, 26.5, 56.3, 41.6, 45.3 / -23.5, 35.9, 50.8, 36.7, 48.5
+- prefix-96kb: 130.9, 187.1, 254.1, 189.2, 151.6 / 84.4, 199.5, 201.8, 184.1, 202.2
+- prefix-384kb: 1511.8, 1440.8, 1547.5, 1585.5, 1569.7 / 1449, 1557.1, 1515.4, 1535.7, 1543.4
+- large-closed-block: 38.3, 103.9, 106, 98.3, 102 / 26.2, 107.9, 107, 103.5, 99.7
+
+DOM projection differences:
+- long-code-fence: ["codeBlocks[0]: ours \"export const value0 = compute(0, 'label-0') // step 0 export const value1 = compute(1, 'label-1') // step 1 export const value2 = compute(2, 'label-2') // step… · theirs \"export const value0 = compute(0, 'label-0') // step 0export const value1 = compute(1, 'label-1') // step 1export const value2 = compute(2, 'label-2') // step 2…"]
+- citations: ["links.length: ours 258 · theirs 0"]

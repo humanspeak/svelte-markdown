@@ -1,0 +1,40 @@
+ 10:43:13 up 4 days, 3 min,  1 user,  load average: 1.20, 1.38, 1.48
+=== attribution: long-list (svelte-markdown, 1 traced run after 1 warmup) ===
+page: totalWorkMs 4013.7 · frames 754 · avg 5.323 · p95 7.8 · libraryFlushMs 2005.1 (753 flushes)
+trace: 1323 window measures, raw sum 4013.386ms, union 4013.386ms (100.0% of totalWorkMs; 0ms of overlapping windows counted twice by the page)
+flush measure 2005.075ms over 753 flushes · main thread pid 1341375 tid 1341375
+
+bucket                                                 total ms  ms/frame   share
+stream-flush measure (parse+diff+state write)            1995.1     2.646   49.7%
+JS outside flush (derived + DOM commit + metadata)       1443.3     1.914   36.0%
+UpdateLayoutTree + Layout                                 256.9     0.341    6.4%
+Paint + composite                                          10.6     0.014    0.3%
+MinorGC / MajorGC                                          14.3     0.019    0.4%
+other traced main-thread work                              90.9     0.121    2.3%
+untraced window time (idle / gaps)                        202.3     0.268    5.0%
+sum of buckets                                           4013.4     5.323
+  of which JS outside flush: 65.648ms in the sync window (prop assignment + tick) · 1377.677ms in the frame window
+  "other" by event: RunTask 73.993ms · HitTest 16.908ms · IntersectionObserverController::computeIntersections 0.011ms
+traced buckets (excl. untraced) = 3811.0ms = 95.0% of page totalWorkMs 4013.7ms · 95.0% of the window union
+paint + composite after the windows (not charged by the bench): 860.724ms (1.142 ms/frame)
+
+top 15 functions by self time (samples inside the measured windows; 4053.329ms sampled)
+ 1.    437.4ms  10.8%  Ys  http://127.0.0.1:4183/_app/immutable/chunks/CrvI8adm.js:67:82912
+ 2.    368.1ms   9.1%  inlineTokens  http://127.0.0.1:4183/_app/immutable/chunks/CrvI8adm.js:48:675
+ 3.    182.0ms   4.5%  getBoundingClientRect  (native)
+ 4.    177.7ms   4.4%  inlineText  http://127.0.0.1:4183/_app/immutable/chunks/CrvI8adm.js:34:4517
+ 5.    169.0ms   4.2%  list  http://127.0.0.1:4183/_app/immutable/chunks/CrvI8adm.js:22:67
+ 6.    168.3ms   4.2%  #g  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:10688
+ 7.    162.8ms     4%  #v  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:11736
+ 8.    121.1ms     3%  Ln  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:16355
+ 9.    102.2ms   2.5%  isAppendOnlyUpdate  http://127.0.0.1:4183/_app/immutable/chunks/CrvI8adm.js:71:73
+10.     89.1ms   2.2%  lheading  http://127.0.0.1:4183/_app/immutable/chunks/CrvI8adm.js:32:537
+11.     81.4ms     2%  emStrong  http://127.0.0.1:4183/_app/immutable/chunks/CrvI8adm.js:34:2206
+12.     79.7ms     2%  Bs  http://127.0.0.1:4183/_app/immutable/chunks/CrvI8adm.js:67:81568
+13.     72.3ms   1.8%  link  http://127.0.0.1:4183/_app/immutable/chunks/CrvI8adm.js:34:875
+14.     67.4ms   1.7%  Vr  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:23922
+15.     62.1ms   1.5%  get  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:3:10835
+
+trace: /tmp/long-list.trace.json
+cpu profile: /tmp/long-list.cpuprofile
+summary: .agents/.plans/stream-vs-streamdown/evidence/010/attribution-after/long-list.attribution.json
