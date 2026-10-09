@@ -1,5 +1,6 @@
-import { Tokenizer, type MarkedOptions, type Token } from 'marked'
+import { Tokenizer, type MarkedExtension, type MarkedOptions, type Token } from 'marked'
 import { describe, expect, it } from 'vitest'
+import { buildParserOptions } from './extension-options.js'
 import { IncrementalParser } from './incremental-parser.js'
 import { lexAndClean } from './parse-and-cache.js'
 import { ProvenanceCollector, sliceMapped } from './streaming-provenance.js'
@@ -495,5 +496,137 @@ describe('supplied tokenizer isolation', () => {
             expect(Object.getOwnPropertyDescriptor(tokenizer, 'inlineText')?.value).toBe(original)
             expect(leaf).toMatchObject({ raw: 'a', text: 'a' })
         }
+    })
+})
+
+describe('extension tokenizers', () => {
+    // Shaped like marked-katex-extension: inline + block tokenizers with start hints.
+    const katex: MarkedExtension = {
+        extensions: [
+            {
+                name: 'inlineKatex',
+                level: 'inline',
+                start: (src: string) => src.indexOf('$'),
+                tokenizer(src: string) {
+                    const match = /^\$([^$\n]+?)\$/.exec(src)
+                    if (match) return { type: 'inlineKatex', raw: match[0], text: match[1] }
+                }
+            },
+            {
+                name: 'blockKatex',
+                level: 'block',
+                start: (src: string) => src.indexOf('$$'),
+                tokenizer(src: string) {
+                    const match = /^\$\$\n([^$]+?)\n\$\$(?:\n|$)/.exec(src)
+                    if (match) return { type: 'blockKatex', raw: match[0], text: match[1] }
+                }
+            }
+        ]
+    }
+    const options = buildParserOptions({}, [katex])
+    const describeLeaves = (tokens: Token[], collector: ProvenanceCollector) => {
+        const result: { type: string; text: string; exact: boolean; start?: number }[] = []
+        const walk = (node: Record<string, unknown>) => {
+            const children = node.tokens as Token[] | undefined
+            if (children?.length) children.forEach((child) => walk(child as never))
+            else if (typeof node.text === 'string') {
+                const provenance = collector.get(node)
+                result.push({
+                    type: node.type as string,
+                    text: node.text,
+                    exact: !!provenance?.exact,
+                    start: provenance?.exact
+                        ? provenance.text?.runs[0]?.sources[0]?.start
+                        : undefined
+                })
+            }
+            ;(node.items as Record<string, unknown>[] | undefined)?.forEach(walk)
+        }
+        tokens.forEach((token) => walk(token as never))
+        return result
+    }
+    const source = 'Price is $x$ today\n\n$$\nE=mc^2\n$$\n\nPlain **text**\n\n- item $y$'
+
+    it('keeps built-in text exact and marks only extension tokens unknown', () => {
+        const collector = new ProvenanceCollector()
+        const tokens = lexAndClean(source, options, false, undefined, collector)
+        expect(tokens).toEqual(lexAndClean(source, options, false))
+        expect(describeLeaves(tokens, collector)).toEqual([
+            { type: 'text', text: 'Price is ', exact: true, start: 0 },
+            { type: 'inlineKatex', text: 'x', exact: false, start: undefined },
+            { type: 'text', text: ' today', exact: true, start: 12 },
+            { type: 'blockKatex', text: 'E=mc^2', exact: false, start: undefined },
+            { type: 'text', text: 'Plain ', exact: true, start: 34 },
+            { type: 'text', text: 'text', exact: true, start: 42 },
+            { type: 'text', text: 'item ', exact: true, start: 52 },
+            { type: 'inlineKatex', text: 'y', exact: false, start: undefined }
+        ])
+    })
+
+    it('matches the one-shot parse at every streaming split', () => {
+        const collector = new ProvenanceCollector()
+        const expected = describeLeaves(
+            lexAndClean(source, options, false, undefined, collector),
+            collector
+        )
+        for (let split = 0; split <= source.length; split++) {
+            const streamed = new ProvenanceCollector()
+            const parser = new IncrementalParser(buildParserOptions({}, [katex]), streamed)
+            parser.update(source.slice(0, split))
+            const next = parser.update(source)
+            expect(describeLeaves(next.tokens, streamed), `split ${split}`).toEqual(expected)
+        }
+    })
+
+    it('keeps content an extension lexes for itself unknown', () => {
+        const container: MarkedExtension = {
+            extensions: [
+                {
+                    name: 'note',
+                    level: 'block',
+                    tokenizer(src: string) {
+                        const match = /^:::\n([^:]+?)\n:::(?:\n|$)/.exec(src)
+                        if (!match) return
+                        const token = { type: 'note', raw: match[0], text: match[1], tokens: [] }
+                        this.lexer.inline(match[1], token.tokens)
+                        return token
+                    }
+                }
+            ]
+        }
+        const noteOptions = buildParserOptions({}, [container])
+        const collector = new ProvenanceCollector()
+        const text = 'Before\n\n:::\ninside *em*\n:::\n\nAfter'
+        const tokens = lexAndClean(text, noteOptions, false, undefined, collector)
+        expect(tokens).toEqual(lexAndClean(text, noteOptions, false))
+        expect(describeLeaves(tokens, collector).map(({ text, exact }) => [text, exact])).toEqual([
+            ['Before', true],
+            ['inside ', false],
+            ['em', false],
+            ['After', true]
+        ])
+    })
+
+    it('falls back to unknown for the whole parse when built-in text merges into an extension token', () => {
+        const fakeText: MarkedExtension = {
+            extensions: [
+                {
+                    name: 'bang',
+                    level: 'inline',
+                    tokenizer(src: string) {
+                        if (src.startsWith('!!')) return { type: 'text', raw: '!!', text: 'bang' }
+                    }
+                }
+            ]
+        }
+        const fakeOptions = buildParserOptions({}, [fakeText])
+        const collector = new ProvenanceCollector()
+        const text = 'a\n\n!!b'
+        const tokens = lexAndClean(text, fakeOptions, false, undefined, collector)
+        expect(tokens).toEqual(lexAndClean(text, fakeOptions, false))
+        expect(describeLeaves(tokens, collector).map(({ text, exact }) => [text, exact])).toEqual([
+            ['a', false],
+            ['bangb', false]
+        ])
     })
 })

@@ -1,4 +1,4 @@
-import { Lexer, Tokenizer, type Token, type Tokens } from 'marked'
+import { Lexer, Tokenizer, type Token, type TokenizerExtensionFunction, type Tokens } from 'marked'
 import {
     assertMappedValue,
     concatMapped,
@@ -59,19 +59,63 @@ export const traceLexer = (
     const unsupported =
         suppliedTokenizer ||
         (!!lexer.options.tokenizer && Object.getPrototypeOf(tokenizer) !== Tokenizer.prototype) ||
-        !!lexer.options.extensions ||
         !!lexer.options.walkTokens
     // Supplied tokenizers may override instance methods without subclassing. Never instrument
-    // or mutate such shared instances. Custom transforms conservatively make this whole parse
-    // unknown; equality of type/raw/text cannot establish their origins.
+    // or mutate such shared instances. walkTokens may rewrite any token after lexing, so it
+    // conservatively makes this whole parse unknown; equality of type/raw/text cannot establish
+    // origins.
     if (unsupported)
         return () => {
             collector.capture(lexer.tokens)
         }
 
+    // Extension tokenizers are opaque: their tokens, and everything lexed on their behalf,
+    // stay unknown. Built-in tokens around them keep exact provenance. Merging built-in text
+    // into an opaque token (or any resolution failure) poisons the whole parse back to unknown.
+    let suspended = 0
+    let poisoned = false
+    const opaque = new WeakSet<object>()
+    const extensions = lexer.options.extensions
+    if (extensions) {
+        const wrap = (fn: TokenizerExtensionFunction): TokenizerExtensionFunction =>
+            function (src, tokens) {
+                const frame = stack.at(-1)
+                if (!suspended && frame) finish(frame)
+                const queued = lexer.inlineQueue.length
+                suspended++
+                let token: ReturnType<TokenizerExtensionFunction>
+                try {
+                    token = fn.call(this, src, tokens)
+                } finally {
+                    suspended--
+                }
+                for (const entry of lexer.inlineQueue.slice(queued)) opaque.add(entry.tokens)
+                if (token) opaque.add(token)
+                return token
+            }
+        // The lexer owns a shallow copy of the caller's options; replace, never mutate, the
+        // shared extensions object.
+        lexer.options = {
+            ...lexer.options,
+            extensions: {
+                ...extensions,
+                ...(extensions.block ? { block: extensions.block.map(wrap) } : {}),
+                ...(extensions.inline ? { inline: extensions.inline.map(wrap) } : {})
+            }
+        }
+    }
+
     for (const kind of ['blockTokens', 'inlineTokens'] as const) {
         const original = lexer[kind].bind(lexer)
         const wrapped = (input: string, tokens: Token[] = [], clipped?: boolean) => {
+            if (suspended || opaque.has(tokens)) {
+                suspended++
+                try {
+                    return original(input, tokens, clipped)
+                } finally {
+                    suspended--
+                }
+            }
             const frame: Frame = {
                 source: input,
                 normalized: normalizeBlock(mappedSource(input), lexer.options.pedantic ?? false)
@@ -119,6 +163,7 @@ export const traceLexer = (
         ;(tokenizer as unknown as Record<string, (..._args: unknown[]) => AnyToken | undefined>)[
             rule
         ] = (...args) => {
+            if (suspended) return original(...args)
             const frame = stack.at(-1)!
             const input = args[0] as string
             if ((frame.inline && rule === 'escape') || (!frame.inline && rule === 'space')) {
@@ -321,6 +366,12 @@ export const traceLexer = (
                 : leading
             : empty()
     }
+    /** Opaque targets stay unknown. A lone newline only extends their raw; any other merge poisons. */
+    const mergesIntoOpaque = (event: Event) => {
+        if (!event.target || !opaque.has(event.target)) return false
+        if (!(event.rule === 'space' && event.raw?.length === 1)) poisoned = true
+        return true
+    }
     const recordEvent = (
         event: Event,
         frame: Frame,
@@ -331,6 +382,7 @@ export const traceLexer = (
     ) => {
         const token = event.token!
         const target = event.target
+        if (mergesIntoOpaque(event)) return
         if (target) {
             const previous = target === token ? undefined : collector.get(target)
             const separator = mergeSeparator(event, frame, view, text, previous?.text, leading)
@@ -414,7 +466,7 @@ export const traceLexer = (
             resolveEvent(event, frame, view, leading)
         }
     }
-    return () => {
+    const resolveAll = () => {
         let input = mappedSource(source, base)
         if (!inline)
             input = replaceMapped(input, /\r\n|\r/g, (_match, span) =>
@@ -428,5 +480,32 @@ export const traceLexer = (
             if (!text) throw new Error('Provenance deferred inline input has no accepted owner')
             resolve(frame, assertMappedValue(text, frame.source, 'deferred inline input'))
         }
+    }
+    if (!extensions) return resolveAll
+    return () => {
+        try {
+            resolveAll()
+            if (!poisoned) return
+        } catch {
+            // Fall through: an extension shaped the parse in a way the adapters cannot map.
+        }
+        markUnknown(collector, lexer.tokens)
+    }
+}
+
+/** Overwrite every sidecar in `tokens` with unknown provenance, discarding partial mappings. */
+const markUnknown = (collector: ProvenanceCollector, tokens: readonly object[]): void => {
+    for (const token of tokens) {
+        collector.set(token, { exact: false, sourceSpans: [] })
+        const node = token as {
+            tokens?: object[]
+            items?: object[]
+            header?: object[]
+            rows?: object[][]
+        }
+        for (const key of ['tokens', 'items', 'header'] as const) {
+            if (Array.isArray(node[key])) markUnknown(collector, node[key])
+        }
+        node.rows?.forEach((row) => markUnknown(collector, row))
     }
 }
