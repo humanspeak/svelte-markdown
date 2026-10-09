@@ -578,6 +578,52 @@ describe('extension tokenizers', () => {
         }
     })
 
+    const opaqueSpans = (tokens: Token[], collector: ProvenanceCollector, text: string) => {
+        const result: [string, string][] = []
+        const walk = (node: Record<string, unknown>) => {
+            const provenance = collector.get(node)
+            if (provenance?.opaque)
+                result.push([
+                    node.type as string,
+                    provenance.sourceSpans.map(({ start, end }) => text.slice(start, end)).join('')
+                ])
+            ;(node.tokens as Record<string, unknown>[] | undefined)?.forEach(walk)
+            ;(node.items as Record<string, unknown>[] | undefined)?.forEach(walk)
+        }
+        tokens.forEach((token) => walk(token as never))
+        return result
+    }
+    const nested = `${source}\n\n> quoted $q$ here\n\n1. first\n   $$\n   a+b\n   $$`
+
+    it('records the source span of each top-level extension token', () => {
+        const collector = new ProvenanceCollector()
+        const tokens = lexAndClean(nested, options, false, undefined, collector)
+        expect(opaqueSpans(tokens, collector, nested)).toEqual([
+            ['inlineKatex', '$x$'],
+            ['blockKatex', '$$\nE=mc^2\n$$\n'],
+            ['inlineKatex', '$y$'],
+            ['inlineKatex', '$q$'],
+            // List indentation is stripped by the grammar, so the span skips it.
+            ['blockKatex', '$$\na+b\n$$']
+        ])
+    })
+
+    it('records the same extension spans at every streaming split', () => {
+        const collector = new ProvenanceCollector()
+        const expected = opaqueSpans(
+            lexAndClean(nested, options, false, undefined, collector),
+            collector,
+            nested
+        )
+        for (let split = 0; split <= nested.length; split++) {
+            const streamed = new ProvenanceCollector()
+            const parser = new IncrementalParser(buildParserOptions({}, [katex]), streamed)
+            parser.update(nested.slice(0, split))
+            const next = parser.update(nested)
+            expect(opaqueSpans(next.tokens, streamed, nested), `split ${split}`).toEqual(expected)
+        }
+    })
+
     it('keeps content an extension lexes for itself unknown', () => {
         const container: MarkedExtension = {
             extensions: [
@@ -605,6 +651,7 @@ describe('extension tokenizers', () => {
             ['em', false],
             ['After', true]
         ])
+        expect(opaqueSpans(tokens, collector, text)).toEqual([['note', ':::\ninside *em*\n:::\n']])
     })
 
     it('falls back to unknown for the whole parse when built-in text merges into an extension token', () => {
@@ -628,5 +675,6 @@ describe('extension tokenizers', () => {
             ['a', false],
             ['bangb', false]
         ])
+        expect(opaqueSpans(tokens, collector, text)).toEqual([])
     })
 })

@@ -1,8 +1,9 @@
 import { render } from '@testing-library/svelte'
+import { createRawSnippet } from 'svelte'
 import { describe, expect, it } from 'vitest'
 import Consumer from '../../test/streaming-text/MotionConsumer.svelte'
-import type { StreamingTextMetadata } from '../../types.js'
-import { FadeCharacters, FadeWords, RiseWords } from './index.js'
+import type { StreamingTextArrival, StreamingTextMetadata } from '../../types.js'
+import { Fade, FadeCharacters, FadeWords, RiseWords } from './index.js'
 // The motion span: inside the ink wrapper when a preset wipes, otherwise the first span.
 const MOTION = '[data-ink] > span, span:not([data-ink])'
 const baseline: StreamingTextMetadata = {
@@ -193,5 +194,44 @@ describe('ink wipe', () => {
                 ink: { duration: 0.3 }
             }).container.querySelector<HTMLElement>('[data-ink]')?.style.animationDuration
         ).toBe('0.3s')
+    })
+})
+describe('Fade', () => {
+    const child = createRawSnippet(() => ({ render: () => '<b>math</b>' }))
+    const unit = (
+        change: StreamingTextArrival['change'],
+        revealedBeforeBatch = false
+    ): StreamingTextMetadata => ({
+        epoch: 1,
+        leafId: 'unknown:1',
+        renderBatchId: 2,
+        provenance: 'unknown',
+        ranges: [],
+        arrival: { change, batchId: revealedBeforeBatch ? 1 : 2, revealedBeforeBatch }
+    })
+    const opacity = (props: Record<string, unknown>) =>
+        render(Fade, { children: child, ...props }).container.querySelector<HTMLElement>(
+            'span, div'
+        )!.style.opacity
+    it('hides only a unit arriving in the current batch', () => {
+        expect(opacity({ streamingText: unit('append') })).toBe('0')
+        expect(opacity({ streamingText: unit('append', true) })).not.toBe('0')
+        expect(opacity({ streamingText: unit('baseline') })).not.toBe('0')
+        expect(opacity({ streamingText: unit('revision') })).not.toBe('0')
+        expect(opacity({ streamingText: { ...unit('append'), arrival: undefined } })).not.toBe('0')
+        expect(opacity({})).not.toBe('0')
+    })
+    it('honours enabled, opt-in policies and consumer targets', () => {
+        expect(opacity({ streamingText: unit('append'), enabled: false })).not.toBe('0')
+        expect(opacity({ streamingText: unit('revision'), animateRevisions: true })).toBe('0')
+        expect(opacity({ streamingText: unit('baseline'), animateInitialContent: true })).toBe('0')
+        expect(opacity({ streamingText: unit('append'), initial: { opacity: 0.3 } })).toBe('0.3')
+    })
+    it('renders the children inline by default and in a div when block', () => {
+        const inline = render(Fade, { children: child }).container
+        expect(inline.firstElementChild?.tagName).toBe('SPAN')
+        expect(inline.textContent).toBe('math')
+        const block = render(Fade, { children: child, block: true }).container
+        expect(block.firstElementChild?.tagName).toBe('DIV')
     })
 })

@@ -428,6 +428,31 @@ For example, save a configured renderer as `MyRise.svelte` and register it with 
 
 Baseline text always uses `initial={false}`, even when you supply `initial`, unless you explicitly set `animateInitialContent`. Revisions use `initial={false}` unless `animateRevisions` is enabled. SSR seeds are baseline, so existing text is visible on the server and during hydration. An unfinished segment retains its keyed node and creation eligibility as its text grows.
 
+### Fade extension output such as math
+
+Extension tokens such as KaTeX math are opaque: their contents never become word segments. Wrap their renderer in `Fade` to fade the whole token in when it arrives mid-stream.
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { KatexRenderer, markedKatex } from '@humanspeak/svelte-markdown/extensions/katex'
+    import { Fade, RiseWords } from '@humanspeak/svelte-markdown/streaming/motion'
+    const extensions = [markedKatex()]
+</script>
+
+<SvelteMarkdown {source} streaming streamingText {extensions}>
+    {#snippet rawtext({ text, streamingText })}<RiseWords {text} {streamingText} />{/snippet}
+    {#snippet inlineKatex({ text, streamingText })}
+        <Fade {streamingText}><KatexRenderer {text} /></Fade>
+    {/snippet}
+    {#snippet blockKatex({ text, streamingText })}
+        <Fade {streamingText} block><KatexRenderer {text} displayMode /></Fade>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+A token arrives in the batch where its whole source span first parses as that token, typically when the closing delimiter arrives; characters already shown as plain text before that do not count. Arrival is keyed by source identity, so remounts of an already revealed token (a paragraph becoming a setext heading or list, a reparse) and baseline content render without an entrance. `Fade` accepts `streamingText`, `enabled` (true), `block` (false; a `div` instead of a `span`), `animateRevisions` (false), `animateInitialContent` (false), `initial`, `animate` and `transition`; the default is a 0.65s linear opacity fade. If an extension shapes the parse in a way the tracer cannot map, its tokens get no arrival and render without an entrance.
+
 ### Own every segment with StreamingText
 
 `StreamingText` is exported from the core and has no Motion dependency. Without a `segment` snippet it renders plain escaped text without wrappers. With a snippet it segments and keys your markup. The [live example](/examples/streaming-text-motion) exposes the actual `MotionStreamingText.svelte` source, plus duration, capped stagger, word/grapheme, preset selection and restart controls.
@@ -498,16 +523,21 @@ interface StreamingTextRange {
     readonly change: StreamingTextChange; readonly batchId: number
     readonly revealedBeforeBatch: boolean
 }
+interface StreamingTextArrival {
+    readonly change: StreamingTextChange; readonly batchId: number
+    readonly revealedBeforeBatch: boolean
+}
 interface StreamingTextMetadata {
     readonly epoch: number; readonly leafId: string; readonly renderBatchId: number
     readonly provenance: 'exact' | 'unknown'
     readonly ranges: readonly StreamingTextRange[]
+    readonly arrival?: StreamingTextArrival // extension tokens only
 }
 ```
 
 Offsets are leaf-local UTF-16 positions. `index` is the current segment position; `batchIndex` is leaf-local within its arrival batch, not global document stagger. `isNew`, `change`, `batchId` and `batchIndex` retain the segment's creation values during unrelated updates and unfinished-word completion; `isNew` describes entrance eligibility, not a timer. Metadata and segments are frozen. Never modify token objects to control this API.
 
-First content and reset seeds are baseline. Source replacements, `resetStream`, `streamId`, mode changes and disabling/re-enabling tracking discard the previous arrival epoch. Existing visible characters moved under completed markdown wrappers remain revealed, although their DOM may remount. New keys alone do not imply arrival. Offset overwrites classify changed positions as revisions while unchanged positions keep identity; padded gaps are baseline and later fills are revisions. Identical repeated words have distinct source identities. Tokens produced by custom extension tokenizers (for example KaTeX math) expose `provenance: 'unknown'` and never animate, while surrounding markdown text keeps exact provenance and its entrances. A `walkTokens` hook or custom `tokenizer` makes the whole parse unknown and suppresses automatic entrances; output is preserved either way.
+First content and reset seeds are baseline. Source replacements, `resetStream`, `streamId`, mode changes and disabling/re-enabling tracking discard the previous arrival epoch. Existing visible characters moved under completed markdown wrappers remain revealed, although their DOM may remount. New keys alone do not imply arrival. Offset overwrites classify changed positions as revisions while unchanged positions keep identity; padded gaps are baseline and later fills are revisions. Identical repeated words have distinct source identities. Tokens produced by custom extension tokenizers (for example KaTeX math) expose `provenance: 'unknown'` with no ranges, while surrounding markdown text keeps exact provenance and its entrances; their whole-token `arrival` drives `Fade`. A `walkTokens` hook or custom `tokenizer` makes the whole parse unknown and suppresses automatic entrances; output is preserved either way.
 
 Word and grapheme segmentation require `Intl.Segmenter` (modern browsers and Node) or a custom `segmenter`. Missing support throws clearly. A custom segmenter returns ordered UTF-16 spans covering the exact input once; gaps, overlaps, invalid offsets or changed text throw instead of dropping content. Use a custom segmenter for your application's boundaries. Changing locale, granularity or segmenter rebaselines existing segments. Changed leaves are resegmented with full context to handle punctuation, combining marks and split surrogate pairs; completed unchanged leaves remain cached. Parsing a long open paragraph/list and full-parser fallbacks can still cost proportional to that block/document. Tracking and segment DOM cost are opt-in.
 

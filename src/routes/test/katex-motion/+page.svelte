@@ -1,33 +1,28 @@
 <script lang="ts">
     import { onMount, tick } from 'svelte'
-    import { markedKatex } from '$lib/extensions/katex/index.js'
-    import FadeKatex from './FadeKatex.svelte'
+    import { KatexRenderer, markedKatex } from '$lib/extensions/katex/index.js'
+    import type { StreamingTextMetadata } from '$lib/types.js'
     import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
-    import { RiseWords } from '$lib/streaming/motion/index.js'
+    import { Fade, RiseWords } from '$lib/streaming/motion/index.js'
 
     const answers = {
-        'No math':
-            'Streaming answers should feel **alive**. Every word in this reply should rise into place, even though the KaTeX extension is loaded on the right.\n\n- Lists animate too\n- And so do `inline code` neighbours\n\nNothing here is math, so nothing should be static.',
         'With math':
-            'The quadratic formula solves $ax^2 + bx + c = 0$ for any coefficients:\n\n$$\nx = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}\n$$\n\nThe text around the math keeps animating, while the formulas themselves appear without an entrance. Euler wrote $e^{i\\pi} + 1 = 0$ and moved on.'
+            'The quadratic formula solves $ax^2 + bx + c = 0$ for any coefficients:\n\n$$\nx = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}\n$$\n\nThe text around the math rises in, and each formula fades in once as it arrives. Euler wrote $e^{i\\pi} + 1 = 0$ and moved on.',
+        'Structure changes':
+            'Euler wrote $e^{i\\pi} + 1 = 0$ and moved on\n===\n\nThen a list:\n\nThe sum $a+b$ here\n- item',
+        'No math':
+            'Streaming answers should feel **alive**. Every word in this reply should rise into place, even though the KaTeX extension is loaded.\n\n- Lists animate too\n- And so do `inline code` neighbours\n\nNothing here is math, so nothing should be static.'
     }
     type Answer = keyof typeof answers
 
     const extensions = [markedKatex({ singleDollarInline: true })]
-    const panes = [
-        { name: 'No extensions', extensions: [] },
-        { name: 'markedKatex loaded', extensions }
-    ]
 
-    let answer = $state<Answer>('No math')
+    let answer = $state<Answer>('With math')
     let source = $state('')
     let streamId = $state(0)
+    let outputId = $state(0)
     let running = $state(false)
     let timer: ReturnType<typeof setInterval> | undefined
-    let motionOn = $state(true)
-    let reducedMotion = $state(false)
-    // One switch for text and math, exactly like the enabled flag passed to RiseWords.
-    const enabled = $derived(motionOn && !reducedMotion)
 
     function stop() {
         clearInterval(timer)
@@ -48,15 +43,8 @@
         }, 80)
     }
     onMount(() => {
-        const query = window.matchMedia('(prefers-reduced-motion: reduce)')
-        const update = () => (reducedMotion = query.matches)
-        update()
-        query.addEventListener('change', update)
         void stream()
-        return () => {
-            query.removeEventListener('change', update)
-            stop()
-        }
+        return stop
     })
 </script>
 
@@ -72,54 +60,76 @@
 <main>
     <h1>KaTeX extension + streaming entrances</h1>
     <p>
-        Both panes stream the same answer with <code>RiseWords</code>. Before the fix, the right
-        pane rendered every word statically because loading any extension marked the whole parse as
-        <code>provenance: 'unknown'</code>.
+        Both panes load <code>markedKatex</code> and use <code>RiseWords</code>. The left pane
+        streams the answer, so its text should rise in and its math should fade in. The right pane
+        receives the whole answer at once, as on a page refresh, so neither text nor math in it
+        should animate. <em>Structure changes</em> turns paragraphs holding math into a heading and back;
+        each formula should still fade in only once.
     </p>
     <div class="toolbar">
         <select bind:value={answer} disabled={running}>
             {#each Object.keys(answers) as name (name)}<option>{name}</option>{/each}
         </select>
-        <button onclick={stream}>{running ? 'Restart' : 'Stream / Replay'}</button>
-        <label><input type="checkbox" bind:checked={motionOn} /> Motion</label>
-        <span class="status"
-            >{reducedMotion
-                ? 'System reduced motion · animation off'
-                : enabled
-                  ? 'Text rises · math fades'
-                  : 'Motion off · text and math appear instantly'}</span
-        >
+        <button onclick={stream}>{running ? 'Restart stream' : 'Stream again'}</button>
+        <button onclick={() => outputId++}>Re-mount output</button>
     </div>
     <div class="panes">
-        {#each panes as pane (pane.name)}
-            <section data-testid={pane.name}>
-                <h2>{pane.name}</h2>
-                <div class="output">
-                    {#key streamId}
-                        <SvelteMarkdown
-                            {source}
-                            streaming
+        <section data-testid="streaming">
+            <h2>Streaming</h2>
+            <div class="output">
+                {#key streamId}
+                    <SvelteMarkdown {source} streaming streamingText {extensions}>
+                        {#snippet rawtext({ text, streamingText })}<span
+                                class:unknown={streamingText?.provenance !== 'exact'}
+                                ><RiseWords {text} {streamingText} /></span
+                            >{/snippet}
+                        {#snippet inlineKatex({
+                            text,
                             streamingText
-                            extensions={pane.extensions}
-                        >
-                            {#snippet rawtext({ text, streamingText })}<span
-                                    class:unknown={streamingText?.provenance !== 'exact'}
-                                    ><RiseWords {text} {streamingText} {enabled} /></span
-                                >{/snippet}
-                            {#snippet inlineKatex({ text }: { text: string })}<FadeKatex
-                                    {text}
-                                    {enabled}
-                                />{/snippet}
-                            {#snippet blockKatex({ text }: { text: string })}<FadeKatex
-                                    {text}
-                                    {enabled}
-                                    displayMode
-                                />{/snippet}
-                        </SvelteMarkdown>
-                    {/key}
-                </div>
-            </section>
-        {/each}
+                        }: {
+                            text: string
+                            streamingText?: StreamingTextMetadata
+                        })}<Fade {streamingText}><KatexRenderer {text} /></Fade>{/snippet}
+                        {#snippet blockKatex({
+                            text,
+                            streamingText
+                        }: {
+                            text: string
+                            streamingText?: StreamingTextMetadata
+                        })}<Fade {streamingText} block><KatexRenderer {text} displayMode /></Fade
+                            >{/snippet}
+                    </SvelteMarkdown>
+                {/key}
+            </div>
+        </section>
+        <section data-testid="already-output">
+            <h2>Already output</h2>
+            <div class="output">
+                {#key `${answer}:${outputId}`}
+                    <SvelteMarkdown source={answers[answer]} streaming streamingText {extensions}>
+                        {#snippet rawtext({ text, streamingText })}<span
+                                class:unknown={streamingText?.provenance !== 'exact'}
+                                ><RiseWords {text} {streamingText} /></span
+                            >{/snippet}
+                        {#snippet inlineKatex({
+                            text,
+                            streamingText
+                        }: {
+                            text: string
+                            streamingText?: StreamingTextMetadata
+                        })}<Fade {streamingText}><KatexRenderer {text} /></Fade>{/snippet}
+                        {#snippet blockKatex({
+                            text,
+                            streamingText
+                        }: {
+                            text: string
+                            streamingText?: StreamingTextMetadata
+                        })}<Fade {streamingText} block><KatexRenderer {text} displayMode /></Fade
+                            >{/snippet}
+                    </SvelteMarkdown>
+                {/key}
+            </div>
+        </section>
     </div>
     <p class="legend">
         <span class="unknown">Red underline</span> = unknown provenance (no entrance).
@@ -144,10 +154,6 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 24px;
-    }
-    .status {
-        font-size: 13px;
-        color: #56635f;
     }
     section {
         border: 1px solid #d3ddd8;

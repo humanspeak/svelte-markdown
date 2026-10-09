@@ -32,3 +32,15 @@ export interface MotionTextProps extends StreamingMotionProps {
     granularity: StreamingTextGranularity
     preset: 'fade-words' | 'rise-words' | 'fade-characters'
 }
+export interface StreamingFadeProps {
+    streamingText?: StreamingTextMetadata
+    enabled?: boolean
+    /** Render a block wrapper (`div`) instead of an inline `span`. */
+    block?: boolean
+    animateRevisions?: boolean
+    animateInitialContent?: boolean
+    initial?: MotionProps['initial']
+    animate?: MotionProps['animate']
+    transition?: MotionProps['transition']
+    children?: Snippet
+}

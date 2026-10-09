@@ -41,6 +41,8 @@ interface Event {
     steps: (Frame | Event)[]
 }
 const empty = () => mappedSource('')
+/** Pseudo-rule for a top-level extension token; not a Tokenizer method name. */
+const EXTENSION = '\0extension'
 /** Instance-local tracer. Frames are captured provisionally, then resolved from accepted rules. */
 export const traceLexer = (
     lexer: Lexer,
@@ -72,6 +74,7 @@ export const traceLexer = (
     // Extension tokenizers are opaque: their tokens, and everything lexed on their behalf,
     // stay unknown. Built-in tokens around them keep exact provenance. Merging built-in text
     // into an opaque token (or any resolution failure) poisons the whole parse back to unknown.
+    // A top-level extension token still records its source span, so it can arrive as one unit.
     let suspended = 0
     let poisoned = false
     const opaque = new WeakSet<object>()
@@ -80,7 +83,8 @@ export const traceLexer = (
         const wrap = (fn: TokenizerExtensionFunction): TokenizerExtensionFunction =>
             function (src, tokens) {
                 const frame = stack.at(-1)
-                if (!suspended && frame) finish(frame)
+                const top = !suspended && frame
+                if (top) finish(frame)
                 const queued = lexer.inlineQueue.length
                 suspended++
                 let token: ReturnType<TokenizerExtensionFunction>
@@ -91,6 +95,22 @@ export const traceLexer = (
                 }
                 for (const entry of lexer.inlineQueue.slice(queued)) opaque.add(entry.tokens)
                 if (token) opaque.add(token)
+                // Extensions run before the probes that advance the cursor, so locate the token
+                // from the unconsumed input. The token is already its own target: never a merge.
+                if (token && top)
+                    frame.events.push({
+                        rule: EXTENSION,
+                        input: src,
+                        offset:
+                            (frame.inline ? frame.source.length : frame.normalized.length) -
+                            src.length,
+                        token,
+                        raw: token.raw,
+                        target: token,
+                        frames: [],
+                        frame,
+                        steps: []
+                    })
                 return token
             }
         // The lexer owns a shallow copy of the caller's options; replace, never mutate, the
@@ -427,6 +447,16 @@ export const traceLexer = (
         const raw = sliceMapped(view, event.offset, event.offset + event.raw!.length)
         assertMappedValue(raw, event.raw!, `${event.rule} raw`)
         const token = event.token!
+        if (event.rule === EXTENSION) {
+            // Contents stay opaque: only the span is known, never a text mapping.
+            collector.set(token, {
+                exact: false,
+                opaque: true,
+                sourceSpans: raw.runs.flatMap((run) => run.sources),
+                raw
+            })
+            return
+        }
         const text = textAdapters[event.rule]?.(event, raw)
         const descendants =
             event.rule === 'list'
