@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount, tick } from 'svelte'
     import { KatexRenderer, markedKatex } from '$lib/extensions/katex/index.js'
-    import type { StreamingTextMetadata } from '$lib/types.js'
+    import type { KatexSnippetProps } from '$lib/extensions/index.js'
     import SvelteMarkdown from '$lib/SvelteMarkdown.svelte'
     import { Fade, RiseWords } from '$lib/streaming/motion/index.js'
 
@@ -57,6 +57,10 @@
     />
 </svelte:head>
 
+{#snippet math({ text, displayMode, streamingText }: KatexSnippetProps)}
+    <Fade {streamingText} block={displayMode}><KatexRenderer {text} {displayMode} /></Fade>
+{/snippet}
+
 <main>
     <h1>KaTeX extension + streaming entrances</h1>
     <p>
@@ -78,25 +82,17 @@
             <h2>Streaming</h2>
             <div class="output">
                 {#key streamId}
-                    <SvelteMarkdown {source} streaming streamingText {extensions}>
+                    <SvelteMarkdown
+                        {source}
+                        streaming
+                        streamingText
+                        {extensions}
+                        inlineKatex={math}
+                        blockKatex={math}
+                    >
                         {#snippet rawtext({ text, streamingText })}<span
                                 class:unknown={streamingText?.provenance !== 'exact'}
                                 ><RiseWords {text} {streamingText} /></span
-                            >{/snippet}
-                        {#snippet inlineKatex({
-                            text,
-                            streamingText
-                        }: {
-                            text: string
-                            streamingText?: StreamingTextMetadata
-                        })}<Fade {streamingText}><KatexRenderer {text} /></Fade>{/snippet}
-                        {#snippet blockKatex({
-                            text,
-                            streamingText
-                        }: {
-                            text: string
-                            streamingText?: StreamingTextMetadata
-                        })}<Fade {streamingText} block><KatexRenderer {text} displayMode /></Fade
                             >{/snippet}
                     </SvelteMarkdown>
                 {/key}
@@ -106,25 +102,17 @@
             <h2>Already output</h2>
             <div class="output">
                 {#key `${answer}:${outputId}`}
-                    <SvelteMarkdown source={answers[answer]} streaming streamingText {extensions}>
+                    <SvelteMarkdown
+                        source={answers[answer]}
+                        streaming
+                        streamingText
+                        {extensions}
+                        inlineKatex={math}
+                        blockKatex={math}
+                    >
                         {#snippet rawtext({ text, streamingText })}<span
                                 class:unknown={streamingText?.provenance !== 'exact'}
                                 ><RiseWords {text} {streamingText} /></span
-                            >{/snippet}
-                        {#snippet inlineKatex({
-                            text,
-                            streamingText
-                        }: {
-                            text: string
-                            streamingText?: StreamingTextMetadata
-                        })}<Fade {streamingText}><KatexRenderer {text} /></Fade>{/snippet}
-                        {#snippet blockKatex({
-                            text,
-                            streamingText
-                        }: {
-                            text: string
-                            streamingText?: StreamingTextMetadata
-                        })}<Fade {streamingText} block><KatexRenderer {text} displayMode /></Fade
                             >{/snippet}
                     </SvelteMarkdown>
                 {/key}

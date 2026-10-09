@@ -1,7 +1,7 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
     import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
-    import { markedKatex } from '@humanspeak/svelte-markdown/extensions'
+    import { markedKatex, type KatexSnippetProps } from '@humanspeak/svelte-markdown/extensions'
     import { DemoSplitV2 } from '@humanspeak/docs-kit'
     import katex from 'katex'
 
@@ -74,18 +74,18 @@ Markdown works alongside math: **bold**, *italic*, and inline \\(\\sum_{i=1}^{n}
                 extensions={[markedKatex()]}
                 renderers={{ code: HighlightedCode }}
             >
-                {#snippet inlineKatex(props: { text: string })}
-                    <!-- eslint-disable-next-line svelte/no-at-html-tags -- KaTeX HTML is sanitized by the library itself -->
+                {#snippet inlineKatex(props: KatexSnippetProps)}
+                    <!-- trunk-ignore(eslint/svelte/no-at-html-tags) -->
                     {@html katex.renderToString(props.text, {
                         throwOnError: false,
-                        displayMode: false
+                        displayMode: props.displayMode
                     })}
                 {/snippet}
-                {#snippet blockKatex(props: { text: string })}
-                    <!-- eslint-disable-next-line svelte/no-at-html-tags -- KaTeX HTML is sanitized by the library itself -->
+                {#snippet blockKatex(props: KatexSnippetProps)}
+                    <!-- trunk-ignore(eslint/svelte/no-at-html-tags) -->
                     {@html katex.renderToString(props.text, {
                         throwOnError: false,
-                        displayMode: true
+                        displayMode: props.displayMode
                     })}
                 {/snippet}
             </SvelteMarkdown>

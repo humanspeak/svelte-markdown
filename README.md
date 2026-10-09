@@ -498,24 +498,46 @@ Single-dollar inline (`$x^2$`) is **off** by default — KaTeX itself excludes i
 
 `KatexRenderer` hardcodes `throwOnError: false` so a single malformed expression renders as a tinted error span instead of throwing — if you need stricter behavior, supply your own component for the `inlineKatex` / `blockKatex` keys.
 
-**Snippet override approach** (no separate component file needed):
+**Snippet override approach** (one snippet handles inline and display math):
 
 ```svelte
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
-    import { markedKatex } from '@humanspeak/svelte-markdown/extensions/katex'
-    import katex from 'katex'
+    import {
+        markedKatex,
+        KatexRenderer,
+        type KatexSnippetProps
+    } from '@humanspeak/svelte-markdown/extensions'
     import 'katex/dist/katex.min.css'
 </script>
 
-<SvelteMarkdown source={`Euler's identity: \\(e^{i\\pi} + 1 = 0\\)`} extensions={[markedKatex()]}>
-    {#snippet inlineKatex(props)}
-        {@html katex.renderToString(props.text, { throwOnError: false, displayMode: false })}
-    {/snippet}
-    {#snippet blockKatex(props)}
-        {@html katex.renderToString(props.text, { throwOnError: false, displayMode: true })}
-    {/snippet}
-</SvelteMarkdown>
+{#snippet math({ text, displayMode }: KatexSnippetProps)}
+    <KatexRenderer {text} {displayMode} />
+{/snippet}
+
+<SvelteMarkdown
+    source={`Euler's identity: \\(e^{i\\pi} + 1 = 0\\)`}
+    extensions={[markedKatex()]}
+    inlineKatex={math}
+    blockKatex={math}
+/>
+```
+
+`KatexSnippetProps` includes `text: string`, `displayMode: boolean`, and optional `streamingText: StreamingTextMetadata`. `KatexSnippetOverrides` adds optional `inlineKatex` and `blockKatex` snippets to wrapper props without accepting arbitrary prop names. Both types are exported from `@humanspeak/svelte-markdown/extensions` and `@humanspeak/svelte-markdown/extensions/katex`.
+
+A wrapper that supplies its own KaTeX extension can forward the snippets with:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown, { type SvelteMarkdownProps } from '@humanspeak/svelte-markdown'
+    import { markedKatex, type KatexSnippetOverrides } from '@humanspeak/svelte-markdown/extensions'
+
+    type Props = Omit<SvelteMarkdownProps, 'extensions'> & KatexSnippetOverrides
+    let props: Props = $props()
+    const extensions = [markedKatex()]
+</script>
+
+<SvelteMarkdown {...props} {extensions} />
 ```
 
 ### Mermaid Diagrams (Async Rendering)
