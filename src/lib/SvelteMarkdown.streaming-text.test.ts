@@ -178,6 +178,29 @@ describe('tracking lifecycle boundaries', () => {
         )
         warning.mockRestore()
     })
+    it('keeps entrances for markdown text when a sync tokenizer extension is loaded', async () => {
+        const math = {
+            extensions: [
+                {
+                    name: 'inlineMath',
+                    level: 'inline' as const,
+                    start: (src: string) => src.indexOf('$'),
+                    tokenizer(src: string) {
+                        const match = /^\$([^$\n]+?)\$/.exec(src)
+                        if (match) return { type: 'inlineMath', raw: match[0], text: match[1] }
+                    }
+                }
+            ]
+        }
+        const { container, component } = render(Markdown, { source: 'old ', extensions: [math] })
+        await act(() => component.writeChunk('$x$ new'))
+        await flushStreamingBatch()
+        const last = words(container).at(-1)!
+        expect(last.textContent).toBe('new')
+        expect(last.getAttribute('data-provenance')).toBe('exact')
+        expect(last.getAttribute('data-new')).toBe('true')
+        expect(words(container)[0].getAttribute('data-new')).toBe('false')
+    })
     it('never traverses a ledger or captures provenance unless tracking is enabled', async () => {
         const prepare = vi.spyOn(StreamingTextLedger.prototype, 'prepare')
         const capture = vi.spyOn(ProvenanceCollector.prototype, 'capture')
