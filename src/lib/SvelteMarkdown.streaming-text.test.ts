@@ -1,9 +1,11 @@
 import { act, render } from '@testing-library/svelte'
 import { describe, expect, it, vi } from 'vitest'
 import SvelteMarkdown from './SvelteMarkdown.svelte'
+import ArrivalMarkdown from './test/streaming-text/ArrivalMarkdown.svelte'
 import Markdown from './test/streaming-text/Markdown.svelte'
 import Race from './test/streaming-text/Race.svelte'
 import { flushStreamingBatch, useStreamingTestHarness } from './test/streaming/harness.js'
+import type { StreamingTextArrival } from './types.js'
 import { ProvenanceCollector } from './utils/streaming-provenance.js'
 import { StreamingTextLedger } from './utils/streaming-text.js'
 
@@ -222,5 +224,67 @@ describe('tracking lifecycle boundaries', () => {
         expect(words(container)).toHaveLength(1)
         expect(words(container)[0].getAttribute('data-new')).toBe('false')
         expect(words(container)[0].getAttribute('data-id')).not.toBe(ids[0])
+    })
+})
+
+describe('extension token arrival', () => {
+    // Shaped like marked-katex-extension's single-dollar inline rule.
+    const math = {
+        extensions: [
+            {
+                name: 'inlineMath',
+                level: 'inline' as const,
+                start: (src: string) => src.indexOf('$'),
+                tokenizer(src: string) {
+                    const match = /^\$([^$\n]+?)\$(?=\s|$)/.exec(src)
+                    if (match) return { type: 'inlineMath', raw: match[0], text: match[1] }
+                }
+            }
+        ]
+    }
+    type Mount = { text: string; arrival?: StreamingTextArrival; batch?: number }
+    const isNew = ({ arrival, batch }: Mount) =>
+        arrival?.change === 'append' && !arrival.revealedBeforeBatch && arrival.batchId === batch
+    const stream = async (chunks: string[], source = '') => {
+        const mounts: Mount[] = []
+        const { component } = render(ArrivalMarkdown, {
+            source,
+            extensions: [math],
+            onmount: (mount: Mount) => mounts.push(mount)
+        })
+        const initial = mounts.splice(0)
+        const perChunk: [string, boolean][][] = []
+        for (const chunk of chunks) {
+            await act(() => component.writeChunk(chunk))
+            await flushStreamingBatch()
+            perChunk.push(mounts.splice(0).map((mount) => [mount.text, isNew(mount)]))
+        }
+        return { initial, perChunk }
+    }
+
+    it('arrives once; structural remounts of the same source are already revealed', async () => {
+        const source = 'Euler wrote $e$ and moved on\n===\n\nThe sum $a+b$ here\n- item'
+        const chunks = source.match(/\S+\s*/gu)!
+        const { perChunk } = await stream(chunks)
+        const at = (chunk: string) => perChunk[chunks.indexOf(chunk)]
+        expect(at('$e$ ')).toEqual([['e', true]])
+        // Setext underline turns the paragraph into a heading: remount, not an arrival.
+        expect(at('===\n\n')).toEqual([['e', false]])
+        expect(at('$a+b$ ')).toEqual([['a+b', true]])
+        // A lone `-` is briefly a setext underline, then a list starts: two remounts.
+        expect(at('- ')).toEqual([['a+b', false]])
+        expect(at('item')).toEqual([['a+b', false]])
+        expect(perChunk.flat().filter(([, fresh]) => fresh)).toHaveLength(2)
+    })
+    it('arrives when the closing delimiter arrives, after its characters showed as text', async () => {
+        const { perChunk } = await stream(['sum $a', '+b', '$ done'])
+        expect(perChunk).toEqual([[], [], [['a+b', true]]])
+    })
+    it('treats math in the initial source as baseline', async () => {
+        const { initial, perChunk } = await stream([' more $c$ end'], 'old $b$ ')
+        expect(initial.map((mount) => [mount.text, mount.arrival?.change, isNew(mount)])).toEqual([
+            ['b', 'baseline', false]
+        ])
+        expect(perChunk).toEqual([[['c', true]]])
     })
 })

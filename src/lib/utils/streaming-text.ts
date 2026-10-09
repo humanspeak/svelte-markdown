@@ -1,4 +1,5 @@
 import type {
+    StreamingTextArrival,
     StreamingTextChange,
     StreamingTextGranularity,
     StreamingTextMetadata,
@@ -209,6 +210,19 @@ import type {
     ProvenanceNode
 } from './streaming-provenance.js'
 
+type LedgerNode = {
+    tokens?: object[]
+    items?: object[]
+    header?: object[]
+    text?: string
+    raw?: string
+}
+const isTextLeaf = (token: LedgerNode) =>
+    !token.tokens &&
+    !token.items &&
+    !Array.isArray(token.header) &&
+    typeof (token.text ?? token.raw) === 'string'
+
 interface SourcePiece {
     start: number
     end: number
@@ -224,6 +238,9 @@ export class StreamingTextLedger {
     private pieces: SourcePiece[] = []
     private nextPiece = 0
     private readonly revealed = new Map<string, number>()
+    // Opaque units are keyed by their whole source span: revealing their characters as plain
+    // text earlier (an unclosed `$x`) does not count as revealing the unit.
+    private readonly revealedUnits = new Map<string, number>()
     private readonly metadata = new WeakMap<object, StreamingTextMetadata>()
     private readonly projected = new WeakMap<object, ProvenanceNode>()
     batchId = 0
@@ -330,6 +347,7 @@ export class StreamingTextLedger {
 
     prepare(tokens: readonly Token[], collector: ProvenanceCollector, start = 0): void {
         const pending = new Set<string>()
+        const pendingUnits = new Set<string>()
         const visit = (node: object) => {
             const occurrence = collector.get(node)
             if (occurrence && this.projected.get(node) === occurrence) return
@@ -344,14 +362,12 @@ export class StreamingTextLedger {
                 raw?: string
                 type?: string
             }
-            if (
-                !token.tokens &&
-                !token.items &&
-                !Array.isArray(token.header) &&
-                typeof (token.text ?? token.raw) === 'string'
-            ) {
-                this.project(node, occurrence, token.text ?? token.raw ?? '', pending)
-            }
+            const arrival = occurrence?.opaque
+                ? this.projectArrival(occurrence, pendingUnits)
+                : undefined
+            if (isTextLeaf(token))
+                this.project(node, occurrence, token.text ?? token.raw ?? '', pending, arrival)
+            else if (arrival) this.project(node, occurrence, '', pending, arrival)
             token.tokens?.forEach(visit)
             token.items?.forEach(visit)
             if (Array.isArray(token.header)) token.header.forEach(visit)
@@ -360,6 +376,36 @@ export class StreamingTextLedger {
         for (let index = start; index < tokens.length; index++) visit(tokens[index])
         for (const origin of pending)
             if (!this.revealed.has(origin)) this.revealed.set(origin, this.batchId)
+        for (const unit of pendingUnits)
+            if (!this.revealedUnits.has(unit)) this.revealedUnits.set(unit, this.batchId)
+    }
+    /** Re-mounting the same source span (a paragraph becoming a heading) is not an arrival. */
+    private projectArrival(
+        occurrence: ProvenanceNode,
+        pendingUnits: Set<string>
+    ): StreamingTextArrival | undefined {
+        const ids: string[] = []
+        const changes = new Set<StreamingTextChange>()
+        for (const span of occurrence.sourceSpans)
+            for (let position = span.start; position < span.end; position++) {
+                const piece = this.locate(position)
+                if (!piece) continue
+                ids.push(this.origin(piece, position))
+                changes.add(piece.change)
+            }
+        if (!ids.length) return undefined
+        const unit = ids.join(',')
+        const revealed = this.revealedUnits.get(unit)
+        pendingUnits.add(unit)
+        return Object.freeze({
+            change: changes.has('revision')
+                ? 'revision'
+                : changes.has('baseline')
+                  ? 'baseline'
+                  : 'append',
+            batchId: revealed ?? this.batchId,
+            revealedBeforeBatch: revealed !== undefined
+        })
     }
     private getContributors(run: MappingRun, output: number): { id: string; piece: SourcePiece }[] {
         const sources =
@@ -410,7 +456,8 @@ export class StreamingTextLedger {
         node: object,
         occurrence: ProvenanceNode | undefined,
         text: string,
-        pending: Set<string>
+        pending: Set<string>,
+        arrival?: StreamingTextArrival
     ): void {
         this.counters.projectedLeaves++
         const view = getMappedView(occurrence, text)
@@ -435,7 +482,8 @@ export class StreamingTextLedger {
                 leafId: ranges[0]?.originId ?? `unknown:${this.counters.projectedLeaves}`,
                 renderBatchId: this.batchId,
                 provenance: exact ? 'exact' : 'unknown',
-                ranges: Object.freeze(ranges)
+                ranges: Object.freeze(ranges),
+                ...(arrival ? { arrival } : {})
             })
         )
     }

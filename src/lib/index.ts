@@ -179,6 +179,7 @@ export type {
 
 export { default as StreamingText } from './StreamingText.svelte'
 export type {
+    StreamingTextArrival,
     StreamingTextChange,
     StreamingTextGranularity,
     StreamingTextMetadata,

@@ -17,6 +17,8 @@ export interface MappedView {
 }
 export interface ProvenanceNode {
     readonly exact: boolean
+    /** Extension token whose source span is known but whose contents are not mapped. */
+    readonly opaque?: boolean
     readonly sourceSpans: readonly SourceInterval[]
     readonly raw?: MappedView
     readonly text?: MappedView
@@ -197,6 +199,7 @@ export class ProvenanceCollector {
         if (own.text && !Array.isArray(node.tokens)) this.counters.projectedLeaves++
         const result: ProvenanceNode = {
             exact: own.exact,
+            ...(own.opaque ? { opaque: true } : {}),
             sourceSpans: own.sourceSpans,
             ...(own.raw ? { raw: own.raw } : {}),
             ...(own.text ? { text: own.text } : {}),

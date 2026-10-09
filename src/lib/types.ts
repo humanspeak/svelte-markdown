@@ -360,12 +360,20 @@ export interface StreamingTextRange {
     readonly batchId: number
     readonly revealedBeforeBatch: boolean
 }
+/** Arrival of an opaque token (for example extension math), treated as one unit. */
+export interface StreamingTextArrival {
+    readonly change: StreamingTextChange
+    readonly batchId: number
+    readonly revealedBeforeBatch: boolean
+}
 export interface StreamingTextMetadata {
     readonly epoch: number
     readonly leafId: string
     readonly renderBatchId: number
     readonly provenance: 'exact' | 'unknown'
     readonly ranges: readonly StreamingTextRange[]
+    /** Present only on extension tokens whose source span is known. */
+    readonly arrival?: StreamingTextArrival
 }
 export interface StreamingTextSegment extends StreamingTextSpan {
     readonly id: string
