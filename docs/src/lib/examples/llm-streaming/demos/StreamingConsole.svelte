@@ -1,7 +1,39 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
-    import type { StreamingChunk, StreamingOffsetChunk } from '@humanspeak/svelte-markdown'
-    import { tick } from 'svelte'
+    import type {
+        RendererComponent,
+        Renderers,
+        StreamingChunk,
+        StreamingOffsetChunk
+    } from '@humanspeak/svelte-markdown'
+    import {
+        HIGHLIGHT_CONTEXT_KEY,
+        HighlightedCode
+    } from '@humanspeak/svelte-markdown/extensions/highlight'
+    import { createTanstackHighlighter } from '@humanspeak/svelte-markdown/extensions/tanstack-highlight'
+    import { js as tsJs } from '@tanstack/highlight/languages/js'
+    import { json as tsJson } from '@tanstack/highlight/languages/json'
+    import { ts as tsTs } from '@tanstack/highlight/languages/ts'
+    import { createThemeCss } from '@tanstack/highlight/theme'
+    import githubDarkTheme from '@tanstack/highlight/themes/github-dark'
+    import githubLightTheme from '@tanstack/highlight/themes/github-light'
+    import { setContext, tick } from 'svelte'
+
+    // Syntax highlighting: TanStack Highlight is synchronous, so it keeps the
+    // streaming path enabled (an async highlighter would disable `streaming`).
+    // The `code` renderer reads the engine from context; colors come from the
+    // theme stylesheet injected below (`html.dark` toggles the dark palette).
+    const highlighter = createTanstackHighlighter({ languages: [tsTs, tsJs, tsJson] })
+    setContext(HIGHLIGHT_CONTEXT_KEY, highlighter)
+    interface CodeRenderers extends Renderers {
+        code: RendererComponent
+    }
+    const renderers: Partial<CodeRenderers> = { code: HighlightedCode }
+    const tanstackThemeCss = createThemeCss({
+        light: githubLightTheme,
+        dark: githubDarkTheme,
+        darkSelector: 'html.dark'
+    })
 
     const DEFAULT_LLM_RESPONSE = `# Understanding Reactive Systems
 
@@ -291,6 +323,11 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs).
     })
 </script>
 
+<svelte:head>
+    <!-- trunk-ignore(eslint/svelte/no-at-html-tags) -->
+    {@html `<style>${tanstackThemeCss}</style>`}
+</svelte:head>
+
 <div class="ls">
     <!-- ── Brut bar ─────────────────────────────────────────────── -->
     <div class="ls-bar">
@@ -355,7 +392,12 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs).
                     bind:this={previewEl}
                     class="ls-out prose prose-sm dark:prose-invert max-w-none"
                 >
-                    <SvelteMarkdown bind:this={markdown} source={renderSource} streaming={true} />
+                    <SvelteMarkdown
+                        bind:this={markdown}
+                        source={renderSource}
+                        streaming={true}
+                        {renderers}
+                    />
                 </div>
             {:else}
                 <div class="ls-empty">Click "Start" to begin streaming.</div>
@@ -528,6 +570,9 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs).
     .ls-grid {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        /* Absorb extra height when the notes column stretches the frame, so
+           the controls and progress row stay pinned to the footer. */
+        flex: 1;
         min-height: 380px;
         border-bottom: 1px solid var(--brut-rule);
     }
@@ -664,6 +709,16 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs).
         line-height: 1.65;
         color: var(--brut-ink);
         border-radius: 0;
+    }
+    /* TanStack emits th-* classes; background/foreground come from the
+       injected theme stylesheet. Unknown languages fall back to plain <pre>. */
+    .ls-out :global(pre.th-code) {
+        background: var(--th-background);
+        color: var(--th-token);
+    }
+    .ls-out :global(pre.highlight-fallback) {
+        background: var(--brut-bg-2);
+        color: var(--brut-ink);
     }
     .ls-out :global(pre code) {
         background: transparent;

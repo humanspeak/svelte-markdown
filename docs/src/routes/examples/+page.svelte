@@ -118,11 +118,25 @@
                 'Stream markdown and rich HTML from AI agents in real time. Adjustable speed, jitter, and chunk modes — XSS-safe by default.'
         },
         {
+            slug: 'streaming-text-motion',
+            title: 'Streaming Text Motion',
+            tag: 'STREAMING',
+            description:
+                'Animate words as they stream in — FadeWords, RiseWords and FadeCharacters presets with a soft ink wipe, or your own headless snippet.'
+        },
+        {
             slug: 'agent-output',
             title: 'Agent Output',
             tag: 'STREAMING',
             description:
                 'Watch a simulated agent stream mixed markdown and HTML — with a live log of every javascript: URL and on*= handler the sanitizer blocks.'
+        },
+        {
+            slug: 'highlight-engines',
+            title: 'Highlight Engines',
+            tag: 'STREAMING',
+            description:
+                'Stream one code-heavy response through Shiki and TanStack Highlight side by side with a single HighlightedCode renderer — live per-engine timings.'
         }
     ]
 

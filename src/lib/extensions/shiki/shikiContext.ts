@@ -1,38 +1,34 @@
 /**
- * SPIKE — highlighter injection strategies for `ShikiCode.svelte`.
+ * Backward-compatible names for the shared highlighter injection channels.
  *
- * The `code` renderer is instantiated deep inside `SvelteMarkdown` via the
- * `renderers` prop, which only forwards token-derived props (`lang`, `text`).
- * There is therefore no ergonomic way to thread a per-instance `highlighter`
- * prop through the standard renderers map, so the spike offers two out-of-band
- * channels and lets `ShikiCode` resolve in priority order:
- *
- * 1. an explicit `highlighter` prop (only reachable if the consumer wraps
- *    `ShikiCode` in their own component),
- * 2. Svelte {@link https://svelte.dev/docs/svelte#setcontext | context} set by
- *    an ancestor of `<SvelteMarkdown>` under {@link SHIKI_CONTEXT_KEY},
- * 3. a module-level singleton set via {@link setShikiHighlighter}.
- *
- * The report recommends one of these for the ship plan.
+ * The context key and singleton now live on the engine-agnostic
+ * `extensions/highlight` subpath so a Shiki highlighter and a TanStack
+ * highlighter are interchangeable at every injection point. These aliases
+ * keep every pre-existing `extensions/shiki` import working unchanged:
+ * `SHIKI_CONTEXT_KEY` **is** `HIGHLIGHT_CONTEXT_KEY` (same symbol), and
+ * `setShikiHighlighter` / `getShikiHighlighter` read and write the same
+ * singleton as `setCodeHighlighter` / `getCodeHighlighter`.
  *
  * @module
  */
 
-import type { ShikiHighlighter } from './createShikiHighlighter.js'
-
-/** Context key an ancestor of `<SvelteMarkdown>` can set to inject a highlighter. */
-export const SHIKI_CONTEXT_KEY = Symbol('svelte-markdown:shiki-highlighter')
-
-let singleton: ShikiHighlighter | undefined
+import {
+    getCodeHighlighter,
+    HIGHLIGHT_CONTEXT_KEY,
+    setCodeHighlighter
+} from '../highlight/highlightContext.js'
 
 /**
- * Register a process/module-wide highlighter used by every `ShikiCode` that
- * receives neither a prop nor a context highlighter. Convenient for apps with a
- * single global theme; pass `undefined` to clear (used in tests).
+ * Context key an ancestor of `<SvelteMarkdown>` can set to inject a highlighter.
+ * Alias of `HIGHLIGHT_CONTEXT_KEY`.
  */
-export const setShikiHighlighter = (highlighter: ShikiHighlighter | undefined): void => {
-    singleton = highlighter
-}
+export const SHIKI_CONTEXT_KEY = HIGHLIGHT_CONTEXT_KEY
 
-/** Read the current module-level singleton highlighter, if any. */
-export const getShikiHighlighter = (): ShikiHighlighter | undefined => singleton
+/**
+ * Register a module-wide highlighter. Alias of `setCodeHighlighter`; pass
+ * `undefined` to clear (used in tests).
+ */
+export const setShikiHighlighter = setCodeHighlighter
+
+/** Read the current module-level singleton highlighter. Alias of `getCodeHighlighter`. */
+export const getShikiHighlighter = getCodeHighlighter

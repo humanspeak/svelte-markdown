@@ -1,0 +1,40 @@
+# load at start:  13:23:21 up 4 days,  2:43,  1 user,  load average: 1.34, 1.58, 1.86
+=== attribution: prefix-384kb (svelte-markdown, 1 traced run after 1 warmup) ===
+page: totalWorkMs 1422.3 · frames 67 · avg 21.228 · p95 27.2 · libraryFlushMs 10.3 (67 flushes)
+trace: 135 window measures, raw sum 1422.295ms, union 1422.295ms (100.0% of totalWorkMs; 0ms of overlapping windows counted twice by the page)
+flush measure 10.299ms over 64 flushes · main thread pid 1447257 tid 1447257
+
+bucket                                                 total ms  ms/frame   share
+stream-flush measure (parse+diff+state write)              10.0     0.149    0.7%
+JS outside flush (derived + DOM commit + metadata)        118.2     1.764    8.3%
+UpdateLayoutTree + Layout                                 760.0    11.343   53.4%
+Paint + composite                                         280.7     4.190   19.7%
+MinorGC / MajorGC                                          15.2     0.227    1.1%
+other traced main-thread work                             236.4     3.528   16.6%
+untraced window time (idle / gaps)                          1.8     0.027    0.1%
+sum of buckets                                           1422.3    21.228
+  of which JS outside flush: 50.919ms in the sync window (prop assignment + tick) · 67.286ms in the frame window
+  "other" by event: RunTask 234.996ms · HitTest 1.185ms · IntersectionObserverController::computeIntersections 0.222ms
+traced buckets (excl. untraced) = 1420.5ms = 99.9% of page totalWorkMs 1422.3ms · 99.9% of the window union
+paint + composite after the windows (not charged by the bench): 102.771ms (1.534 ms/frame)
+
+top 15 functions by self time (samples inside the measured windows; 1426.552ms sampled)
+ 1.    760.7ms  53.3%  getBoundingClientRect  (native)
+ 2.     26.7ms   1.9%  _e  http://127.0.0.1:4183/_app/immutable/chunks/CzerIEjR.js:72:9642
+ 3.     15.5ms   1.1%  (garbage collector)  (native)
+ 4.      6.5ms   0.5%  (anonymous)  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:2:4085
+ 5.      5.5ms   0.4%  prepareTokensForRender  http://127.0.0.1:4183/_app/immutable/chunks/CzerIEjR.js:68:10194
+ 6.      4.8ms   0.3%  before  (native)
+ 7.      4.7ms   0.3%  #v  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:11736
+ 8.      3.9ms   0.3%  measure  (native)
+ 9.      2.1ms   0.1%  Ur  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:24273
+10.      1.9ms   0.1%  ensure  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:2:2077
+11.      1.9ms   0.1%  Ao  http://127.0.0.1:4183/_app/immutable/chunks/CzerIEjR.js:68:10717
+12.      1.8ms   0.1%  E  http://127.0.0.1:4183/_app/immutable/chunks/CzerIEjR.js:68:8724
+13.      1.6ms   0.1%  slug  http://127.0.0.1:4183/_app/immutable/chunks/CzerIEjR.js:1:20214
+14.      1.6ms   0.1%  gr  http://127.0.0.1:4183/_app/immutable/chunks/CzerIEjR.js:1:20411
+15.      1.6ms   0.1%  get  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:3:10835
+
+trace: /tmp/prefix-384kb.trace.json
+cpu profile: /tmp/prefix-384kb.cpuprofile
+summary: .agents/.plans/stream-vs-streamdown/evidence/014/attribution/prefix-384kb.attribution.json

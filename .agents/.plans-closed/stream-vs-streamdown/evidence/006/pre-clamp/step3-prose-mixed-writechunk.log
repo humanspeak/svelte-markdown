@@ -1,0 +1,86 @@
+
+=== prose-mixed-writechunk (prose-mixed, 24000+ bytes, 32 chars × 1/frame, input writeChunk, mode paired) ===
+skipping svelte-streamdown: writeChunk input is not supported by that renderer
+svelte-markdown     run 1 [svelte-markdown]: work 1922.4ms total · avg 2.51 · p95 5.20 · peak 10.3 · over-budget 0/765 · growth 1.334 · parity 0/31 mismatched
+parity (ours vs fresh parse): OK — max 0 mismatched of 31 checks
+median total work: ours 1922.4ms · p95 5.2ms · frames over 16.7ms 0 (no competitor run)
+
+=== JSON ===
+{
+  "metadata": {
+    "capturedAt": "2026-09-28T10:26:47.951Z",
+    "url": "http://127.0.0.1:4183/test/stream-compare",
+    "iterations": 1,
+    "warmups": 0,
+    "mode": "paired",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "pageErrors": []
+  },
+  "results": {
+    "prose-mixed-writechunk": {
+      "skippedRenderers": [
+        "svelte-streamdown"
+      ],
+      "svelte-markdown": {
+        "runs": [
+          {
+            "renderer": "svelte-markdown",
+            "scenario": "prose-mixed-writechunk",
+            "corpus": "prose-mixed",
+            "inputMode": "writeChunk",
+            "prefixBytes": 0,
+            "sourceBytes": 24477,
+            "chunkSize": 32,
+            "updatesPerFrame": 1,
+            "frames": 765,
+            "totalWorkMs": 1922.4,
+            "avgWorkMs": 2.513,
+            "p50WorkMs": 2.2,
+            "p95WorkMs": 5.2,
+            "p99WorkMs": 7.5,
+            "peakWorkMs": 10.3,
+            "framesOverBudget": 0,
+            "growthRatio": 1.334,
+            "syncTotalMs": 17.5,
+            "frameWorkTotalMs": 1904.9,
+            "libraryFlushMs": 337.6,
+            "libraryFlushCount": 765,
+            "domNodes": 1381,
+            "mutations": 10102,
+            "heapDeltaKb": 74215.119,
+            "outputHash": "dfb2623b",
+            "outputLength": 18963,
+            "parityChecks": 31,
+            "parityMismatches": 0,
+            "firstParityMismatch": null,
+            "parityMismatchSamples": [],
+            "order": "svelte-markdown"
+          }
+        ],
+        "summary": {
+          "iterations": 1,
+          "frames": 765,
+          "totalWorkMsMedian": 1922.4,
+          "avgWorkMsMedian": 2.513,
+          "p50WorkMsMedian": 2.2,
+          "p95WorkMsMedian": 5.2,
+          "p99WorkMsMedian": 7.5,
+          "peakWorkMsMedian": 10.3,
+          "framesOverBudgetMedian": 0,
+          "growthRatioMedian": 1.334,
+          "syncTotalMsMedian": 17.5,
+          "frameWorkTotalMsMedian": 1904.9,
+          "libraryFlushMsMedian": 337.6,
+          "mutationsMedian": 10102,
+          "heapDeltaKbMedian": 74215.119,
+          "domNodes": 1381,
+          "outputHash": "dfb2623b",
+          "outputLength": 18963,
+          "parityChecksTotal": 31,
+          "parityMismatchesMax": 0,
+          "firstParityMismatch": null
+        }
+      }
+    }
+  }
+}

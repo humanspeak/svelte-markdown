@@ -73,6 +73,11 @@ The extension tokenizers are small parser helpers. The renderer components are w
 | `KatexRenderer` from `/extensions/katex` | Yes, `katex` | Uses `katex.renderToString()` synchronously. |
 | `markedMermaid` from `/extensions/mermaid` | No | Tokenizes Mermaid fences; does not import `mermaid`. |
 | `MermaidRenderer` from `/extensions/mermaid` | No initial `mermaid` chunk | Dynamically imports Mermaid in the browser. |
+| `HighlightedCode` from `/extensions/highlight` | No | Engine-agnostic `code` renderer; imports neither `shiki` nor `@tanstack/highlight`. |
+| `createShikiHighlighter` from `/extensions/shiki` | Yes, `shiki` core + the grammars/themes you import | Synchronous JS-engine highlighter. |
+| `createTanstackHighlighter` from `/extensions/tanstack-highlight` | Yes, `@tanstack/highlight` core + the languages you import | Synchronous scanner highlighter; ~10× smaller than Shiki for the same languages. |
+
+The two highlighting engines never leak into each other: importing the Shiki factory bundles nothing from TanStack and vice versa. See [Syntax Highlighting](/docs/advanced/syntax-highlighting) for measured sizes.
 
 This means you can parse math or diagrams without paying for the renderer until you actually import the renderer path. If you provide your own renderer or snippet, your imports decide what ships.
 

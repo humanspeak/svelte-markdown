@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import { DemoSplitV2 } from '@humanspeak/docs-kit'
 
     const defaultMarkdown = `## Welcome to My Markdown Playground! 🎨
@@ -59,7 +60,7 @@ Happy coding! <span style="color: hotpink">♥</span>`
     {/snippet}
     {#snippet right()}
         <div class="dk-pg-preview prose prose-sm dark:prose-invert max-w-none">
-            <SvelteMarkdown {source} />
+            <SvelteMarkdown {source} renderers={{ code: HighlightedCode }} />
         </div>
     {/snippet}
 </DemoSplitV2>

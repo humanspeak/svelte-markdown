@@ -4,20 +4,20 @@ description: Set up dependencies for Trunk Code Quality
 runs:
     using: composite
     steps:
-        - uses: pnpm/action-setup@v6 # zizmor: ignore[unpinned-uses]
+        - uses: pnpm/action-setup@v6.1.0 # zizmor: ignore[unpinned-uses]
 
         - name: Setup Node.js
-          uses: actions/setup-node@v7 # zizmor: ignore[unpinned-uses]
+          uses: actions/setup-node@v7.0.0 # zizmor: ignore[unpinned-uses]
           with:
               node-version: 24
 
-        - name: Install Root NodeJS dependencies
+        - name: Install workspace dependencies
           shell: bash
           run: |
               pnpm install --frozen-lockfile
 
-        - name: Install Docs NodeJS dependencies
+        - name: Generate SvelteKit configurations
           shell: bash
-          working-directory: docs
           run: |
-              pnpm install --frozen-lockfile
+              pnpm exec svelte-kit sync
+              pnpm --filter docs exec svelte-kit sync

@@ -328,6 +328,111 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(chunkedIds).toEqual(staticIds)
     })
 
+    test('matches a cold render at each flush with unstable duplicates and nested headings', async () => {
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+        let source = ''
+        const chunks = [
+            '# foo\n\n# foo\n\n# foo',
+            '!',
+            '!',
+            '\n\n> # foo\n\n',
+            '- # foo\n\n',
+            '<div class="nested-heading-test">\n\n# foo\n\n</div>\n\n',
+            '# foo',
+            '!'
+        ]
+
+        for (const chunk of chunks) {
+            source += chunk
+            await act(() => component.writeChunk(chunk))
+            await flushStreamingBatch()
+            const cold = render(SvelteMarkdown, { props: { source } })
+            expect(headingIds(container)).toEqual(headingIds(cold.container))
+            cold.unmount()
+        }
+
+        expect(container.querySelector('blockquote h1')).toHaveAttribute('id', 'foo-3')
+        expect(container.querySelector('li h1')).toHaveAttribute('id', 'foo-4')
+        expect(container.querySelector('.nested-heading-test h1')).toHaveAttribute('id', 'foo-5')
+        expect(headingIds(container)).toEqual([
+            'foo',
+            'foo-1',
+            'foo-2',
+            'foo-3',
+            'foo-4',
+            'foo-5',
+            'foo-6'
+        ])
+    })
+
+    test('keeps nested heading ids stable when repeated definitions shift tail source offsets', async () => {
+        const initial = '[ref]: /url\n[ref]: /url\n```md\n```\n> # foo\n> ## f'
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: initial, streaming: true }
+        })
+        await flushStreamingBatch()
+        expect(headingIds(container)).toEqual(['foo', 'f'])
+
+        await act(() => component.writeChunk('He'))
+        await flushStreamingBatch()
+
+        const cold = render(SvelteMarkdown, { props: { source: `${initial}He` } })
+        expect(headingIds(cold.container)).toEqual(['foo', 'fhe'])
+        expect(headingIds(container)).toEqual(headingIds(cold.container))
+        cold.unmount()
+    })
+
+    test('matches a cold render after offset chunks rewrite earlier collided headings', async () => {
+        const initial = '# foo\n\n# foo-1\n\n# foo\n\n# foo\n\n'
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: initial, streaming: true }
+        })
+        await flushStreamingBatch()
+        let source = initial
+
+        for (const { offset, value } of [
+            { offset: 2, value: 'bar' },
+            { offset: initial.indexOf('foo-1'), value: 'foo-2' },
+            { offset: 2, value: 'foo' }
+        ]) {
+            source = source.slice(0, offset) + value + source.slice(offset + value.length)
+            await act(() => component.writeChunk({ offset, value }))
+            await flushStreamingBatch()
+            const cold = render(SvelteMarkdown, { props: { source } })
+            expect(headingIds(container)).toEqual(headingIds(cold.container))
+            cold.unmount()
+        }
+
+        expect(headingIds(container)).toEqual(['foo', 'foo-2', 'foo-1', 'foo-3'])
+    })
+
+    test('resets heading history when headerPrefix or headerIds changes mid-stream', async () => {
+        const source = '# foo\n\n# foo\n\n# foo'
+        const { component, container, rerender } = render(SvelteMarkdown, {
+            props: { source, streaming: true }
+        })
+        await flushStreamingBatch()
+
+        for (const options of [
+            { headerPrefix: 'docs-' },
+            { headerPrefix: 'docs-', headerIds: false },
+            { headerPrefix: 'other-', headerIds: true },
+            { headerPrefix: '', headerIds: true }
+        ]) {
+            await rerender({ source, streaming: true, options })
+            await flushStreamingBatch()
+            const cold = render(SvelteMarkdown, { props: { source, options } })
+            expect(headingIds(container)).toEqual(headingIds(cold.container))
+            cold.unmount()
+        }
+
+        await act(() => component.writeChunk('!\n\n# foo'))
+        await flushStreamingBatch()
+        expect(headingIds(container)).toEqual(['foo', 'foo-1', 'foo-2', 'foo-3'])
+    })
+
     test('does not re-slug stable prefix headings when appending non-heading text', async () => {
         const slugSpy = vi.spyOn(Slugger.prototype, 'slug')
 
@@ -525,6 +630,37 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
 
         expect(destroyed.some((entry) => entry.text === 'Intro paragraph')).toBe(false)
         expect(mounted.filter((entry) => entry.text === 'Intro paragraph')).toHaveLength(1)
+    })
+
+    test('keeps the first three paragraph nodes when a fourth streams in (wholesale-replacement guard)', async () => {
+        // Guard for the #291 invariant on `streamTokens`: every write reassigns
+        // the array wholesale. If a write site ever mutated it in place, a
+        // non-deep (`$state.raw`) array would stop rendering the new paragraph.
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+
+        for (const chunk of ['First paragraph', '\n\nSecond paragraph', '\n\nThird paragraph']) {
+            await act(() => component.writeChunk(chunk))
+            await flushStreamingBatch()
+        }
+
+        const before = Array.from(container.querySelectorAll('p'))
+        expect(before.map((paragraph) => paragraph.textContent)).toEqual([
+            'First paragraph',
+            'Second paragraph',
+            'Third paragraph'
+        ])
+
+        await act(() => component.writeChunk('\n\nFourth paragraph'))
+        await flushStreamingBatch()
+
+        const after = Array.from(container.querySelectorAll('p'))
+        expect(after).toHaveLength(4)
+        expect(after[0]).toBe(before[0])
+        expect(after[1]).toBe(before[1])
+        expect(after[2]).toBe(before[2])
+        expect(after[3].textContent).toBe('Fourth paragraph')
     })
 
     test('keeps a stable root token mounted when a sibling is inserted before it', async () => {
@@ -884,5 +1020,174 @@ describe('SvelteMarkdown streaming stability (issue #328)', () => {
         expect(ulsAfter).toHaveLength(2)
         expect(ulsAfter[0].getAttribute('data-tie-probe')).toBe('first')
         expect(ulsAfter[1].getAttribute('data-tie-probe')).toBe('second')
+    })
+
+    test('re-renders only the citing paragraphs when a reference definition streams in', async () => {
+        type UpdateCountWindow = Window & { __svmParserUpdateCount?: number }
+        const citing = new Set([5, 15])
+        const paragraphs = Array.from({ length: 20 }, (_, index) =>
+            citing.has(index + 1)
+                ? `Paragraph ${index + 1} cites [1] as evidence.`
+                : `Paragraph ${index + 1} is plain prose.`
+        )
+        const definition = '[1]: https://example.com/study\n'
+        const fullSource = `${paragraphs.map((paragraph) => `${paragraph}\n\n`).join('')}${definition}`
+
+        const { component, container } = render(SvelteMarkdown, {
+            props: { source: '', streaming: true }
+        })
+        for (const paragraph of paragraphs) {
+            await act(() => component.writeChunk(`${paragraph}\n\n`))
+            await flushStreamingBatch()
+        }
+
+        const paragraphsBefore = Array.from(container.querySelectorAll('p'))
+        expect(paragraphsBefore).toHaveLength(20)
+        expect(container.querySelectorAll('a')).toHaveLength(0)
+
+        const w = window as UpdateCountWindow
+        // Mount-time runs of the dev-only counter are proven live here.
+        expect(w.__svmParserUpdateCount ?? 0).toBeGreaterThan(0)
+        w.__svmParserUpdateCount = 0
+
+        await act(() => component.writeChunk(definition))
+        await flushStreamingBatch()
+
+        const paragraphsAfter = Array.from(container.querySelectorAll('p'))
+        expect(paragraphsAfter).toHaveLength(20)
+        for (const number of citing) {
+            const link = paragraphsAfter[number - 1].querySelector('a')
+            expect(link).toHaveAttribute('href', 'https://example.com/study')
+        }
+        // Non-citing paragraphs keep their DOM nodes.
+        expect(paragraphsAfter[0]).toBe(paragraphsBefore[0])
+        expect(paragraphsAfter[19]).toBe(paragraphsBefore[19])
+
+        // Bound: each citing paragraph now owns 2 Parser instances (the
+        // paragraph and the new link; text children render inline), so the
+        // citing work is 2 paragraphs x 2 Parsers. Allow 4 effect runs per
+        // such Parser: 4 x (2 x 2) = 16. That also absorbs the root Parser
+        // (new token array) and the newly mounted `def` Parser. Re-rendering
+        // every paragraph would be at least 20.
+        const citingParserInstances = citing.size * 2
+        expect(w.__svmParserUpdateCount ?? 0).toBeLessThanOrEqual(4 * citingParserInstances)
+
+        // Parity with a fresh non-streaming render of the same source.
+        const { container: fresh } = render(SvelteMarkdown, { props: { source: fullSource } })
+        const hrefs = (root: HTMLElement) =>
+            Array.from(root.querySelectorAll('a[href]'), (anchor) => anchor.getAttribute('href'))
+        expect(container.textContent).toBe(fresh.textContent)
+        expect(hrefs(container)).toEqual(hrefs(fresh))
+        expect(hrefs(container)).toHaveLength(2)
+    })
+
+    describe('open list/table prop churn (plan 010, default renderers)', () => {
+        type CounterWindow = Window & {
+            __svmParserCount?: number
+            __svmParserUpdateCount?: number
+        }
+        const counters = () => window as CounterWindow
+
+        /** Parser instances a fresh render of `source` mounts, minus root and block. */
+        const parsersUnderOneBlockChild = async (source: string) => {
+            const w = counters()
+            const before = w.__svmParserCount ?? 0
+            const { unmount } = render(SvelteMarkdown, { props: { source } })
+            await flushStreamingBatch()
+            const mounted = (w.__svmParserCount ?? 0) - before
+            unmount()
+            // Root Parser + the list/table Parser own the child; the rest are
+            // the Parser instances rendered under it.
+            return mounted - 2
+        }
+
+        const streamAll = async (
+            component: { writeChunk: (chunk: string) => void },
+            source: string
+        ) => {
+            for (const chunk of chunkSource(source, 64)) {
+                await act(() => component.writeChunk(chunk))
+                await flushStreamingBatch()
+            }
+        }
+
+        test('appending to the last item of an open list updates only that item', async () => {
+            const item = (index: number) =>
+                `- Item ${index} with **bold ${index}**, \`code${index}\` and a [link](https://example.com/${index}) here`
+            const items = Array.from({ length: 30 }, (_, index) => item(index + 1))
+            const source = items.join('\n')
+            const underLastItem = await parsersUnderOneBlockChild(item(30))
+            expect(underLastItem).toBeGreaterThan(0)
+
+            const { component, container } = render(SvelteMarkdown, {
+                props: { source: '', streaming: true }
+            })
+            await streamAll(component, source)
+            const listItems = Array.from(container.querySelectorAll('li'))
+            expect(listItems).toHaveLength(30)
+
+            const w = counters()
+            expect(w.__svmParserUpdateCount ?? 0).toBeGreaterThan(0)
+            w.__svmParserUpdateCount = 0
+
+            await act(() => component.writeChunk(' 8 chars'))
+            await flushStreamingBatch()
+
+            const listItemsAfter = Array.from(container.querySelectorAll('li'))
+            expect(listItemsAfter).toHaveLength(30)
+            expect(listItemsAfter[29].textContent).toMatch(/here 8 chars$/)
+            expect(listItemsAfter[0]).toBe(listItems[0])
+            // Only the last item's Parsers plus the list and root Parsers may
+            // update; churn through every item would be ~30x this.
+            expect(w.__svmParserUpdateCount ?? 0).toBeLessThanOrEqual(underLastItem + 2)
+
+            const { container: fresh } = render(SvelteMarkdown, {
+                props: { source: `${source} 8 chars` }
+            })
+            expect(container.innerHTML).toBe(fresh.innerHTML)
+        })
+
+        test('appending to the last cell of an open table updates only that cell', async () => {
+            const head = '| # | Name | Module | Docs |\n| --- | --- | --- | --- |\n'
+            const row = (index: number) =>
+                `| ${index} | **Item ${index}** | \`mod${index}\` | [docs](https://example.com/t/${index}) tail |`
+            const rows = Array.from({ length: 20 }, (_, index) => row(index + 1))
+            // The last row has no closing pipe, so appended text lands in its
+            // last cell (the table stays open: no trailing blank line).
+            const source = `${head}${rows.join('\n')}`.replace(/ \|$/, '')
+            // Parsers under one last cell: a fresh table whose only row has
+            // empty cells except the last one.
+            const underLastCell = await parsersUnderOneBlockChild(
+                `${head}|  |  |  | [docs](https://example.com/t/20) tail`
+            )
+            expect(underLastCell).toBeGreaterThan(0)
+
+            const { component, container } = render(SvelteMarkdown, {
+                props: { source: '', streaming: true }
+            })
+            await streamAll(component, source)
+            const cells = Array.from(container.querySelectorAll('tbody td'))
+            expect(cells).toHaveLength(80)
+
+            const w = counters()
+            expect(w.__svmParserUpdateCount ?? 0).toBeGreaterThan(0)
+            w.__svmParserUpdateCount = 0
+
+            await act(() => component.writeChunk(' 8 chars'))
+            await flushStreamingBatch()
+
+            const cellsAfter = Array.from(container.querySelectorAll('tbody td'))
+            expect(cellsAfter).toHaveLength(80)
+            expect(cellsAfter[79].textContent).toMatch(/tail 8 chars$/)
+            expect(cellsAfter[0]).toBe(cells[0])
+            // Only the last cell's Parsers plus the table and root Parsers
+            // may update; churn through every cell would be ~80x this.
+            expect(w.__svmParserUpdateCount ?? 0).toBeLessThanOrEqual(underLastCell + 2)
+
+            const { container: fresh } = render(SvelteMarkdown, {
+                props: { source: `${source} 8 chars` }
+            })
+            expect(container.innerHTML).toBe(fresh.innerHTML)
+        })
     })
 })

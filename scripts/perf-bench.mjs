@@ -171,6 +171,8 @@ async function runAll(label, page) {
         // Mixed-shape corpus that defeats optimizations only winning on
         // the highly-repetitive `generateLarge` shapes.
         ['parseRealistic', 'parse-realistic', { timeout: 90_000 }],
+        // Long-document heading metadata and cold-render ID parity.
+        ['parseHeadingHeavy', 'parse-heading-heavy', { timeout: 90_000 }],
         // Same 50KB body as `parse50kb` but mounted with custom
         // markdown + html snippet overrides — drives the slow dispatch
         // path so override-path regressions can't slip through.

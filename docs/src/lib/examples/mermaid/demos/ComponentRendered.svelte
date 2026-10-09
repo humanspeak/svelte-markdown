@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
     import { markedMermaid, MermaidRenderer } from '@humanspeak/svelte-markdown/extensions'
     import { DemoSplitV2 } from '@humanspeak/docs-kit'
@@ -59,7 +60,8 @@ classDiagram
         mermaid: RendererComponent
     }
     const renderers: Partial<MermaidRenderers> = {
-        mermaid: MermaidRenderer
+        mermaid: MermaidRenderer,
+        code: HighlightedCode
     }
 
     // Debounced live editor: `input` tracks the textarea verbatim,

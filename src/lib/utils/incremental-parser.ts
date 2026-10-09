@@ -10,10 +10,21 @@
  */
 
 import type { SvelteMarkdownOptions } from '$lib/types.js'
-import type { Token } from '$lib/utils/markdown-parser.js'
+import type { Token, Tokens, TokensList } from '$lib/utils/markdown-parser.js'
 import { lexAndClean } from '$lib/utils/parse-and-cache.js'
-import { isSameStableNode } from '$lib/utils/streaming-token-reuse.js'
+import {
+    countStreamStat,
+    isSameStableNode,
+    STREAM_STATS_ENABLED
+} from '$lib/utils/streaming-token-reuse.js'
 import { isTailWindowSafe } from '$lib/utils/tail-window.js'
+import {
+    isFromUnterminatedHtmlBlock,
+    isHtmlOpenTag,
+    isUnterminatedHtmlBlock
+} from '$lib/utils/token-cleanup.js'
+import { isVoidElement } from '$lib/utils/void-elements.js'
+import type { ProvenanceCollector } from './streaming-provenance.js'
 
 /**
  * The shape of an HTML token after the cleanup pipeline. Marked's base
@@ -35,12 +46,492 @@ interface ParseSourceResult {
     tokens: Token[]
     tailTokens: Token[]
     usedTailWindow: boolean
+    /**
+     * Leading roots of `tokens` that ARE the previous parse's root objects
+     * (same identity, same index) by construction: the copied prefix on the
+     * plain tail-window path, 0 everywhere else (the targeted definition path
+     * may replace prefix roots). The divergence scan starts here.
+     */
+    reusedPrefixCount: number
+    /**
+     * True when the roots do not add up to the source length (see
+     * `IncrementalParser.prevHasLengthMismatch`). Tail-window results sum
+     * only the re-lexed tail (the prefix covers `reparseOffset` by
+     * construction); full re-lexes sum every root.
+     */
+    hasLengthMismatch: boolean
+    /** Every reference definition in `tokens` (marked's `def` tokens). */
+    links: LinkMap
+    /**
+     * True when a definition changed in a way that can change how an
+     * already-rendered root resolves a reference, so a raw-equal prefix is
+     * not a safe reuse contract (`reuseMode: 'tree'` / divergeAt 0).
+     */
+    referenceSensitive: boolean
 }
 
 const CLOSED_FENCE_RE = /^ {0,3}(`{3,}|~{3,}).*\n[\s\S]*\n {0,3}\1[ \t]*\n*$/
+const FENCE_OPEN_RE = /^ {0,3}(`{3,}|~{3,})/
+/** A paragraph that is only the start of an ordered-list marker (`2`, `10`):
+ *  the next chunk may complete it (`2. item`). A lone bullet marker needs no
+ *  rule — `-`, `*` or `+` already lexes as a list item — except when the
+ *  line is also a thematic break (see `OPEN_RULE_ITEM_RE`). */
+const PARTIAL_ORDERED_MARKER_RE = /^ {0,3}\d{1,9}$/
+/** An unfinished thematic break that starts with a `-` or `*` bullet marker
+ *  and whitespace (`- - -`, ` * * *`, `-\t-\t-`): one more non-rule
+ *  character turns the line into a list item (`- - -c` => item `- -c`)
+ *  that may join the list before the blank line. `---`, `_ _ _` and a rule
+ *  whose line already ended cannot. */
+const OPEN_RULE_ITEM_RE = /^ {0,3}[-*][ \t][^\n]*$/
+/** A block that opens like a reference definition's title (`"`, `'`, `(`).
+ *  marked accepts a title on the line after the destination, indented by
+ *  any whitespace, so a partial one lexes as a paragraph or indented code
+ *  until it closes and joins the preceding `def`. */
+const DEFINITION_TITLE_START_RE = /^[ \t]*["'(]/
 const LINK_REFERENCE_RE = /\[[^\]\n]+\]\[[^\]\n]*\]/
 const SHORTCUT_REFERENCE_RE = /\[[^\]\n]+\](?![[(])/ // Excludes inline links/images and full refs
-const REFERENCE_DEFINITION_RE = /^\s{0,3}\[[^\]\n]+\]:/m
+const REGEXP_SPECIAL_RE = /[.*+?^${}()|[\]\\]/g
+const WHITESPACE_RUN_RE = /\s+/g
+const BLANK_LINE_RE = /^\s*$/
+/** A whole reference definition on one line: label, destination, optional
+ *  closed title, nothing after. Anything else that starts like a definition
+ *  (`[k]:` with the destination on the next line, `[k]: /k junk`, a title
+ *  that continues on the next line) may turn out to be paragraph text, so it
+ *  is treated as a reference use. */
+const COMPLETE_DEFINITION_LINE_RE =
+    /^ {0,3}\[[^\]\n]+\]:[ \t]*(?:<[^<>\n]*>|[^<\s]\S*)(?:[ \t]+(?:"[^"\n]*"|'[^'\n]*'|\([^()\n]*\)))?[ \t]*\r?$/
+
+/**
+ * Every reference definition contains `]:` (the label's closing bracket and
+ * the colon are adjacent in CommonMark, whatever container the definition
+ * sits in). Source without it cannot add, change or remove a definition, so
+ * this is the one textual pre-filter left: prose skips all definition work.
+ * Whether a definition exists, and what it says, is decided from marked's
+ * own `def` tokens.
+ */
+const DEFINITION_SIGIL = ']:'
+
+/** marked's reference-definition map (`lexer.tokens.links`). */
+type LinkMap = TokensList['links']
+
+/**
+ * Block tokens whose children are inline-only (or absent). Definitions are
+ * block-level, so these never hold one and the definition walk skips them.
+ */
+const DEFINITION_FREE_TYPES = new Set([
+    'paragraph',
+    'heading',
+    'text',
+    'table',
+    'code',
+    'space',
+    'hr'
+])
+
+/** Root types a reference use can never change the rendering of. */
+const REFERENCE_INERT_ROOT_TYPES = new Set(['space', 'def', 'code', 'hr'])
+
+/** A stable prefix root that may use a changed reference label. */
+interface CitingRoot {
+    /** Index in the prefix */
+    index: number
+    /** The root's exact source span */
+    source: string
+    start: number
+    /** `source` normalized for label-use search */
+    text: string
+}
+
+/**
+ * True for a root that can be a piece of an expanded html block: an `html`
+ * root, or a root-level `text` (marked never emits `text` at the root; only
+ * cleanup's html expansion does).
+ *
+ * @param token - A root token
+ * @returns `true` for `html` and root-level `text`
+ * @example
+ * ```typescript
+ * isHtmlPiece({ type: 'text', raw: '\n<' } as Token) // true
+ * ```
+ */
+const isHtmlPiece = (token: Token): boolean => token.type === 'html' || token.type === 'text'
+
+/** Root types that no following line can extend or change (ATX and setext
+ *  headings, thematic breaks, blank lines). */
+const LINE_CLOSED_TYPES = new Set(['heading', 'hr', 'space'])
+
+/**
+ * True for a root that the NEXT line can still extend or change when no
+ * blank line separates them. In CommonMark a line that turns out to be
+ * paragraph text continues the previous paragraph, list item or blockquote
+ * (lazy continuation), a line can turn a paragraph into a setext heading, a
+ * line after a table is another row, and a line after a definition may be
+ * its title. So a block directly followed by the open tail must stay in the
+ * tail until a blank line closes it:
+ *
+ *   'Para\n#N'  => paragraph 'Para\n' + paragraph '#N'
+ *   'Para\n#NotAHeading' => one paragraph (`#N` is a lazy continuation)
+ *   '1.\n2'     => list '1.\n' + paragraph '2';  '1.\n2.' => one list
+ *
+ * Only headings, thematic breaks, blank lines and CLOSED fenced code can
+ * never absorb a following line; every other type — including ones this
+ * parser does not know (extensions) — is held. An open fence is always the
+ * last token, so it never reaches this check.
+ *
+ * @param token - The root directly before the first tail root
+ * @returns `true` if the root must stay in the tail
+ * @example
+ * ```typescript
+ * canAbsorbNextLine({ type: 'paragraph', raw: 'Para\n' } as Token) // true
+ * canAbsorbNextLine({ type: 'heading', raw: '# H\n' } as Token) // false
+ * ```
+ */
+const canAbsorbNextLine = (token: Token): boolean =>
+    !LINE_CLOSED_TYPES.has(token.type) &&
+    !(token.type === 'code' && CLOSED_FENCE_RE.test(token.raw))
+
+/**
+ * True when the last root is an unfinished line that the next chunk can
+ * still turn into a list item, although marked lexes it as something else
+ * today: a partial ordered marker (`2` => paragraph, `2. b` => item) or a
+ * thematic break that opens with a bullet marker (`- - -` => hr,
+ * `- - -c` => item `- -c`). Decided from `type` and `raw` alone.
+ *
+ * @param token - The last root of the parse
+ * @returns `true` if the line may still become a list item
+ * @example
+ * ```typescript
+ * isOpenItemStart({ type: 'paragraph', raw: '2' } as Token) // true
+ * isOpenItemStart({ type: 'hr', raw: '- - -' } as Token) // true
+ * isOpenItemStart({ type: 'hr', raw: '---' } as Token) // false
+ * ```
+ */
+const isOpenItemStart = (token: Token): boolean =>
+    (token.type === 'paragraph' && PARTIAL_ORDERED_MARKER_RE.test(token.raw)) ||
+    (token.type === 'hr' && OPEN_RULE_ITEM_RE.test(token.raw))
+
+/**
+ * True when the root at `index` is a `space` that contains a blank line. A
+ * `space` root is not always one: marked also emits the trailing
+ * whitespace of a line as `space` (`- x\nhard break  \n` => list
+ * `- x\nhard break` + space `  \n`), and such a root separates nothing.
+ * A blank line needs two line breaks, counting the one that ends the root
+ * before it.
+ *
+ * @param tokens - Root tokens
+ * @param index - Index of the root to test
+ * @returns `true` for a `space` root that holds a blank line
+ * @example
+ * ```typescript
+ * isBlankLineAt(lexAndClean('P\n\n', options, false), 1) // true
+ * isBlankLineAt(lexAndClean('- x\nb  \n', options, false), 1) // false
+ * ```
+ */
+const isBlankLineAt = (tokens: readonly Token[], index: number): boolean => {
+    const token = tokens[index]
+    if (token.type !== 'space') return false
+    const firstBreak = token.raw.indexOf('\n')
+    if (firstBreak < 0) return false
+    const endsLine = index > 0 && tokens[index - 1].raw.endsWith('\n')
+    return endsLine || token.raw.indexOf('\n', firstBreak + 1) >= 0
+}
+
+/**
+ * True when the root at `index` must stay in the tail because it directly
+ * precedes the tail (no blank line between them) and can still absorb or be
+ * changed by a following line. A `space` root that is not a blank line is
+ * trailing whitespace of a line and is held so the walk can see past it.
+ *
+ * A definition absorbs only its title: marked accepts a title on the line
+ * after the destination, indented by any whitespace, so the root after it
+ * is held only while it opens like one (`[d]: /d\n"Ti` => def + paragraph;
+ * `[d]: /d\n"Title"` => one def). Any other line after a definition starts
+ * a new block, so a run of definitions (a references section) is not one
+ * long chain of held roots.
+ *
+ * @param tokens - Root tokens
+ * @param index - Index of the root directly before the current tail start
+ * @returns `true` if the root must join the tail
+ * @example
+ * ```typescript
+ * isAdjacentOpenBlock(lexAndClean('Para\n#N', options, false), 0) // true
+ * ```
+ */
+const isAdjacentOpenBlock = (tokens: readonly Token[], index: number): boolean => {
+    const token = tokens[index]
+    if (token.type === 'space') return !isBlankLineAt(tokens, index)
+    if (token.type === 'def') return DEFINITION_TITLE_START_RE.test(tokens[index + 1].raw)
+    return canAbsorbNextLine(token)
+}
+
+/**
+ * How many adjacent open blocks the boundary walk holds before it gives up
+ * and refuses the boundary (a full re-lex for that update). Adjacent chains
+ * are short in practice — a list or blockquote absorbs following paragraph
+ * lines lazily, and headings, rules and closed fences end the walk — so the
+ * cap only bounds pathological alternations.
+ */
+const MAX_ADJACENT_HOLDS = 8
+
+/*
+ * marked's inline lexer state (`lexer.state.inLink` / `inRawBlock`) is shared
+ * by every block of one lex: an inline `<code>` left open in one paragraph
+ * makes the text of the following paragraphs `escaped`, and an inline `<a `
+ * left open stops later bare URLs from autolinking, until the closing tag.
+ * The state is kept as two bits.
+ */
+const DEFAULT_INLINE_STATE = 0
+const IN_LINK = 1
+const IN_RAW_BLOCK = 2
+/** marked's `startATag` / `startPreScriptTag`; the matching closing tags
+ *  (`</a>`, `</pre>`...) clear the state. */
+const START_A_TAG_RE = /^<a /i
+const START_RAW_TAG_RE = /^<(pre|code|kbd|script)(\s|>)/i
+const RAW_TAGS = new Set(['pre', 'code', 'kbd', 'script'])
+/** Inline containers: their `tokens` were lexed by marked's inline lexer. */
+const INLINE_CONTAINER_TYPES = new Set(['paragraph', 'heading', 'text'])
+
+type InlineStateToken = Token & {
+    inLink?: boolean
+    inRawBlock?: boolean
+    tag?: string
+    tokens?: Token[]
+    items?: { tokens?: Token[] }[]
+    header?: { tokens?: Token[] }[]
+    rows?: { tokens?: Token[] }[][]
+}
+
+/**
+ * marked's inline state after one INLINE token, given the state before it.
+ * An html token marked emitted carries the state after it (`inLink`,
+ * `inRawBlock`); cleanup keeps those fields unless it paired the tag with its
+ * closing tag, and a pair can only close the state (its closing tag clears
+ * it, as marked's `endATag` / `endPreScriptTag` do). A bracket link or image
+ * (`[t](/u)`, `[t][r]`, `![i](/u)`: raw starts with `[` or `!`) lexes its text
+ * with `inLink` set and clears it afterwards, as marked's `outputLink` does;
+ * an autolink (`<https://…>`) or a bare GFM URL never touches it. No link
+ * touches `inRawBlock`. The walk descends into nested inline tokens.
+ *
+ * @param token - An inline token
+ * @param state - The state bits before it
+ * @returns The state bits after it
+ * @example
+ * ```typescript
+ * stepInlineState({ type: 'html', raw: '<code>', inLink: false, inRawBlock: true } as Token, 0) // IN_RAW_BLOCK
+ * stepInlineState({ type: 'link', raw: '[t](/u)', tokens: [] } as Token, IN_LINK) // 0
+ * stepInlineState({ type: 'link', raw: '<https://b.example>', tokens: [] } as Token, IN_LINK) // IN_LINK
+ * ```
+ */
+const stepInlineState = (token: Token, state: number): number => {
+    const inline = token as InlineStateToken
+    if (inline.type === 'html' && typeof inline.inRawBlock === 'boolean') {
+        return (inline.inLink ? IN_LINK : 0) | (inline.inRawBlock ? IN_RAW_BLOCK : 0)
+    }
+    if (!Array.isArray(inline.tokens)) return state
+    if (isBracketLink(inline)) return stepInlineTokens(inline.tokens, state | IN_LINK) & ~IN_LINK
+    if (inline.type !== 'html' || !inline.tag) return stepInlineTokens(inline.tokens, state)
+    // A paired inline tag: the opening tag, the children, the closing tag.
+    let inner = state
+    if (!(inner & IN_LINK) && START_A_TAG_RE.test(inline.raw)) inner |= IN_LINK
+    if (!(inner & IN_RAW_BLOCK) && START_RAW_TAG_RE.test(inline.raw)) inner |= IN_RAW_BLOCK
+    inner = stepInlineTokens(inline.tokens, inner)
+    if (inline.tag === 'a') inner &= ~IN_LINK
+    if (RAW_TAGS.has(inline.tag)) inner &= ~IN_RAW_BLOCK
+    return inner
+}
+
+/**
+ * Whether a token came from marked's `link` / `reflink` tokenizers (bracket
+ * links and images, which run `outputLink` and so reset `inLink`), as opposed
+ * to its `autolink` / `url` tokenizers (`<https://…>`, bare URLs), which emit
+ * `link` tokens too but leave the state alone.
+ *
+ * @param token - An inline token
+ * @returns `true` for a bracket link or image
+ * @example
+ * ```typescript
+ * isBracketLink({ type: 'image', raw: '![i](/u)' } as Token) // true
+ * isBracketLink({ type: 'link', raw: '<me@b.example>' } as Token) // false
+ * ```
+ */
+const isBracketLink = (token: Token): boolean =>
+    (token.type === 'link' || token.type === 'image') &&
+    (token.raw.startsWith('[') || token.raw.startsWith('!'))
+
+/** Folds `stepInlineState` over inline tokens. */
+const stepInlineTokens = (tokens: readonly Token[], state: number): number => {
+    for (const token of tokens) state = stepInlineState(token, state)
+    return state
+}
+
+/**
+ * marked's inline state after BLOCK tokens, given the state before them:
+ * inline containers (paragraph, heading, list `text`, table cells) fold
+ * their inline tokens; block containers (blockquote, list items, paired
+ * html blocks) are descended into; block html itself never touches it.
+ *
+ * @param tokens - Block tokens in document order
+ * @param state - The state bits before them
+ * @returns The state bits after them
+ * @example
+ * ```typescript
+ * stepBlockState(lexAndClean('a <code>\n\n', options, false), 0) // IN_RAW_BLOCK
+ * ```
+ */
+const stepBlockState = (tokens: readonly Token[], state: number): number => {
+    for (const token of tokens) {
+        const block = token as InlineStateToken
+        if (INLINE_CONTAINER_TYPES.has(block.type)) {
+            if (block.tokens) state = stepInlineTokens(block.tokens, state)
+        } else if (block.type === 'list') {
+            for (const item of block.items ?? []) state = stepBlockState(item.tokens ?? [], state)
+        } else if (block.type === 'table') {
+            for (const cell of [...(block.header ?? []), ...(block.rows ?? []).flat()]) {
+                state = stepInlineTokens(cell.tokens ?? [], state)
+            }
+        } else if (Array.isArray(block.tokens)) {
+            state = stepBlockState(block.tokens, state)
+        }
+    }
+    return state
+}
+
+const createLinkMap = (): LinkMap => Object.create(null) as LinkMap
+
+/** Shared empty map for read-only "no definitions" arguments. */
+const NO_LINKS: LinkMap = Object.freeze(createLinkMap())
+
+/**
+ * True when `links` defines at least one label. O(1).
+ *
+ * @param links - A definition map
+ * @returns `true` if the map is not empty
+ * @example
+ * ```typescript
+ * hasAnyLabel(createLinkMap()) // false
+ * ```
+ */
+const hasAnyLabel = (links: LinkMap): boolean => {
+    // marked never stores an empty label, so the first key answers it.
+    for (const label in links) if (label) return true
+    return false
+}
+
+/**
+ * Copy of `links` without the labels `removed` defines.
+ *
+ * @param links - Definitions to copy
+ * @param removed - Definitions whose labels are left out
+ * @returns A new map (`links` is not mutated)
+ * @example
+ * ```typescript
+ * withoutLabels({ a: A, b: B }, { b: B }) // { a: A }
+ * ```
+ */
+const withoutLabels = (links: LinkMap, removed: LinkMap): LinkMap => {
+    const kept = createLinkMap()
+    for (const label in links) {
+        if (!(label in removed)) kept[label] = links[label]
+    }
+    return kept
+}
+
+/**
+ * Collects the reference definitions under `tokens` into `links` in document
+ * order, keeping the first definition of a label — exactly the map marked
+ * builds during a full lex (marked emits no `def` token for a duplicate
+ * label, and nested definitions in blockquotes, list items and html blocks
+ * keep their `def` token). Inline-only blocks are not descended into.
+ *
+ * @param tokens - Tokens in document order
+ * @param links - Map to fill (mutated and returned)
+ * @returns `links`
+ * @example
+ * ```typescript
+ * collectDefinitions(tokens, createLinkMap()) // { docs: { href: '/docs', title: undefined } }
+ * ```
+ */
+const collectDefinitions = (tokens: readonly Token[], links: LinkMap): LinkMap => {
+    for (const token of tokens) {
+        if (token.type === 'def') {
+            const definition = token as Tokens.Def
+            if (!(definition.tag in links)) {
+                links[definition.tag] = { href: definition.href, title: definition.title }
+            }
+            continue
+        }
+        if (DEFINITION_FREE_TYPES.has(token.type)) continue
+        const container = token as { items?: unknown; tokens?: unknown }
+        if (Array.isArray(container.items)) collectDefinitions(container.items as Token[], links)
+        if (Array.isArray(container.tokens)) collectDefinitions(container.tokens as Token[], links)
+    }
+    return links
+}
+
+/**
+ * Labels whose resolution differs between two definition maps, ignoring
+ * labels `shadowing` defines (an earlier definition wins, so those cannot
+ * change).
+ *
+ * @param before - Definitions from the region being replaced
+ * @param after - Definitions from the freshly lexed region
+ * @param shadowing - Definitions that precede both regions
+ * @returns Normalized labels that were added, removed, or changed
+ * @example
+ * ```typescript
+ * getChangedLabels({ a: { href: '/x' } }, { a: { href: '/xy' } }, {}) // ['a']
+ * ```
+ */
+const getChangedLabels = (before: LinkMap, after: LinkMap, shadowing: LinkMap): string[] => {
+    const changed: string[] = []
+    for (const label of new Set([...Object.keys(before), ...Object.keys(after)])) {
+        if (label in shadowing) continue
+        const previous = before[label]
+        const next = after[label]
+        if (
+            previous?.href !== next?.href ||
+            previous?.title !== next?.title ||
+            !previous !== !next
+        ) {
+            changed.push(label)
+        }
+    }
+    return changed
+}
+
+/**
+ * Normalizes text the way marked normalizes a reference label (case fold via
+ * lower/upper/lower, whitespace runs collapsed to one space), so a label's
+ * uses can be found by substring search.
+ *
+ * @param text - Source text
+ * @returns The normalized text
+ * @example
+ * ```typescript
+ * normalizeReferenceText('See [Foo\n  Bar]') // 'see [foo bar]'
+ * ```
+ */
+const normalizeReferenceText = (text: string): string =>
+    text.toLowerCase().toUpperCase().toLowerCase().replace(WHITESPACE_RUN_RE, ' ')
+
+/**
+ * Matches a use of a normalized label in normalized text: `[label]`, which
+ * covers shortcut `[label]`, collapsed `[label][]` and full `[text][label]`
+ * references. marked trims the label, so one space inside either bracket is
+ * allowed.
+ *
+ * @param label - Normalized label (marked's `tokens.links` key)
+ * @returns A matcher for normalized root text
+ * @example
+ * ```typescript
+ * createLabelUseMatcher('1').test('see [1] and [2]') // true
+ * ```
+ */
+const createLabelUseMatcher = (label: string): RegExp =>
+    new RegExp(`\\[ ?${label.replace(REGEXP_SPECIAL_RE, '\\$&')} ?\\]`)
+
+/** How a streaming consumer may reuse the previous parse's token objects. */
+export type StreamingReuseMode = 'prefix' | 'tree' | 'none'
 
 /**
  * Result of an incremental parse update.
@@ -54,8 +545,25 @@ export interface IncrementalUpdateResult {
     divergeOffset?: number
     /** Whether consumers can safely reuse stable token objects from the previous parse */
     canReuse: boolean
+    /**
+     * How consumers may reuse token objects from the previous parse:
+     * - `'prefix'`: the first `divergeAt` roots are stable (same as `canReuse`).
+     * - `'tree'`: append-only, but a reference definition may have changed
+     *   inline children anywhere; compare index-aligned across the whole array
+     *   with the semantic comparator (`reuseStableTokenTree`). `divergeAt` is 0
+     *   and `divergeOffset` is `undefined` (full render-metadata walk).
+     * - `'none'`: not append-only; replace the token array.
+     */
+    reuseMode: StreamingReuseMode
     /** Whether this update re-lexed only the appended tail (vs the whole source) */
     usedTailWindow: boolean
+    /**
+     * Leading roots of `tokens` that are the SAME objects, at the same
+     * indices, as in the previous update's `tokens` array (the reused prefix
+     * of a tail-window update; 0 otherwise). A consumer that rendered that
+     * previous array unchanged can skip these indices when reusing objects.
+     */
+    reusedPrefixCount: number
 }
 
 /**
@@ -99,21 +607,61 @@ export class IncrementalParser {
      *  on the hot path. */
     private prevHasHtmlSpanMismatch = false
 
+    /** True iff the root tokens of `prevTokens` do not add up to
+     *  `prevSource.length` — marked consumed source without emitting a token
+     *  of the same length (it normalizes `\r\n` to `\n`, and a duplicate
+     *  reference definition emits no token). Tail-window offsets are computed
+     *  from token lengths, so while this holds the tail window is not used.
+     *  Recomputed on every full re-lex, so a document whose mismatch goes
+     *  away regains the tail window. */
+    private prevHasLengthMismatch = false
+
+    /** True iff `prevSource` contains a carriage return (plan 008). marked
+     *  normalizes `\r\n` to `\n`, so a root is shorter than its span, and
+     *  another root can be longer than its span (a blockquote raw that gains
+     *  a line break): the errors can cancel, and the length check above then
+     *  passes with wrong offsets. So a source with `\r` never uses the tail
+     *  window. Sticky under appends — only the appended slice is searched —
+     *  and recomputed from the whole source on any other update (which is a
+     *  full re-lex anyway). */
+    private prevHasCarriageReturn = false
+
     /** Cached boundary for the next append-only update. Computed when
      * parser state is committed so `getTailWindowBoundary` stays O(1). */
     private prevTailWindowBoundary: TailWindowBoundary = { prefixCount: 0, reparseOffset: 0 }
 
-    /** Cached reference-syntax facts for `prevSource`. These avoid scanning
-     * the accumulated stream on every append. */
+    /** Cached reference-use fact for `prevSource` (a cheap regex superset,
+     * refreshed from the appended slice only). Avoids scanning the
+     * accumulated stream on every append. */
     private prevHasPotentialReferenceUse = false
-    private prevHasReferenceDefinition = false
+
+    /** Every reference definition in `prevTokens`, from marked's own `def`
+     * tokens (nested ones included). Replaced after each update: collected
+     * from the roots after a full re-lex, or the prefix's definitions plus
+     * the re-lexed tail's after a tail-window update. Each label has at most
+     * one `def` token in a parse, so the prefix's definitions are this map
+     * minus the previous tail's. */
+    private knownLinks: LinkMap = createLinkMap()
+
+    /** Normalized source text per stable root, for label-use search. Roots
+     * are reused objects at fixed offsets, so each is normalized once. */
+    private normalizedRootText = new WeakMap<Token, string>()
+
+    /** marked's inline lexer state after each root whose state is not the
+     * default (see `stepBlockState`); absent means the default. Recorded
+     * for the re-lexed roots of each update (`recordInlineStates`), so the
+     * boundary check reads one entry instead of walking the prefix. */
+    private inlineStateAfter = new WeakMap<Token, number>()
 
     /**
      * Creates a new incremental parser instance.
      *
      * @param options - Svelte markdown parser options forwarded to Marked's Lexer
      */
-    constructor(options: SvelteMarkdownOptions) {
+    private readonly provenance?: ProvenanceCollector
+
+    constructor(options: SvelteMarkdownOptions, provenance?: ProvenanceCollector) {
+        this.provenance = provenance
         this.options = options
 
         // Marked's `use()` stores each extension's tokenizer FUNCTION (by
@@ -142,19 +690,50 @@ export class IncrementalParser {
     }
 
     /**
-     * True for an HTML opening tag whose actual source span is unknown.
-     * After token cleanup, closed HTML tokens keep children on `.tokens`
-     * and record their full source span as `sourceLength`. Unclosed HTML
-     * openings have neither a full span nor a closing tag yet, so serving
-     * them as a stable tail-window prefix would corrupt the offset math.
+     * True for an HTML construct that is still open: an opening tag whose
+     * actual source span is unknown, a tag with no closing bracket yet, or a
+     * comment / processing instruction / declaration / CDATA section /
+     * raw-text element before its terminator (`isUnterminatedHtmlBlock`),
+     * including any root cleanup expanded out of one
+     * (`isFromUnterminatedHtmlBlock`). After token cleanup, closed HTML tokens
+     * keep children on `.tokens` and record their full source span as
+     * `sourceLength`. Unclosed HTML openings have neither a full span nor a
+     * closing tag yet, so serving them as a stable tail-window prefix would
+     * corrupt the offset math or split the construct at a blank line.
      */
     private hasHtmlSpanMismatch = (token: Token): boolean => {
+        // A root cleanup expanded out of an unterminated comment, processing
+        // instruction, ... that contains a tag (plan 008): no root carries
+        // the opener any more, and a piece can be `text`.
+        if (isFromUnterminatedHtmlBlock(token)) return true
         if (token.type !== 'html') return false
         const html = token as HtmlToken
-        if (!html.tag) return false
-        if (html.raw.endsWith('/>')) return false
+        if (html.sourceLength != null) return false
+        // A comment, processing instruction, declaration, CDATA section or
+        // raw-text element (`<pre>`, `<script>`, ...) still before its
+        // terminator: a blank line does not end it (plan 006).
+        if (isUnterminatedHtmlBlock(html.raw)) return true
+        // A tag cut before its closing bracket (plan 008): marked consumes
+        // the line break after a block-level tag name as part of the opener,
+        // so a blank line does not end it yet (`<div\n\n` => html `<div` +
+        // space, `<div\n\ns` => one html root). Which names are block-level
+        // is marked's decision: a root it lexed as html is enough.
+        if (!html.raw.includes('>')) return true
         if (html.raw.startsWith('</')) return false
-        return html.sourceLength == null
+        if (html.tag) return !html.raw.endsWith('/>')
+        // An opening tag still waiting for its closing tag. Cleanup leaves it
+        // as a FLAT root with no `.tag`, `.tokens` or `.sourceLength`
+        // (`'<div>\n\n'` => `{ type: 'html', raw: '<div>', block: true }`
+        // + `space`); only `pairFlatHtmlTokens` adds those once `</div>`
+        // arrives and swallows the siblings in between. Freezing it before
+        // then would leave its future children as flat roots, so the
+        // document stays on the full re-lex path until it closes (#291).
+        // Genuinely self-closed tags (`<div/>`, `<br>` -> `<br/>`) get a
+        // `.tag` from cleanup and are handled above, so a tag-less `/>`
+        // source here is an opening with an unquoted attribute value
+        // (`<a href=/foo/>`); void elements never take children.
+        const tagInfo = isHtmlOpenTag(html.raw)
+        return tagInfo !== null && tagInfo.isOpening && !isVoidElement(tagInfo.tag)
     }
 
     /**
@@ -166,32 +745,31 @@ export class IncrementalParser {
         return (token as HtmlToken).sourceLength ?? token.raw.length
     }
 
-    private isStableAtSourceEnd = (token: Token): boolean => {
-        if (token.type === 'space') return false
-        // Code must be checked before the generic blank-line test: an
-        // UNCLOSED fence that pauses on a blank line inside the block also
-        // ends with `\n\n`, and treating it as stable freezes the half-open
-        // fence into the reused prefix — every later append then re-lexes in
-        // isolation and the rest of the block renders as plain markdown.
-        // (Indented code is conservatively unstable too: a further indented
-        // line after a blank line continues the same block.)
-        if (token.type === 'code') return CLOSED_FENCE_RE.test(token.raw)
-        if (token.raw.endsWith('\n\n')) return true
-
-        switch (token.type) {
-            case 'heading':
-            case 'hr':
-                return token.raw.endsWith('\n')
-            default:
-                return false
-        }
+    /**
+     * Total source characters `tokens` consumed, per `getTokenSourceLength`.
+     * The tail-window offset arithmetic is only valid when this equals the
+     * length of the source the tokens were lexed from; see
+     * `prevHasLengthMismatch`.
+     *
+     * @param tokens - Root tokens from one lex, in document order
+     * @returns The summed source span of `tokens`
+     * @example
+     * ```typescript
+     * this.sumSourceLength(lexAndClean('# A\n\nB', options, false)) // 6 (= source length)
+     * this.sumSourceLength(lexAndClean('a\r\n\r\nb', options, false)) // 4, not 6
+     * ```
+     */
+    private sumSourceLength = (tokens: readonly Token[]): number => {
+        let total = 0
+        for (const token of tokens) total += this.getTokenSourceLength(token)
+        return total
     }
 
     /**
      * True when `source` contains reference-style link syntax that could
      * resolve against a definition — either a full reference (`[text][id]`)
      * or a shortcut (`[text]`). It says nothing about whether a matching
-     * definition exists; pair it with {@link hasReferenceDefinition} for that.
+     * definition exists; definitions are read from the lexed tokens.
      *
      * @param source - Markdown source to scan
      * @returns `true` if a full or shortcut reference use is present
@@ -215,54 +793,58 @@ export class IncrementalParser {
      * renderable uses and should not keep a stream reference-sensitive after
      * the definition has already been handled.
      *
-     * @param source - Markdown source or source slice to scan
+     * A definition cannot interrupt a paragraph, so a definition-shaped line
+     * directly after a non-blank line is paragraph text (or a lazy
+     * continuation of a list item or blockquote), and its label IS a use
+     * (`Intro\n[k]: /k` is one paragraph citing `[k]`). A definition-shaped
+     * line is therefore skipped only at the start of `source`, after a blank
+     * line, or after another skipped definition line — and only when it is a
+     * whole definition on one line (`COMPLETE_DEFINITION_LINE_RE`): marked
+     * rejects `[k]:\n7. seven` or `[k]: /k junk` as definitions, and they
+     * are paragraph text citing `[k]`. Everything else counts as a use
+     * (a definition after a heading, a destination on the next line):
+     * conservative, it only costs a citing-root search when a definition
+     * changes.
+     *
+     * @param source - Markdown source or source slice to scan; its first
+     *   line is treated as following a blank line
      * @returns `true` if a full or shortcut reference use appears on a
      *   non-definition line
      * @example
      * ```typescript
      * this.hasPotentialReferenceUseOutsideDefinitions('[docs]: /docs') // false
      * this.hasPotentialReferenceUseOutsideDefinitions('see [docs]')     // true
+     * this.hasPotentialReferenceUseOutsideDefinitions('Intro\n[k]: /k') // true
      * ```
      */
     private hasPotentialReferenceUseOutsideDefinitions = (source: string): boolean => {
         if (!source.includes('[') || !source.includes(']')) return false
 
+        let definitionMayStart = true
         for (const line of source.split('\n')) {
-            if (REFERENCE_DEFINITION_RE.test(line)) continue
+            if (definitionMayStart && COMPLETE_DEFINITION_LINE_RE.test(line)) continue
             if (this.hasPotentialReferenceUse(line)) return true
+            definitionMayStart = BLANK_LINE_RE.test(line)
         }
 
         return false
     }
 
     /**
-     * True when `source` contains a link reference definition line
-     * (`[label]: url`). A definition can retroactively change how reference
-     * uses elsewhere in the document render, which is what makes it relevant
-     * to tail-window safety.
-     *
-     * @param source - Markdown source to scan
-     * @returns `true` if a reference definition line is present
-     * @example
-     * ```typescript
-     * this.hasReferenceDefinition('[docs]: /docs')  // true
-     * this.hasReferenceDefinition('see [docs]')     // false
-     * ```
-     */
-    private hasReferenceDefinition = (source: string): boolean => {
-        if (!source.includes('[') || !source.includes(']')) return false
-        return REFERENCE_DEFINITION_RE.test(source)
-    }
-
-    /**
      * True when an append-only update newly introduces text accepted by
-     * `matches`. Reference uses and definitions cannot span newlines, so a
-     * token split across the append boundary can only complete on the line
-     * that straddles it; checking the appended slice plus that single boundary
-     * line catches every case without rescanning the accumulated source.
-     * Assumes `source` starts with `prevSource` — callers guard the non-append
-     * case. (The one unbounded input is a document streamed as a single
-     * newline-free line, where the boundary line grows with the document.)
+     * `matches`. Reference uses cannot span newlines, so a use split across
+     * the append boundary can only complete on the line that straddles it;
+     * checking the appended slice plus that boundary line — and the one line
+     * before it, which decides whether a definition-shaped line is a
+     * definition or paragraph text (see
+     * `hasPotentialReferenceUseOutsideDefinitions`) — catches every case
+     * without rescanning the accumulated source. Assumes `source` starts
+     * with `prevSource` — callers guard the non-append case. (The one
+     * unbounded input is a document streamed as a single newline-free line,
+     * where the boundary line grows with the document.)
+     *
+     * Detects NEW matches only: a boundary line that already matched before
+     * the append returns `false` even if the append extends it.
      *
      * @param source - Full source string for an append-only update
      * @param matches - Predicate identifying the reference syntax of interest
@@ -282,7 +864,9 @@ export class IncrementalParser {
         const lineStart = this.prevSource.lastIndexOf('\n') + 1
         // Already present on the boundary line before the append ⇒ not new.
         if (matches(this.prevSource.slice(lineStart))) return false
-        return matches(source.slice(lineStart))
+        const contextStart =
+            lineStart > 1 ? this.prevSource.lastIndexOf('\n', lineStart - 2) + 1 : 0
+        return matches(source.slice(contextStart))
     }
 
     /**
@@ -290,8 +874,12 @@ export class IncrementalParser {
      * i.e. this is not the first update and `source` begins with `prevSource`.
      * Computed once per `update` and threaded into `canUseTailWindow` /
      * `parseSource` so the full-length `startsWith` scan runs a single time.
+     * When the caller already verified that `source` starts with `appendsTo`
+     * and `appendsTo` is `prevSource` (normally the same string object, so the
+     * equality check is O(1)), that scan is skipped (plan 011).
      *
      * @param source - The full new source string for this update
+     * @param appendsTo - A string the caller verified `source` starts with
      * @returns `true` if this update only appends to `prevSource`
      * @example
      * ```typescript
@@ -300,65 +888,24 @@ export class IncrementalParser {
      * this.isAppendOnlyUpdate('# A\n\nX') // false (diverges from prevSource)
      * ```
      */
-    private isAppendOnlyUpdate = (source: string): boolean =>
-        this.prevSource !== '' && source.startsWith(this.prevSource)
-
-    /**
-     * True when appending to `prevSource` introduces a reference definition
-     * that was not already present. Definitions can arrive wholly in the
-     * appended slice or be completed across the append boundary, such as
-     * `[do` followed by `cs]: /docs`. Returns false for any update that is not
-     * a pure append of `prevSource`.
-     *
-     * @param source - The full new source, expected to start with `prevSource`
-     * @returns `true` if the appended update adds a reference definition
-     * @example
-     * ```typescript
-     * // prevSource === '[do'
-     * this.hasNewReferenceDefinition('[docs]: /d') // true
-     * ```
-     */
-    private hasNewReferenceDefinition = (source: string): boolean => {
-        if (!source.startsWith(this.prevSource)) return false
-        return this.appendIntroducesMatch(source, this.hasReferenceDefinition)
-    }
-
-    /**
-     * True when a reference definition arriving in the appended tail can
-     * retroactively change how existing reference-style uses in the stable
-     * prefix render — the one case where an append-only stream is not safe
-     * to serve incrementally. This is the standalone form used as
-     * `canUseTailWindow`'s default argument; the hot path in `update` computes
-     * the same value inline (reusing `appendAddsDefinition`) so the boundary
-     * scan runs a single time per update.
-     *
-     * @param source - The full new source string for this update
-     * @returns `true` if a newly appended definition can change how the reused
-     *   prefix renders, meaning the tail window must be bypassed
-     * @example
-     * ```typescript
-     * // prevSource === 'see [docs]\n\n' (a shortcut use already rendered)
-     * this.appendedDefinitionInvalidatesTail('see [docs]\n\n[docs]: /d') // true
-     * ```
-     */
-    private appendedDefinitionInvalidatesTail = (source: string): boolean =>
-        this.prevHasPotentialReferenceUse && this.hasNewReferenceDefinition(source)
+    private isAppendOnlyUpdate = (source: string, appendsTo?: string): boolean =>
+        this.prevSource !== '' &&
+        (appendsTo === this.prevSource || source.startsWith(this.prevSource))
 
     /**
      * Decides whether an update may reuse the stable token prefix and re-lex
      * only the appended tail (`boundary.reparseOffset` onward) instead of the
      * whole document. Returns false whenever that shortcut could diverge from a
-     * full parse: caller parser hooks are active, the update is not append-only,
-     * the boundary is empty, or reference syntax straddles the prefix/tail split
-     * in a way a tail-only re-lex cannot resolve.
+     * full parse: caller parser hooks are active, the update is not
+     * append-only, the boundary is empty, or the previous roots do not add up
+     * to the source. Reference definitions do not bypass the tail window: the
+     * tail is lexed with the prefix's definitions (see `parseTailWindow`), and
+     * a changed definition is handled after that lex, from its tokens.
      *
      * @param source - The full new source string for this update
      * @param boundary - The stable-prefix boundary from `getTailWindowBoundary`
      * @param isAppendOnly - Precomputed append-only fact from `update`; direct
      *   helper callers may omit it to compute the same fact locally
-     * @param referenceInvalidatesTail - Precomputed reference-safety flag;
-     *   defaults to `appendedDefinitionInvalidatesTail(source)` for standalone
-     *   callers that have not computed it already
      * @returns `true` if the appended tail can be re-lexed in isolation
      * @example
      * ```typescript
@@ -371,49 +918,425 @@ export class IncrementalParser {
     private canUseTailWindow = (
         source: string,
         boundary: TailWindowBoundary,
-        isAppendOnly = this.isAppendOnlyUpdate(source),
-        referenceInvalidatesTail = this.appendedDefinitionInvalidatesTail(source)
+        isAppendOnly = this.isAppendOnlyUpdate(source)
     ): boolean => {
         if (this.tailWindowDisabled) return false
         if (this.prevSource === '' || this.prevTokens.length === 0) return false
         if (!isAppendOnly) return false
-        if (boundary.reparseOffset <= 0) return false
-        if (referenceInvalidatesTail) return false
-
-        // A reference definition living in the reused prefix is invisible to a
-        // tail-only re-lex (marked's link map is per-lex), so any reference use
-        // in the tail slice would render unresolved. The cached definition flag
-        // keeps definition-free streams on the cheap path.
-        if (this.prevHasReferenceDefinition) {
-            const tail = source.slice(boundary.reparseOffset)
-            if (this.hasPotentialReferenceUseOutsideDefinitions(tail)) {
-                return false
-            }
-        }
-
-        return true
+        // A carriage return in the source, before or in this append: offsets
+        // computed from root lengths may be wrong although they add up.
+        if (this.prevHasCarriageReturn || this.appendHasCarriageReturn(source)) return false
+        // The cached boundary is already empty on a length mismatch; checked
+        // here too so a boundary from elsewhere cannot bypass the guard.
+        return boundary.reparseOffset > 0 && !this.prevHasLengthMismatch
     }
 
+    /**
+     * True when the part of `source` after `prevSource` contains a carriage
+     * return. O(appended); assumes `source` starts with `prevSource`.
+     *
+     * @param source - Full source for an append-only update
+     * @returns `true` if the appended slice contains `\r`
+     * @example
+     * ```typescript
+     * // prevSource === 'a\n'
+     * this.appendHasCarriageReturn('a\nb\r\n') // true
+     * ```
+     */
+    private appendHasCarriageReturn = (source: string): boolean =>
+        source.indexOf('\r', this.prevSource.length) >= 0
+
+    /**
+     * All reference definitions under `tokens`, from marked's `def` tokens;
+     * see `collectDefinitions`. The single entry point for definition walks,
+     * so their cost is observable.
+     *
+     * @param tokens - Tokens in document order
+     * @returns A new definition map
+     * @example
+     * ```typescript
+     * this.collectLinks(tailTokens) // { a: { href: '/x', title: undefined } }
+     * ```
+     */
+    private collectLinks = (tokens: readonly Token[]): LinkMap =>
+        collectDefinitions(tokens, createLinkMap())
+
+    /**
+     * Lexes an appended tail seeded with the definitions that precede it, so
+     * tail references resolve against the prefix and a duplicate label keeps
+     * the prefix's definition, exactly as in a one-shot lex. A tail without
+     * `[` can neither use nor define a reference, so it is lexed unseeded
+     * (skipping the map copy).
+     *
+     * @param tailSource - Source from the reparse offset to the end
+     * @param links - Definitions of the stable prefix
+     * @returns The tail's root tokens
+     * @example
+     * ```typescript
+     * this.lexTail('See [a].', { a: { href: '/x', title: undefined } }) // paragraph with a link
+     * ```
+     */
+    private lexTail = (tailSource: string, links: LinkMap, baseOffset: number): Token[] =>
+        lexAndClean(
+            tailSource,
+            this.options,
+            false,
+            hasAnyLabel(links) && tailSource.includes('[') ? links : undefined,
+            this.provenance,
+            baseOffset
+        )
+
+    /**
+     * Parses an append-only update in the tail window: the tail is lexed
+     * seeded with the prefix's definitions, then whether a definition changed
+     * is read from the tail's `def` tokens.
+     *
+     * 1. Tail without `]:` — it cannot add, change or remove a definition
+     *    (the previous tail's source is a prefix of it), so no definition work.
+     * 2. Otherwise the tail's definitions are compared with the ones the
+     *    previous tail contributed. No change, or no reference use anywhere
+     *    in the previous source: a plain tail-window update.
+     * 3. A changed label with possible uses: re-lex the prefix roots that
+     *    cite it (`parseDefinitionUpdate`), else a full re-lex; either way the
+     *    update is reference-sensitive.
+     *
+     * @param source - Full source for this append-only update
+     * @param boundary - Stable-prefix boundary (non-empty)
+     * @returns The parse result for this update
+     * @example
+     * ```typescript
+     * // prevSource === 'See [a].\n\n'
+     * this.parseTailWindow('See [a].\n\n> [a]: /x\n', boundary) // re-lexes the tail and 'See [a].'
+     * ```
+     */
+    private parseTailWindow = (source: string, boundary: TailWindowBoundary): ParseSourceResult => {
+        const tailSource = source.slice(boundary.reparseOffset)
+        if (!tailSource.includes(DEFINITION_SIGIL)) {
+            const tailTokens = this.lexTail(tailSource, this.knownLinks, boundary.reparseOffset)
+            return this.createTailWindowResult(source, boundary, tailTokens, this.knownLinks)
+        }
+
+        const previousTailLinks = this.collectLinks(this.prevTokens.slice(boundary.prefixCount))
+        const prefixLinks = withoutLabels(this.knownLinks, previousTailLinks)
+        const tailTokens = this.lexTail(tailSource, prefixLinks, boundary.reparseOffset)
+        const tailLinks = this.collectLinks(tailTokens)
+        const changedLabels = getChangedLabels(previousTailLinks, tailLinks, prefixLinks)
+        // Earlier definitions win: prefix entries override tail entries (the
+        // seeded tail lex emits no `def` for a prefix label anyway).
+        const links = Object.assign(createLinkMap(), tailLinks, prefixLinks)
+        if (changedLabels.length === 0 || !this.prevHasPotentialReferenceUse) {
+            return this.createTailWindowResult(source, boundary, tailTokens, links)
+        }
+        return (
+            this.parseDefinitionUpdate(source, boundary, tailTokens, changedLabels, links) ??
+            this.parseFullSource(source, true)
+        )
+    }
+
+    /**
+     * The plain tail-window result: the previous prefix roots (same objects)
+     * followed by the freshly lexed tail.
+     *
+     * @param source - Full source for this update
+     * @param boundary - Stable-prefix boundary (non-empty)
+     * @param tailTokens - Roots lexed from `source.slice(boundary.reparseOffset)`
+     * @param links - Every definition in the resulting tokens
+     * @returns A tail-window parse result that is not reference-sensitive
+     * @example
+     * ```typescript
+     * this.createTailWindowResult(source, boundary, tailTokens, this.knownLinks)
+     * ```
+     */
+    private createTailWindowResult = (
+        source: string,
+        boundary: TailWindowBoundary,
+        tailTokens: Token[],
+        links: LinkMap
+    ): ParseSourceResult => {
+        if (STREAM_STATS_ENABLED) {
+            countStreamStat('copiedRoots', boundary.prefixCount + tailTokens.length)
+        }
+        return {
+            // `slice` + `concat` is several times faster than spreading the
+            // prefix at thousands of roots (plan 011).
+            tokens: this.prevTokens.slice(0, boundary.prefixCount).concat(tailTokens),
+            tailTokens,
+            usedTailWindow: true,
+            reusedPrefixCount: boundary.prefixCount,
+            // Offset integrity (O(tail)): the prefix covers `reparseOffset` by
+            // construction, so only the tail needs to add up. On a mismatch
+            // `parseSource` discards this result for a full re-lex: the tail's
+            // blank-line split can differ from a one-shot parse.
+            hasLengthMismatch:
+                this.sumSourceLength(tailTokens) !== source.length - boundary.reparseOffset,
+            links,
+            referenceSensitive: false
+        }
+    }
+
+    /**
+     * Completes a tail-window update whose tail changed the definition of a
+     * label the prefix may use: each prefix root that cites a changed label
+     * is re-lexed with the complete definition map; every other prefix root
+     * is kept as-is. The tail is already lexed, so this re-lexes at most the
+     * prefix — never more characters than a full re-lex. Returns `undefined`
+     * (the caller then does a full re-lex) when the prefix offsets do not add
+     * up, or a re-lexed root does not reproduce exactly one root with the
+     * same type, raw and span.
+     *
+     * @param source - Full source for this append-only update
+     * @param boundary - Stable-prefix boundary (non-empty)
+     * @param tailTokens - The tail, lexed seeded with the prefix's definitions
+     * @param changedLabels - Normalized labels whose definition changed
+     * @param links - The complete definition map for `source`
+     * @returns The spliced tokens, or `undefined` to fall back to a full re-lex
+     * @example
+     * ```typescript
+     * // prevSource === 'See [a].\n\nPlain.\n\n'
+     * this.parseDefinitionUpdate(source, boundary, tailTokens, ['a'], links)
+     * // re-lexes 'See [a].' only
+     * ```
+     */
+    private parseDefinitionUpdate = (
+        source: string,
+        boundary: TailWindowBoundary,
+        tailTokens: Token[],
+        changedLabels: string[],
+        links: LinkMap
+    ): ParseSourceResult | undefined => {
+        const prefixRoots = this.prevTokens.slice(0, boundary.prefixCount)
+        const candidates = this.findCitingRoots(source, prefixRoots, changedLabels, boundary)
+        if (!candidates) return undefined
+        const roots = this.relexCitingRoots(prefixRoots, candidates, links)
+        if (!roots) return undefined
+        if (STREAM_STATS_ENABLED) countStreamStat('copiedRoots', roots.length + tailTokens.length)
+        return {
+            tokens: [...roots, ...tailTokens],
+            tailTokens,
+            usedTailWindow: true,
+            reusedPrefixCount: 0,
+            // Offset integrity (O(tail)): the prefix roots end at
+            // `reparseOffset` (checked in `findCitingRoots`) and each re-lexed
+            // root keeps its span (checked in `relexCitingRoots`).
+            hasLengthMismatch:
+                this.sumSourceLength(tailTokens) !== source.length - boundary.reparseOffset,
+            links,
+            referenceSensitive: true
+        }
+    }
+
+    /**
+     * Finds the stable prefix roots whose source uses any of `labels`,
+     * without lexing. Offsets are summed over the prefix and must land on
+     * `boundary.reparseOffset`.
+     *
+     * @param source - Full source for this update
+     * @param prefixRoots - Stable prefix roots from the previous parse
+     * @param labels - Normalized labels whose definition changed
+     * @param boundary - Stable-prefix boundary the roots end at
+     * @returns Citing roots with their source, or `undefined` to fall back
+     * @example
+     * ```typescript
+     * this.findCitingRoots(source, prefixRoots, ['a'], boundary)
+     * ```
+     */
+    private findCitingRoots = (
+        source: string,
+        prefixRoots: Token[],
+        labels: string[],
+        boundary: TailWindowBoundary
+    ): CitingRoot[] | undefined => {
+        const matchers = labels.map(createLabelUseMatcher)
+        const candidates: CitingRoot[] = []
+        let offset = 0
+        for (let index = 0; index < prefixRoots.length; index++) {
+            const root = prefixRoots[index]
+            const start = offset
+            offset += this.getTokenSourceLength(root)
+            if (REFERENCE_INERT_ROOT_TYPES.has(root.type)) continue
+            const text = this.getNormalizedRootText(root, source, start, offset)
+            if (!matchers.some((matcher) => matcher.test(text))) continue
+            candidates.push({ index, start, source: source.slice(start, offset), text })
+        }
+        return offset === boundary.reparseOffset ? candidates : undefined
+    }
+
+    /**
+     * Re-lexes each citing root with the complete link map; see
+     * `parseDefinitionUpdate`. A root that itself holds a definition (nested
+     * in a blockquote, list item or html block) is seeded WITHOUT its own
+     * labels, so its lexer registers them and emits their `def` tokens again
+     * instead of dropping them as duplicates.
+     *
+     * @param prefixRoots - Stable prefix roots from the previous parse
+     * @param candidates - Roots that use a changed label
+     * @param links - The complete definition map for the current source
+     * @returns Prefix roots with citing roots replaced (the input array when
+     *   there are none), or `undefined` to fall back to a full re-lex
+     * @example
+     * ```typescript
+     * this.relexCitingRoots(prefixRoots, candidates, links)
+     * ```
+     */
+    private relexCitingRoots = (
+        prefixRoots: Token[],
+        candidates: CitingRoot[],
+        links: LinkMap
+    ): Token[] | undefined => {
+        let roots: Token[] | undefined
+        for (const candidate of candidates) {
+            // Re-lexed alone, the root starts from marked's default inline
+            // state; inside an open inline `<code>` / `<a ` it would not.
+            if (
+                candidate.index > 0 &&
+                this.getInlineStateAfter(prefixRoots[candidate.index - 1]) !== DEFAULT_INLINE_STATE
+            ) {
+                return undefined
+            }
+            const root = prefixRoots[candidate.index]
+            const seed = candidate.source.includes(DEFINITION_SIGIL)
+                ? withoutLabels(links, this.collectLinks([root]))
+                : links
+            const relexed = lexAndClean(
+                candidate.source,
+                this.options,
+                false,
+                seed,
+                this.provenance,
+                candidate.start
+            )
+            if (relexed.length !== 1) return undefined
+            if (relexed[0].type !== root.type || relexed[0].raw !== root.raw) return undefined
+            // Offset integrity: the root must still consume its exact span.
+            if (this.getTokenSourceLength(relexed[0]) !== candidate.source.length) return undefined
+            roots ??= prefixRoots.slice()
+            roots[candidate.index] = relexed[0]
+        }
+        return roots ?? prefixRoots
+    }
+
+    /**
+     * Normalized source text of a stable prefix root, cached per root object.
+     *
+     * @param root - A stable prefix root
+     * @param source - Full source the root's offsets refer to
+     * @param start - Root start offset in `source`
+     * @param end - Root end offset in `source`
+     * @returns `normalizeReferenceText` of the root's source span
+     * @example
+     * ```typescript
+     * this.getNormalizedRootText(root, source, 0, root.raw.length)
+     * ```
+     */
+    private getNormalizedRootText = (
+        root: Token,
+        source: string,
+        start: number,
+        end: number
+    ): string => {
+        let text = this.normalizedRootText.get(root)
+        if (text === undefined) {
+            text = normalizeReferenceText(source.slice(start, end))
+            this.normalizedRootText.set(root, text)
+        }
+        return text
+    }
+
+    /**
+     * Re-lexes the whole source; the fallback for every update the tail
+     * window or the targeted definition path cannot serve. Definitions are
+     * collected from the roots only when the source contains `]:`, and
+     * compared with the previous parse's to decide reference sensitivity.
+     *
+     * @param source - Full source for this update
+     * @param isAppendOnly - Whether `source` appends to the previous source
+     * @returns A full-parse result (no reused prefix)
+     * @example
+     * ```typescript
+     * this.parseFullSource('# A\n\nB', true) // { tokens: [heading, space, paragraph], usedTailWindow: false, ... }
+     * ```
+     */
+    private parseFullSource = (source: string, isAppendOnly: boolean): ParseSourceResult => {
+        const tokens = lexAndClean(source, this.options, false, undefined, this.provenance)
+        // The lex was already O(document), so neither the scan for `]:`, the
+        // definition walk nor the full length sum adds an order.
+        const links = source.includes(DEFINITION_SIGIL) ? this.collectLinks(tokens) : NO_LINKS
+        return {
+            tokens,
+            tailTokens: [],
+            usedTailWindow: false,
+            reusedPrefixCount: 0,
+            hasLengthMismatch: this.sumSourceLength(tokens) !== source.length,
+            links,
+            referenceSensitive: this.definitionsAffectUses(source, links, isAppendOnly)
+        }
+    }
+
+    /**
+     * Whether the definitions of a fully re-lexed source can change how a
+     * root that kept its `raw` renders. For an append, that needs a label
+     * whose definition changed and a possible reference use in the previous
+     * source. For any other edit (no prefix is reused anyway) it stays as
+     * conservative as before: definitions on either side plus a possible use.
+     *
+     * @param source - Full source for this update
+     * @param links - Every definition in the new tokens
+     * @param isAppendOnly - Whether `source` appends to the previous source
+     * @returns `true` if the update must be treated as reference-sensitive
+     * @example
+     * ```typescript
+     * // prevSource === 'See [a].\n\n' (a use, no definition yet)
+     * this.definitionsAffectUses('See [a].\n\n[a]: /x', { a: A }, true) // true
+     * ```
+     */
+    private definitionsAffectUses = (
+        source: string,
+        links: LinkMap,
+        isAppendOnly: boolean
+    ): boolean => {
+        if (isAppendOnly) {
+            return (
+                this.prevHasPotentialReferenceUse &&
+                getChangedLabels(this.knownLinks, links, NO_LINKS).length > 0
+            )
+        }
+        return (
+            (hasAnyLabel(this.knownLinks) || hasAnyLabel(links)) &&
+            (this.prevHasPotentialReferenceUse || this.hasPotentialReferenceUse(source))
+        )
+    }
+
+    /**
+     * Produces this update's tokens: the tail window when it may be used,
+     * else a full re-lex. A tail-window (or targeted definition) result whose
+     * roots do not add up to the source is discarded for a full re-lex: marked
+     * dropped or rewrote source in the tail (a duplicate definition, CRLF),
+     * and the separately lexed tail can then split blank lines differently
+     * from a one-shot parse (`space "\n\n" + space "\n"` vs `space "\n\n\n"`).
+     * That costs one extra lex on the rare update where it happens; the flag
+     * the full result carries keeps later updates off the tail window.
+     *
+     * @param source - Full source for this update
+     * @param boundary - Stable-prefix boundary from `getTailWindowBoundary`
+     * @param isAppendOnly - Whether `source` appends to the previous source
+     * @returns The parse result for this update
+     * @example
+     * ```typescript
+     * this.parseSource(source, this.getTailWindowBoundary(), true)
+     * ```
+     */
     private parseSource = (
         source: string,
         boundary: TailWindowBoundary,
-        isAppendOnly: boolean,
-        referenceInvalidatesTail: boolean
+        isAppendOnly: boolean
     ): ParseSourceResult => {
-        if (!this.canUseTailWindow(source, boundary, isAppendOnly, referenceInvalidatesTail)) {
-            return {
-                tokens: lexAndClean(source, this.options, false),
-                tailTokens: [],
-                usedTailWindow: false
-            }
+        if (!this.canUseTailWindow(source, boundary, isAppendOnly)) {
+            return this.parseFullSource(source, isAppendOnly)
         }
-
-        const tailTokens = lexAndClean(source.slice(boundary.reparseOffset), this.options, false)
-        return {
-            tokens: [...this.prevTokens.slice(0, boundary.prefixCount), ...tailTokens],
-            tailTokens,
-            usedTailWindow: true
-        }
+        const result = this.parseTailWindow(source, boundary)
+        return result.usedTailWindow && result.hasLengthMismatch
+            ? this.parseFullSource(source, isAppendOnly)
+            : result
     }
 
     /**
@@ -439,8 +1362,9 @@ export class IncrementalParser {
      *
      * @param tokens - Latest token array after parsing the current source
      * @param sourceLength - Character length of the current source
-     * @param hasHtmlSpanMismatch - Whether any current token has an unknown
-     *   source span
+     * @param offsetsUnsafe - Whether token lengths cannot be mapped to source
+     *   offsets: an HTML token has an unknown source span, the roots do not
+     *   add up to `sourceLength`, or the source contains a carriage return
      * @returns The prefix token count and source offset to reuse on the next
      *   append-only update
      * @example
@@ -451,27 +1375,232 @@ export class IncrementalParser {
     private getNextTailWindowBoundary = (
         tokens: Token[],
         sourceLength: number,
-        hasHtmlSpanMismatch: boolean
+        offsetsUnsafe: boolean
     ): TailWindowBoundary => {
         // (#291) If any token is an HTML opening with no known source span,
         // the tail-window prefix is unsound: `.raw` is only the opening tag
         // itself, while children and the closing tag live elsewhere. Closed
         // HTML tokens carry `sourceLength`, so only truly partial HTML forces
-        // the empty boundary that falls through to a full re-parse.
-        if (tokens.length === 0 || hasHtmlSpanMismatch) {
+        // the empty boundary that falls through to a full re-parse. The same
+        // holds when the roots do not add up to the source length (CRLF, a
+        // duplicate reference definition): `sourceLength - raw.length` would
+        // land in the wrong place.
+        if (tokens.length === 0 || offsetsUnsafe) {
             return { prefixCount: 0, reparseOffset: 0 }
         }
 
-        const lastToken = tokens[tokens.length - 1]
-        if (this.isStableAtSourceEnd(lastToken)) {
-            return { prefixCount: tokens.length, reparseOffset: sourceLength }
+        // The LAST token is never stable, whatever its type. marked moves a
+        // block's trailing newline out of its raw once the next character is
+        // another newline (marked 15, GFM):
+        //   "```\nx\n```\n" => code "```\nx\n```\n"
+        //   "```\nx\n```\n\n" => code "```\nx\n```" + space "\n\n"
+        //   "# H\n" => heading "# H\n";  "# H\n\n" => heading "# H" + space "\n\n"
+        //   "P\n" => paragraph "P\n";    "P\n\n" => paragraph "P" + space "\n\n"
+        // (lists, blockquotes, tables, html and defs behave the same). So a
+        // token at the source end can still change its `raw` split, and
+        // freezing it one chunk early breaks parity with a one-shot parse
+        // (`raw.length` feeds source-offset render keys). No block raw ever
+        // ends in a blank line either — the blank line is always a separate
+        // `space` token — and an unclosed fence must stay in the tail anyway.
+        // Once another token follows it, it joins the prefix via this cut.
+        let cut = tokens.length - 1
+        let reparseOffset = sourceLength - this.getTokenSourceLength(tokens[cut])
+        const heldCount = this.countHeldTokens(tokens)
+        if (heldCount === undefined) return { prefixCount: 0, reparseOffset: 0 }
+        for (let held = heldCount; held > 0; held--) {
+            cut--
+            reparseOffset -= this.getTokenSourceLength(tokens[cut])
         }
+        if (this.isUnsafeCut(tokens, cut)) return { prefixCount: 0, reparseOffset: 0 }
+        return { prefixCount: cut, reparseOffset }
+    }
 
-        return {
-            prefixCount: tokens.length - 1,
-            reparseOffset: sourceLength - this.getTokenSourceLength(lastToken)
+    /**
+     * True when the tail must not start at `cut`, because the tail would be
+     * lexed in a context a one-shot parse does not have. O(1): inspects the
+     * two roots around the cut and one cached fact; the next update then
+     * re-lexes in full, and the tail window is used again as soon as the cut
+     * moves past the condition.
+     *
+     * 1. The cut splits ONE marked html block that cleanup expanded into
+     *    several roots. marked lexes `<li>x</li>\n<` as one html token and
+     *    cleanup turns it into `html <li>` + text `\n<`; the next chunk still
+     *    extends that block, so a tail lexed from the second piece becomes a
+     *    separate document (`\n</u` => space + paragraph) where a one-shot
+     *    parse keeps one html block (`<li>` spanning `</u`). Root-level `text`
+     *    only comes from such an expansion; two adjacent html-ish roots with
+     *    no `space` between them are treated the same (a false positive only
+     *    costs a full re-lex).
+     * 2. marked's inline lexer state is not the default at the cut: an inline
+     *    `<pre>`/`<code>`/`<kbd>`/`<script>` or `<a ` opened before it is not
+     *    closed yet (see `stepInlineState`), and the tail would be lexed with
+     *    a fresh state (`a <code>\n\nb` => `b` is escaped text one-shot).
+     *
+     * @param tokens - Latest root tokens
+     * @param cut - Index of the first tail root
+     * @returns `true` if the next update must re-lex the whole source
+     * @example
+     * ```typescript
+     * this.isUnsafeCut(lexAndClean('<li>x</li>\n<', options, false), 1) // true
+     * this.isUnsafeCut(lexAndClean('<li>x</li>\n\n', options, false), 1) // false
+     * ```
+     */
+    private isUnsafeCut = (tokens: Token[], cut: number): boolean =>
+        cut > 0 &&
+        ((isHtmlPiece(tokens[cut]) && isHtmlPiece(tokens[cut - 1])) ||
+            this.getInlineStateAfter(tokens[cut - 1]) !== DEFAULT_INLINE_STATE)
+
+    /**
+     * marked's inline lexer state after `root`, as recorded by
+     * `recordInlineStates` (the default when nothing was recorded).
+     *
+     * @param root - A root token of the current parse
+     * @returns The inline state bits after the root
+     * @example
+     * ```typescript
+     * this.getInlineStateAfter(tokens[cut - 1]) // DEFAULT_INLINE_STATE
+     * ```
+     */
+    private getInlineStateAfter = (root: Token): number =>
+        this.inlineStateAfter.get(root) ?? DEFAULT_INLINE_STATE
+
+    /**
+     * Records marked's inline lexer state after each root from `from` on,
+     * folding from the state after the root before it. Roots before `from`
+     * are the previous parse's objects and keep their recorded state. Only
+     * roots whose raw contains `<` can change the state, so prose costs one
+     * `includes` per root. Runs on the re-lexed tail on the tail-window
+     * path and on every root only after a full re-lex.
+     *
+     * @param tokens - Root tokens of the committed parse
+     * @param from - First root that is not a reused prefix root
+     * @example
+     * ```typescript
+     * this.recordInlineStates(parseResult.tokens, parseResult.reusedPrefixCount)
+     * ```
+     */
+    private recordInlineStates = (tokens: Token[], from: number): void => {
+        let state = from > 0 ? this.getInlineStateAfter(tokens[from - 1]) : DEFAULT_INLINE_STATE
+        for (let index = from; index < tokens.length; index++) {
+            const root = tokens[index]
+            if (root.raw.includes('<')) state = stepBlockState([root], state)
+            if (state === DEFAULT_INLINE_STATE) this.inlineStateAfter.delete(root)
+            else this.inlineStateAfter.set(root, state)
         }
     }
+
+    /**
+     * How many tokens BEFORE the last one must stay in the tail because the
+     * stream sits on a boundary the next chunk can still move, or `undefined`
+     * when the boundary must be refused (full re-lex on the next update).
+     * Never scans: it inspects at most `MAX_ADJACENT_HOLDS` + 3 roots at the
+     * end, and each rule holds a block only while the stream is on its
+     * ambiguous boundary; once a blank line (or a block no line can change)
+     * follows, the held block joins the prefix.
+     *
+     * Principle: the reused prefix ends at the last blank line that closes a
+     * block. Two parts:
+     *
+     * 1. `countBlankLineHolds` — the blocks a blank line does not close (a
+     *    list or indented code), and a whitespace-only last line that may
+     *    still become indentation.
+     * 2. Adjacency — walking back from the first tail root, every root with
+     *    no blank line between it and the tail is held while it can still
+     *    absorb or be changed by a following line (`isAdjacentOpenBlock`).
+     *    The walk stops at a blank line, at the document start, or at a
+     *    heading, thematic break or closed fence. A chain longer than
+     *    `MAX_ADJACENT_HOLDS` refuses the boundary rather than scanning on.
+     *
+     * @param tokens - Latest root tokens (non-empty)
+     * @returns Tokens to pull into the tail before the last token, or
+     *   `undefined` to refuse the boundary
+     * @example
+     * ```typescript
+     * this.countHeldTokens(lexAndClean('# H\n ', options, false)) // 1
+     * this.countHeldTokens(lexAndClean('[d]: /d\n"Ti', options, false)) // 1
+     * this.countHeldTokens(lexAndClean('1. a\n\n2', options, false)) // 2
+     * this.countHeldTokens(lexAndClean('Para\n#N', options, false)) // 1
+     * this.countHeldTokens(lexAndClean('P\n+ \n-', options, false)) // 3
+     * ```
+     */
+    private countHeldTokens = (tokens: Token[]): number | undefined => {
+        let held = this.countBlankLineHolds(tokens)
+        let first = tokens.length - 1 - held
+        if (isBlankLineAt(tokens, first)) return held
+        for (let step = 0; step < MAX_ADJACENT_HOLDS; step++) {
+            if (first === 0 || !isAdjacentOpenBlock(tokens, first - 1)) return held
+            held++
+            first--
+        }
+        return first === 0 || !isAdjacentOpenBlock(tokens, first - 1) ? held : undefined
+    }
+
+    /**
+     * The blank-line holds: rules that keep a block in the tail although a
+     * blank or whitespace-only line follows it.
+     *
+     * 1. The last token is `space` and the stream is inside a whitespace-only
+     *    line (its raw does not end with a line break): that line may still
+     *    become indentation, and marked then assigns the previous block's
+     *    trailing newline differently (`# H\n ` => heading `# H` + space,
+     *    `# H\n    i` => heading `# H\n` + code). Holds any block type.
+     * 2. The last token is `space` ending a line after a list or indented
+     *    code: a blank line does not close those blocks.
+     * 3. `list|indented code, space, X` where X is an unfinished line that
+     *    can still become the list's next item: a paragraph that is only a
+     *    partial ordered marker (`2` -> `2. second`), or a thematic break
+     *    that opens with a bullet marker and whitespace (`- - -` ->
+     *    `- - -c`, one list with item `- -c`). The list is not closed yet.
+     *    Any other text after the blank line has closed the list. The rule
+     *    does not check that the markers match (`* * *` after `- a` starts a
+     *    new list); holding one more root for a single update is harmless.
+     *
+     * @param tokens - Latest root tokens (non-empty)
+     * @returns 0, 1 or 2 tokens to pull into the tail before the last token
+     * @example
+     * ```typescript
+     * this.countBlankLineHolds(lexAndClean('# H\n ', options, false)) // 1
+     * this.countBlankLineHolds(lexAndClean('1. a\n\n2', options, false)) // 2
+     * this.countBlankLineHolds(lexAndClean('- a\n\n- - -', options, false)) // 2
+     * ```
+     */
+    private countBlankLineHolds = (tokens: Token[]): number => {
+        const cut = tokens.length - 1
+        if (cut < 1) return 0
+        const last = tokens[cut]
+        const previous = tokens[cut - 1]
+        if (last.type === 'space') {
+            return !last.raw.endsWith('\n') || this.canContinueAcrossBlankLine(previous) ? 1 : 0
+        }
+        return cut > 1 &&
+            isOpenItemStart(last) &&
+            previous.type === 'space' &&
+            this.canContinueAcrossBlankLine(tokens[cut - 2])
+            ? 2
+            : 0
+    }
+
+    /**
+     * Blocks a blank or whitespace-only line does NOT terminate: the next
+     * chunk may continue them (another list item, a further indented code
+     * line), so they must be re-lexed together with the tail. A fenced
+     * block (open or closed) is excluded: once a `space` follows it, a
+     * closed fence is done, and an open fence absorbs blank lines into its
+     * own raw so it is the last token and already in the tail. Only
+     * fence-less (indented) code qualifies.
+     *
+     * @param token - The token immediately before a trailing `space` token
+     * @returns `true` for a list or an indented code block
+     * @example
+     * ```typescript
+     * this.canContinueAcrossBlankLine(listToken) // true
+     * ```
+     */
+    private canContinueAcrossBlankLine = (token: Token): boolean =>
+        token.type === 'list' ||
+        (token.type === 'code' &&
+            !CLOSED_FENCE_RE.test(token.raw) &&
+            !FENCE_OPEN_RE.test(token.raw))
 
     /**
      * Commits parser state and refreshes cached bookkeeping facts for the next
@@ -483,28 +1612,33 @@ export class IncrementalParser {
      * @param parseResult - Parsed tokens plus metadata describing whether the
      *   tail-window shortcut was used
      * @param isAppendOnly - Whether `source` appended to the previous source
-     * @param appendAddsDefinition - Whether the append introduced a reference
-     *   definition, already computed by `update` so the boundary scan is not
-     *   repeated here
      * @returns Nothing; updates `prevSource`, `prevTokens`, and cached flags
      * @example
      * ```typescript
-     * this.updateCachedState(source, parseResult, isAppendOnly, appendAddsDefinition)
+     * this.updateCachedState(source, parseResult, isAppendOnly)
      * ```
      */
     private updateCachedState = (
         source: string,
         parseResult: ParseSourceResult,
-        isAppendOnly: boolean,
-        appendAddsDefinition: boolean
+        isAppendOnly: boolean
     ): void => {
         // HTML-span-mismatch keys on `usedTailWindow` (a fact about the tokens,
         // recomputed whenever the tail window is bypassed), while the reference
-        // facts key on `isAppendOnly` (facts about the source, which accumulate
-        // monotonically under a pure append regardless of parse strategy).
+        // use fact keys on `isAppendOnly` (a fact about the source, which
+        // accumulates monotonically under a pure append regardless of parse
+        // strategy). Definitions come from the parse result's tokens.
         const hasHtmlSpanMismatch = parseResult.usedTailWindow
             ? this.prevHasHtmlSpanMismatch || this.hasAnyHtmlSpanMismatch(parseResult.tailTokens)
             : this.hasAnyHtmlSpanMismatch(parseResult.tokens)
+        // Computed by `parseSource`: O(tail) on the tail-window paths, a full
+        // sum only after a full re-lex (which was already O(document)).
+        const { hasLengthMismatch } = parseResult
+        // Sticky under appends (O(appended)); any other update was a full
+        // re-lex, so one scan of the source adds no order.
+        const hasCarriageReturn = isAppendOnly
+            ? this.prevHasCarriageReturn || this.appendHasCarriageReturn(source)
+            : source.includes('\r')
 
         // `isAppendOnly` already guarantees `source.startsWith(prevSource)`, so
         // call `appendIntroducesMatch` directly rather than re-checking it.
@@ -512,60 +1646,117 @@ export class IncrementalParser {
             ? this.prevHasPotentialReferenceUse ||
               this.appendIntroducesMatch(source, this.hasPotentialReferenceUseOutsideDefinitions)
             : this.hasPotentialReferenceUseOutsideDefinitions(source)
-        this.prevHasReferenceDefinition = isAppendOnly
-            ? this.prevHasReferenceDefinition || appendAddsDefinition
-            : this.hasReferenceDefinition(source)
+        this.knownLinks = parseResult.links
 
         this.prevSource = source
         this.prevTokens = parseResult.tokens
         this.prevHasHtmlSpanMismatch = hasHtmlSpanMismatch
+        this.prevHasLengthMismatch = hasLengthMismatch
+        this.prevHasCarriageReturn = hasCarriageReturn
+        // Reused prefix roots keep their recorded state; only the re-lexed
+        // roots are walked (every root after a full re-lex).
+        this.recordInlineStates(parseResult.tokens, parseResult.reusedPrefixCount)
         this.prevTailWindowBoundary = this.getNextTailWindowBoundary(
             parseResult.tokens,
             source.length,
-            hasHtmlSpanMismatch
+            hasHtmlSpanMismatch || hasLengthMismatch || hasCarriageReturn
         )
     }
 
     /**
-     * Reference definitions can change inline children without changing raw,
-     * so definitions alongside reference-style uses require a full rerender.
-     * Append-only updates reuse the invalidation flag computed during parsing
-     * to avoid rescanning the accumulated source. Other edits check both sources.
+     * Finds the first root that differs from the previous parse and the
+     * absolute source offset where it begins.
+     *
+     * We compare with the semantic comparator, and for html tokens that
+     * includes the structural shape — an unclosed `<div>` and a closed
+     * `<div>...</div>` both have `raw === '<div>'` but very different
+     * `.tokens` children. Without this check the streaming consumer would
+     * never see the partial-to-closed transition. See #291.
+     *
+     * The scan starts at `parseResult.reusedPrefixCount`: on the plain
+     * tail-window path the first `boundary.prefixCount` roots are the previous
+     * parse's objects at the same indices (copied by `parseSource`), so
+     * comparing them could only return `true`. Skipping them keeps the scan
+     * proportional to the re-lexed tail instead of the document (plan 011).
+     * Every other path reports 0 and compares from index 0.
+     *
+     * `divergeOffset` lets `SvelteMarkdown.svelte` skip render-metadata work
+     * for the reused prefix. The tail-window path seeds it with the already
+     * -known `boundary.reparseOffset` (the reused prefix is covered) and only
+     * sums tokens past the prefix. The full-reparse path (which still
+     * re-lexes the whole source, e.g. when a built-in extension is not
+     * tail-safe) starts at 0 and sums every matched token from index 0, so an
+     * append-only update with a stable prefix can still skip the prefix
+     * metadata walk even though the tail-window was bypassed.
+     *
+     * @param newTokens - Tokens from the current parse
+     * @param parseResult - How the current parse was produced
+     * @param boundary - The tail-window boundary used for this parse
+     * @returns The divergence index and offset (`undefined` when unknown)
+     * @example
+     * ```typescript
+     * const { divergeAt, divergeOffset } = this.findDivergence(tokens, parseResult, boundary)
+     * ```
      */
-    private isReferenceSensitiveUpdate = (
-        source: string,
-        isAppendOnly: boolean,
-        referenceInvalidatesTail: boolean
-    ): boolean =>
-        isAppendOnly
-            ? referenceInvalidatesTail
-            : (this.prevHasReferenceDefinition || this.hasReferenceDefinition(source)) &&
-              (this.hasPotentialReferenceUse(this.prevSource) ||
-                  this.hasPotentialReferenceUse(source))
+    private findDivergence = (
+        newTokens: Token[],
+        parseResult: ParseSourceResult,
+        boundary: TailWindowBoundary
+    ): { divergeAt: number; divergeOffset: number | undefined } => {
+        let divergeAt = parseResult.reusedPrefixCount
+        let divergeOffset: number | undefined = parseResult.usedTailWindow
+            ? boundary.reparseOffset
+            : 0
+        const minLen = Math.min(this.prevTokens.length, newTokens.length)
+        while (divergeAt < minLen) {
+            const prev = this.prevTokens[divergeAt]
+            const next = newTokens[divergeAt]
+            if (STREAM_STATS_ENABLED) countStreamStat('comparedRoots')
+            if (!isSameStableNode(prev, next)) break
+            if (parseResult.usedTailWindow) {
+                // Tail-window path (unchanged): tokens up to `prefixCount`
+                // are the reused prefix already covered by `reparseOffset`.
+                if (divergeOffset !== undefined && divergeAt >= boundary.prefixCount) {
+                    divergeOffset += this.getTokenSourceLength(next)
+                }
+            } else if (divergeOffset !== undefined) {
+                // Full-reparse path: accumulate the absolute offset from
+                // index 0. A matched-prefix HTML token with an unknown
+                // source span (unclosed opening) breaks the offset→source
+                // mapping — null the offset so the consumer falls back to a
+                // full metadata walk. A wrong offset silently corrupts
+                // source keys and DOM identity; `undefined` is always safe.
+                if (this.hasHtmlSpanMismatch(next)) {
+                    divergeOffset = undefined
+                } else {
+                    divergeOffset += this.getTokenSourceLength(next)
+                }
+            }
+            divergeAt++
+        }
+        return { divergeAt, divergeOffset }
+    }
 
     /**
      * Parses the full source and diffs against the previous result.
      *
      * @param source - The full accumulated markdown source string
+     * @param appendsTo - Optional string the caller has ALREADY verified that
+     *   `source` starts with (e.g. its previous buffer before appending a
+     *   chunk). When it is the previously parsed source, the parser skips its
+     *   own full-length `startsWith` check. Passing a string `source` does not
+     *   start with breaks parsing; omit it when unsure.
      * @returns The new tokens and the index where they diverge from the previous parse
      */
-    update = (source: string): IncrementalUpdateResult => {
+    update = (source: string, appendsTo?: string): IncrementalUpdateResult => {
         const boundary = this.getTailWindowBoundary()
-        const isAppendOnly = this.isAppendOnlyUpdate(source)
-        // Whether this append introduces a reference definition. Both the
-        // tail-window decision (via `referenceInvalidatesTail`) and the cached
-        // -state refresh need it, so compute the boundary scan once here. When
-        // `prevSource` is empty this is the first update, where no cached use
-        // exists yet, so `referenceInvalidatesTail` is false either way.
-        const appendAddsDefinition =
-            isAppendOnly && this.appendIntroducesMatch(source, this.hasReferenceDefinition)
-        const referenceInvalidatesTail = this.prevHasPotentialReferenceUse && appendAddsDefinition
-        const parseResult = this.parseSource(
-            source,
-            boundary,
-            isAppendOnly,
-            referenceInvalidatesTail
-        )
+        const isAppendOnly = this.isAppendOnlyUpdate(source, appendsTo)
+        // Whether a reference definition changed is decided AFTER lexing, from
+        // marked's `def` tokens (see `parseTailWindow` / `parseFullSource`):
+        // a definition whose URL or title is still streaming, or one nested
+        // in a blockquote or list item, changes how earlier references
+        // resolve, and only the tokens say so reliably.
+        const parseResult = this.parseSource(source, boundary, isAppendOnly)
         const newTokens = parseResult.tokens
 
         // Apply walkTokens if configured
@@ -576,68 +1767,26 @@ export class IncrementalParser {
             }
         }
 
-        const referenceSensitive = this.isReferenceSensitiveUpdate(
-            source,
-            isAppendOnly,
-            referenceInvalidatesTail
-        )
+        const { referenceSensitive } = parseResult
         const canReuse = isAppendOnly && !referenceSensitive
+        const reuseMode: StreamingReuseMode = canReuse ? 'prefix' : isAppendOnly ? 'tree' : 'none'
 
-        // Find first divergence point. We compare `.raw` for fast equality,
-        // and for html tokens we also check the structural shape — an
-        // unclosed `<div>` and a closed `<div>...</div>` both have
-        // `raw === '<div>'` but very different `.tokens` children. Without
-        // this check the streaming consumer would never see the partial-
-        // to-closed transition. See #291.
-        // `divergeOffset` is the absolute source offset of the first diverged
-        // token, letting `SvelteMarkdown.svelte` skip render-metadata work for
-        // the reused prefix. The tail-window path seeds it with the already
-        // -known `boundary.reparseOffset` (the reused prefix is covered) and
-        // only sums tokens past the prefix. The full-reparse path (which still
-        // re-lexes the whole source, e.g. when a built-in extension is not
-        // tail-safe) starts at 0 and sums every matched token from index 0, so
-        // an append-only update with a stable prefix can still skip the prefix
-        // metadata walk even though the tail-window was bypassed.
-        let divergeAt = 0
-        let divergeOffset: number | undefined = parseResult.usedTailWindow
-            ? boundary.reparseOffset
-            : 0
-        if (!referenceSensitive) {
-            const minLen = Math.min(this.prevTokens.length, newTokens.length)
-            while (divergeAt < minLen) {
-                const prev = this.prevTokens[divergeAt]
-                const next = newTokens[divergeAt]
-                if (!isSameStableNode(prev, next)) break
-                if (parseResult.usedTailWindow) {
-                    // Tail-window path (unchanged): tokens up to `prefixCount`
-                    // are the reused prefix already covered by `reparseOffset`.
-                    if (divergeOffset !== undefined && divergeAt >= boundary.prefixCount) {
-                        divergeOffset += this.getTokenSourceLength(next)
-                    }
-                } else if (divergeOffset !== undefined) {
-                    // Full-reparse path: accumulate the absolute offset from
-                    // index 0. A matched-prefix HTML token with an unknown
-                    // source span (unclosed opening) breaks the offset→source
-                    // mapping — null the offset so the consumer falls back to a
-                    // full metadata walk. A wrong offset silently corrupts
-                    // source keys and DOM identity; `undefined` is always safe.
-                    if (this.hasHtmlSpanMismatch(next)) {
-                        divergeOffset = undefined
-                    } else {
-                        divergeOffset += this.getTokenSourceLength(next)
-                    }
-                }
-                divergeAt++
-            }
-        }
+        // Reference-sensitive updates report no stable prefix: inline children
+        // may differ without `raw` changing. In tree mode the offset is
+        // `undefined` so the consumer walks all render metadata.
+        const { divergeAt, divergeOffset } = referenceSensitive
+            ? { divergeAt: 0, divergeOffset: reuseMode === 'tree' ? undefined : 0 }
+            : this.findDivergence(newTokens, parseResult, boundary)
 
-        this.updateCachedState(source, parseResult, isAppendOnly, appendAddsDefinition)
+        this.updateCachedState(source, parseResult, isAppendOnly)
         return {
             tokens: newTokens,
             divergeAt,
             divergeOffset,
             canReuse,
-            usedTailWindow: parseResult.usedTailWindow
+            reuseMode,
+            usedTailWindow: parseResult.usedTailWindow,
+            reusedPrefixCount: parseResult.reusedPrefixCount
         }
     }
 }

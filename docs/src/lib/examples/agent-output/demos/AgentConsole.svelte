@@ -3,6 +3,7 @@
         defaultSanitizeAttributes,
         defaultSanitizeUrl
     } from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import type {
         SanitizeAttributesFn,
         SanitizeUrlFn,
@@ -231,6 +232,7 @@ That is everything — the renderer kept the safe content and dropped the rest.`
                     streaming={true}
                     {sanitizeUrl}
                     {sanitizeAttributes}
+                    renderers={{ code: HighlightedCode }}
                 />
                 {#if !streamSource && !isActive}
                     <p class="ag-empty">click "start" to render the simulated agent response.</p>
@@ -459,6 +461,10 @@ That is everything — the renderer kept the safe content and dropped the rest.`
         line-height: 1.65;
         color: var(--brut-ink);
         border-radius: 0;
+    }
+    .ag-out :global(pre.th-code) {
+        background: var(--th-background);
+        color: var(--th-token);
     }
     .ag-out :global(pre code) {
         background: transparent;

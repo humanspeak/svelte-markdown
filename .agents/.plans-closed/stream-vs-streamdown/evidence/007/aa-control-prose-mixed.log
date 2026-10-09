@@ -1,0 +1,14 @@
+load before prose-mixed: 1.88 3.21 2.79 at 2026-09-28T12:15:59Z (after: 0.98 2.62 2.61)
+
+=== prose-mixed (prose-mixed, 24000+ bytes, 32 chars × 1/frame, input prop, mode paired) ===
+svelte-markdown@A   run 1 [svelte-markdown@A > svelte-markdown@B]: work 2851.9ms total · avg 3.73 · p95 6.40 · peak 17.6 · over-budget 2/765 · growth 1.385 · overlap clamped 8.7ms · parity 0/31 mismatched
+svelte-markdown@B   run 1 [svelte-markdown@A > svelte-markdown@B]: work 2946.0ms total · avg 3.85 · p95 6.50 · peak 14.4 · over-budget 0/765 · growth 1.283 · overlap clamped 7.6ms · parity 0/31 mismatched
+svelte-markdown@B   run 2 [svelte-markdown@B > svelte-markdown@A]: work 2704.0ms total · avg 3.54 · p95 5.90 · peak 10.3 · over-budget 0/765 · growth 1.22 · overlap clamped 11.1ms · parity 0/31 mismatched
+svelte-markdown@A   run 2 [svelte-markdown@B > svelte-markdown@A]: work 2813.0ms total · avg 3.68 · p95 6.60 · peak 12.6 · over-budget 0/765 · growth 1.485 · overlap clamped 6.9ms · parity 0/31 mismatched
+parity svelte-markdown@A (vs fresh parse): OK — max 0 mismatched of 62 checks
+parity svelte-markdown@B (vs fresh parse): OK — max 0 mismatched of 62 checks
+median total work: A 2832.45ms · B 2825ms · lib flush A 513.9ms · B 504.5ms
+median p95 frame work: A 6.5ms · B 6.2ms · frames over 16.7ms: A 1 · B 0
+paired delta (A − B total work, median of 2 pairs): 7.45ms (0.263% of A) — B does less work
+output hash: MATCH · dom projection: MATCH
+

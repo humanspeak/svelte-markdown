@@ -1,0 +1,68 @@
+
+## aa-control
+
+| Scenario | Repeat | Load | A total | B total | Paired delta ms (% of A) | A lib flush | B lib flush | A p95 | B p95 | A over-budget | B over-budget | Parity A / B (checks) | Hash / DOM |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `prose-mixed` | — | 1.27 | 2,231 | 2,244 | -13.5 (-0.61%) | 191 | 198 | 4.8 | 4.8 | 0 | 0.5 | 0 / 0 (62) | MATCH / MATCH |
+| `long-list` | — | 1.03 | 4,551 | 4,565 | -14.0 (-0.31%) | 2,252 | 2,332 | 10.4 | 10.4 | 3 | 3 | 0 / 0 (62) | MATCH / MATCH |
+
+Per-pair deltas (A − B, ms) and per-run over-budget (A | B):
+
+- `prose-mixed` : -140.3, 113.3 · over-budget A [0,0] | B [1,0] · page errors 0
+- `long-list` : 142.8, -170.8 · over-budget A [5,1] | B [4,2] · page errors 0
+
+## ab-run
+
+| Scenario | Repeat | Load | A total | B total | Paired delta ms (% of A) | A lib flush | B lib flush | A p95 | B p95 | A over-budget | B over-budget | Parity A / B (checks) | Hash / DOM |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `prose-mixed` | 1 | 1.07 | 2,232 | 2,256 | 24.4 (1.09%) | 175 | 184 | 4.7 | 5.0 | 0 | 0 | 0 / 0 (155) | MATCH / MATCH |
+| `prose-mixed` | 2 | 2.52 | 2,297 | 2,362 | 32.9 (1.43%) | 178 | 188 | 5.0 | 5.1 | 0 | 0 | 0 / 0 (155) | MATCH / MATCH |
+| `long-list` | 1 | 1.49 | 4,166 | 4,334 | -198.5 (-4.77%) | 2,083 | 2,122 | 7.8 | 8.8 | 0 | 0 | 0 / 0 (155) | MATCH / MATCH |
+| `long-list` | 2 | 1.77 | 4,382 | 4,199 | 220.2 (5.03%) | 2,176 | 2,074 | 8.7 | 8.1 | 0 | 0 | 0 / 0 (155) | MATCH / MATCH |
+| `long-table` | 1 | 1.38 | 1,862 | 1,894 | 37.0 (1.99%) | 485 | 485 | 12.0 | 9.5 | 3 | 1 | 0 / 0 (65) | MATCH / MATCH |
+| `long-table` | 2 | 1.82 | 1,811 | 1,897 | -107.7 (-5.95%) | 453 | 490 | 8.9 | 9.9 | 0 | 2 | 0 / 0 (65) | MATCH / MATCH |
+| `long-code-fence` | 1 | 1.17 | 1,883 | 1,953 | -119.0 (-6.32%) | 114 | 125 | 4.1 | 4.1 | 0 | 0 | 0 / 0 (155) | MATCH / MATCH |
+| `long-code-fence` | 2 | 1.67 | 1,848 | 1,868 | -26.1 (-1.41%) | 117 | 119 | 3.7 | 3.9 | 0 | 0 | 0 / 0 (155) | MATCH / MATCH |
+| `citations` | 1 | 1.26 | 2,024 | 1,997 | 19.6 (0.97%) | 259 | 249 | 4.5 | 4.6 | 1 | 0 | 0 / 0 (155) | MATCH / MATCH |
+| `citations` | 2 | 1.38 | 2,075 | 1,994 | 101.0 (4.87%) | 259 | 253 | 4.7 | 4.7 | 1 | 0 | 0 / 0 (155) | MATCH / MATCH |
+| `prefix-384kb` | 1 | 1.25 | 950 | 877 | 98.2 (10.34%) | 12 | 12 | 20.8 | 18.8 | 18 | 12 | 0 / 0 (15) | MATCH / MATCH |
+| `prefix-384kb` | 2 | 1.37 | 944 | 1,011 | -94.0 (-9.96%) | 12 | 13 | 21.5 | 22.1 | 17 | 18 | 0 / 0 (15) | MATCH / MATCH |
+
+Per-pair deltas (A − B, ms) and per-run over-budget (A | B):
+
+- `prose-mixed` 1: 476.7, -62.2, -23.8, 24.4, 52.2 · over-budget A [0,0,0,0,0] | B [0,0,1,0,0] · page errors 0
+- `prose-mixed` 2: 216.9, 32.9, -142.1, -26.7, 113.2 · over-budget A [0,0,0,0,0] | B [1,0,0,1,0] · page errors 0
+- `long-list` 1: 258.3, -216.5, -314.4, -198.5, -49.4 · over-budget A [2,0,0,1,0] | B [1,0,1,0,0] · page errors 0
+- `long-list` 2: 197.4, 239.1, 362.5, 130.6, 220.2 · over-budget A [1,4,0,0,0] | B [1,1,0,0,0] · page errors 0
+- `long-table` 1: 37.0, 164.3, 76.6, 21.8, -51.4 · over-budget A [0,0,3,5,4] | B [0,0,2,1,5] · page errors 0
+- `long-table` 2: -107.7, -309.8, 189.1, -291.6, 113.5 · over-budget A [3,0,1,0,0] | B [2,6,2,1,0] · page errors 0
+- `long-code-fence` 1: -119.0, -123.4, 40.9, -70.2, -144.2 · over-budget A [0,0,0,0,0] | B [0,0,0,0,0] · page errors 0
+- `long-code-fence` 2: -153.9, -44.5, 32.7, -26.1, 94.1 · over-budget A [0,0,0,0,0] | B [0,0,0,0,0] · page errors 0
+- `citations` 1: -129.3, -69.7, 19.6, 46.8, 28.5 · over-budget A [0,1,1,1,0] | B [0,0,0,1,1] · page errors 0
+- `citations` 2: -118.2, 101.0, 107.7, 163.9, -67.0 · over-budget A [2,2,1,1,0] | B [1,0,0,1,0] · page errors 0
+- `prefix-384kb` 1: -57.4, 109.0, 98.2, -159.8, 139.5 · over-budget A [11,18,18,4,25] | B [12,14,6,20,8] · page errors 0
+- `prefix-384kb` 2: -106.8, 48.5, -94.0, -183.8, 116.3 · over-budget A [16,22,17,6,19] | B [24,16,18,23,10] · page errors 0
+
+## vs-streamdown
+
+| Scenario | Repeat | Load | Ours total | Theirs total | Paired delta (theirs − ours) | Ratio theirs ÷ ours | Ours avg | Ours p95 | Theirs p95 | Ours over-budget | Theirs over-budget | Ours lib flush | Parity (checks) | Output comparable (ratio) | DOM projection |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `citations` | 1 | 2.11 | 1,967 | 1,845 | -74.0 | 0.94 | 2.61 | 4.4 | 3.4 | 1 of 753 | 0 | 250 | 0 (155) | yes (1.025) | links.length: ours 258 · theirs 0 |
+| `citations` | 2 | 1.10 | 2,046 | 1,757 | -289.4 | 0.86 | 2.72 | 4.7 | 3.5 | 1 of 753 | 0 | 276 | 0 (155) | yes (1.025) | links.length: ours 258 · theirs 0 |
+| `prose-mixed` | 1 | 1.03 | 2,248 | 2,728 | 480.6 | 1.21 | 2.94 | 5.0 | 5.4 | 0 of 765 | 0 | 189 | 0 (155) | yes (1.019) | MATCH |
+| `prose-mixed` | 2 | 1.28 | 2,227 | 2,728 | 434.2 | 1.23 | 2.91 | 4.9 | 5.8 | 0 of 765 | 0 | 183 | 0 (155) | yes (1.019) | MATCH |
+| `loose-ordered-list` | 1 | 1.20 | 4,334 | 10,896 | 6,600.2 | 2.51 | 5.76 | 10.8 | 26.2 | 4 of 753 | 306 | 2,193 | 0 (155) | yes (1.013) | MATCH |
+| `loose-ordered-list` | 2 | 1.13 | 4,425 | 10,770 | 6,345.4 | 2.43 | 5.88 | 9.6 | 26.1 | 1 of 753 | 293 | 2,164 | 0 (155) | yes (1.013) | MATCH |
+| `html-blocks` | 1 | 1.40 | 3,686 | 2,352 | -1,316.5 | 0.64 | 4.91 | 12.6 | 5.0 | 6 of 751 | 0 | 1,970 | 0 (155) | NO (1.268) | MATCH |
+| `html-blocks` | 2 | 1.03 | 4,007 | 2,401 | -1,621.8 | 0.60 | 5.34 | 13.2 | 5.1 | 9 of 751 | 0 | 2,020 | 0 (155) | NO (1.268) | MATCH |
+
+Per-pair deltas (theirs − ours, ms), per-run over-budget (ours | theirs), DOM nodes (ours / theirs):
+
+- `citations` 1: -145.3, -215.3, -22.2, -74.0, -67.6 · over-budget [0,1,1,0,1] | [0,0,0,0,0] · DOM nodes 776 / 519 · page errors 0
+- `citations` 2: -307.0, -289.4, -104.4, -257.5, -300.7 · over-budget [0,1,2,0,1] | [0,0,0,0,0] · DOM nodes 776 / 519 · page errors 0
+- `prose-mixed` 1: 480.6, 277.6, 463.5, 642.0, 766.3 · over-budget [1,0,0,0,0] | [0,0,0,2,1] · DOM nodes 1381 / 1704 · page errors 0
+- `prose-mixed` 2: 327.0, 513.7, 557.0, 424.9, 434.2 · over-budget [0,0,0,0,0] | [0,0,1,1,0] · DOM nodes 1381 / 1704 · page errors 0
+- `loose-ordered-list` 1: 6,290.9, 6,731.4, 6,600.2, 6,657.2, 6,288.6 · over-budget [4,3,2,6,4] | [293,308,306,317,305] · DOM nodes 1014 / 1015 · page errors 0
+- `loose-ordered-list` 2: 6,555.7, 6,284.3, 6,412.0, 6,290.7, 6,345.4 · over-budget [9,4,1,1,0] | [301,305,290,293,287] · DOM nodes 1014 / 1015 · page errors 0
+- `html-blocks` 1: -1,235.3, -1,494.1, -1,316.5, -1,313.0, -1,524.5 · over-budget [6,6,7,6,7] | [0,0,0,0,0] · DOM nodes 856 / 686 · page errors 0
+- `html-blocks` 2: -1,621.8, -1,606.7, -1,457.7, -1,638.2, -1,694.5 · over-budget [7,15,8,9,9] | [0,0,0,0,0] · DOM nodes 856 / 686 · page errors 0

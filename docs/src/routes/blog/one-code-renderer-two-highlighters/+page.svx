@@ -1,0 +1,161 @@
+---
+title: One Code Renderer, Two Highlighters
+date: '2026-09-27T12:00:00-04:00'
+description: Why @humanspeak/svelte-markdown now ships an engine-agnostic HighlightedCode renderer with Shiki and TanStack Highlight as interchangeable, opt-in engines — and what streaming code from an LLM taught us about the tradeoff.
+tags:
+    - syntax-highlighting
+    - streaming
+    - shiki
+    - tanstack
+    - svelte-5
+author: Jason Kummerl
+readingTime: 7
+---
+
+<script lang="ts">
+    import { BlogPostV2, type BlogPostMeta } from '@humanspeak/docs-kit/blog'
+    import { docsConfig } from '$lib/docs-config'
+
+    const post: BlogPostMeta = {
+        slug: 'one-code-renderer-two-highlighters',
+        title: 'One Code Renderer, Two Highlighters',
+        date: '2026-09-27T12:00:00-04:00',
+        description:
+            'Why @humanspeak/svelte-markdown now ships an engine-agnostic HighlightedCode renderer with Shiki and TanStack Highlight as interchangeable, opt-in engines — and what streaming code from an LLM taught us about the tradeoff.',
+        tags: ['syntax-highlighting', 'streaming', 'shiki', 'tanstack', 'svelte-5'],
+        author: 'Jason Kummerl',
+        readingTime: 7
+    }
+</script>
+
+<BlogPostV2 {post} config={docsConfig}>
+
+When we shipped Shiki highlighting for [`@humanspeak/svelte-markdown`](https://www.npmjs.com/package/@humanspeak/svelte-markdown) earlier this year, the headline was the part that didn't exist: no async work on the render path. Shiki's synchronous core plus its pure-JavaScript regex engine meant a fenced code block could be highlighted _during_ an LLM stream without tripping the guard that turns streaming off. That was the whole trick, and it held up.
+
+What didn't hold up quite as well was the bill. A highlighter with three languages and one theme is about 87 KB gzipped. For a documentation site that renders a page once, fine. For a chat UI that streams a 200-line code block one token at a time and re-highlights the open fence on every frame, it's a tax you pay on every keystroke the model produces.
+
+Then TanStack shipped [TanStack Highlight](https://tanstack.com/highlight/latest): 25 languages, hand-written scanners, semantic CSS classes instead of inline colors, about 4 KB gzipped for the same three languages. It is deliberately not a TextMate engine. It is also, for the specific job of rendering streamed agent output, very close to exactly what we wanted.
+
+So the question became: do we swap, or do we support both? This post is about why the answer was "neither, and both."
+
+## The renderer was never about Shiki
+
+Here is the entire interface `ShikiCode` was built on:
+
+```ts
+interface CodeHighlighter {
+    highlight(code: string, lang: string): string
+    hasLang(lang: string): boolean
+}
+```
+
+Two synchronous methods. Everything Shiki-specific lived in the factory that produced this object: which grammars to load, which theme to render, how to escape the unregistered-language fallback. The renderer itself only ever called `highlight` and pasted the result into `{@html}`.
+
+That meant the refactor was mostly a rename. We moved the interface, the context key, and the module singleton to a new engine-free subpath, `@humanspeak/svelte-markdown/extensions/highlight`, and renamed the component to `HighlightedCode`. The Shiki subpath keeps exporting `ShikiCode`, `SHIKI_CONTEXT_KEY`, and `setShikiHighlighter` as aliases of the same component, the same symbol, and the same singleton, so nobody's existing code changes. Then we added a second factory. Here is the whole TanStack setup, end to end:
+
+```bash
+pnpm add @tanstack/highlight
+```
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import {
+        createTanstackHighlighter,
+        HighlightedCode,
+        setCodeHighlighter
+    } from '@humanspeak/svelte-markdown/extensions/tanstack-highlight'
+    import { ts } from '@tanstack/highlight/languages/ts'
+    import { json } from '@tanstack/highlight/languages/json'
+    import { createThemeCss } from '@tanstack/highlight/theme'
+    import githubDark from '@tanstack/highlight/themes/github-dark'
+    import githubLight from '@tanstack/highlight/themes/github-light'
+
+    // 1. Build a highlighter from the languages you actually use, and
+    //    register it once. Every HighlightedCode instance resolves it.
+    setCodeHighlighter(createTanstackHighlighter({ languages: [ts, json] }))
+
+    // 2. TanStack emits semantic `th-*` classes with no colors, so emit a
+    //    theme stylesheet. `darkSelector` must match how your app toggles
+    //    dark mode (`html.dark`, `.dark`, `[data-theme="dark"]`, ...).
+    const themeCss = createThemeCss({
+        light: githubLight,
+        dark: githubDark,
+        darkSelector: 'html.dark'
+    })
+
+    let { source }: { source: string } = $props()
+</script>
+
+<svelte:head>
+    {@html `<style>${themeCss}</style>`}
+</svelte:head>
+
+<!-- 3. Swap the default code renderer. Streaming stays on. -->
+<SvelteMarkdown {source} renderers={{ code: HighlightedCode }} streaming />
+```
+
+Three things happen there. The factory builds a `CodeHighlighter` from explicitly imported languages, so only those scanners ship in your bundle. The theme helper turns two theme objects into CSS variables, which is what makes light and dark a stylesheet toggle rather than a re-highlight. And the renderer swap is the only change to the markdown component itself.
+
+The Shiki version is the same shape with a different factory and no stylesheet, because Shiki inlines its colors:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import {
+        createShikiHighlighter,
+        HighlightedCode,
+        setCodeHighlighter
+    } from '@humanspeak/svelte-markdown/extensions/shiki'
+    import ts from 'shiki/langs/typescript.mjs'
+    import githubDark from 'shiki/themes/github-dark.mjs'
+
+    setCodeHighlighter(createShikiHighlighter({ langs: [ts], themes: [githubDark] }))
+
+    let { source }: { source: string } = $props()
+</script>
+
+<SvelteMarkdown {source} renderers={{ code: HighlightedCode }} streaming />
+```
+
+Swapping engines is a change to the factory call and, for TanStack, the stylesheet. Running both on the same page is two context providers instead of the singleton. A third engine is one more factory that returns the same two methods.
+
+## What the contract actually enforces
+
+The interface looks trivial, but it carries one rule that matters more than the shape: `highlight` must be synchronous and must never throw.
+
+Synchronous, because `SvelteMarkdown` disables streaming the moment any renderer on the path needs to await something. The incremental parser reuses a stable prefix of tokens between chunks and re-lexes only the tail; it can't reconcile that against a promise that resolves later.
+
+Never throws, because the code it is asked to highlight is unfinished. Mid-stream, the fence is open, the string is unterminated, the JSX tag is half-written. A highlighter that throws on malformed input takes the whole render down with it, and the user sees a blank message instead of a partially-highlighted one. Both factories wrap their engine in a try/catch and degrade to an escaped `<pre>`. We tested that with deliberately broken tokenizers, unterminated strings, empty blocks, and fenced info strings like `"><img src=x onerror=alert(1)>`.
+
+That last one is the security angle. The language name on a fence is attacker-influenced in an agent UI. Shiki uses it only as a lookup key. TanStack normalizes anything it doesn't recognize to `plaintext`. The shared fallback escapes it into a `data-lang` attribute and nowhere else. None of the three paths ever put it into markup raw.
+
+## The side-by-side
+
+We built a [demo](/examples/highlight-engines) that streams one code-heavy assistant reply into two `SvelteMarkdown` instances. Both use `HighlightedCode`. The left pane injects a Shiki highlighter through context; the right pane injects TanStack. Every call to `highlight` is timed by wrapping the two-method object, which is a nice side effect of the contract being that small: instrumentation is a plain closure, no engine hooks.
+
+Two things are visible when you press start.
+
+First, the `calls` counter for each engine climbs while a fence is open and stops the moment it closes. That's the memoization in `HighlightedCode` doing its job: `html` is derived from `(text, lang)`, so once a block's text stops changing it is never highlighted again, no matter how much prose streams in after it. This was true of the old `ShikiCode` too, but seeing both counters freeze at the same moment makes the point better than a paragraph does.
+
+Second, the per-call timings separate. On the open fence, Shiki's JS engine re-tokenizes the whole block on every flush at roughly a millisecond or two per line. TanStack's scanners do the same work in a fraction of that. For a short block it doesn't matter. For a long one being streamed at 40 tokens a second, it is the difference between staying under the frame budget and not.
+
+## Which one should you use
+
+We are not going to pretend there is one answer.
+
+Pick **Shiki** when the code has to look exactly like it does in VS Code. TextMate grammars handle JSX, embedded languages, and unusual syntax that hand-written scanners will get subtly wrong. If your site is documentation and the page renders once, the 87 KB is a one-time cost and the fidelity is worth it.
+
+Pick **TanStack Highlight** when you are streaming code from a model into a chat surface. The bundle is small enough to stop thinking about, the output is semantic classes so light and dark mode is a CSS variable swap with no re-highlight, and the per-flush cost on an open fence is low enough that you can stop budgeting for it. It is at version 0.1 and TanStack says the contract can move, so pin it. The factory is the only file in this library that would change.
+
+Pick **your own** if you already have a highlighter you trust. Implement the two methods, hand it to `setCodeHighlighter`, and `HighlightedCode` will use it. That was the point of pulling the interface out.
+
+## What we'd do differently
+
+The one thing we changed that is visible to an existing user: when no highlighter is configured at all, the renderer's fallback `<pre>` now carries `highlight-fallback` instead of `shiki-fallback`. The Shiki factory's own unregistered-language fallback is unchanged. We considered keeping both classes on the element for a release, and decided the unconfigured state is a misconfiguration nobody styles on purpose. If that bites you, it's a one-line CSS selector.
+
+The bigger lesson is the one we keep relearning: the thing that made the Shiki integration work was never Shiki. It was refusing to let anything asynchronous onto the render path. Once that constraint is written down as a two-method interface, the engine underneath it becomes a detail, and details are cheap to swap.
+
+— Jason Kummerl
+
+</BlogPostV2>

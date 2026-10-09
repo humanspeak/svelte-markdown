@@ -1,0 +1,40 @@
+load before long-code-fence: 1.92 3.51 4.16
+=== attribution: long-code-fence (svelte-markdown, 1 traced run after 1 warmup) ===
+page: totalWorkMs 1793.2 · frames 753 · avg 2.381 · p95 4 · libraryFlushMs 160.9 (752 flushes)
+trace: 1347 window measures, raw sum 1793.051ms, union 1793.051ms (100.0% of totalWorkMs; 0ms of overlapping windows counted twice by the page)
+flush measure 160.907ms over 720 flushes · main thread pid 1222213 tid 1222213
+
+bucket                                                 total ms  ms/frame   share
+stream-flush measure (parse+diff+state write)             151.6     0.201    8.5%
+JS outside flush (derived + DOM commit + metadata)        337.2     0.448   18.8%
+UpdateLayoutTree + Layout                                1033.1     1.372   57.6%
+Paint + composite                                           7.4     0.010    0.4%
+MinorGC / MajorGC                                           0.0     0.000    0.0%
+other traced main-thread work                              82.9     0.110    4.6%
+untraced window time (idle / gaps)                        180.8     0.240   10.1%
+sum of buckets                                           1793.1     2.381
+  of which JS outside flush: 69.884ms in the sync window (prop assignment + tick) · 267.324ms in the frame window
+  "other" by event: RunTask 66.322ms · HitTest 16.613ms
+traced buckets (excl. untraced) = 1612.2ms = 89.9% of page totalWorkMs 1793.2ms · 89.9% of the window union
+paint + composite after the windows (not charged by the bench): 748.714ms (0.994 ms/frame)
+
+top 15 functions by self time (samples inside the measured windows; 1843.498ms sampled)
+ 1.    998.1ms  54.1%  getBoundingClientRect  (native)
+ 2.     70.6ms   3.8%  isAppendOnlyUpdate  http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js:71:73
+ 3.     28.2ms   1.5%  measure  (native)
+ 4.     18.2ms     1%  fences  http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js:6:725
+ 5.      7.9ms   0.4%  Ri  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:35060
+ 6.      7.5ms   0.4%  (anonymous)  http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js:71:7353
+ 7.      4.8ms   0.3%  le  http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js:71:6786
+ 8.      4.0ms   0.2%  lex  http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js:34:5394
+ 9.      3.9ms   0.2%  get  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:17336
+10.      3.5ms   0.2%  Tc  http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js:71:5619
+11.      3.4ms   0.2%  Ce  http://127.0.0.1:4183/_app/immutable/nodes/36.DM36nNAe.js:296:2677
+12.      3.3ms   0.2%  #v  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:11736
+13.      3.3ms   0.2%  queueMicrotask  (native)
+14.      3.3ms   0.2%  Z  http://127.0.0.1:4183/_app/immutable/chunks/BCivH4Vn.js:1:25787
+15.      2.9ms   0.2%  update  http://127.0.0.1:4183/_app/immutable/chunks/DAV6IjOg.js:71:2245
+
+trace: /tmp/long-code-fence.trace.json
+cpu profile: /tmp/long-code-fence.cpuprofile
+summary: .agents/.plans/stream-vs-streamdown/evidence/006/attribution/long-code-fence.attribution.json

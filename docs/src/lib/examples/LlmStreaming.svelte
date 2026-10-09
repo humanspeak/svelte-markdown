@@ -1,5 +1,6 @@
 <script lang="ts">
     import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import { HighlightedCode } from '@humanspeak/svelte-markdown/extensions/highlight'
     import type { StreamingChunk, StreamingOffsetChunk } from '@humanspeak/svelte-markdown'
     import {
         Play,
@@ -708,7 +709,12 @@ For more information, visit the [Svelte documentation](https://svelte.dev/docs) 
                         bind:this={previewEl}
                         class="prose prose-sm dark:prose-invert min-h-0 max-w-none flex-1 overflow-y-auto"
                     >
-                        <SvelteMarkdown bind:this={markdown} {source} streaming={true} />
+                        <SvelteMarkdown
+                            bind:this={markdown}
+                            {source}
+                            streaming={true}
+                            renderers={{ code: HighlightedCode }}
+                        />
                     </div>
                 {:else}
                     <div

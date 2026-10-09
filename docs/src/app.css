@@ -36,3 +36,21 @@
     background-size: 200% 100%;
     animation: sheen 6s ease-in-out infinite;
 }
+
+/* TanStack Highlight code blocks (wired site-wide in +layout.svelte): the
+   theme stylesheet defines --th-background / --th-token for light and
+   html.dark. docs-kit's `.prose pre` paints with layered `!important`
+   utilities reading --color-code-background / --color-code-block-foreground
+   (and `.prose code` reads --color-code-foreground), so repoint those variables on highlighted blocks instead of fighting the
+   cascade. `:root` lifts specificity above `.prose pre`; demos whose scoped
+   `pre` rules still out-rank this add their own `pre.th-code` override. */
+:root pre.th-code {
+    --color-code-background: var(--th-background);
+    --color-code-block-foreground: var(--th-token);
+    --color-code-foreground: var(--th-token);
+    background: var(--th-background);
+    color: var(--th-token);
+}
+:root pre.th-code code {
+    color: inherit;
+}

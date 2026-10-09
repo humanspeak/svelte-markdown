@@ -1,5 +1,13 @@
 import * as htmlparser2 from 'htmlparser2'
 import type { Token, Tokens } from 'marked'
+import {
+    concatMapped,
+    mappedSource,
+    replacementMapped,
+    sliceMapped,
+    type MappedView,
+    type ProvenanceCollector
+} from './streaming-provenance.js'
 import { isVoidElement } from './void-elements.js'
 
 /**
@@ -102,6 +110,9 @@ const formatSelfClosingHtmlToken = (token: Token): Token => {
     return {
         ...token,
         raw: formattedRaw,
+        // `<br>` -> `<br/>` is one character longer than its source; record the
+        // true span so root offsets still add up to the lexed source.
+        ...(formattedRaw.length !== token.raw.length && { sourceLength: token.raw.length }),
         tag: tagName,
         attributes: extractAttributes(token.raw),
         // A self-closing element is fully resolved and childless. The empty
@@ -228,9 +239,16 @@ const hasMultipleTags = (html: string): boolean => {
  *
  * @internal
  */
-const expandHtmlBlockNested = (html: string): Token[] => {
+const expandHtmlBlockNested = (
+    html: string,
+    provenance?: ProvenanceCollector,
+    input?: MappedView
+): Token[] => {
     const root: Token[] = []
     const stack: Token[][] = [root]
+    /** Source offset where each emitted token starts, for root source spans. */
+    const starts = new Map<Token, number>()
+    let textStart = 0
     /**
      * Open elements awaiting their close event.
      *
@@ -252,17 +270,35 @@ const expandHtmlBlockNested = (html: string): Token[] => {
           }
     )[] = []
     let currentText = ''
+    let textMapping = provenance ? mappedSource('') : undefined
+    let previousEntity: MappedView | undefined
 
     const flushText = () => {
         if (currentText.length === 0) return
         if (currentText.trim()) {
-            stack[stack.length - 1].push({
-                type: 'text',
-                raw: currentText,
-                text: currentText
-            } as Token)
+            const textToken = { type: 'text', raw: currentText, text: currentText } as Token
+            starts.set(textToken, textStart)
+            if (provenance && input)
+                provenance.set(textToken, {
+                    exact: true,
+                    sourceSpans: textMapping!.runs.flatMap((run) => run.sources),
+                    text: textMapping,
+                    raw: textMapping
+                })
+            stack[stack.length - 1].push(textToken)
         }
         currentText = ''
+        if (provenance) textMapping = mappedSource('')
+    }
+
+    const mapOpening = (token: Token, start: number, end: number) => {
+        if (!provenance || !input) return
+        const span = sliceMapped(input, start, end)
+        provenance.set(token, {
+            exact: true,
+            sourceSpans: span.runs.flatMap((run) => run.sources),
+            raw: span.value === token.raw ? span : replacementMapped(token.raw, span)
+        })
     }
 
     const parser = new htmlparser2.Parser(
@@ -279,13 +315,16 @@ const expandHtmlBlockNested = (html: string): Token[] => {
                     isVoidElement(name) ||
                     isSelfClosedTagSource(html.slice(parser.startIndex, parser.endIndex + 1))
                 if (isSelfClosed) {
-                    stack[stack.length - 1].push({
+                    const selfClosed = {
                         type: 'html',
                         raw: `<${name}${serializeAttributes(attributes)}/>`,
                         tag: name,
                         attributes,
                         tokens: []
-                    } as Token)
+                    } as Token
+                    mapOpening(selfClosed, parser.startIndex, parser.endIndex + 1)
+                    starts.set(selfClosed, parser.startIndex)
+                    stack[stack.length - 1].push(selfClosed)
                     opens.push({ tag: name, selfClosed: true })
                     return
                 }
@@ -296,12 +335,25 @@ const expandHtmlBlockNested = (html: string): Token[] => {
                     tag: name,
                     attributes
                 } as Token
+                mapOpening(opening, parser.startIndex, parser.endIndex + 1)
+                starts.set(opening, parser.startIndex)
                 stack[stack.length - 1].push(opening)
                 stack.push(childTokens)
                 opens.push({ tag: name, opening, childTokens, startIndex: parser.startIndex })
             },
             ontext: (text) => {
+                if (currentText.length === 0) textStart = parser.startIndex
                 currentText += text
+                if (provenance && input) {
+                    const span = sliceMapped(input, parser.startIndex, parser.endIndex + 1)
+                    const event = parser.endIndex < parser.startIndex ? previousEntity : span
+                    if (event) {
+                        const mapping =
+                            event.value === text ? event : replacementMapped(text, event)
+                        textMapping = concatMapped(textMapping!, mapping)
+                    }
+                    if (span.value) previousEntity = span
+                }
             },
             onclosetag: (name, implied) => {
                 flushText()
@@ -344,23 +396,154 @@ const expandHtmlBlockNested = (html: string): Token[] => {
     parser.end()
     flushText()
 
+    assignRootSourceSpans(root, starts, html.length)
     return root
 }
+
+/**
+ * Source span of a root html opening that is still waiting for its closing
+ * tag. Kept off the token: `sourceLength` on an html token means "resolved"
+ * to the incremental parser's unclosed-HTML detector (#291). Read back by
+ * `pairFlatHtmlTokens` when a later `</tag>` closes it.
+ */
+const unresolvedSourceSpans = new WeakMap<Token, number>()
+
+/**
+ * Makes the root tokens of one expanded html token add up to that token's
+ * source length. Each root spans from where it starts in the source to where
+ * the next root starts (the first from 0, the last to the end), so dropped
+ * whitespace and trailing newlines are counted, and re-serialized tags
+ * (`<br>` -> `<br/>`, lowercased names and attributes) and decoded entities
+ * no longer shift the offsets the incremental parser computes from them.
+ *
+ * @internal
+ */
+const assignRootSourceSpans = (
+    root: Token[],
+    starts: Map<Token, number>,
+    sourceLength: number
+): void => {
+    for (let i = 0; i < root.length; i++) {
+        const token = root[i] as Token & { sourceLength?: number; tokens?: Token[] }
+        const start = i === 0 ? 0 : (starts.get(token) ?? 0)
+        const end = i === root.length - 1 ? sourceLength : (starts.get(root[i + 1]) ?? sourceLength)
+        if (token.type === 'html' && token.tokens === undefined) {
+            unresolvedSourceSpans.set(token, end - start)
+        } else {
+            token.sourceLength = end - start
+        }
+    }
+}
+
+/** Source characters a token consumed; see {@link assignRootSourceSpans}. */
+const getSourceSpan = (token: Token): number =>
+    (token as Token & { sourceLength?: number }).sourceLength ??
+    unresolvedSourceSpans.get(token) ??
+    token.raw.length
+
+/** Start of a CommonMark type-1 HTML block (`<pre`, `<script`, `<style`,
+ *  `<textarea`), which only its matching closing tag ends. */
+const RAW_TEXT_BLOCK_START_RE = /^ {0,3}<(pre|script|style|textarea)(?=[\s>]|$)/i
+/** Start of a CommonMark type-4 HTML block (a declaration, `<!DOCTYPE`). */
+const DECLARATION_START_RE = /^ {0,3}<![a-zA-Z]/
+
+/**
+ * True for the raw of an html root that opens a CommonMark HTML block of
+ * types 1–5 without containing its terminator. Those blocks are not ended by
+ * a blank line — they run to their terminator, or to the end of the input
+ * while unclosed — so the next chunk can still extend them across any number
+ * of blank lines. Shapes cleanup leaves for them (marked 15):
+ *
+ *   '<!-- a comment\n\n'   => html{ raw: '<!-- a comment', block: true } + space
+ *   '<!-- a comment\n\nsp' => html{ raw: '<!-- a comment\n\nsp', block: true }
+ *   '<?php x;\n\n'         => html{ raw: '<?php x;', block: true } + space
+ *   '<![CDATA[ a\n\n'      => html{ raw: '<![CDATA[ a', block: true } + space
+ *   '<pre>\nkeep\n\n  th'  => html{ raw: '<pre>\nkeep\n\n  th', block: true }
+ *
+ * No `tag` and no `sourceLength`: the tag-based detector cannot see the first
+ * four. A type-1 opening that cleanup expanded carries `tag` and is caught
+ * there too; checked here so `<pre` before its `>` is covered as well.
+ * Inspects the start in O(1); only a matching opener searches its own raw.
+ * Used by `IncrementalParser` and by `expandHtmlToken` below.
+ *
+ * @param raw - Raw source of an html root token without a known span
+ * @returns `true` if the block is still waiting for its terminator
+ * @example
+ * ```typescript
+ * isUnterminatedHtmlBlock('<!-- a comment') // true
+ * isUnterminatedHtmlBlock('<!-- a comment\n\nspanning -->') // false
+ * isUnterminatedHtmlBlock('<div>') // false (tag-based detector's job)
+ * ```
+ */
+export const isUnterminatedHtmlBlock = (raw: string): boolean => {
+    const start = raw.indexOf('<')
+    if (start < 0 || start > 3) return false
+    if (raw.startsWith('<!--', start)) return !raw.includes('-->', start + 2)
+    if (raw.startsWith('<?', start)) return !raw.includes('?>', start + 1)
+    if (raw.startsWith('<![CDATA[', start)) return !raw.includes(']]>', start + 9)
+    if (DECLARATION_START_RE.test(raw)) return !raw.includes('>', start + 2)
+    const rawText = RAW_TEXT_BLOCK_START_RE.exec(raw)
+    return rawText !== null && !raw.toLowerCase().includes(`</${rawText[1].toLowerCase()}>`)
+}
+
+/**
+ * Roots cleanup produced from an html block that is still waiting for its
+ * terminator (`isUnterminatedHtmlBlock` on the marked token's raw). Once
+ * such a block contains a tag, cleanup expands it and no produced root
+ * carries the opener any more (`<?pi\n<li>x</li>\n\n` => text `x` + space;
+ * `<!--\n<hr>\n\n` => html `<!--\n<hr/>` with a `sourceLength`), so the
+ * incremental parser reads this set instead. Kept off the token so rendered
+ * output and semantic equality do not change.
+ */
+const unterminatedHtmlRoots = new WeakSet<Token>()
+
+/**
+ * True for a token cleanup produced from an html block that is still
+ * waiting for its terminator; see `unterminatedHtmlRoots`.
+ *
+ * @param token - A token returned by `shrinkHtmlTokens`
+ * @returns `true` if the token came from an unterminated html block
+ * @example
+ * ```typescript
+ * const [root] = shrinkHtmlTokens(new Lexer().lex('<?pi\n<li>x</li>\n'))
+ * isFromUnterminatedHtmlBlock(root) // true
+ * ```
+ */
+export const isFromUnterminatedHtmlBlock = (token: Token): boolean =>
+    unterminatedHtmlRoots.has(token)
 
 /**
  * Expands a single html token. Single-tag inputs (the dominant inline
  * shape — opening tag alone, closing tag alone, self-closing) skip
  * htmlparser2 entirely and go through the cheap `formatSelfClosingHtmlToken`
  * path. Anything with two or more tags routes through
- * `expandHtmlBlockNested` for inline nesting.
+ * `expandHtmlBlockNested` for inline nesting. The roots of a block html
+ * token that is still waiting for its terminator are recorded in
+ * `unterminatedHtmlRoots`.
  *
  * @internal
  */
-const expandHtmlToken = (token: Token): Token[] => {
-    if (!hasMultipleTags(token.raw)) {
-        return [formatSelfClosingHtmlToken(token)]
+const expandHtmlToken = (token: Token, provenance?: ProvenanceCollector): Token[] => {
+    const nested = hasMultipleTags(token.raw)
+    const expansion = nested
+        ? expandHtmlBlockNested(token.raw, provenance, provenance?.get(token)?.raw)
+        : [formatSelfClosingHtmlToken(token)]
+    if (provenance && !nested) {
+        const own = provenance.get(token)
+        if (own)
+            provenance.set(expansion[0], {
+                ...own,
+                raw:
+                    own.raw && own.raw.value !== expansion[0].raw
+                        ? replacementMapped(expansion[0].raw, own.raw)
+                        : own.raw
+            })
     }
-    return expandHtmlBlockNested(token.raw)
+    // Record provenance only; what is rendered does not change.
+    if ((token as Tokens.HTML).block && isUnterminatedHtmlBlock(token.raw)) {
+        for (const root of expansion) unterminatedHtmlRoots.add(root)
+    }
+    return expansion
 }
 
 /**
@@ -373,7 +556,7 @@ const expandHtmlToken = (token: Token): Token[] => {
  *
  * @internal
  */
-const pairFlatHtmlTokens = (tokens: Token[]): Token[] => {
+const pairFlatHtmlTokens = (tokens: Token[], provenance?: ProvenanceCollector): Token[] => {
     const result: Token[] = []
     const stack: { tag: string; startIndex: number }[] = []
 
@@ -423,21 +606,19 @@ const pairFlatHtmlTokens = (tokens: Token[]): Token[] => {
             const innerTokens = result.splice(startIndex + 1, result.length - startIndex - 1)
             const openingToken = result.pop()!
             const sourceLength =
-                openingToken.raw.length +
-                innerTokens.reduce((sum, innerToken) => {
-                    const sourceLength = (innerToken as Token & { sourceLength?: number })
-                        .sourceLength
-                    return sum + (sourceLength ?? innerToken.raw.length)
-                }, 0) +
-                token.raw.length
-            result.push({
+                getSourceSpan(openingToken) +
+                innerTokens.reduce((sum, innerToken) => sum + getSourceSpan(innerToken), 0) +
+                getSourceSpan(token)
+            const paired = {
                 type: 'html',
                 raw: openingToken.raw,
                 tag: lastOpen.tag,
                 tokens: innerTokens,
                 attributes: extractAttributes(openingToken.raw),
                 sourceLength
-            } as Token)
+            } as Token
+            if (provenance) provenance.transfer(openingToken, paired)
+            result.push(paired)
         }
     }
 
@@ -496,19 +677,21 @@ const tokensShallowEqual = (left: Token[] | undefined, right: Token[]): left is 
  * const cleaned = cleanListItem(item, 0)
  * // cleaned === item when nothing nested changed on a re-clean
  */
-const cleanListItem = (item: Tokens.ListItem, index: number): IndexedListItem => {
-    const cleanedTokens = item.tokens ? shrinkHtmlTokens(item.tokens) : []
+const cleanListItem = (
+    item: Tokens.ListItem,
+    index: number,
+    provenance?: ProvenanceCollector
+): IndexedListItem => {
+    const cleanedTokens = item.tokens ? shrinkHtmlTokens(item.tokens, provenance) : []
     const indexedItem = item as IndexedListItem
 
     if (indexedItem.listItemIndex === index && tokensShallowEqual(item.tokens, cleanedTokens)) {
         return indexedItem
     }
 
-    return {
-        ...item,
-        listItemIndex: index,
-        tokens: cleanedTokens
-    }
+    const cleaned = { ...item, listItemIndex: index, tokens: cleanedTokens }
+    provenance?.transfer(item, cleaned)
+    return cleaned
 }
 
 /**
@@ -529,17 +712,19 @@ const cleanListItem = (item: Tokens.ListItem, index: number): IndexedListItem =>
  * const cleaned = cleanTableCell(cell)
  * // cleaned === cell when nothing nested changed on a re-clean
  */
-const cleanTableCell = (cell: Tokens.TableCell): Tokens.TableCell => {
-    const cleanedTokens = cell.tokens ? shrinkHtmlTokens(cell.tokens) : []
+const cleanTableCell = (
+    cell: Tokens.TableCell,
+    provenance?: ProvenanceCollector
+): Tokens.TableCell => {
+    const cleanedTokens = cell.tokens ? shrinkHtmlTokens(cell.tokens, provenance) : []
 
     if (tokensShallowEqual(cell.tokens, cleanedTokens)) {
         return cell
     }
 
-    return {
-        ...cell,
-        tokens: cleanedTokens
-    }
+    const cleaned = { ...cell, tokens: cleanedTokens }
+    provenance?.transfer(cell, cleaned)
+    return cleaned
 }
 
 /**
@@ -567,7 +752,7 @@ const cleanTableCell = (cell: Tokens.TableCell): Tokens.TableCell => {
  *
  * @public
  */
-export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
+export const shrinkHtmlTokens = (tokens: Token[], provenance?: ProvenanceCollector): Token[] => {
     const expanded: Token[] = []
     for (const token of tokens) {
         if (
@@ -576,29 +761,36 @@ export const shrinkHtmlTokens = (tokens: Token[]): Token[] => {
             Array.isArray((token as Token & { tokens: Token[] }).tokens)
         ) {
             const t = token as Token & { tokens: Token[] }
-            t.tokens = shrinkHtmlTokens(t.tokens)
+            provenance?.invalidate(t)
+            t.tokens = shrinkHtmlTokens(t.tokens, provenance)
             expanded.push(token)
         } else if (token.type === 'list') {
-            token.items = token.items.map(cleanListItem)
+            provenance?.invalidate(token)
+            token.items = token.items.map((item: Tokens.ListItem, index: number) =>
+                cleanListItem(item, index, provenance)
+            )
             expanded.push(token)
         } else if (token.type === 'table') {
+            provenance?.invalidate(token)
             const tableToken = token as Tokens.Table
             if (tableToken.header) {
-                tableToken.header = tableToken.header.map(cleanTableCell)
+                tableToken.header = tableToken.header.map((cell) =>
+                    cleanTableCell(cell, provenance)
+                )
             }
             if (tableToken.rows) {
                 tableToken.rows = tableToken.rows.map((row: Tokens.TableCell[]) =>
-                    row.map(cleanTableCell)
+                    row.map((cell) => cleanTableCell(cell, provenance))
                 )
             }
             expanded.push(token)
         } else if (token.type === 'html') {
-            const expansion = expandHtmlToken(token)
+            const expansion = expandHtmlToken(token, provenance)
             for (const t of expansion) expanded.push(t)
         } else {
             expanded.push(token)
         }
     }
 
-    return pairFlatHtmlTokens(expanded)
+    return pairFlatHtmlTokens(expanded, provenance)
 }

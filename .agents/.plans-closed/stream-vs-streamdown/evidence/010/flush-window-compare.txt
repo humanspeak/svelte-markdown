@@ -1,0 +1,46 @@
+== before: 753 flushes, 1553 ms
+   lib line 48                  510
+   lib line 67                  363
+   (program)                    274
+   lib line 34                  186
+   lib line 22                  128
+   lib line 71                  92
+   lib line 32                  64
+   lib line 6                   12
+   lib line 35                  11
+   measure                      10
+      inlineTokens lib line 48                 496
+      (program) (program)                      274
+      Ks lib line 67                           249
+      list lib line 22                         128
+      isAppendOnlyUpdate lib line 71           71
+      emStrong lib line 34                     65
+      lheading lib line 32                     64
+      link lib line 34                         63
+      Ls lib line 67                           59
+      Ys lib line 67                           21
+      url lib line 34                          16
+      Us lib line 67                           14
+== after: 753 flushes, 1976 ms
+   lib line 67                  479
+   lib line 34                  461
+   lib line 48                  378
+   measure                      207
+   lib line 22                  166
+   lib line 32                  80
+   lib line 71                  77
+   (program)                    39
+   lib line 2                   37
+   lib line 4                   21
+      inlineTokens lib line 48                 361
+      Ys lib line 67                           331
+      measure measure                          207
+      inlineText lib line 34                   170
+      list lib line 22                         166
+      emStrong lib line 34                     81
+      lheading lib line 32                     80
+      Bs lib line 67                           66
+      isAppendOnlyUpdate lib line 71           64
+      link lib line 34                         63
+      (program) (program)                      39
+      codespan lib line 34                     39

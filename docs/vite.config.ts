@@ -171,6 +171,9 @@ export default defineConfig({
                     if (id.includes('node_modules/shiki')) {
                         return 'shiki'
                     }
+                    if (id.includes('node_modules/@tanstack/highlight')) {
+                        return 'tanstack-highlight'
+                    }
                     if (id.includes('node_modules/katex')) {
                         return 'katex'
                     }
