@@ -434,18 +434,21 @@ Extension tokens such as KaTeX math are opaque: their contents never become word
 
 ```svelte
 <script lang="ts">
-    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import SvelteMarkdown, { type StreamingTextMetadata } from '@humanspeak/svelte-markdown'
     import { KatexRenderer, markedKatex } from '@humanspeak/svelte-markdown/extensions/katex'
     import { Fade, RiseWords } from '@humanspeak/svelte-markdown/streaming/motion'
+    // Extension snippets are not typed by SvelteMarkdown, so annotate their props.
+    type MathProps = { text: string; streamingText?: StreamingTextMetadata }
+    let source = $state('')
     const extensions = [markedKatex()]
 </script>
 
 <SvelteMarkdown {source} streaming streamingText {extensions}>
     {#snippet rawtext({ text, streamingText })}<RiseWords {text} {streamingText} />{/snippet}
-    {#snippet inlineKatex({ text, streamingText })}
+    {#snippet inlineKatex({ text, streamingText }: MathProps)}
         <Fade {streamingText}><KatexRenderer {text} /></Fade>
     {/snippet}
-    {#snippet blockKatex({ text, streamingText })}
+    {#snippet blockKatex({ text, streamingText }: MathProps)}
         <Fade {streamingText} block><KatexRenderer {text} displayMode /></Fade>
     {/snippet}
 </SvelteMarkdown>
