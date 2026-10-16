@@ -43,6 +43,7 @@ Wall-clock time is deliberately not the metric. A renderer that defers work to t
 | Runs | One warmup, then five iterations; both renderers run back to back in alternating order; two full suites |
 | Competitor | `svelte-streamdown` 4.2.0 with animation, controls, and highlighting off |
 | Date and machine | 2026-09-28 (the numbered list and HTML block rows: 2026-09-29), Intel Core i7-6700K, Ubuntu 26.04 |
+| Re-checked | 2026-10-16 against `svelte-streamdown` 4.2.1 (see below) |
 
 Two safeguards keep the numbers honest:
 
@@ -78,6 +79,10 @@ Element counts at the end of each stream, identical across all runs:
 | Plain bullet list | 768 | 769 |
 | Code fence | 4 | 797 |
 | Citation-heavy prose | 776 | 519 |
+
+### Re-check against 4.2.1
+
+On 2026-10-16 the suite was run twice against `svelte-streamdown` 4.2.1 and once against 4.2.0, all on a second machine (Intel Core i9-10910, macOS 26.6.2). Svelte Streamdown's work was the same on both versions, within run-to-run noise, in every scenario, and every scenario kept the winner shown above. Ratios on that machine were mostly higher than the ones above, for example 1.57–1.64 on mixed prose, but the 4.2.0 run showed the same shift, so the cause is the hardware and not the release. The table above is kept from the original capture.
 
 ## Caveats
 

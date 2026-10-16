@@ -91,7 +91,7 @@ export const competitors: Competitor[] = [
                 name: 'Streaming Speed',
                 us: 'About 1.2–2.7x less work on prose, lists, tables, and long documents',
                 them: 'Less work on a single open code block, on citation-heavy text, and on HTML blocks, which it shows as text by default',
-                note: 'Measured 2026-09-28 against svelte-streamdown 4.2.0 with both renderers run back to back on the same content. Results vary by machine and content. Method and full numbers: Streaming Benchmarks in the docs.'
+                note: 'Measured 2026-09-28 against svelte-streamdown 4.2.0 with both renderers run back to back on the same content, and re-checked 2026-10-16 against 4.2.1 with no change in its results. Results vary by machine and content. Method and full numbers: Streaming Benchmarks in the docs.'
             },
             {
                 name: 'Smoothness on Long Lists & Tables',
@@ -129,8 +129,9 @@ export const competitors: Competitor[] = [
             },
             {
                 name: 'Streaming Animations',
-                us: false,
-                them: 'Word, character, or block animations'
+                us: 'Opt-in word, character, or whole-token fades',
+                them: 'Word, character, or block animations',
+                note: 'Svelte Markdown ships fade and rise presets in an optional motion add-on, plus a whole-token fade for math. Svelte Streamdown also animates whole blocks.'
             },
             { name: 'MDX-Style Components', us: false, them: true },
             { name: 'Inline Citations', us: false, them: 'Popover + list/carousel views' },
@@ -188,7 +189,7 @@ export const competitors: Competitor[] = [
             'Faster on a single open code block and on citation-heavy text'
         ],
         consUs: [
-            'No built-in reveal animations or citation UI',
+            'No citation UI, and no block-level reveal animations',
             'No MDX-style components inside markdown',
             'You bring the styling',
             'Slower on a single open code block and on citation-heavy text',
