@@ -301,8 +301,8 @@ importers:
         specifier: ^4.7.6
         version: 4.7.6(picomatch@4.0.7)(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)
       svelte-streamdown:
-        specifier: 4.2.0
-        version: 4.2.0(svelte@5.57.1(@typescript-eslint/types@8.70.1))
+        specifier: 4.2.1
+        version: 4.2.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -1706,10 +1706,6 @@ packages:
     resolution: {integrity: sha512-yYU8cogLeSh/ms2jh8Fj7jaba/EWa7Ja6GoUqYZaraEuCI5YS6ms6ObZgjjedm+jm6XZjdNRWBpPP6Z86oOxcw==}
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7 || ^8
-
-  '@tanstack/highlight@0.1.0':
-    resolution: {integrity: sha512-B/NdJETsgoQ7ludUbflIiYQk74bE6VSgP3kLR99P1OsRX1Gepr3EVg6oVLRZ+duKWs+P4lrhWC4vVJsrRSnV2g==}
-    engines: {node: '>=18'}
 
   '@tanstack/highlight@1.0.0':
     resolution: {integrity: sha512-nrg2iZSQUZlDZGTPKh/CNlg6Orm3vFHIaIi/9DqPC1rUpfe/M6rD2iokrckWTc2Z5jYDz185BK76GUh9VIjQRw==}
@@ -4186,8 +4182,8 @@ packages:
       svelte:
         optional: true
 
-  svelte-streamdown@4.2.0:
-    resolution: {integrity: sha512-VEJxXxA162NLvxNoXmJHuzi6uY3NeWmV2fcRuy8MIYvhRM0/8proibAowti28inAXGBgFUwqSHFhnyXCB6tYVQ==}
+  svelte-streamdown@4.2.1:
+    resolution: {integrity: sha512-Vt1fG9x1xCnKfkxHMuuBbVwigrpsunTAg5lQxd7JvMz7ILnotpWLzOddmuSxod+oYjBkq6bdXohan1V0Wnhxzg==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -5540,8 +5536,6 @@ snapshots:
       '@tailwindcss/oxide': 4.3.3
       tailwindcss: 4.3.3
       vite: 8.3.0(@types/node@26.6.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)
-
-  '@tanstack/highlight@0.1.0': {}
 
   '@tanstack/highlight@1.0.0': {}
 
@@ -8330,10 +8324,10 @@ snapshots:
     optionalDependencies:
       svelte: 5.57.1(@typescript-eslint/types@8.70.1)
 
-  svelte-streamdown@4.2.0(svelte@5.57.1(@typescript-eslint/types@8.70.1)):
+  svelte-streamdown@4.2.1(svelte@5.57.1(@typescript-eslint/types@8.70.1)):
     dependencies:
       '@floating-ui/dom': 1.8.0
-      '@tanstack/highlight': 0.1.0
+      '@tanstack/highlight': 1.0.0
       clsx: 2.1.1
       katex: 0.16.47
       marked: 18.0.12
