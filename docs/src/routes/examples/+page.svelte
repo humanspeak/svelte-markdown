@@ -1,6 +1,6 @@
 <script lang="ts">
     import { BrutIndexV2 } from '@humanspeak/docs-kit'
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
     import rootPkg from '../../../../package.json'
 
     const PKG_NAME = rootPkg.name

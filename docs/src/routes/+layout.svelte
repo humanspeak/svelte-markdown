@@ -18,8 +18,8 @@
     import githubDarkTheme from '@tanstack/highlight/themes/github-dark'
     import githubLightTheme from '@tanstack/highlight/themes/github-light'
     import { setContext } from 'svelte'
-    import { docsConfig } from '$lib/docs-config'
-    import githubStats from '$lib/github-stats.json'
+    import { docsConfig } from '#lib/docs-config.js'
+    import githubStats from '#lib/github-stats.json'
 
     const { children } = $props()
 

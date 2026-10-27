@@ -5,9 +5,9 @@
         formatSheetLabel,
         type ExampleSection
     } from '@humanspeak/docs-kit'
-    import { demoCodeSample } from '$lib/demo-loaders'
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import StreamingConsole from '$lib/examples/llm-streaming/demos/StreamingConsole.svelte'
+    import { demoCodeSample } from '#lib/demo-loaders.js'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
+    import StreamingConsole from '#lib/examples/llm-streaming/demos/StreamingConsole.svelte'
     import { Activity, DollarSign, Lightbulb, Sparkles, Zap } from '@lucide/svelte'
 
     const seo = getSeoContext()

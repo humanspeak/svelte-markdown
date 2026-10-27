@@ -1,4 +1,4 @@
-import { dev } from '$app/environment'
+import { dev } from '$app/env'
 import { createPackageStatsLoad } from '@humanspeak/docs-kit/server'
 import rootPkg from '../../../package.json'
 

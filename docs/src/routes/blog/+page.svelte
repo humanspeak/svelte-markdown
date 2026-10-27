@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
     import { BlogIndexV2, loadBlogPostsMdsvex } from '@humanspeak/docs-kit/blog'
 
     type MdsvexModule = {

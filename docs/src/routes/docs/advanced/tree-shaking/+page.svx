@@ -4,7 +4,7 @@ description: Keep @humanspeak/svelte-markdown bundles lean with subpath imports,
 ---
 
 <script>
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
 
     const seo = getSeoContext()
     if (seo) {

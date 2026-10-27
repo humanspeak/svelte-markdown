@@ -4,7 +4,7 @@ description: Migrate from svelte-markdown to @humanspeak/svelte-markdown for Sve
 ---
 
 <script>
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
 
     const seo = getSeoContext()
     if (seo) {

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { CompareIndexV2 } from '@humanspeak/docs-kit'
-    import { competitors, ours } from '$lib/compare-data'
+    import { competitors, ours } from '#lib/compare-data.js'
 </script>
 
 <CompareIndexV2

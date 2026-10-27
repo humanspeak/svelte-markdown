@@ -3,8 +3,8 @@ packages:
     - docs
 
 overrides:
-    # SvelteKit still requests cookie 0.6.0 (CVE-2024-47764).
-    '@sveltejs/kit>cookie': ^0.7.2
+    # SvelteKit 2 (library dev app) still requests cookie 0.6.0 (CVE-2024-47764).
+    '@sveltejs/kit@2>cookie': ^0.7.2
     # Mermaid 12's Chevrotain dependencies pin vulnerable lodash-es 4.17.23.
     # CVE-2026-4800 and CVE-2026-2950; remove once upstream uses patched versions.
     'lodash-es@<4.18.0': ^4.18.1

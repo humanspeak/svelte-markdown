@@ -5,11 +5,11 @@
         formatSheetLabel,
         type ExampleSection
     } from '@humanspeak/docs-kit'
-    import { demoCodeSample } from '$lib/demo-loaders'
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import AllowAllHtml from '$lib/examples/html-filtering/demos/AllowAllHtml.svelte'
-    import AllowOnlySafe from '$lib/examples/html-filtering/demos/AllowOnlySafe.svelte'
-    import BlockAllHtml from '$lib/examples/html-filtering/demos/BlockAllHtml.svelte'
+    import { demoCodeSample } from '#lib/demo-loaders.js'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
+    import AllowAllHtml from '#lib/examples/html-filtering/demos/AllowAllHtml.svelte'
+    import AllowOnlySafe from '#lib/examples/html-filtering/demos/AllowOnlySafe.svelte'
+    import BlockAllHtml from '#lib/examples/html-filtering/demos/BlockAllHtml.svelte'
     import { AlertTriangle, ShieldCheck, ShieldOff, Sparkles, Filter, Ban } from '@lucide/svelte'
     const seo = getSeoContext()
     if (seo) {

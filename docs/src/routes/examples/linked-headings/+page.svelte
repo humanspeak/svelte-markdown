@@ -5,11 +5,11 @@
         formatSheetLabel,
         type ExampleSection
     } from '@humanspeak/docs-kit'
-    import { demoCodeSample } from '$lib/demo-loaders'
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import DefaultHeadings from '$lib/examples/linked-headings/demos/DefaultHeadings.svelte'
-    import RendererHeadings from '$lib/examples/linked-headings/demos/RendererHeadings.svelte'
-    import SnippetHeadings from '$lib/examples/linked-headings/demos/SnippetHeadings.svelte'
+    import { demoCodeSample } from '#lib/demo-loaders.js'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
+    import DefaultHeadings from '#lib/examples/linked-headings/demos/DefaultHeadings.svelte'
+    import RendererHeadings from '#lib/examples/linked-headings/demos/RendererHeadings.svelte'
+    import SnippetHeadings from '#lib/examples/linked-headings/demos/SnippetHeadings.svelte'
     import { Anchor, Code, Hash, Link, Sparkles, Wrench } from '@lucide/svelte'
 
     const seo = getSeoContext()

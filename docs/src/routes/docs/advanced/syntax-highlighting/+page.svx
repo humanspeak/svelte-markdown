@@ -4,7 +4,7 @@ description: Add opt-in syntax highlighting to @humanspeak/svelte-markdown with 
 ---
 
 <script>
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
 
     const seo = getSeoContext()
     if (seo) {

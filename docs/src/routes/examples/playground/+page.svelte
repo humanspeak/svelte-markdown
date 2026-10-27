@@ -5,9 +5,9 @@
         formatSheetLabel,
         type ExampleSection
     } from '@humanspeak/docs-kit'
-    import { demoCodeSample } from '$lib/demo-loaders'
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import MarkdownPlayground from '$lib/examples/playground/demos/MarkdownPlayground.svelte'
+    import { demoCodeSample } from '#lib/demo-loaders.js'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
+    import MarkdownPlayground from '#lib/examples/playground/demos/MarkdownPlayground.svelte'
     import { Edit3, Eye, Zap } from '@lucide/svelte'
     const seo = getSeoContext()
     if (seo) {

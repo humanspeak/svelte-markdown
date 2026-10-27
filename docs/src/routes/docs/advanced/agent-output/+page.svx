@@ -4,7 +4,7 @@ description: Render streaming HTML and markdown from AI coding agents with @huma
 ---
 
 <script>
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
 
     const seo = getSeoContext()
     if (seo) {
@@ -109,8 +109,8 @@ Agents often emit semantic markup that should map to a component rather than ren
 ```svelte
 <script lang="ts">
     import SvelteMarkdown, { Html } from '@humanspeak/svelte-markdown'
-    import Thinking from '$lib/components/agent/Thinking.svelte'
-    import ToolCall from '$lib/components/agent/ToolCall.svelte'
+    import Thinking from '#lib/components/agent/Thinking.svelte'
+    import ToolCall from '#lib/components/agent/ToolCall.svelte'
 
     const renderers = {
         html: {

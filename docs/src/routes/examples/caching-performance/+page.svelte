@@ -5,9 +5,9 @@
         formatSheetLabel,
         type ExampleSection
     } from '@humanspeak/docs-kit'
-    import { demoCodeSample } from '$lib/demo-loaders'
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import CachingBenchmark from '$lib/examples/caching-performance/demos/CachingBenchmark.svelte'
+    import { demoCodeSample } from '#lib/demo-loaders.js'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
+    import CachingBenchmark from '#lib/examples/caching-performance/demos/CachingBenchmark.svelte'
     import { Gauge, Recycle, Zap } from '@lucide/svelte'
 
     const seo = getSeoContext()

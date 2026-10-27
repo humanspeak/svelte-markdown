@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { iconMap, type IconName } from '$lib/icons'
+    import { iconMap, type IconName } from '#lib/icons.js'
 
     const { name, class: className = 'size-4' }: { name: IconName; class?: string } = $props()
 
