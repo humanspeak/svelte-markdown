@@ -5,9 +5,9 @@
         formatSheetLabel,
         type ExampleSection
     } from '@humanspeak/docs-kit'
-    import { demoCodeSample } from '$lib/demo-loaders'
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import ReactiveExtensionConsole from '$lib/examples/reactive-extensions/demos/ReactiveExtensionConsole.svelte'
+    import { demoCodeSample } from '#lib/demo-loaders.js'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
+    import ReactiveExtensionConsole from '#lib/examples/reactive-extensions/demos/ReactiveExtensionConsole.svelte'
     import { Layers, ListRestart, MousePointerClick, Radar } from '@lucide/svelte'
 
     const seo = getSeoContext()

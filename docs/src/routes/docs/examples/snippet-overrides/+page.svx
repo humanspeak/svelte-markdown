@@ -4,7 +4,7 @@ description: Use Svelte 5 snippet overrides in @humanspeak/svelte-markdown to cu
 ---
 
 <script>
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
 
     const seo = getSeoContext()
     if (seo) {

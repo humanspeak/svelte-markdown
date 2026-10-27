@@ -1,4 +1,4 @@
-import { docsConfig } from '$lib/docs-config'
+import { docsConfig } from '#lib/docs-config.js'
 import { fetchOtherProjects } from '@humanspeak/docs-kit'
 import type { LayoutServerLoad } from './$types'
 

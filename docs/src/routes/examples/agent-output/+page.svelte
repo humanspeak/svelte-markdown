@@ -5,9 +5,9 @@
         formatSheetLabel,
         type ExampleSection
     } from '@humanspeak/docs-kit'
-    import { demoCodeSample } from '$lib/demo-loaders'
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import AgentConsole from '$lib/examples/agent-output/demos/AgentConsole.svelte'
+    import { demoCodeSample } from '#lib/demo-loaders.js'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
+    import AgentConsole from '#lib/examples/agent-output/demos/AgentConsole.svelte'
     import { Shield, ShieldCheck, ShieldOff, Zap } from '@lucide/svelte'
 
     const seo = getSeoContext()

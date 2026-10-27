@@ -3,6 +3,9 @@
     "version": "0.0.1",
     "private": true,
     "type": "module",
+    "imports": {
+        "#lib/*": "./src/lib/*"
+    },
     "scripts": {
         "build": "tsx ./scripts/fetch-github-stats.ts && vite build && node ./scripts/check-favicon.mjs",
         "build:indexnow": "tsx ./scripts/fetch-github-stats.ts && vite build --mode indexnow && node ./scripts/check-favicon.mjs",
@@ -18,7 +21,7 @@
     "dependencies": {
         "@fontsource-variable/inter": "^5.3.0",
         "@fontsource-variable/jetbrains-mono": "^5.3.0",
-        "@humanspeak/docs-kit": "github:humanspeak/docs-kit#2026.9.10",
+        "@humanspeak/docs-kit": "github:humanspeak/docs-kit#1432451ec0b28c887bb00dc120a8c290bd6efabd",
         "@humanspeak/svelte-markdown": "workspace:*",
         "@tanstack/highlight": "1.0.0",
         "katex": "^0.18.7",
@@ -35,8 +38,8 @@
         "@humanspeak/svelte-motion": "^2.0.1-0",
         "@icons-pack/svelte-simple-icons": "^7.2.0",
         "@lucide/svelte": "^1.47.0",
-        "@sveltejs/adapter-cloudflare": "^7.2.9",
-        "@sveltejs/kit": "^2.70.3",
+        "@sveltejs/adapter-cloudflare": "^8.0.1",
+        "@sveltejs/kit": "^3.1.0",
         "@sveltejs/vite-plugin-svelte": "^7.3.1",
         "@tailwindcss/postcss": "^4.3.3",
         "@tailwindcss/typography": "^0.5.20",

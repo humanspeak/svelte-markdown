@@ -4,7 +4,7 @@ description: Customize markdown rendering inline with Svelte 5 snippets in @huma
 ---
 
 <script>
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
 
     const seo = getSeoContext()
     if (seo) {

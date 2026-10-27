@@ -5,10 +5,10 @@
         formatSheetLabel,
         type ExampleSection
     } from '@humanspeak/docs-kit'
-    import { demoCodeSample } from '$lib/demo-loaders'
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import ComponentRendered from '$lib/examples/shiki/demos/ComponentRendered.svelte'
-    import FallbackRendered from '$lib/examples/shiki/demos/FallbackRendered.svelte'
+    import { demoCodeSample } from '#lib/demo-loaders.js'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
+    import ComponentRendered from '#lib/examples/shiki/demos/ComponentRendered.svelte'
+    import FallbackRendered from '#lib/examples/shiki/demos/FallbackRendered.svelte'
     import { Highlighter, Package, Shield, Terminal, Zap } from '@lucide/svelte'
 
     const seo = getSeoContext()

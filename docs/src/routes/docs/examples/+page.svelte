@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import type { IconName } from '$lib/icons'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
+    import type { IconName } from '#lib/icons.js'
 
     const seo = getSeoContext()
     if (seo) {

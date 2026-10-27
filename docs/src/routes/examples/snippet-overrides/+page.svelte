@@ -5,10 +5,10 @@
         formatSheetLabel,
         type ExampleSection
     } from '@humanspeak/docs-kit'
-    import { demoCodeSample } from '$lib/demo-loaders'
-    import { getSeoContext } from '$lib/components/contexts/Seo/Seo.context'
-    import DefaultRendering from '$lib/examples/snippet-overrides/demos/DefaultRendering.svelte'
-    import WithSnippets from '$lib/examples/snippet-overrides/demos/WithSnippets.svelte'
+    import { demoCodeSample } from '#lib/demo-loaders.js'
+    import { getSeoContext } from '#lib/components/contexts/Seo/Seo.context.js'
+    import DefaultRendering from '#lib/examples/snippet-overrides/demos/DefaultRendering.svelte'
+    import WithSnippets from '#lib/examples/snippet-overrides/demos/WithSnippets.svelte'
     import { Code, Layers, Paintbrush, Sparkles } from '@lucide/svelte'
 
     const seo = getSeoContext()
