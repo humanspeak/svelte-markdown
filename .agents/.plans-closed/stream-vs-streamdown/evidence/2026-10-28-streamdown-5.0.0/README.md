@@ -50,3 +50,18 @@ Decision: the docs page, the compare page, and `.competitive-intel/config.json` 
 The executor stopped at Case C because the published "About 30% of frames run long" figure did not reproduce on this machine. Guard checked the logs. Every scenario keeps its winner. Svelte Markdown parity is 0 mismatched in all 130 runs. Page weight (`domNodes` in the JSON) is identical to the published table. Only the frame-over-budget percentage moved, and it depends on the machine: the 16.7 ms budget is absolute, and this i9 is faster than the original i7-6700K. The 4.2.1 control shows the same shift.
 
 The operator chose to publish this capture. The Streaming Benchmarks table, the vs-svelte-streamdown compare entry ("About 1.5–3.1x less work", "About 16–42% of frames run long") and `config.benchmarks[0].measured_against` were updated in commit `0973f2c`.
+
+## Attribution (2026-10-28, same machine)
+
+Captured 19:00–19:02Z with `scripts/stream-compare-attribute.mjs` (one warmup, then one traced Svelte Markdown run per scenario) against a fresh `pnpm build` and `pnpm preview` on :4173. Outputs are in `attribution/<scenario>.{log,attribution.json}`. No page errors. Per-frame ms (page average / flush / JS outside the flush / style and layout):
+
+| Scenario        | Total | Flush | Other JS | Style/layout |
+| --------------- | ----- | ----- | -------- | ------------ |
+| prose-mixed     | 1.84  | 0.11  | 0.65     | 0.42         |
+| long-list       | 4.05  | 1.39  | 1.47     | 0.29         |
+| long-code-fence | 1.94  | 0.08  | 0.53     | 0.54         |
+| citations       | 1.97  | 0.17  | 0.65     | 0.30         |
+| prefix-24kb     | 2.84  | 0.15  | 0.89     | 1.05         |
+| prefix-384kb    | 21.49 | 0.14  | 1.38     | 11.45        |
+
+Renderer work (flush plus other JS) is 1.05 ms/frame at 24 KB and 1.52 ms/frame at 384 KB, against 1.37 and 1.91 in the 2026-09-28 i7 capture. Traced coverage of total work is 59–79% (100% at 384 KB). The rest is untraced window time. This feeds the "Where the time goes" table and the large-documents caveat on the Streaming Benchmarks page.

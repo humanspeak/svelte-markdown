@@ -90,22 +90,22 @@ The table was first captured on 2026-09-28 against `svelte-streamdown` 4.2.0 on 
 - **HTML blocks are not a like-for-like comparison.** By default Svelte Streamdown shows raw HTML as plain text, and the benchmark keeps that default. It builds none of the `<div>` and `<details>` elements that Svelte Markdown renders.
 - **Some documents are parsed in full on every update.** This trades speed for correct output. It applies to documents with Windows line endings (`\r\n`), and to documents that currently end inside an unfinished HTML tag, comment, or element. The HTML blocks row above includes this cost.
 - **Code fences differ in structure.** Svelte Streamdown wraps every line in its own element. Svelte Markdown emits one text node per line with no wrapper elements.
-- **Large documents include a full layout every frame.** The harness forces a layout of the whole document each frame, which both renderers pay. At 384 KB that pass is most of the frame. Svelte Markdown's own parsing and rendering work stays nearly flat: about 1.4 ms per frame at 24 KB and 1.9 ms at 384 KB.
+- **Large documents include a full layout every frame.** The harness forces a layout of the whole document each frame, which both renderers pay. At 384 KB that pass is most of the frame. Svelte Markdown's own parsing and rendering work stays nearly flat: about 1.1 ms per frame at 24 KB and 1.5 ms at 384 KB.
 - **Milliseconds are machine-specific.** The ratios are the claim. Absolute totals moved by tens of percent between captures on the same machine.
 - **One workload family.** Cumulative string updates at a fixed rate. Your transport, content, and device will differ.
 
 ## Where the time goes
 
-One traced run per scenario, Svelte Markdown only, in milliseconds per frame:
+One traced run per scenario, Svelte Markdown only, in milliseconds per frame, on the same machine and day as the results above. The three columns do not add up to the total. The rest is paint, garbage collection, and time the trace does not attribute.
 
 | Scenario | Total | Parse and diff | Other JavaScript | Style and layout |
 |----------|:-----:|:--------------:|:----------------:|:----------------:|
-| Mixed prose | 2.70 | 0.19 | 1.32 | 0.62 |
-| One open bullet list | 5.35 | 2.52 | 2.05 | -- |
-| One open code fence | 2.01 | -- | 0.73 | 0.73 |
-| Citation-heavy prose | 2.49 | 0.28 | 1.20 | -- |
+| Mixed prose | 1.84 | 0.11 | 0.65 | 0.42 |
+| One open bullet list | 4.05 | 1.39 | 1.47 | 0.29 |
+| One open code fence | 1.94 | 0.08 | 0.53 | 0.54 |
+| Citation-heavy prose | 1.97 | 0.17 | 0.65 | 0.30 |
 
-An open list is re-lexed in full on every frame by design, which is why parsing dominates there.
+An open list is re-lexed in full on every frame by design, which is why parsing takes about a third of the frame there, against well under a tenth elsewhere.
 
 ## Reproduce it
 
