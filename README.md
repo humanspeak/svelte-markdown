@@ -592,6 +592,20 @@ Then use the built-in helpers — no boilerplate needed:
 
 `markedMermaid()` is a zero-dependency tokenizer that converts ` ```mermaid ` code blocks into custom tokens. `MermaidRenderer` lazy-loads mermaid in the browser, renders SVG asynchronously, and automatically re-renders when dark/light mode changes.
 
+You can also use snippet overrides to wrap `MermaidRenderer` with custom markup:
+
+```svelte
+<SvelteMarkdown source={markdown} extensions={[markedMermaid()]}>
+    {#snippet mermaid(props)}
+        <div class="my-diagram-wrapper">
+            <MermaidRenderer text={props.text} />
+        </div>
+    {/snippet}
+</SvelteMarkdown>
+```
+
+The Mermaid tokenizer is synchronous, so parsing and streaming remain enabled. Diagram rendering happens in the browser after mount; server-rendered pages show a loading placeholder for diagrams. The snippet delegates that async rendering to `MermaidRenderer` and controls only its layout.
+
 #### Choosing an engine
 
 mermaid.js is the default engine, so existing users need no changes. To render diagrams with a different engine, implement the `MermaidEngine` contract, exported from `@humanspeak/svelte-markdown/extensions`:
@@ -622,19 +636,65 @@ setMermaidEngine(myEngine)
 
 Engine output is injected as SVG markup with `{@html}`, so a custom engine must produce safe markup for untrusted diagram source. The built-in mermaid.js engine runs with `securityLevel: 'strict'`.
 
-You can also use snippet overrides to wrap `MermaidRenderer` with custom markup:
+#### Lightweight engine: pele
 
-```svelte
-<SvelteMarkdown source={markdown} extensions={[markedMermaid()]}>
-    {#snippet mermaid(props)}
-        <div class="my-diagram-wrapper">
-            <MermaidRenderer text={props.text} />
-        </div>
-    {/snippet}
-</SvelteMarkdown>
+[pele](https://pele.run) is an MIT-licensed, zero-dependency Mermaid-syntax renderer that runs synchronously, so a diagram appears in the same frame instead of after an async load. According to pele's documentation, its core is about 15 KB gzip plus a 6–45 KB chunk per diagram type. For comparison, mermaid.js is roughly 1.5 MB. The trade-off is coverage and styling: pele supports its own set of diagram types and draws its own layout.
+
+```bash
+npm install pele
 ```
 
-The Mermaid tokenizer is synchronous, so parsing and streaming remain enabled. Diagram rendering happens in the browser after mount; server-rendered pages show a loading placeholder for diagrams. The snippet delegates that async rendering to `MermaidRenderer` and controls only its layout.
+Import the engine from its own subpath, register the diagram types you need, and set it as the engine. The subpath is separate from `extensions` so that `pele` is only bundled when you opt in:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
+    import {
+        createPeleEngine,
+        markedMermaid,
+        MermaidRenderer,
+        setMermaidEngine
+    } from '@humanspeak/svelte-markdown/extensions/mermaid-pele'
+    import flowchart from 'pele/diagrams/flowchart'
+    import sequence from 'pele/diagrams/sequence'
+
+    // Only the listed diagram types are bundled and can render.
+    setMermaidEngine(createPeleEngine({ diagrams: [flowchart, sequence] }))
+
+    let { source } = $props()
+
+    interface MermaidRenderers extends Renderers {
+        mermaid: RendererComponent
+    }
+
+    const renderers: Partial<MermaidRenderers> = {
+        mermaid: MermaidRenderer
+    }
+</script>
+
+<SvelteMarkdown {source} extensions={[markedMermaid()]} {renderers} />
+```
+
+A diagram whose type was not registered renders `Diagram error: …` in place of the diagram. Pele escapes diagram text and filters links and styles, so its SVG is safe to inject.
+
+Pele is themed with `--pele-*` CSS variables on `.pele` or a parent element, so colours follow your stylesheet and the `dark` and theme fields in the render context are ignored:
+
+```css
+.pele {
+    --pele-bg: #ffffff;
+    --pele-fg: #1f1f1f;
+    --pele-accent: #2563eb;
+}
+
+.dark .pele {
+    --pele-bg: #0f172a;
+    --pele-fg: #e2e8f0;
+    --pele-accent: #60a5fa;
+}
+```
+
+Because pele uses its own layout and visual style, its diagrams will not look identical to mermaid.js output.
 
 ### GitHub Alerts
 

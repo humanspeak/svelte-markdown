@@ -276,6 +276,9 @@ importers:
       mprocs:
         specifier: ^0.9.6
         version: 0.9.6
+      pele:
+        specifier: 1.10.1
+        version: 1.10.1
       prettier:
         specifier: ^3.9.9
         version: 3.9.9
@@ -3692,6 +3695,10 @@ packages:
 
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
+
+  pele@1.10.1:
+    resolution: {integrity: sha512-beU/HA96TdYrUYv+dbt6h4G3DqFyBIAGEGjfY5RbP1mUBCqcOrtV67/AhSQggxfL5gphFH5XJ0BsPzL6x/RP2w==}
+    engines: {node: '>=20'}
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -7835,6 +7842,8 @@ snapshots:
   path-to-regexp@6.3.0: {}
 
   pathe@2.0.3: {}
+
+  pele@1.10.1: {}
 
   picocolors@1.1.1: {}
 
