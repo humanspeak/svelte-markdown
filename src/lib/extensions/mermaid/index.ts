@@ -1,2 +1,6 @@
+export { createMermaidJsEngine } from './createMermaidJsEngine.js'
 export { markedMermaid } from './markedMermaid.js'
+export { MERMAID_ENGINE_CONTEXT_KEY, getMermaidEngine, setMermaidEngine } from './mermaidContext.js'
+export { toMermaidError } from './mermaidEngine.js'
+export type { MermaidEngine, MermaidRenderContext, MermaidRenderResult } from './mermaidEngine.js'
 export { default as MermaidRenderer } from './MermaidRenderer.svelte'

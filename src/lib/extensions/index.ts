@@ -24,4 +24,13 @@ export type { AlertType } from './alert/index.js'
 export { FootnoteRef, FootnoteSection, markedFootnote } from './footnote/index.js'
 export { BLOCK_KATEX_TOKEN, INLINE_KATEX_TOKEN, KatexRenderer, markedKatex } from './katex/index.js'
 export type { KatexSnippetOverrides, KatexSnippetProps, MarkedKatexOptions } from './katex/index.js'
-export { MermaidRenderer, markedMermaid } from './mermaid/index.js'
+export {
+    MERMAID_ENGINE_CONTEXT_KEY,
+    MermaidRenderer,
+    createMermaidJsEngine,
+    getMermaidEngine,
+    markedMermaid,
+    setMermaidEngine,
+    toMermaidError
+} from './mermaid/index.js'
+export type { MermaidEngine, MermaidRenderContext, MermaidRenderResult } from './mermaid/index.js'

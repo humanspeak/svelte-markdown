@@ -592,6 +592,36 @@ Then use the built-in helpers — no boilerplate needed:
 
 `markedMermaid()` is a zero-dependency tokenizer that converts ` ```mermaid ` code blocks into custom tokens. `MermaidRenderer` lazy-loads mermaid in the browser, renders SVG asynchronously, and automatically re-renders when dark/light mode changes.
 
+#### Choosing an engine
+
+mermaid.js is the default engine, so existing users need no changes. To render diagrams with a different engine, implement the `MermaidEngine` contract, exported from `@humanspeak/svelte-markdown/extensions`:
+
+```ts
+import type { MermaidEngine } from '@humanspeak/svelte-markdown/extensions'
+
+const myEngine: MermaidEngine = {
+    render(text, { dark, lightTheme, darkTheme }) {
+        try {
+            return { svg: renderToSvg(text, dark ? darkTheme : lightTheme) }
+        } catch (e) {
+            return { error: e instanceof Error ? e.message : String(e) }
+        }
+    }
+}
+```
+
+`render` may return a result synchronously or a Promise. It must never throw, and its Promise must never reject. Report failures as `{ error }` instead.
+
+The engine is resolved in priority order: an explicit `engine` prop → a Svelte context set under `MERMAID_ENGINE_CONTEXT_KEY` → the module singleton from `setMermaidEngine()` → the built-in mermaid.js engine. Register a singleton once at app startup:
+
+```ts
+import { setMermaidEngine } from '@humanspeak/svelte-markdown/extensions'
+
+setMermaidEngine(myEngine)
+```
+
+Engine output is injected as SVG markup with `{@html}`, so a custom engine must produce safe markup for untrusted diagram source. The built-in mermaid.js engine runs with `securityLevel: 'strict'`.
+
 You can also use snippet overrides to wrap `MermaidRenderer` with custom markup:
 
 ```svelte
