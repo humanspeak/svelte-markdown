@@ -335,10 +335,12 @@ export const competitors: Competitor[] = [
     {
         slug: 'vs-tiptap',
         name: 'Tiptap',
-        seoTitle: 'Tiptap vs Svelte Markdown: Editor or Renderer?',
+        seoTitle: 'Tiptap in Svelte 5: Editor vs Markdown Renderer',
         tagline: 'Do you need to edit markdown, or just render it?',
         description:
             'Tiptap is a ProseMirror rich-text editor; Svelte Markdown is a zero-config Svelte 5 renderer for read-only markdown. Editing vs rendering — which do you need?',
+        seoDescription:
+            'Using Tiptap with Svelte 5? Tiptap is a rich-text editor; Svelte Markdown renders markdown and streaming AI output. See when to use each, or both together.',
         website: 'https://tiptap.dev',
         github: 'https://github.com/ueberdosis/tiptap',
         npm: '@tiptap/core',
@@ -408,7 +410,9 @@ export const competitors: Competitor[] = [
             'svelte rich text editor',
             'tiptap vs svelte-markdown',
             'svelte wysiwyg',
-            'svelte-tiptap'
+            'svelte-tiptap',
+            'tiptap svelte 5',
+            'tiptap markdown'
         ]
     },
     {
@@ -513,10 +517,12 @@ export const competitors: Competitor[] = [
     {
         slug: 'vs-marked',
         name: 'marked',
-        seoTitle: 'marked vs Svelte Markdown: Parser or Svelte Component?',
+        seoTitle: 'Using marked in Svelte 5: Render Markdown as Components',
         tagline: 'The Engine Under Our Hood',
         description:
             'Compare marked and @humanspeak/svelte-markdown: direct markdown parsing versus a Svelte 5 component layer with renderers, caching, and safety controls.',
+        seoDescription:
+            'Using marked in Svelte? Svelte Markdown runs marked for you and renders each token as a Svelte 5 component: no {@html}, safe links, built-in caching.',
         website: 'https://marked.js.org',
         github: 'https://github.com/markedjs/marked',
         npm: 'marked',
@@ -603,7 +609,9 @@ export const competitors: Competitor[] = [
             'marked js',
             'svelte markdown renderer',
             'marked svelte',
-            'marked vs svelte-markdown'
+            'marked vs svelte-markdown',
+            'svelte marked',
+            'marked svelte 5'
         ]
     },
     {
@@ -689,9 +697,12 @@ export const competitors: Competitor[] = [
     {
         slug: 'vs-svelte-exmarkdown',
         name: 'svelte-exmarkdown',
+        seoTitle: 'svelte-exmarkdown vs Svelte Markdown: unified or marked?',
         tagline: 'Two Runtime Renderers, Different Engines',
         description:
             'Compare svelte-exmarkdown and @humanspeak/svelte-markdown: unified-based runtime rendering versus marked-powered Svelte 5 renderers and streaming support.',
+        seoDescription:
+            'svelte-exmarkdown uses remark/rehype plugins; Svelte Markdown uses marked with Svelte 5 snippet renderers, LLM streaming, and safe HTML defaults.',
         github: 'https://github.com/ssssota/svelte-exmarkdown',
         npm: 'svelte-exmarkdown',
         type: 'Runtime Renderer',
@@ -767,7 +778,8 @@ export const competitors: Competitor[] = [
         keywords: [
             'svelte exmarkdown',
             'svelte markdown component',
-            'svelte-exmarkdown vs svelte-markdown'
+            'svelte-exmarkdown vs svelte-markdown',
+            'svelte-exmarkdown'
         ]
     },
     {
