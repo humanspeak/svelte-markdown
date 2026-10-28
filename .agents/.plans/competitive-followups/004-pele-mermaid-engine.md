@@ -13,12 +13,14 @@
 > If that prints nothing, STOP.
 >
 > **Drift check (run first)**:
-> `git diff --stat bdebe69..HEAD -- package.json scripts/tree-shaking.mjs src/lib/extensions/barrel-optional-deps.test.ts README.md docs/src/routes/docs/advanced/marked-extensions/+page.svx`
-> Plan 003 is expected to have changed `README.md` (a `#### Choosing an engine`
-> subsection). Any other change in these files means you must compare them
-> with the excerpts below before proceeding.
+> `git diff --stat 3051dc1..HEAD -- package.json scripts/tree-shaking.mjs src/lib/extensions/barrel-optional-deps.test.ts README.md docs/src/routes/docs/advanced/marked-extensions/+page.svx`
+> The baseline `3051dc1` already includes plan 003 (contract, renderer, and the
+> README `#### Choosing an engine` subsection). Any change in these files since
+> then means you must compare them with the excerpts below before proceeding.
 >
 > **Revision 2026-10-28**: Git workflow re-pointed to the shared digest branch `chore/competitive-intel-2026-10-28` (operator's standing rule: digest follow-ups ship as one PR). The reviewer owns git. No change to scope or steps.
+>
+> **Revision 2026-10-28 (2)**: plan 003 placed `#### Choosing an engine` in the middle of the README Mermaid section, so the existing snippet-override example and the streaming note ended up under it. With operator agreement, the fix is folded into this plan: Step 6 now first moves that subsection to the end of the Mermaid section. `Planned at` was re-stamped to `3051dc1` (plan 003 landed).
 
 ## Status
 
@@ -30,7 +32,7 @@
   `src/lib/extensions/mermaid/mermaidEngine.ts`, which 003 creates.
 - **Wave**: 2
 - **Category**: direction (competitive gap)
-- **Planned at**: commit `bdebe69`, 2026-10-28
+- **Planned at**: commit `3051dc1`, 2026-10-28 (re-stamped; originally `bdebe69`)
 - **Ticket**: HUM-72 (`gap-lightweight-mermaid-engine`), part 2 of 3
 
 ## Why this matters
@@ -149,7 +151,7 @@ resolves the engine through the `engine` prop, then context
 - `pnpm-lock.yaml` (via `pnpm add` only)
 - `src/lib/extensions/barrel-optional-deps.test.ts`: add `'pele'` and `'mermaid'` to the guarded list, and add a mermaid-subpath invariant
 - `scripts/tree-shaking.mjs`: new cases
-- `README.md`: a new `#### Lightweight engine: pele` subsection under the Mermaid section
+- `README.md`: move plan 003's `#### Choosing an engine` subsection to the end of the Mermaid section, then add a new `#### Lightweight engine: pele` subsection after it
 - `docs/src/routes/docs/advanced/marked-extensions/+page.svx`: a short note in `## Step-by-Step: Mermaid Diagrams`
 
 **Out of scope**:
@@ -316,8 +318,29 @@ Report it, because the fix may belong in plan 003's module layout.
 
 ### Step 6: Document it
 
-`README.md`: under the Mermaid section, after plan 003's `#### Choosing an engine`,
-add `#### Lightweight engine: pele`. Include:
+**6a. Fix the subsection order first.** In `README.md`, the section
+`### Mermaid Diagrams (Async Rendering)` currently reads, in order:
+
+1. intro, install, and the basic usage example
+2. the paragraph starting `` `markedMermaid()` is a zero-dependency tokenizer``
+3. `#### Choosing an engine` (added by plan 003) and all of its content, which
+   ends with the paragraph starting `Engine output is injected as SVG markup`
+4. the paragraph starting `You can also use snippet overrides to wrap`, its
+   ` ```svelte ` example, and the paragraph starting
+   `The Mermaid tokenizer is synchronous`
+5. then `### GitHub Alerts`
+
+Move block 3 (the `#### Choosing an engine` heading through the end of its
+`Engine output is injected…` paragraph) so it sits **after** block 4 and
+directly before `### GitHub Alerts`. Do not change any wording; it is a pure
+move. Afterwards, the snippet-override example and the streaming note sit
+directly under the section's intro again.
+
+**Verify 6a**: `awk '/^### Mermaid Diagrams/,/^### GitHub Alerts/' README.md | grep -n "^#### \|snippet overrides to wrap\|tokenizer is synchronous"`
+lists `You can also use snippet overrides…` and `The Mermaid tokenizer is synchronous…` **before** `#### Choosing an engine`.
+
+**6b.** Then, after the (moved) `#### Choosing an engine` subsection and before
+`### GitHub Alerts`, add `#### Lightweight engine: pele`. Include:
 
 - one sentence on what pele is and the size/sync trade-off. Use only the
   figures in "Why this matters", attributed to pele's docs.
