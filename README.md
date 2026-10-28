@@ -696,6 +696,30 @@ Pele is themed with `--pele-*` CSS variables on `.pele` or a parent element, so 
 
 Because pele uses its own layout and visual style, its diagrams will not look identical to mermaid.js output.
 
+#### Live diagrams while streaming
+
+By default a diagram renders only after its closing fence arrives. For streamed AI output you can render it while the fence is still open:
+
+```svelte
+<SvelteMarkdown
+    source={streamingMarkdown}
+    extensions={[markedMermaid({ renderOpenFences: true })]}
+    {renderers}
+/>
+```
+
+With `renderOpenFences: true`, complete lines render as they arrive. A half-typed last line is skipped, and the last good diagram stays visible while the next line is incomplete or invalid. The error box is only shown once the fence closes. This option is off by default, so existing behavior does not change.
+
+Pair it with the pele engine above. It renders synchronously, so each completed line updates the diagram in the same frame. With the async mermaid.js engine it also works, but each completed line triggers a full async render.
+
+Snippet overrides receive a `closed` prop, which is `false` while the fence is still open:
+
+```svelte
+{#snippet mermaid(props)}
+    <MermaidRenderer text={props.text} closed={props.closed} />
+{/snippet}
+```
+
 ### GitHub Alerts
 
 Built-in support for [GitHub-style alerts/admonitions](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts). Five alert types are supported: `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, and `CAUTION`.

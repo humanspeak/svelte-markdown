@@ -21,9 +21,20 @@ produce safe SVG.
         darkTheme?: string
         /** Optional explicit engine; overrides context and singleton. Defaults to mermaid.js. */
         engine?: MermaidEngine
+        /**
+         * `false` while the fence is still streaming (see `markedMermaid({ renderOpenFences })`).
+         * An open diagram keeps the last good SVG on error and never shows the error box.
+         */
+        closed?: boolean
     }
 
-    const { text, lightTheme = 'default', darkTheme = 'dark', engine }: Props = $props()
+    const {
+        text,
+        lightTheme = 'default',
+        darkTheme = 'dark',
+        engine,
+        closed = true
+    }: Props = $props()
 
     // Context is stable for the component's lifetime; read once at init.
     const contextEngine = getContext<MermaidEngine | undefined>(MERMAID_ENGINE_CONTEXT_KEY)
@@ -34,19 +45,31 @@ produce safe SVG.
     let mounted = $state(false)
     let dark = $state(false)
     let result = $state<MermaidRenderResult | null>(null)
+    // Last successful SVG, kept so an open fence can stay on screen through errors.
+    let lastSvg = $state('')
     let renderCounter = 0
+
+    const apply = (value: MermaidRenderResult) => {
+        result = value
+        if (value.svg !== undefined) lastSvg = value.svg
+    }
 
     $effect(() => {
         if (!mounted) return
         const current = ++renderCounter
+        if (!closed && text === '') {
+            // Nothing to draw yet for an open fence; skip the engine.
+            result = null
+            return
+        }
         const output = resolved.render(text, { dark, lightTheme, darkTheme })
         if (output instanceof Promise) {
             // Engines never reject (contract); stale results are dropped.
             void output.then((value) => {
-                if (current === renderCounter) result = value
+                if (current === renderCounter) apply(value)
             })
         } else {
-            result = output
+            apply(output)
         }
     })
 
@@ -61,13 +84,18 @@ produce safe SVG.
     })
 </script>
 
-{#if !result}
-    <div class="mermaid-loading" data-testid="mermaid-loading">Loading diagram...</div>
-{:else if result.error !== undefined}
-    <div class="mermaid-error" data-testid="mermaid-error">Diagram error: {result.error}</div>
-{:else}
+{#if result?.svg !== undefined}
     <div class="mermaid-diagram" data-testid="mermaid-diagram">
         <!-- trunk-ignore(eslint/svelte/no-at-html-tags) -->
         {@html result.svg}
     </div>
+{:else if result?.error !== undefined && closed}
+    <div class="mermaid-error" data-testid="mermaid-error">Diagram error: {result.error}</div>
+{:else if !closed && lastSvg}
+    <div class="mermaid-diagram" data-testid="mermaid-diagram">
+        <!-- trunk-ignore(eslint/svelte/no-at-html-tags) -->
+        {@html lastSvg}
+    </div>
+{:else}
+    <div class="mermaid-loading" data-testid="mermaid-loading">Loading diagram...</div>
 {/if}

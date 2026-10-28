@@ -1,9 +1,9 @@
 import type { TokenizerExtension } from 'marked'
 import { describe, expect, it } from 'vitest'
-import { markedMermaid } from './markedMermaid.js'
+import { markedMermaid, type MarkedMermaidOptions } from './markedMermaid.js'
 
-function getTokenizerDef(): TokenizerExtension {
-    const ext = markedMermaid()
+function getTokenizerDef(options?: MarkedMermaidOptions): TokenizerExtension {
+    const ext = markedMermaid(options)
     return ext.extensions![0] as TokenizerExtension
 }
 
@@ -168,6 +168,51 @@ describe('markedMermaid', () => {
             const token2 = def.tokenizer.call({} as never, src, [])
             expect(token1).not.toBe(token2)
             expect(token1).toEqual(token2)
+        })
+    })
+
+    describe('renderOpenFences', () => {
+        const openOptions: MarkedMermaidOptions = { renderOpenFences: true }
+
+        it('emits a closed:false token for an open fence, with only complete lines in text', () => {
+            const def = getTokenizerDef(openOptions)
+            const src = '```mermaid\ngraph TD\n    A --> B\n    B --'
+            const token = def.tokenizer.call({} as never, src, [])
+            expect(token).toEqual({
+                type: 'mermaid',
+                raw: src,
+                text: 'graph TD\n    A --> B',
+                closed: false
+            })
+        })
+
+        it('emits no closed key for a closed fence', () => {
+            const def = getTokenizerDef(openOptions)
+            const src = '```mermaid\ngraph TD\n    A --> B\n```'
+            const token = def.tokenizer.call({} as never, src, [])
+            expect(token).toBeDefined()
+            expect(token!.text).toBe('graph TD\n    A --> B')
+            expect('closed' in token!).toBe(false)
+        })
+
+        it('emits empty text for an open fence with no body yet', () => {
+            const def = getTokenizerDef(openOptions)
+            const src = '```mermaid\n'
+            const token = def.tokenizer.call({} as never, src, [])
+            expect(token).toEqual({ type: 'mermaid', raw: src, text: '', closed: false })
+        })
+
+        it('emits empty text while the first diagram line is still incomplete', () => {
+            const def = getTokenizerDef(openOptions)
+            const src = '```mermaid\ngraph TD'
+            const token = def.tokenizer.call({} as never, src, [])
+            expect(token).toEqual({ type: 'mermaid', raw: src, text: '', closed: false })
+        })
+
+        it('returns undefined for an open fence when the option is not set', () => {
+            const def = getTokenizerDef()
+            const token = def.tokenizer.call({} as never, '```mermaid\ngraph TD\n    A --> B', [])
+            expect(token).toBeUndefined()
         })
     })
 

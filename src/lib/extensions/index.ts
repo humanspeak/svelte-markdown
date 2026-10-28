@@ -33,4 +33,9 @@ export {
     setMermaidEngine,
     toMermaidError
 } from './mermaid/index.js'
-export type { MermaidEngine, MermaidRenderContext, MermaidRenderResult } from './mermaid/index.js'
+export type {
+    MarkedMermaidOptions,
+    MermaidEngine,
+    MermaidRenderContext,
+    MermaidRenderResult
+} from './mermaid/index.js'
