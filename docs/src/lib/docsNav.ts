@@ -168,6 +168,7 @@ export const docsSections: NavSection[] = [
             { title: 'Tree Shaking', href: '/docs/advanced/tree-shaking', icon: Gauge },
             { title: 'Allow/Deny', href: '/docs/advanced/allow-deny', icon: Shield },
             { title: 'Marked Extensions', href: '/docs/advanced/marked-extensions', icon: Puzzle },
+            { title: 'Mermaid Diagrams', href: '/docs/advanced/mermaid', icon: Workflow },
             {
                 title: 'Syntax Highlighting',
                 href: '/docs/advanced/syntax-highlighting',

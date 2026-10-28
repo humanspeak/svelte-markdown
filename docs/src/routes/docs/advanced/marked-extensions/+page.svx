@@ -239,23 +239,9 @@ e^{i\\pi} + 1 = 0
 />
 ```
 
-## Step-by-Step: Mermaid Diagrams
+## Mermaid Diagrams
 
-Unlike KaTeX (synchronous rendering via `katex.renderToString()`), **Mermaid is async and browser-only** — it requires the DOM and uses `await mermaid.render()`. The package provides built-in `markedMermaid` and `MermaidRenderer` helpers so you don't need to write boilerplate.
-
-> **Lightweight alternative:** a synchronous, zero-dependency engine backed by [pele](https://pele.run) is available on the `extensions/mermaid-pele` subpath. It renders in the same frame instead of after an async load, and supports only the diagram types you register. See the [pele engine section of the README](https://github.com/humanspeak/svelte-markdown#lightweight-engine-pele).
-
-### 1. Install Mermaid
-
-Mermaid is an optional peer dependency — install it yourself:
-
-```bash
-npm install mermaid
-```
-
-### 2. Wire Up with Built-in Helpers
-
-The package exports `markedMermaid()` (a zero-dep tokenizer for ` ```mermaid ` code blocks) and `MermaidRenderer` (a Svelte component that lazy-loads mermaid and renders SVG diagrams with dark mode support):
+Unlike KaTeX, which renders synchronously with `katex.renderToString()`, Mermaid diagrams are drawn in the browser after mount. The package ships `markedMermaid()` (a zero-dependency tokenizer for ` ```mermaid ` fences) and `MermaidRenderer` (a component that draws the diagram through a pluggable engine):
 
 ```svelte
 <script lang="ts">
@@ -288,12 +274,7 @@ graph TD
 />
 ```
 
-The built-in `MermaidRenderer` handles:
-- **Dynamic import**: `import('mermaid')` in `onMount` ensures it only loads in the browser
-- **Async rendering**: `mermaid.render()` returns a promise with the SVG string
-- **Loading/error states**: Handles the async lifecycle gracefully
-- **Unique IDs**: `crypto.randomUUID()` prevents collisions when multiple diagrams render
-- **Theme reactivity**: A `MutationObserver` watches the `<html>` class for dark/light changes and re-renders with the correct Mermaid theme via per-diagram directives
+mermaid.js (`npm install mermaid`) is the default engine. The lightweight synchronous [pele](https://pele.run) engine, custom engines through the `MermaidEngine` contract, and live diagrams while a fence is still streaming are covered on the [Mermaid Diagrams](/docs/advanced/mermaid) page.
 
 ### Snippet Overrides for Async Extensions
 
@@ -303,13 +284,13 @@ You can also use snippet overrides to wrap `MermaidRenderer` with custom markup 
 <SvelteMarkdown source={markdown} extensions={[markedMermaid()]}>
     {#snippet mermaid(props)}
         <div class="my-diagram-wrapper">
-            <MermaidRenderer text={props.text} />
+            <MermaidRenderer text={props.text} closed={props.closed} />
         </div>
     {/snippet}
 </SvelteMarkdown>
 ```
 
-Since snippets run synchronously during render, they delegate the async work to `MermaidRenderer` rather than calling `mermaid.render()` directly. This pattern works for any async extension — keep the async logic in a component and use the snippet for layout customization.
+Since snippets run synchronously during render, they hand the async work to `MermaidRenderer` instead of calling `mermaid.render()` directly. This pattern works for any async extension: keep the async logic in a component and use the snippet for layout.
 
 ## General Pattern
 
@@ -338,6 +319,7 @@ Any extension that adds custom token types can be integrated using the pattern a
 ## Related
 
 - [KaTeX Interactive Demo](/examples/marked-extensions) -- try KaTeX math rendering live with both component and snippet approaches
+- [Mermaid Diagrams](/docs/advanced/mermaid) -- engines, the `MermaidEngine` contract, pele, and live streaming diagrams
 - [Mermaid Interactive Demo](/examples/mermaid) -- try async Mermaid diagram rendering with a custom marked extension
 - [Custom Renderers](/docs/renderers/custom-renderers) -- override built-in markdown renderers
 - [Types & Exports](/docs/api/types) -- `RendererComponent`, `Renderers` type definitions

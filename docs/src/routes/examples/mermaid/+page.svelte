@@ -66,8 +66,8 @@
         <li>
             <Puzzle />
             <span>
-                <code>markedMermaid()</code> registers an async <code>walkTokens</code> extension
-                that turns <code>```mermaid</code> fences into renderable tokens.
+                <code>markedMermaid()</code> registers a synchronous block tokenizer that turns
+                <code>```mermaid</code> fences into renderable tokens, so streaming stays enabled.
             </span>
         </li>
         <li>
