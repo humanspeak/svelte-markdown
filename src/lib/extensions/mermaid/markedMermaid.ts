@@ -1,6 +1,21 @@
 import { tailWindowSafeExtension } from '$lib/utils/tail-window.js'
 import type { MarkedExtension } from 'marked'
 
+/** Options for {@link markedMermaid}. */
+export interface MarkedMermaidOptions {
+    /**
+     * Emit tokens for a still-open fence at the end of input, so diagrams render
+     * while they stream. Only complete lines are included in `text`: a half-typed
+     * last line is dropped, and `text` changes only when a line completes. Open
+     * tokens carry `closed: false`.
+     *
+     * Trade-off: partial diagrams render mid-stream. Pair this with a synchronous
+     * engine such as `extensions/mermaid-pele`; with async mermaid.js each completed
+     * line triggers a full async render. Default `false`.
+     */
+    renderOpenFences?: boolean
+}
+
 /**
  * Creates a marked extension that tokenizes fenced ` ```mermaid ` code blocks
  * into custom `mermaid` tokens.
@@ -23,11 +38,19 @@ import type { MarkedExtension } from 'marked'
  *   extensions={[markedMermaid()]}
  *   {renderers}
  * />
+ *
+ * <!-- Render diagrams while their fence is still streaming (opt-in) -->
+ * <SvelteMarkdown
+ *   source={streamingMarkdown}
+ *   extensions={[markedMermaid({ renderOpenFences: true })]}
+ *   {renderers}
+ * />
  * ```
  *
+ * @param options - Optional tokenizer behavior. See {@link MarkedMermaidOptions}.
  * @returns A `MarkedExtension` with a single block-level `mermaid` tokenizer
  */
-export function markedMermaid(): MarkedExtension {
+export function markedMermaid(options: MarkedMermaidOptions = {}): MarkedExtension {
     const ext: MarkedExtension = {
         extensions: [
             {
@@ -43,6 +66,20 @@ export function markedMermaid(): MarkedExtension {
                             type: 'mermaid',
                             raw: match[0],
                             text: match[1].trim()
+                        }
+                    }
+                    if (options.renderOpenFences) {
+                        const open = src.match(/^```mermaid\n([\s\S]*)$/)
+                        if (open) {
+                            const body = open[1]
+                            // Keep complete lines only; the trailing partial line (if any) is dropped.
+                            const complete = body.slice(0, body.lastIndexOf('\n') + 1)
+                            return {
+                                type: 'mermaid',
+                                raw: open[0],
+                                text: complete.trim(),
+                                closed: false
+                            }
                         }
                     }
                 }

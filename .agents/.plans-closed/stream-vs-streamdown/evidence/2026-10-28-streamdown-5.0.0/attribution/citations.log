@@ -1,0 +1,39 @@
+=== attribution: citations (svelte-markdown, 1 traced run after 1 warmup) ===
+page: totalWorkMs 1485 · frames 753 · avg 1.972 · p95 4.2 · libraryFlushMs 131.7 (752 flushes)
+trace: 1249 window measures, raw sum 1484.602ms, union 1484.602ms (100.0% of totalWorkMs; 0ms of overlapping windows counted twice by the page)
+flush measure 131.736ms over 671 flushes · main thread pid 8844 tid 16902731
+
+bucket                                                 total ms  ms/frame   share
+stream-flush measure (parse+diff+state write)             131.1     0.174    8.8%
+JS outside flush (derived + DOM commit + metadata)        485.7     0.645   32.7%
+UpdateLayoutTree + Layout                                 223.7     0.297   15.1%
+Paint + composite                                           7.8     0.010    0.5%
+MinorGC / MajorGC                                           3.3     0.004    0.2%
+other traced main-thread work                              32.2     0.043    2.2%
+untraced window time (idle / gaps)                        600.9     0.798   40.5%
+sum of buckets                                           1484.6     1.972
+  of which JS outside flush: 50.018ms in the sync window (prop assignment + tick) · 435.685ms in the frame window
+  "other" by event: RunTask 32.177ms · IntersectionObserverController::computeIntersections 0.009ms
+traced buckets (excl. untraced) = 883.7ms = 59.5% of page totalWorkMs 1485ms · 59.5% of the window union
+paint + composite after the windows (not charged by the bench): 467.753ms (0.621 ms/frame)
+
+top 15 functions by self time (samples inside the measured windows; 1561.104ms sampled)
+ 1.    134.2ms   8.6%  getBoundingClientRect  (native)
+ 2.     18.5ms   1.2%  before  (native)
+ 3.     15.2ms     1%  wo  http://127.0.0.1:4173/_app/immutable/chunks/CrGrN2_l.js:68:5002
+ 4.     14.4ms   0.9%  #v  http://127.0.0.1:4173/_app/immutable/chunks/UWfWsvcH.js:1:11736
+ 5.     13.1ms   0.8%  inlineTokens  http://127.0.0.1:4173/_app/immutable/chunks/CrGrN2_l.js:48:675
+ 6.     10.8ms   0.7%  (anonymous)  http://127.0.0.1:4173/_app/immutable/chunks/UWfWsvcH.js:2:4085
+ 7.      8.7ms   0.6%  (garbage collector)  (native)
+ 8.      7.2ms   0.5%  Ln  http://127.0.0.1:4173/_app/immutable/chunks/UWfWsvcH.js:1:16355
+ 9.      6.3ms   0.4%  xo  http://127.0.0.1:4173/_app/immutable/chunks/CrGrN2_l.js:68:4583
+10.      6.2ms   0.4%  _  http://127.0.0.1:4173/_app/immutable/chunks/CrGrN2_l.js:68:6417
+11.      6.2ms   0.4%  Ur  http://127.0.0.1:4173/_app/immutable/chunks/UWfWsvcH.js:1:24273
+12.      5.6ms   0.4%  ownKeys  http://127.0.0.1:4173/_app/immutable/chunks/UWfWsvcH.js:3:11151
+13.      5.5ms   0.4%  inlineText  http://127.0.0.1:4173/_app/immutable/chunks/CrGrN2_l.js:34:4517
+14.      5.3ms   0.3%  get  http://127.0.0.1:4173/_app/immutable/chunks/UWfWsvcH.js:3:11289
+15.      4.8ms   0.3%  append  (native)
+
+trace: /tmp/citations.trace.json
+cpu profile: /tmp/citations.cpuprofile
+summary: .agents/.plans-closed/stream-vs-streamdown/evidence/2026-10-28-streamdown-5.0.0/attribution/citations.attribution.json

@@ -53,12 +53,15 @@ const collectPlainModuleGraph = (entry: string): Map<string, string[]> => {
 
 /**
  * Optional peer packages whose plain-JS imports must never be reachable from
- * the barrel. Each highlighting engine statically imports its package from a
- * `.ts` factory, so the same invariant applies to every engine subpath.
+ * the barrel. Each highlighting engine and each mermaid engine (`pele`) statically
+ * imports its package from a `.ts` factory, so the same invariant applies to
+ * every engine subpath. `mermaid` is guarded too, because the mermaid.js engine
+ * must stay a dynamic import wherever the shared renderer is reachable.
  */
-const OPTIONAL_ENGINE_PACKAGES = ['shiki', '@tanstack/highlight']
+const OPTIONAL_ENGINE_PACKAGES = ['shiki', '@tanstack/highlight', 'pele', 'mermaid']
 
 const HIGHLIGHT_RENDERER = resolve(__dirname, 'highlight/index.ts')
+const MERMAID_RENDERER = resolve(__dirname, 'mermaid/index.ts')
 
 const reachesPackage = (graph: Map<string, string[]>, pkg: string): string[] =>
     [...graph]
@@ -77,6 +80,11 @@ describe('extensions barrel optional-dependency invariant', () => {
         expect(barrelImports.filter((s) => s.includes('shiki'))).toEqual([])
         expect(barrelImports.filter((s) => s.includes('tanstack'))).toEqual([])
     })
+
+    it('does not re-export the mermaid-pele subpath', () => {
+        const barrelImports = importSpecifiers(readFileSync(BARREL, 'utf-8'))
+        expect(barrelImports.filter((s) => s.includes('pele'))).toEqual([])
+    })
 })
 
 describe('shared highlight renderer optional-dependency invariant', () => {
@@ -86,6 +94,17 @@ describe('shared highlight renderer optional-dependency invariant', () => {
     for (const pkg of OPTIONAL_ENGINE_PACKAGES) {
         it(`never reaches a ${pkg} import from extensions/highlight`, () => {
             expect(reachesPackage(collectPlainModuleGraph(HIGHLIGHT_RENDERER), pkg)).toEqual([])
+        })
+    }
+})
+
+describe('shared mermaid renderer optional-dependency invariant', () => {
+    // `extensions/mermaid` is the engine-agnostic renderer subpath. Its mermaid.js
+    // engine loads mermaid dynamically, and pele lives on its own subpath, so the
+    // shared renderer must never statically reach either engine package.
+    for (const pkg of OPTIONAL_ENGINE_PACKAGES) {
+        it(`never reaches a ${pkg} import from extensions/mermaid`, () => {
+            expect(reachesPackage(collectPlainModuleGraph(MERMAID_RENDERER), pkg)).toEqual([])
         })
     }
 })

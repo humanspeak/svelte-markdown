@@ -1,0 +1,197 @@
+{
+    "scenario": "prefix-384kb",
+    "renderer": "svelte-markdown",
+    "capturedAt": "2026-10-28T19:02:18.883Z",
+    "url": "http://127.0.0.1:4173/test/stream-compare",
+    "warmups": 1,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "page": {
+        "totalWorkMs": 1439.7,
+        "frames": 67,
+        "avgWorkMs": 21.488,
+        "p95WorkMs": 29.4,
+        "libraryFlushMs": 9.5,
+        "libraryFlushCount": 67
+    },
+    "trace": {
+        "windowCount": 135,
+        "windowMs": 1439.653,
+        "windowRawMs": 1439.653,
+        "flushMeasureMs": 9.496,
+        "flushMeasureCount": 61,
+        "paintOutsideWindowsMs": 110.336,
+        "jsOutsideSyncMs": 37.977,
+        "otherTopMs": [
+            {
+                "name": "RunTask",
+                "ms": 260.738
+            },
+            {
+                "name": "IntersectionObserverController::computeIntersections",
+                "ms": 0.128
+            }
+        ]
+    },
+    "bucketsMs": {
+        "flush": 9.319,
+        "jsOutside": 92.316,
+        "styleLayout": 767.431,
+        "paint": 308.166,
+        "gc": 0,
+        "other": 260.866,
+        "untraced": 1.555
+    },
+    "bucketsMsPerFrame": {
+        "flush": 0.139,
+        "jsOutside": 1.378,
+        "styleLayout": 11.454,
+        "paint": 4.599,
+        "gc": 0,
+        "other": 3.894,
+        "untraced": 0.023
+    },
+    "tracedCoverageOfTotalWork": 0.999,
+    "tracedCoverageOfWindowUnion": 0.999,
+    "profile": {
+        "scope": "samples inside the measured windows",
+        "sampledMs": 1444.081,
+        "top": [
+            {
+                "functionName": "getBoundingClientRect",
+                "url": "",
+                "line": 0,
+                "column": 0,
+                "selfUs": 775059,
+                "selfMs": 775.059,
+                "share": 53.7
+            },
+            {
+                "functionName": "Ce",
+                "url": "http://127.0.0.1:4173/_app/immutable/chunks/CrGrN2_l.js",
+                "line": 81,
+                "column": 7039,
+                "selfUs": 9749,
+                "selfMs": 9.749,
+                "share": 0.7
+            },
+            {
+                "functionName": "_",
+                "url": "http://127.0.0.1:4173/_app/immutable/chunks/CrGrN2_l.js",
+                "line": 68,
+                "column": 6417,
+                "selfUs": 4189,
+                "selfMs": 4.189,
+                "share": 0.3
+            },
+            {
+                "functionName": "measure",
+                "url": "",
+                "line": 0,
+                "column": 0,
+                "selfUs": 3782,
+                "selfMs": 3.782,
+                "share": 0.3
+            },
+            {
+                "functionName": "before",
+                "url": "",
+                "line": 0,
+                "column": 0,
+                "selfUs": 3162,
+                "selfMs": 3.162,
+                "share": 0.2
+            },
+            {
+                "functionName": "#v",
+                "url": "http://127.0.0.1:4173/_app/immutable/chunks/UWfWsvcH.js",
+                "line": 1,
+                "column": 11736,
+                "selfUs": 3145,
+                "selfMs": 3.145,
+                "share": 0.2
+            },
+            {
+                "functionName": "prepareTokensForRender",
+                "url": "http://127.0.0.1:4173/_app/immutable/chunks/CrGrN2_l.js",
+                "line": 68,
+                "column": 9246,
+                "selfUs": 2907,
+                "selfMs": 2.907,
+                "share": 0.2
+            },
+            {
+                "functionName": "te",
+                "url": "http://127.0.0.1:4173/_app/immutable/chunks/CrGrN2_l.js",
+                "line": 68,
+                "column": 8652,
+                "selfUs": 2473,
+                "selfMs": 2.473,
+                "share": 0.2
+            },
+            {
+                "functionName": "get",
+                "url": "http://127.0.0.1:4173/_app/immutable/chunks/UWfWsvcH.js",
+                "line": 3,
+                "column": 11289,
+                "selfUs": 1917,
+                "selfMs": 1.917,
+                "share": 0.1
+            },
+            {
+                "functionName": "(anonymous)",
+                "url": "http://127.0.0.1:4173/_app/immutable/chunks/UWfWsvcH.js",
+                "line": 2,
+                "column": 4085,
+                "selfUs": 1897,
+                "selfMs": 1.897,
+                "share": 0.1
+            },
+            {
+                "functionName": "V",
+                "url": "http://127.0.0.1:4173/_app/immutable/chunks/UWfWsvcH.js",
+                "line": 1,
+                "column": 20636,
+                "selfUs": 1608,
+                "selfMs": 1.608,
+                "share": 0.1
+            },
+            {
+                "functionName": "createTailWindowResult",
+                "url": "http://127.0.0.1:4173/_app/immutable/chunks/CrGrN2_l.js",
+                "line": 80,
+                "column": 1115,
+                "selfUs": 1530,
+                "selfMs": 1.53,
+                "share": 0.1
+            },
+            {
+                "functionName": "ee",
+                "url": "http://127.0.0.1:4173/_app/immutable/chunks/CrGrN2_l.js",
+                "line": 68,
+                "column": 7769,
+                "selfUs": 1484,
+                "selfMs": 1.484,
+                "share": 0.1
+            },
+            {
+                "functionName": "D",
+                "url": "http://127.0.0.1:4173/_app/immutable/chunks/CrGrN2_l.js",
+                "line": 68,
+                "column": 8443,
+                "selfUs": 1419,
+                "selfMs": 1.419,
+                "share": 0.1
+            },
+            {
+                "functionName": "queueMicrotask",
+                "url": "",
+                "line": 0,
+                "column": 0,
+                "selfUs": 1383,
+                "selfMs": 1.383,
+                "share": 0.1
+            }
+        ]
+    },
+    "pageErrors": []
+}

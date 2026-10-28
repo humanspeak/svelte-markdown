@@ -1,15 +1,26 @@
 import { describe, expect, it } from 'vitest'
 import {
     AlertRenderer,
+    createMermaidJsEngine,
     FootnoteRef,
     FootnoteSection,
+    getMermaidEngine,
     markedAlert,
     markedFootnote,
     markedMermaid,
-    MermaidRenderer
+    MERMAID_ENGINE_CONTEXT_KEY,
+    MermaidRenderer,
+    setMermaidEngine
 } from './index.js'
 
 describe('extensions barrel exports', () => {
+    it('should export the mermaid engine contract helpers', () => {
+        expect(typeof createMermaidJsEngine).toBe('function')
+        expect(typeof setMermaidEngine).toBe('function')
+        expect(typeof getMermaidEngine).toBe('function')
+        expect(MERMAID_ENGINE_CONTEXT_KEY).toBe(Symbol.for('svelte-markdown:mermaid-engine'))
+    })
+
     it('should export markedMermaid function', () => {
         expect(typeof markedMermaid).toBe('function')
 

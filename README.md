@@ -606,6 +606,120 @@ You can also use snippet overrides to wrap `MermaidRenderer` with custom markup:
 
 The Mermaid tokenizer is synchronous, so parsing and streaming remain enabled. Diagram rendering happens in the browser after mount; server-rendered pages show a loading placeholder for diagrams. The snippet delegates that async rendering to `MermaidRenderer` and controls only its layout.
 
+#### Choosing an engine
+
+mermaid.js is the default engine, so existing users need no changes. To render diagrams with a different engine, implement the `MermaidEngine` contract, exported from `@humanspeak/svelte-markdown/extensions`:
+
+```ts
+import type { MermaidEngine } from '@humanspeak/svelte-markdown/extensions'
+
+const myEngine: MermaidEngine = {
+    render(text, { dark, lightTheme, darkTheme }) {
+        try {
+            return { svg: renderToSvg(text, dark ? darkTheme : lightTheme) }
+        } catch (e) {
+            return { error: e instanceof Error ? e.message : String(e) }
+        }
+    }
+}
+```
+
+`render` may return a result synchronously or a Promise. It must never throw, and its Promise must never reject. Report failures as `{ error }` instead.
+
+The engine is resolved in priority order: an explicit `engine` prop → a Svelte context set under `MERMAID_ENGINE_CONTEXT_KEY` → the module singleton from `setMermaidEngine()` → the built-in mermaid.js engine. Register a singleton once at app startup:
+
+```ts
+import { setMermaidEngine } from '@humanspeak/svelte-markdown/extensions'
+
+setMermaidEngine(myEngine)
+```
+
+Engine output is injected as SVG markup with `{@html}`, so a custom engine must produce safe markup for untrusted diagram source. The built-in mermaid.js engine runs with `securityLevel: 'strict'`.
+
+#### Lightweight engine: pele
+
+[pele](https://pele.run) is an MIT-licensed, zero-dependency Mermaid-syntax renderer that runs synchronously, so a diagram appears in the same frame instead of after an async load. According to pele's documentation, its core is about 15 KB gzip plus a 6–45 KB chunk per diagram type. For comparison, mermaid.js is roughly 1.5 MB. The trade-off is coverage and styling: pele supports its own set of diagram types and draws its own layout.
+
+```bash
+npm install pele
+```
+
+Import the engine from its own subpath, register the diagram types you need, and set it as the engine. The subpath is separate from `extensions` so that `pele` is only bundled when you opt in:
+
+```svelte
+<script lang="ts">
+    import SvelteMarkdown from '@humanspeak/svelte-markdown'
+    import type { RendererComponent, Renderers } from '@humanspeak/svelte-markdown'
+    import {
+        createPeleEngine,
+        markedMermaid,
+        MermaidRenderer,
+        setMermaidEngine
+    } from '@humanspeak/svelte-markdown/extensions/mermaid-pele'
+    import flowchart from 'pele/diagrams/flowchart'
+    import sequence from 'pele/diagrams/sequence'
+
+    // Only the listed diagram types are bundled and can render.
+    setMermaidEngine(createPeleEngine({ diagrams: [flowchart, sequence] }))
+
+    let { source } = $props()
+
+    interface MermaidRenderers extends Renderers {
+        mermaid: RendererComponent
+    }
+
+    const renderers: Partial<MermaidRenderers> = {
+        mermaid: MermaidRenderer
+    }
+</script>
+
+<SvelteMarkdown {source} extensions={[markedMermaid()]} {renderers} />
+```
+
+A diagram whose type was not registered renders `Diagram error: …` in place of the diagram. Pele escapes diagram text and filters links and styles, so its SVG is safe to inject.
+
+Pele is themed with `--pele-*` CSS variables on `.pele` or a parent element, so colours follow your stylesheet and the `dark` and theme fields in the render context are ignored:
+
+```css
+.pele {
+    --pele-bg: #ffffff;
+    --pele-fg: #1f1f1f;
+    --pele-accent: #2563eb;
+}
+
+.dark .pele {
+    --pele-bg: #0f172a;
+    --pele-fg: #e2e8f0;
+    --pele-accent: #60a5fa;
+}
+```
+
+Because pele uses its own layout and visual style, its diagrams will not look identical to mermaid.js output.
+
+#### Live diagrams while streaming
+
+By default a diagram renders only after its closing fence arrives. For streamed AI output you can render it while the fence is still open:
+
+```svelte
+<SvelteMarkdown
+    source={streamingMarkdown}
+    extensions={[markedMermaid({ renderOpenFences: true })]}
+    {renderers}
+/>
+```
+
+With `renderOpenFences: true`, complete lines render as they arrive. A half-typed last line is skipped, and the last good diagram stays visible while the next line is incomplete or invalid. The error box is only shown once the fence closes. This option is off by default, so existing behavior does not change.
+
+Pair it with the pele engine above. It renders synchronously, so each completed line updates the diagram in the same frame. With the async mermaid.js engine it also works, but each completed line triggers a full async render.
+
+Snippet overrides receive a `closed` prop, which is `false` while the fence is still open:
+
+```svelte
+{#snippet mermaid(props)}
+    <MermaidRenderer text={props.text} closed={props.closed} />
+{/snippet}
+```
+
 ### GitHub Alerts
 
 Built-in support for [GitHub-style alerts/admonitions](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts). Five alert types are supported: `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, and `CAUTION`.

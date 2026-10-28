@@ -1274,6 +1274,48 @@ describe('IncrementalParser', () => {
             expect(streamed).toEqual(oneShot)
         })
 
+        it('streams an open mermaid fence with renderOpenFences to the same tokens as a one-shot lex at every append', () => {
+            // Fresh options per parser and per one-shot lex: marked's Lexer mutates
+            // the options it receives, and a shared object disables the tail window.
+            const makeOptions = () =>
+                createExtensionOptions([markedMermaid({ renderOpenFences: true })])
+            const parser = new IncrementalParser(makeOptions())
+            const source = [
+                'Intro prose before the diagram.',
+                '',
+                '```mermaid',
+                'graph TD',
+                '    A[Start] --> B{Decision}',
+                '    B -->|yes| C[Done]',
+                '```',
+                '',
+                'Closing prose after the diagram.'
+            ].join('\n')
+
+            // Fixed-size chunking so intermediate appends land inside the open fence.
+            const chunks: string[] = []
+            for (let i = 0; i < source.length; i += 5) {
+                chunks.push(source.slice(i, i + 5))
+            }
+
+            let accumulated = ''
+            for (const chunk of chunks) {
+                accumulated += chunk
+                const streamed = parser.update(accumulated).tokens
+                const oneShot = parseAndCacheModule.lexAndClean(accumulated, makeOptions(), false)
+                expect(streamed, `tokens for prefix ${JSON.stringify(accumulated)}`).toEqual(
+                    oneShot
+                )
+            }
+        })
+
+        it('keeps the tail window enabled with renderOpenFences', () => {
+            const parser = new IncrementalParser(
+                createExtensionOptions([markedMermaid({ renderOpenFences: true })])
+            )
+            expect(asInternalParser(parser).tailWindowDisabled).toBe(false)
+        })
+
         it('keeps single-dollar inline katex parity when enabled', () => {
             const options = createExtensionOptions([markedKatex({ singleDollarInline: true })])
             const parser = new IncrementalParser(options)

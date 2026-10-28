@@ -243,6 +243,8 @@ e^{i\\pi} + 1 = 0
 
 Unlike KaTeX (synchronous rendering via `katex.renderToString()`), **Mermaid is async and browser-only** — it requires the DOM and uses `await mermaid.render()`. The package provides built-in `markedMermaid` and `MermaidRenderer` helpers so you don't need to write boilerplate.
 
+> **Lightweight alternative:** a synchronous, zero-dependency engine backed by [pele](https://pele.run) is available on the `extensions/mermaid-pele` subpath. It renders in the same frame instead of after an async load, and supports only the diagram types you register. See the [pele engine section of the README](https://github.com/humanspeak/svelte-markdown#lightweight-engine-pele).
+
 ### 1. Install Mermaid
 
 Mermaid is an optional peer dependency — install it yourself:

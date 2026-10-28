@@ -99,6 +99,38 @@ const cases = [
         expectDynamicPresent: ['node_modules/mermaid']
     },
     {
+        // Plan 004 ship: the extensions barrel must never reach pele, the
+        // optional mermaid engine peer (see barrel-optional-deps.test).
+        name: 'extensions barrel stays pele-free',
+        source: `
+            import { markedAlert } from '@humanspeak/svelte-markdown/extensions'
+            console.log(markedAlert().extensions?.length)
+        `,
+        expectAllMissing: ['node_modules/pele']
+    },
+    {
+        // The shared mermaid renderer must not pull pele in: only the
+        // explicitly imported pele subpath may bundle it.
+        name: 'mermaid renderer stays pele-free',
+        source: `
+            import { MermaidRenderer } from '@humanspeak/svelte-markdown/extensions/mermaid'
+            console.log(MermaidRenderer)
+        `,
+        expectAllMissing: ['node_modules/pele']
+    },
+    {
+        // Opting into the pele engine factory bundles pele, and never the
+        // mermaid.js engine, which is only loaded by the default engine path.
+        name: 'pele engine factory',
+        source: `
+            import { createPeleEngine } from '@humanspeak/svelte-markdown/extensions/mermaid-pele'
+            import flowchart from 'pele/diagrams/flowchart'
+            console.log(createPeleEngine, flowchart)
+        `,
+        expectInitialPresent: ['node_modules/pele'],
+        expectAllMissing: ['node_modules/mermaid']
+    },
+    {
         // Plan 004 ship: importing an unrelated extension subpath must not pull
         // Shiki (or any @shikijs engine/grammar) into the bundle — highlighting
         // is opt-in and only reachable via the shiki subpath.
@@ -262,6 +294,14 @@ async function buildCase(testCase, consumerDir) {
         const packageDir = join(dir, 'node_modules', '@humanspeak')
         await mkdir(packageDir, { recursive: true })
         if (!consumerDir) await symlink(repoRoot, join(packageDir, 'svelte-markdown'), 'dir')
+        // Cases whose entry imports pele directly (e.g. `pele/diagrams/flowchart`)
+        // must resolve it from the temp consumer, as a real app would.
+        if (!consumerDir)
+            await symlink(
+                join(repoRoot, 'node_modules', 'pele'),
+                join(dir, 'node_modules', 'pele'),
+                'dir'
+            )
         await writeFile(entry, testCase.source)
 
         const result = await build({
