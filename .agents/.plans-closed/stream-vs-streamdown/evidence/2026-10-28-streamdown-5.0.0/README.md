@@ -44,3 +44,9 @@ Svelte Markdown reported zero parity mismatches in every scenario of all three r
 Ratios are computed from the logged medians. Each log's `median total work` line gives the per-suite median; the ratio is that Streamdown median divided by ours.
 
 Decision: the docs page, the compare page, and `.competitive-intel/config.json` were not edited. The "About 30% of frames run long" claim, and the "About 1.2–2.7x" range that the lists exceed on this machine, need a human decision on wording. The `package.json` bump to 5.0.0 is in place so the suites could run, and can be reverted if the claims are not moved to 5.0.0.
+
+## Outcome (guard, 2026-10-28)
+
+The executor stopped at Case C because the published "About 30% of frames run long" figure did not reproduce on this machine. Guard checked the logs. Every scenario keeps its winner. Svelte Markdown parity is 0 mismatched in all 130 runs. Page weight (`domNodes` in the JSON) is identical to the published table. Only the frame-over-budget percentage moved, and it depends on the machine: the 16.7 ms budget is absolute, and this i9 is faster than the original i7-6700K. The 4.2.1 control shows the same shift.
+
+The operator chose to publish this capture. The Streaming Benchmarks table, the vs-svelte-streamdown compare entry ("About 1.5–3.1x less work", "About 16–42% of frames run long") and `config.benchmarks[0].measured_against` were updated in commit `0973f2c`.
