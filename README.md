@@ -638,7 +638,7 @@ Engine output is injected as SVG markup with `{@html}`, so a custom engine must 
 
 #### Lightweight engine: pele
 
-[pele](https://pele.run) is an MIT-licensed, zero-dependency Mermaid-syntax renderer that runs synchronously, so a diagram appears in the same frame instead of after an async load. According to pele's documentation, its core is about 15 KB gzip plus a 6–45 KB chunk per diagram type. For comparison, mermaid.js is roughly 1.5 MB. The trade-off is coverage and styling: pele supports its own set of diagram types and draws its own layout.
+[pele](https://pele.run) is an MIT-licensed, zero-dependency Mermaid-syntax renderer that runs synchronously, so a diagram appears in the same frame instead of after an async load. According to pele's documentation, its core is about 15 KB gzip plus a 6–45 KB chunk per diagram type. For comparison, mermaid.js is roughly 1.5 MB. pele supports every diagram type built into Mermaid 12.1.0, and you register only the ones you need so the rest stay out of your bundle. The trade-off is styling: pele draws its own layout.
 
 ```bash
 npm install pele

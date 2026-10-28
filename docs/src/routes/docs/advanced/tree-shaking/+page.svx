@@ -73,6 +73,7 @@ The extension tokenizers are small parser helpers. The renderer components are w
 | `KatexRenderer` from `/extensions/katex` | Yes, `katex` | Uses `katex.renderToString()` synchronously. |
 | `markedMermaid` from `/extensions/mermaid` | No | Tokenizes Mermaid fences; does not import `mermaid`. |
 | `MermaidRenderer` from `/extensions/mermaid` | No initial `mermaid` chunk | Dynamically imports Mermaid in the browser. |
+| `createPeleEngine` from `/extensions/mermaid-pele` | Yes, `pele` core + the diagram types you import | Synchronous Mermaid engine; never reachable from the `/extensions` barrel. |
 | `HighlightedCode` from `/extensions/highlight` | No | Engine-agnostic `code` renderer; imports neither `shiki` nor `@tanstack/highlight`. |
 | `createShikiHighlighter` from `/extensions/shiki` | Yes, `shiki` core + the grammars/themes you import | Synchronous JS-engine highlighter. |
 | `createTanstackHighlighter` from `/extensions/tanstack-highlight` | Yes, `@tanstack/highlight` core + the languages you import | Synchronous scanner highlighter; ~10× smaller than Shiki for the same languages. |
@@ -105,6 +106,8 @@ If only one route needs KaTeX or Mermaid, import those renderers in that route o
 ### SSR
 
 `KatexRenderer` is synchronous and works during SSR. `MermaidRenderer` is browser-only internally: it waits for mount, then dynamically imports Mermaid and renders the diagram. That keeps Mermaid out of the server render path and out of the initial client graph.
+
+The pele engine from `/extensions/mermaid-pele` is imported statically, so `pele` and every diagram type you register ship in the bundle of the module that imports it. Register it in the route that renders diagrams if other routes don't need it. See [Mermaid Diagrams](/docs/advanced/mermaid) for the engine trade-offs.
 
 For server-rendered pages that must avoid any client-side Mermaid work, use `markedMermaid()` with a custom placeholder renderer or snippet and hydrate a diagram component only where needed.
 
