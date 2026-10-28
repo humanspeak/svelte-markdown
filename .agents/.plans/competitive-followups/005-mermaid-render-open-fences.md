@@ -13,12 +13,14 @@
 > → the interface line and then `ok`. Otherwise STOP.
 >
 > **Drift check (run first)**:
-> `git diff --stat bdebe69..HEAD -- src/lib/extensions/mermaid/markedMermaid.ts src/lib/extensions/mermaid/markedMermaid.test.ts src/lib/utils/incremental-parser.test.ts src/routes/test/`
+> `git diff --stat 8a366c0..HEAD -- src/lib/extensions/mermaid/markedMermaid.ts src/lib/extensions/mermaid/markedMermaid.test.ts src/lib/utils/incremental-parser.test.ts src/routes/test/`
 > `markedMermaid.ts` should be unchanged since `bdebe69`. If it changed,
 > compare it with the excerpt below. `MermaidRenderer.svelte` is expected to
 > match plan 003's Step 6 shape. Read it and confirm before Step 4.
 >
 > **Revision 2026-10-28**: Git workflow re-pointed to the shared digest branch `chore/competitive-intel-2026-10-28` (operator's standing rule: digest follow-ups ship as one PR). The reviewer owns git. No change to scope or steps.
+>
+> **Revision 2026-10-28 (2)**: pre-flight after plans 003 and 004 landed. (a) pele is installed at **1.10.1**, not 1.12.0, because of the 2-day `minimumReleaseAge` policy. Use whatever `package.json` pins, and do not bump it. (b) The prerequisites are on the batch branch at `8a366c0`, so `Planned at` was re-stamped. (c) Before any `pnpm test:e2e`, make sure nothing listens on port 4173 (`lsof -nP -iTCP:4173 -sTCP:LISTEN`). A stale preview there makes every test fail with CONNECTION_REFUSED.
 
 ## Status
 
@@ -30,7 +32,7 @@
   rendering works but is not the point)
 - **Wave**: 3
 - **Category**: direction (competitive gap)
-- **Planned at**: commit `bdebe69`, 2026-10-28
+- **Planned at**: commit `8a366c0`, 2026-10-28 (re-stamped; originally `bdebe69`)
 - **Ticket**: HUM-72 (`gap-lightweight-mermaid-engine`), part 3 of 3. After this plan, the gap can move to `closed_gaps`.
 
 ## Why this matters
