@@ -41,13 +41,13 @@ Wall-clock time is deliberately not the metric. A renderer that defers work to t
 | Input | The growing content string, 32 characters added per frame (about 480 tokens per second) |
 | Documents | About 24 KB per scenario, plus closed prefixes of 24, 96, and 384 KB |
 | Runs | One warmup, then five iterations; both renderers run back to back in alternating order; two full suites |
-| Competitor | `svelte-streamdown` 4.2.0 with animation, controls, and highlighting off |
-| Date and machine | 2026-09-28 (the numbered list and HTML block rows: 2026-09-29), Intel Core i7-6700K, Ubuntu 26.04 |
-| Re-checked | 2026-10-16 against `svelte-streamdown` 4.2.1 (see below) |
+| Competitor | `svelte-streamdown` 5.0.0 with animation, controls, and highlighting off |
+| Date and machine | 2026-10-28, Intel Core i9-10910, macOS 26.7.1 |
+| Control | Same machine and day against `svelte-streamdown` 4.2.1: every scenario had the same winner |
 
 Two safeguards keep the numbers honest:
 
-- **Parity check.** Every 25 frames and at the end, the streamed token tree is compared field by field with a fresh one-shot parse of the same text. All 210 runs reported zero mismatches.
+- **Parity check.** Every 25 frames and at the end, the streamed token tree is compared field by field with a fresh one-shot parse of the same text. All 130 runs in the two 5.0.0 suites reported zero mismatches.
 - **No double counting.** When a frame overruns, the next frame's window starts where the previous one ended.
 
 ## Results
@@ -56,18 +56,18 @@ Median of five iterations. Ranges span the two suites. The ratio is their total 
 
 | Scenario | Ours (ms) | Streamdown (ms) | Ratio | Ours over budget | Theirs over budget |
 |----------|:---------:|:---------------:|:-----:|:----------------:|:------------------:|
-| Mixed prose, 1 update per frame | 1,797–1,932 | 2,266–2,333 | 1.21–1.26 | 0 of 765 | 0 |
-| Mixed prose, 4 updates per frame | 537–559 | 1,103–1,206 | 2.05–2.16 | 0 of 192 | 0–1 |
-| One open bullet list (~200 items) | 3,501–3,625 | 9,111–9,377 | 2.51–2.68 | 1 of 754 | 224–236 |
-| One open table (~150 rows) | 1,569–1,620 | 3,577–3,745 | 2.28–2.31 | 1–2 of 314 | 81–95 |
-| One open code fence | 1,542–1,570 | 1,162–1,178 | 0.75 | 0 of 753 | 0 |
-| Citation-heavy prose | 1,456–1,703 | 1,405–1,445 | 0.85–0.97 | 0 of 753 | 0 |
-| Numbered list with blank lines between items | 4,334–4,425 | 10,770–10,896 | 2.43–2.51 | 1–4 of 753 | 293–306 |
-| HTML blocks with markdown inside | 3,686–4,007 | 2,352–2,401 | 0.60–0.64 | 6–9 of 751 | 0 |
-| 24 KB closed prefix + 2 KB tail | 113–120 | 156–162 | 1.35–1.37 | 0 of 67 | 0 |
-| 96 KB closed prefix + 2 KB tail | 231–232 | 417–425 | 1.81–1.83 | 0 of 67 | 0 |
-| 384 KB closed prefix + 2 KB tail | 906–909 | 2,436–2,454 | 2.69–2.70 | 14 of 67 | 67 of 67 |
-| 20 KB closed nested list + 2 KB tail | 84–85 | 186–187 | 2.18–2.22 | 0 of 67 | 1 |
+| Mixed prose, 1 update per frame | 1,087–1,316 | 1,718–2,121 | 1.58–1.61 | 0 of 765 | 0 |
+| Mixed prose, 4 updates per frame | 425–436 | 908–969 | 2.13–2.22 | 0 of 192 | 0–1 |
+| One open bullet list (~200 items) | 2,668–2,931 | 8,138–9,013 | 3.05–3.07 | 0 of 754 | 103–335 |
+| One open table (~150 rows) | 1,422–1,555 | 3,092–3,709 | 2.17–2.39 | 0 of 314 | 21–115 |
+| One open code fence | 1,138–1,227 | 970–978 | 0.80–0.85 | 0–2 of 753 | 0 |
+| Citation-heavy prose | 1,111–1,143 | 967–1,019 | 0.87–0.89 | 0 of 753 | 0 |
+| Numbered list with blank lines between items | 3,489–3,671 | 10,181–10,960 | 2.77–3.14 | 0–3 of 753 | 251–355 |
+| HTML blocks with markdown inside | 2,088–2,144 | 1,435–1,654 | 0.69–0.77 | 0 of 751 | 0 |
+| 24 KB closed prefix + 2 KB tail | 122–148 | 184–214 | 1.45–1.51 | 0 of 67 | 0 |
+| 96 KB closed prefix + 2 KB tail | 273–322 | 511–695 | 1.87–2.16 | 0–1 of 67 | 0–26 |
+| 384 KB closed prefix + 2 KB tail | 863–903 | 2,135–2,336 | 2.47–2.59 | 1–22 of 67 | 67 of 67 |
+| 20 KB closed nested list + 2 KB tail | 101–131 | 215–219 | 1.67–2.13 | 0 of 67 | 1 |
 
 ### Page weight
 
@@ -80,9 +80,9 @@ Element counts at the end of each stream, identical across all runs:
 | Code fence | 4 | 797 |
 | Citation-heavy prose | 776 | 519 |
 
-### Re-check against 4.2.1
+### Earlier captures
 
-On 2026-10-16 the suite was run twice against `svelte-streamdown` 4.2.1 and once against 4.2.0, all on a second machine (Intel Core i9-10910, macOS 26.6.2). Svelte Streamdown's work was the same on both versions, within run-to-run noise, in every scenario, and every scenario kept the winner shown above. Ratios on that machine were mostly higher than the ones above, for example 1.57–1.64 on mixed prose, but the 4.2.0 run showed the same shift, so the cause is the hardware and not the release. The table above is kept from the original capture.
+The table was first captured on 2026-09-28 against `svelte-streamdown` 4.2.0 on an Intel Core i7-6700K (Ubuntu 26.04) and re-checked against 4.2.1 on 2026-10-16. Both captures are archived under `.agents/.plans-closed/stream-vs-streamdown/evidence/`. Frame-over-budget counts depend on the machine, because the 16.7 ms budget is absolute, so the faster machine shows fewer long frames for both renderers.
 
 ## Caveats
 

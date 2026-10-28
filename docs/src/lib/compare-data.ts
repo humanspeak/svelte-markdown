@@ -89,15 +89,15 @@ export const competitors: Competitor[] = [
             },
             {
                 name: 'Streaming Speed',
-                us: 'About 1.2–2.7x less work on prose, lists, tables, and long documents',
+                us: 'About 1.5–3.1x less work on prose, lists, tables, and long documents',
                 them: 'Less work on a single open code block, on citation-heavy text, and on HTML blocks, which it shows as text by default',
-                note: 'Measured 2026-09-28 against svelte-streamdown 4.2.0 with both renderers run back to back on the same content, and re-checked 2026-10-16 against 4.2.1 with no change in its results. Results vary by machine and content. Method and full numbers: Streaming Benchmarks in the docs.'
+                note: 'Measured 2026-10-28 against svelte-streamdown 5.0.0 with both renderers run back to back on the same content, alongside a same-machine control run against 4.2.1. Results vary by machine and content. Method and full numbers: Streaming Benchmarks in the docs.'
             },
             {
                 name: 'Smoothness on Long Lists & Tables',
                 us: 'Nearly every frame on time',
-                them: 'About 30% of frames run long',
-                note: 'A frame that runs long is a frame the browser cannot show at 60 fps.'
+                them: 'About 16–42% of frames run long',
+                note: 'A frame that runs long is a frame the browser cannot show at 60 fps. Measured on an Intel Core i9-10910. Slower machines see more long frames for both renderers.'
             },
             {
                 name: 'Bursts of Updates',
@@ -203,7 +203,7 @@ export const competitors: Competitor[] = [
             'Resets between messages are up to your app',
             'No cache for revisited documents',
             'About twice the work when chunks arrive in bursts',
-            'About 30% of frames run long on long lists and tables',
+            'About 16–42% of frames run long on long lists and tables',
             'Requires Tailwind or theme overrides',
             'Newer, single-maintainer port of a React project'
         ],
