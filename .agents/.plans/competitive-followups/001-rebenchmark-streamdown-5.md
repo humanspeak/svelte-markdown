@@ -8,12 +8,14 @@
 > dispatched you and told you they maintain the index.
 >
 > **Drift check (run first)**:
-> `git diff --stat bdebe69..HEAD -- package.json src/routes/test/stream-compare/ scripts/stream-compare-bench.mjs docs/src/lib/compare-data.ts docs/src/routes/docs/advanced/streaming-benchmarks/+page.svx .competitive-intel/config.json`
+> `git diff --stat 7b36d0e..HEAD -- package.json src/routes/test/stream-compare/ scripts/stream-compare-bench.mjs docs/src/lib/compare-data.ts docs/src/routes/docs/advanced/streaming-benchmarks/+page.svx .competitive-intel/config.json`
 > If any of those files changed since this plan was written, compare the
 > "Current state" excerpts below with the live files. Treat any mismatch as a
 > STOP condition.
 >
 > **Revision 2026-10-28**: Git workflow re-pointed to the shared digest branch `chore/competitive-intel-2026-10-28` (operator's standing rule: digest follow-ups ship as one PR). The reviewer owns git. No change to scope or steps.
+>
+> **Revision 2026-10-28 (2)**: pre-flight after plans 002–005 landed on the batch branch. `Planned at` was re-stamped to `7b36d0e`. Since `bdebe69`, `package.json` gained `pele` (plan 004), which moved the `svelte-streamdown` line from 184 to 189. `compare-data.ts` changed only in the vs-tiptap, vs-marked and vs-svelte-exmarkdown entries (plan 002). The `vs-svelte-streamdown` entry (lines 36–222, `Streaming Speed` note at line 94) is unchanged. Environment: work in the main checkout `/Users/jasonkummerl/Github/svelte-markdown`. Playwright browsers are installed. Make sure nothing listens on port 4173 before `pnpm preview`, and stop your preview server when you finish.
 
 ## Status
 
@@ -23,7 +25,7 @@
 - **Depends on**: none
 - **Wave**: 1
 - **Category**: docs
-- **Planned at**: commit `bdebe69`, 2026-10-28
+- **Planned at**: commit `7b36d0e`, 2026-10-28 (re-stamped; originally `bdebe69`)
 - **Ticket**: HUM-2 (`vs-streamdown-perf-baseline`)
 
 ## Why this matters
@@ -40,7 +42,7 @@ and updates the copy so every claim names the version it was measured against.
 
 ## Current state
 
-- `package.json:184`: the competitor is pinned exactly as a devDependency:
+- `package.json:189`: the competitor is pinned exactly as a devDependency:
   `"svelte-streamdown": "4.2.1",`
 - `src/routes/test/stream-compare/+page.svelte` is the benchmark harness page.
   It imports `import { Streamdown } from 'svelte-streamdown'` (line 10) and
