@@ -69,7 +69,7 @@ export const isHtmlOpenTag = (raw: string): { tag: string; isOpening: boolean } 
  *
  * @param raw Source text of a single opening tag, e.g. `<img src="x"/>`.
  */
-const isSelfClosedTagSource = (raw: string): boolean => {
+export const isSelfClosedTagSource = (raw: string): boolean => {
     if (!raw.endsWith('/>')) return false
     const beforeSlash = raw.slice(0, -2)
     // `<br/>` — the slash directly follows the tag name.

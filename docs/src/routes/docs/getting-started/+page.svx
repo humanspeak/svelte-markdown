@@ -87,6 +87,7 @@ You can configure the markdown parser through the `options` prop:
 | `headerPrefix` | `string` | `''` | Prefix for generated heading IDs |
 | `gfm` | `boolean` | `true` | Enable GitHub Flavored Markdown |
 | `breaks` | `boolean` | `false` | Convert single newlines to `<br>` |
+| `maxNestingDepth` | `number` | `16` | Maximum nesting depth (16 blockquotes or HTML elements, 8 lists). Deeper content renders as plain text so deeply nested input cannot overflow the call stack. `Infinity` disables the limit |
 
 ## Overriding Renderers
 

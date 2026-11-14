@@ -9,6 +9,12 @@
 
 import type { SvelteMarkdownOptions } from '$lib/types.js'
 import type { Token, TokensList } from '$lib/utils/markdown-parser.js'
+import {
+    clampNestingDepth,
+    isStackOverflow,
+    plainTextTokens,
+    resolveMaxNestingDepth
+} from '$lib/utils/nesting-depth.js'
 import { tokenCache } from '$lib/utils/token-cache.js'
 import { shrinkHtmlTokens } from '$lib/utils/token-cleanup.js'
 import { Lexer, Marked } from 'marked'
@@ -62,9 +68,26 @@ export const lexAndClean = (
     const finishProvenance = provenance
         ? traceLexer(lexer, source, isInline, provenance, baseOffset, !!options.tokenizer)
         : undefined
-    const parsedTokens = isInline ? lexer.inlineTokens(source) : lexer.lex(source)
-    finishProvenance?.()
-    const cleaned = shrinkHtmlTokens(parsedTokens, provenance)
+    let cleaned: Token[]
+    try {
+        const parsedTokens = isInline ? lexer.inlineTokens(source) : lexer.lex(source)
+        finishProvenance?.()
+        // Cap nesting before the tokens reach the recursive renderer: input
+        // nested a few dozen levels deep would overflow the stack on mount.
+        cleaned = clampNestingDepth(
+            shrinkHtmlTokens(parsedTokens, provenance),
+            resolveMaxNestingDepth(options.maxNestingDepth),
+            isInline,
+            provenance
+        )
+    } catch (error) {
+        // Thousands of nesting levels overflow the stack inside marked's own
+        // recursive lexer, before any cap can apply. Show the source as plain
+        // text rather than throwing out of the component. Every other error
+        // still propagates.
+        if (!isStackOverflow(error)) throw error
+        cleaned = plainTextTokens(source, isInline)
+    }
     if (provenance) provenance.capture(cleaned)
     return cleaned
 }
