@@ -141,6 +141,18 @@ If you fully trust your markdown source and need to allow all URLs and attribute
 | `SanitizeAttributesFn` | Type | `(attributes: Record<string, string>, context: SanitizeContext, sanitizeUrl: SanitizeUrlFn) => Record<string, string>` |
 | `SanitizeContext` | Type | `{ type: string, tag: string }` |
 
+## Nesting Depth Limit
+
+Rendering is recursive, so markdown nested a few dozen levels deep (`> > > > ...`, nested lists, nested HTML tags) would otherwise overflow the call stack and crash the whole component tree. A short hostile string is enough, so this matters for any content you do not control, including LLM output.
+
+The parsed token tree is capped by the `maxNestingDepth` option (default `16`: 16 nested blockquotes or HTML elements, or 8 nested lists). Content nested deeper renders as plain text instead of being dropped. Source so deeply nested that the parser itself runs out of stack renders entirely as plain text.
+
+```svelte
+<SvelteMarkdown {source} options={{ maxNestingDepth: 8 }} />
+```
+
+Pass `Infinity` only for trusted input. Pre-parsed token arrays passed as `source` are not capped.
+
 ## Known Gaps (Not Handled by Defaults)
 
 The built-in sanitizer covers URL protocols and event handlers, but some classes of risk pass through and need either custom sanitizers or HTML tag filtering:

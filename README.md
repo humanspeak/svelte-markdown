@@ -1359,16 +1359,41 @@ Pass parser options through the `options` prop:
 <SvelteMarkdown {source} options={{ breaks: true, headerPrefix: 'article-' }} />
 ```
 
-| Option         | Default | Description                                               |
-| -------------- | ------- | --------------------------------------------------------- |
-| `gfm`          | `true`  | GitHub Flavored Markdown, including tables and task lists |
-| `breaks`       | `false` | Render single newlines as line breaks when GFM is enabled |
-| `pedantic`     | `false` | Use Marked's original Markdown parsing rules              |
-| `headerIds`    | `true`  | Generate heading IDs with GitHub-style slugs              |
-| `headerPrefix` | `''`    | Prefix generated heading IDs                              |
+| Option            | Default | Description                                               |
+| ----------------- | ------- | --------------------------------------------------------- |
+| `gfm`             | `true`  | GitHub Flavored Markdown, including tables and task lists |
+| `breaks`          | `false` | Render single newlines as line breaks when GFM is enabled |
+| `pedantic`        | `false` | Use Marked's original Markdown parsing rules              |
+| `headerIds`       | `true`  | Generate heading IDs with GitHub-style slugs              |
+| `headerPrefix`    | `''`    | Prefix generated heading IDs                              |
+| `maxNestingDepth` | `16`    | Maximum token-tree depth; deeper content renders as text  |
 
 Heading renderer components and snippets receive the prepared `id` so they can
 preserve heading links and duplicate-heading suffixes when overriding markup.
+
+#### Nesting depth limit
+
+Rendering is recursive, so input nested dozens of levels deep (`> > > > ...`,
+nested lists, nested HTML tags) would overflow the call stack and break the
+whole component tree. To prevent that, the parsed token tree is capped at
+`maxNestingDepth` levels. Each blockquote or HTML element counts one level and
+each list counts two (the list and its items); paragraphs and headings do not
+count. The default of `16` allows 16 nested blockquotes or HTML elements, or 8
+nested lists, with their content still fully formatted. Inline formatting
+(bold, emphasis, links, inline HTML) may nest 4 levels past the limit.
+
+Content nested deeper is shown as plain text rather than rendered, so it stays
+visible. Over-deep HTML is shown in a normalized form (for example `<br>` reads
+`<br/>`), not byte-for-byte. Source nested so deeply that the parser itself
+runs out of stack renders entirely as plain text.
+
+```svelte
+<SvelteMarkdown {source} options={{ maxNestingDepth: 8 }} />
+```
+
+Pass `Infinity` to turn the limit off for trusted input. Raising it far above
+the default brings the stack overflow back. Pre-parsed token arrays passed as
+`source` are rendered as given and are not capped.
 
 ### Pre-parsed tokens
 
@@ -1390,6 +1415,7 @@ Default URL and attribute sanitizers run before link, image, and HTML props reac
 - **URL protocol allowlist** (`defaultSanitizeUrl`) — Markdown link/image URLs and the HTML attributes `href`, `src`, `action`, `formaction`, `cite`, `data`, and `poster` are restricted to `http:`, `https:`, `mailto:`, `tel:`, and relative URLs. `javascript:`, `vbscript:`, `data:`, and `blob:` URIs are blocked (including mixed-case and leading-whitespace variants).
 - **Event handler stripping** (`defaultSanitizeAttributes`) — All `on*` attributes (e.g. `onclick`, `onerror`, `onload`) are removed. The `srcdoc` attribute is also stripped to prevent iframe HTML injection.
 - **No `<script>` or `<style>` renderers** — Both tags fall through to `UnsupportedHTML`, which renders them as visible escaped text (e.g. `<script>...</script>`) rather than executing or applying them.
+- **Nesting depth limit** (`maxNestingDepth`, default `16`) — Deeply nested input such as `> > > > ...` is capped before rendering, so a few dozen characters cannot overflow the call stack and crash the component tree. Content past the limit renders as plain text (see [Nesting depth limit](#nesting-depth-limit)).
 
 **Configurable controls:**
 

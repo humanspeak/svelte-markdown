@@ -1,6 +1,7 @@
 import type { SvelteMarkdownOptions } from '$lib/types.js'
 import { defaultOptions } from '$lib/utils/markdown-parser.js'
 import { Marked, type MarkedExtension } from 'marked'
+import { resolveMaxNestingDepth } from './nesting-depth.js'
 
 type ExtensionIdentityRecord = Record<string, unknown>
 
@@ -98,10 +99,12 @@ export const buildParserOptions = (
     const extensionCacheSignature =
         extensions.length > 0 ? getExtensionCacheSignature(extensions) : undefined
 
+    const merged = { ...defaultOptions, ...extensionDefaults, ...options }
     return {
-        ...defaultOptions,
-        ...extensionDefaults,
-        ...options,
+        ...merged,
+        // Resolved here so equivalent values (unset, 16, NaN) share one token
+        // cache key; Infinity, the only non-finite result, serializes as `null`.
+        maxNestingDepth: resolveMaxNestingDepth(merged.maxNestingDepth),
         ...(extensionCacheSignature
             ? { _svelteMarkdownExtensionCacheSignature: extensionCacheSignature }
             : {})

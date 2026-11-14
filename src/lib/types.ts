@@ -342,6 +342,23 @@ export interface SvelteMarkdownOptions extends MarkedOptions {
      * @defaultValue `''`
      */
     headerPrefix?: string
+
+    /**
+     * Maximum nesting depth of the parsed token tree. Each blockquote or HTML
+     * element counts one level and each list counts two (the list and its
+     * items); paragraphs and headings do not count. Inline formatting (bold,
+     * emphasis, links, inline HTML) may nest 4 levels past the limit.
+     * Content nested deeper is shown as plain text instead of being
+     * rendered, because rendering is recursive and deeply nested input
+     * (`> > > > ...`) would otherwise overflow the call stack and break the
+     * whole component tree.
+     *
+     * The default allows 16 nested blockquotes or HTML elements, or 8 nested
+     * lists. Pass `Infinity` to disable the guard for trusted input.
+     *
+     * @defaultValue `16`
+     */
+    maxNestingDepth?: number
 }
 
 export type StreamingTextChange = 'baseline' | 'append' | 'revision'
