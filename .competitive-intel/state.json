@@ -1,9 +1,9 @@
 {
     "project": "@humanspeak/svelte-markdown",
-    "last_run": "2026-11-08",
+    "last_run": "2026-11-14",
     "run_type": "delta",
     "snapshot": {
-        "fetched_at": "2026-11-08T06:00:39Z",
+        "fetched_at": "2026-11-14T06:00:44Z",
         "project": "@humanspeak/svelte-markdown",
         "self": {
             "npm": "@humanspeak/svelte-markdown",
@@ -11,7 +11,7 @@
             "latest_version": "2.2.0",
             "last_publish": "2026-10-28",
             "first_publish": "2024-10-30",
-            "weekly_downloads": 41152,
+            "weekly_downloads": 45884,
             "peer_deps": {
                 "pele": ">=1.10.1",
                 "katex": ">=0.16.0",
@@ -143,7 +143,7 @@
                 "latest_version": "0.4.1",
                 "last_publish": "2023-12-25",
                 "first_publish": "2020-04-21",
-                "weekly_downloads": 59709,
+                "weekly_downloads": 65780,
                 "peer_deps": {
                     "svelte": "^4.0.0"
                 },
@@ -161,7 +161,7 @@
                 "latest_version": "5.0.2",
                 "last_publish": "2025-08-09",
                 "first_publish": "2022-04-09",
-                "weekly_downloads": 32342,
+                "weekly_downloads": 33197,
                 "peer_deps": {
                     "svelte": "^5.1.3"
                 },
@@ -178,10 +178,10 @@
             {
                 "npm": "svelte-streamdown",
                 "repo": "beynar/svelte-streamdown",
-                "latest_version": "5.0.1",
-                "last_publish": "2026-11-05",
+                "latest_version": "5.1.1",
+                "last_publish": "2026-11-08",
                 "first_publish": "2025-09-08",
-                "weekly_downloads": 163396,
+                "weekly_downloads": 136611,
                 "peer_deps": {
                     "svelte": "^5.0.0"
                 },
@@ -189,7 +189,7 @@
                 "error": null,
                 "stars": 108,
                 "archived": false,
-                "pushed_at": "2026-11-05",
+                "pushed_at": "2026-11-08",
                 "last_release": "2026-09-14",
                 "recent_releases": [
                     {
@@ -253,13 +253,13 @@
             {
                 "npm": "@comark/svelte",
                 "repo": null,
-                "latest_version": "0.9.0",
-                "last_publish": "2026-11-06",
+                "latest_version": "0.9.2",
+                "last_publish": "2026-11-12",
                 "first_publish": "2026-03-23",
-                "weekly_downloads": 2710,
+                "weekly_downloads": 3198,
                 "peer_deps": {
                     "katex": "^0.19.1",
-                    "shiki": "^4.5.0",
+                    "shiki": "^4.6.0",
                     "svelte": "^5.57.1",
                     "beautiful-mermaid": "^1.1.3"
                 },
@@ -274,6 +274,13 @@
         ]
     },
     "open_gaps": [
+        {
+            "gap": "URL prefix allowlists (allowedLinkPrefixes/allowedImagePrefixes) + srcset sanitization against prompt-injection exfiltration",
+            "held_by": "svelte-streamdown, @comark/svelte",
+            "why": "streamdown 5.1.0/5.1.1 judge //host and /\\host by real host; comark 0.9.2 runs vercel-labs/markdown-sanitizers 165 fixtures. Our default is protocol-only, passes //host as relative, and doesn't sanitize srcset",
+            "worth_doing": "low-medium — decision ticket HUM-162; srcset fix is cheap, helper over sanitizeUrl hook",
+            "first_seen": "2026-11-14"
+        },
         {
             "gap": "inline-code syntax highlighting (Shiki/Rangi on codespans)",
             "held_by": "@comark/svelte",
@@ -291,7 +298,7 @@
             "gap": "streaming presentation layer (citation UI, MDX-style components, table fullscreen, code line numbers, height caps)",
             "held_by": "svelte-streamdown",
             "why": "batteries-included AI chat UIs get these in-box; our position is deliberately lower-level/unstyled",
-            "worth_doing": "watch-not-build unless users ask; reveal animations shipped v2.1.0 (closed_gaps: streaming-reveal-animations); streamdown DL 163.4k vs our 41.2k (2026-11-08)"
+            "worth_doing": "watch-not-build unless users ask; reveal animations shipped v2.1.0 (closed_gaps: streaming-reveal-animations); streamdown DL 136.6k vs our 45.9k (2026-11-14)"
         },
         {
             "gap": "D2 diagrams, infographics, stream-diffs code blocks",
@@ -332,28 +339,28 @@
     ],
     "compare_validation": {
         "svelte-streamdown": {
-            "validated_against_version": "5.0.1",
-            "validated_on": "2026-11-08",
+            "validated_against_version": "5.1.1",
+            "validated_on": "2026-11-14",
             "benchmark_measured_against": "5.0.0 (measured 2026-10-28, #413)",
             "benchmark_valid": false,
             "findings": [
-                "Benchmark stale: measured vs 5.0.0, latest 5.0.1 changes citation parsing (HUM-131)",
+                "Benchmark stale: measured vs 5.0.0, latest 5.1.1 (completer + parser changes) (HUM-131)",
                 "Mermaid row undersells v2.2.0 pele + live streaming diagrams (HUM-104)"
             ],
-            "findings_status": "HUM-131 refiled 2026-11-08 (5.0.1 published 2026-11-05)."
+            "findings_status": "HUM-131 noted 2026-11-14 (5.1.1). Safe Links row still accurate; inline mode flips no row."
         },
         "svelte-exmarkdown": {
             "validated_against_version": "5.0.2",
-            "validated_on": "2026-11-08"
+            "validated_on": "2026-11-14"
         },
         "svelte-markdown": {
             "validated_against_version": "0.4.1",
-            "validated_on": "2026-11-08"
+            "validated_on": "2026-11-14"
         },
         "@comark/svelte": {
-            "validated_against_version": "0.9.0",
-            "validated_on": "2026-11-08",
-            "note": "no vs page; 0.9.0 features (bracket math, transformNode, heading-links) already covered"
+            "validated_against_version": "0.9.2",
+            "validated_on": "2026-11-14",
+            "note": "no vs page; 0.9.2 sanitizer hardening -> HUM-162"
         }
     },
     "watch_candidates": [
@@ -361,10 +368,10 @@
             "npm": "markstream-svelte",
             "first_seen": "2026-08-11",
             "status": "active-watch-candidate",
-            "note": "2.0.24; weekly DL 419 (down from 819). Under the ~1.5k promotion bar.",
-            "latest_version": "2.0.24",
-            "weekly_downloads": 419,
-            "checked_on": "2026-11-08"
+            "note": "2.0.26; weekly DL 490. Under the ~1.5k promotion bar.",
+            "latest_version": "2.0.26",
+            "weekly_downloads": 490,
+            "checked_on": "2026-11-14"
         },
         {
             "npm": "@markdown-ui/svelte",
@@ -378,10 +385,10 @@
             "npm": "@modal-labs/svelte-markdown",
             "first_seen": "2026-09-21",
             "status": "parked",
-            "note": "Likely org fork; 0.5.0 last published 2025-05-16. Spiked ~7.8k (10-07), back to ~3.6k 2026-10-11 — still parked.",
+            "note": "Likely org fork; 0.5.0 last published 2025-05-16. Jumped to ~11.5k (2026-11-14) with no new publish — single-org consumption; still parked.",
             "latest_version": "0.5.0",
-            "weekly_downloads": 3625,
-            "checked_on": "2026-10-16"
+            "weekly_downloads": 11462,
+            "checked_on": "2026-11-14"
         },
         {
             "npm": "@immich/svelte-markdown-preprocess",
@@ -397,9 +404,9 @@
             "first_seen": "2026-10-28",
             "status": "parked",
             "note": "Svelte 5 streaming renderer, 1.0.2; ~223 weekly DL (pkgstats). Too small to track.",
-            "checked_on": "2026-11-08",
+            "checked_on": "2026-11-14",
             "latest_version": "1.0.2",
-            "weekly_downloads": 49
+            "weekly_downloads": 33
         },
         {
             "npm": "@generative-dom/svelte",
@@ -413,7 +420,7 @@
     ],
     "seo": {
         "export_date": "2026-10-23",
-        "trends_latest_date": "2026-11-04",
+        "trends_latest_date": "2026-11-10",
         "striking_distance": [
             {
                 "query": "tiptap svelte",
@@ -546,13 +553,13 @@
             "vs-tiptap / vs-marked / vs-svelte-exmarkdown title rewrites live 2026-10-28 — measuring (HUM-3/4/5, ready 2026-11-25)",
             "target diagram queries (svelte sequence/uml diagram) with /docs/advanced/mermaid"
         ],
-        "sitemap_without_impressions": 14,
+        "sitemap_without_impressions": 15,
         "queryhippo_window": {
-            "current": "2026-10-03..2026-10-30",
-            "clicks": 30,
-            "impressions": 2078,
-            "position": 10.87,
-            "evidence": "6a3dcc2f-7cf0-49fd-8a45-0f4bde3a2ead"
+            "current": "2026-10-14..2026-11-10",
+            "clicks": 41,
+            "impressions": 2519,
+            "position": 10.07,
+            "evidence": "66664427-325a-4953-8e06-4361347c14b4"
         },
         "no_longer_observed_pages": ["https://markdown.svelte.page/examples/code-formatting"],
         "new_queries": ["svelte uml diagram"],
@@ -561,11 +568,11 @@
     },
     "queryhippo": {
         "property_id": "ddec69ab-5b6d-4264-95a0-c7e8c606de80",
-        "last_evidence_id": "62097832-5b86-4891-9bae-c4ad2d6f8507",
-        "data_as_of": "2026-11-04"
+        "last_evidence_id": "3b20b9d7-fde1-4917-9b07-667586b3195f",
+        "data_as_of": "2026-11-10"
     },
     "tickets": {
-        "last_checked": "2026-11-08",
+        "last_checked": "2026-11-14",
         "instance_rebuilt": "2026-10-24 — prior HUM-70..HUM-199 tickets no longer exist; refiled top 5",
         "known": {
             "vs-streamdown-perf-baseline": {
@@ -618,6 +625,11 @@
             },
             "gap-nesting-depth-cap": {
                 "identifier": "HUM-132",
+                "status": "todo",
+                "note": "WIP on local fix/nesting-depth-cap (2026-11-14); close on merge to main"
+            },
+            "gap-url-prefix-allowlist": {
+                "identifier": "HUM-162",
                 "status": "todo"
             }
         },
