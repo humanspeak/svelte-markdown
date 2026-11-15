@@ -56,7 +56,12 @@ import {
     type Token,
     type TokensList
 } from '$lib/utils/markdown-parser.js'
-import type { SanitizeAttributesFn, SanitizeContext, SanitizeUrlFn } from '$lib/utils/sanitize.js'
+import type {
+    AllowUrlPrefixesOptions,
+    SanitizeAttributesFn,
+    SanitizeContext,
+    SanitizeUrlFn
+} from '$lib/utils/sanitize.js'
 
 /** The primary markdown rendering component. */
 export default SvelteMarkdown
@@ -122,12 +127,16 @@ export { IncrementalParser, type IncrementalUpdateResult } from '$lib/utils/incr
  *
  * - `defaultSanitizeUrl`        — protocol allowlist (http, https, mailto, tel, relative)
  * - `defaultSanitizeAttributes` — strips event handlers and sanitizes URL attributes
+ * - `allowUrlPrefixes`          — builds a `sanitizeUrl` that only allows given URL prefixes
+ * - `sanitizeSrcset`            — sanitizes each candidate URL in a `srcset` value
  * - `unsanitizedUrl`            — passthrough (allows all URLs)
  * - `unsanitizedAttributes`     — passthrough (allows all attributes)
  */
 export {
+    allowUrlPrefixes,
     defaultSanitizeAttributes,
     defaultSanitizeUrl,
+    sanitizeSrcset,
     unsanitizedAttributes,
     unsanitizedUrl
 } from '$lib/utils/sanitize.js'
@@ -138,6 +147,7 @@ export type { MarkedExtension } from 'marked'
 
 /** Re-exported types for consumer convenience. */
 export type {
+    AllowUrlPrefixesOptions,
     BlockquoteSnippetProps,
     BrSnippetProps,
     CodeSnippetProps,
