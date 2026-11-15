@@ -1412,14 +1412,33 @@ Default URL and attribute sanitizers run before link, image, and HTML props reac
 **On by default:**
 
 - **HTML parsing** — Raw HTML is parsed with HTMLParser2 and rendered through Svelte components rather than inserted directly with `innerHTML`. HTMLParser2 itself is not a sanitizer.
-- **URL protocol allowlist** (`defaultSanitizeUrl`) — Markdown link/image URLs and the HTML attributes `href`, `src`, `action`, `formaction`, `cite`, `data`, and `poster` are restricted to `http:`, `https:`, `mailto:`, `tel:`, and relative URLs. `javascript:`, `vbscript:`, `data:`, and `blob:` URIs are blocked (including mixed-case and leading-whitespace variants).
+- **URL protocol allowlist** (`defaultSanitizeUrl`) — Markdown link/image URLs, the HTML attributes `href`, `src`, `action`, `formaction`, `cite`, `data`, and `poster`, and each image candidate in `srcset`/`imagesrcset` are restricted to `http:`, `https:`, `mailto:`, `tel:`, and relative URLs. `javascript:`, `vbscript:`, `data:`, and `blob:` URIs are blocked (including mixed-case and leading-whitespace variants).
 - **Event handler stripping** (`defaultSanitizeAttributes`) — All `on*` attributes (e.g. `onclick`, `onerror`, `onload`) are removed. The `srcdoc` attribute is also stripped to prevent iframe HTML injection.
 - **No `<script>` or `<style>` renderers** — Both tags fall through to `UnsupportedHTML`, which renders them as visible escaped text (e.g. `<script>...</script>`) rather than executing or applying them.
 - **Nesting depth limit** (`maxNestingDepth`, default `16`) — Deeply nested input such as `> > > > ...` is capped before rendering, so a few dozen characters cannot overflow the call stack and crash the component tree. Content past the limit renders as plain text (see [Nesting depth limit](#nesting-depth-limit)).
 
 **Configurable controls:**
 
-- **Custom sanitizers** — Pass `sanitizeUrl` / `sanitizeAttributes` props to tighten or loosen the defaults. Use the exported `unsanitizedUrl` / `unsanitizedAttributes` passthroughs to disable sanitization entirely (only for trusted input).
+- **Custom sanitizers** — Pass `sanitizeUrl` / `sanitizeAttributes` props to tighten or loosen the defaults. A custom `sanitizeUrl` also receives each `srcset` candidate URL, so one URL policy (for example, only your CDN's prefix) covers `src` and `srcset` alike. Custom `sanitizeAttributes` functions can reuse the exported `sanitizeSrcset` helper. Use the exported `unsanitizedUrl` / `unsanitizedAttributes` passthroughs to disable sanitization entirely (only for trusted input).
+- **URL prefix allowlist** — `allowUrlPrefixes(prefixes, options?)` builds a `sanitizeUrl` that only allows URLs under the given prefixes, on top of the default protocol check. Use it to keep images and other resources (`srcset`, `<source>`, `<audio>`) on your own CDN, so injected markdown cannot load `https://attacker.example/?data=...`. Prefixes are compared against the URL as the browser parses it, for any page scheme, so `//evil.com`, `/\evil.com`, `https:evil.com`, `https://cdn.example.com@evil.com` and `../` tricks don't slip past. A prefix is a protocol (`'https://'`, `'mailto:'`) or an absolute URL prefix (`'https://cdn.example.com/images/'`). Same-origin relative URLs stay allowed unless you pass `{ allowRelative: false }`. Allowed URLs are returned unchanged, except protocol-relative `//host/...` URLs, which come back as `https:`.
+
+    ```svelte
+    <script>
+        import SvelteMarkdown, {
+            allowUrlPrefixes,
+            defaultSanitizeUrl
+        } from '@humanspeak/svelte-markdown'
+
+        const cdnOnly = allowUrlPrefixes(['https://cdn.example.com/'])
+        // Links keep the default policy. Everything else that loads a resource
+        // (img, source, audio, srcset, ...) must come from the CDN.
+        const sanitizeUrl = (url, context) =>
+            context.tag === 'a' ? defaultSanitizeUrl(url, context) : cdnOnly(url, context)
+    </script>
+
+    <SvelteMarkdown {source} {sanitizeUrl} />
+    ```
+
 - **Granular HTML control** — Use `allowHtmlOnly()` / `excludeHtmlOnly()` to restrict which HTML tags are rendered (see [Helper utilities](#helper-utilities-for-allowdeny-strategies)). For example, `excludeHtmlOnly(['iframe', 'form', 'embed'])` if you don't want those.
 - **Full HTML lockdown** — Call `buildUnsupportedHTML()` to block all raw HTML rendering.
 - **Markdown renderer control** — Use `allowRenderersOnly()` / `excludeRenderersOnly()` to limit which markdown token types are rendered.
@@ -1428,7 +1447,7 @@ Default URL and attribute sanitizers run before link, image, and HTML props reac
 
 - **Inline `style="..."` attributes are not sanitized.** They pass through unchanged (only `on*` and `srcdoc` are stripped from attribute maps). Modern browsers don't execute JavaScript via CSS, but visual hijacking (e.g. `display:none`) and exfiltration via background-image URLs are possible.
 - **`iframe`, `form`, `embed` are rendered** by default. The URL and attribute defaults still allow navigation, form submissions, and embedded content at arbitrary `http(s)` URLs. Use `excludeHtmlOnly(['iframe', 'form', 'embed'])` to remove them.
-- **`srcset` and other less common URL attributes are not sanitized.** Only the attributes listed above pass through `sanitizeUrl`. Provide a custom `sanitizeAttributes` if you need broader coverage.
+- **Less common URL attributes are not sanitized.** Only the attributes listed above and the candidates in `srcset`/`imagesrcset` pass through `sanitizeUrl`. Attributes such as `ping` or `background` pass through unchanged. Provide a custom `sanitizeAttributes` if you need broader coverage.
 - **No built-in DOM sanitizer** — By design, the package does not bundle DOMPurify or similar. For untrusted input, layer a full sanitizer on top of the defaults above.
 
 <!-- docs-kit:ecosystem start -->
