@@ -354,7 +354,7 @@ jobs:
               # (a "fetch failed" here blocked the svelte-motion v0.9.0 publish
               # on 2026-08-12).
               continue-on-error: true
-              uses: trunk-io/analytics-uploader@v2.1.5 # zizmor: ignore[unpinned-uses]
+              uses: trunk-io/analytics-uploader@v2.1.8 # zizmor: ignore[unpinned-uses]
               with:
                   junit-paths: junit-vitest.xml
                   org-slug: ${{ secrets.TRUNK_ORG_SLUG }}
@@ -405,7 +405,7 @@ jobs:
               # (a "fetch failed" here blocked the svelte-motion v0.9.0 publish
               # on 2026-08-12).
               continue-on-error: true
-              uses: trunk-io/analytics-uploader@v2.1.5 # zizmor: ignore[unpinned-uses]
+              uses: trunk-io/analytics-uploader@v2.1.8 # zizmor: ignore[unpinned-uses]
               with:
                   junit-paths: test-results/junit-playwright.xml
                   org-slug: ${{ secrets.TRUNK_ORG_SLUG }}
