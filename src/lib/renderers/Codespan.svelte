@@ -4,10 +4,10 @@ Renders an inline code span (`` `code` ``) as a `<code>` element.
 -->
 <script lang="ts">
     interface Props {
-        raw: string
+        text: string
     }
 
-    const { raw }: Props = $props()
+    const { text }: Props = $props()
 </script>
 
-<code>{raw.replace(/`/g, '')}</code>
+<code>{text}</code>
